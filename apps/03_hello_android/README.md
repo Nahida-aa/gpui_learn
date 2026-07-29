@@ -40,6 +40,25 @@ NativeActivity (GpuiActivity.java)  ──  系统窗口 / ANativeWindow / JNI
 > 一起 vendored 进了仓库，`app/build.gradle.kts` 通过 `java.srcDir` 直接引用，
 > 保证 Java 侧和 Rust 侧始终同源。
 
+## 命令入口（package.json）
+
+本例用 `package.json` 的 `scripts` 管理常用命令，IDE（VS Code / Zed / …）会在
+脚本旁自动显示 **▶ 运行按钮**，比 `justfile` 更顺手：
+
+```bash
+npm run rust:check    # 仅类型检查（aarch64-linux-android）
+npm run rust:build    # 用 cargo ndk 编出 libhello_android.so 到 jniLibs
+npm run apk           # ./gradlew assembleDebug（内部自动跑 cargo ndk）
+npm run apk:release   # release 版
+npm run install       # adb install 到真机
+npm run launch        # adb am start 启动 Activity
+npm run run           # apk + install + launch 一条龙
+npm run logs          # adb logcat 看 hello_android / gpui-android 日志
+npm run uninstall     # adb uninstall
+```
+
+> 需要 Node.js（仅用来跑 npm 脚本，不参与任何构建）。
+
 ## 工具链前置（一次性）
 
 和 `docs/maintain-gpui-android.md` §1 一致：
