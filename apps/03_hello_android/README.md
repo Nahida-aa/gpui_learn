@@ -67,27 +67,31 @@ llvm-nm -D apps/03_hello_android/gradle/app/src/main/jniLibs/arm64-v8a/libhello_
   | grep -E 'android_main|Java_dev_gpui_mobile_GpuiActivity_nativeIsInitialized'
 ```
 
-### B. 打 apk（需要 Gradle）
+### B. 打 apk（用仓库内的 Gradle wrapper）
 
-先**装 Gradle**。任选其一：
-
-- 装好 `gradle` 后先执行一次 `gradle wrapper`（会据 `gradle-wrapper.properties` 生成
-  `gradle-wrapper.jar` + `gradlew` 脚本，之后就能用 `./gradlew`）；
-- 或直接使用系统 `gradle` 命令。
-
-然后：
+本仓库**自带 `./gradlew`（锁定 Gradle 8.9）**，直接用即可，无需另装 Gradle：
 
 ```bash
 cd apps/03_hello_android/gradle
-gradle assembleDebug          # 或 ./gradlew assembleDebug
+./gradlew assembleDebug        # 首次会自动下载 Gradle 8.9 分发
 # 产物：app/build/outputs/apk/debug/app-debug.apk
 ```
+
+> ⚠️ **不要用系统 `gradle` 命令**。本机系统 Gradle 是 9.x，而 AGP 8.7.3 只支持
+> Gradle 8.x（9.x 不被任何 AGP 8.x 接受），直接用 `gradle` 会在插件解析阶段失败。
+> 仓库内的 `./gradlew` 锁了 8.9，已验证可正常构建。
+
+> 💡 若 `./gradlew` 下载 Gradle 8.9 分发很慢（官方 services.gradle.org 有时被限速），
+> 可手动从国内镜像取下 `gradle-8.9-bin.zip`，放进
+> `~/.gradle/wrapper/dists/gradle-8.9-bin/<hash>/` 再跑 `./gradlew`，它会直接解压使用。
+> 镜像例：`https://mirrors.cloud.tencent.com/gradle/gradle-8.9-bin.zip`。
 
 `assembleDebug` 触发 `:app:preBuild` → 我们注册的 `cargoBuild` 任务，
 它会自动跑 `cargo ndk` 把 `libhello_android.so` 放到 `jniLibs/arm64-v8a/`，
 再交给 Android 打包。
 
-> 若只想编 release：`gradle assembleRelease -Prelease`。
+> 若只想编 release：`./gradlew assembleRelease -Prelease`。
+> 注：debug 包约 345 MB（含完整调试符号）；release 会小很多。
 
 ## 装到真机
 

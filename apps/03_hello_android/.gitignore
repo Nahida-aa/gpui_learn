@@ -7,7 +7,6 @@ gradle/.gradle/
 .gradle/
 build/
 
-# Gradle wrapper 生成的 jar（首次 gradle wrapper 后产生，按需本地生成）
-gradle/gradle/wrapper/gradle-wrapper.jar
-gradlew
-gradlew.bat
+# 注意：gradle-wrapper.jar / gradlew / gradlew.bat 已提交进仓库。
+# 本机系统 Gradle 是 9.x，而 AGP 8.7.3 只支持 Gradle 8.x，所以必须用仓库内
+# 锁定的 Gradle 8.9 wrapper（./gradlew）来构建，不要再忽略它们。

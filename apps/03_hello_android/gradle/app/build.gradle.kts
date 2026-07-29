@@ -16,15 +16,20 @@ val cargoProfile = if (providers.gradleProperty("release").isPresent) "release" 
 
 val cargoBuild by tasks.registering(Exec::class) {
     workingDir = projectDir.parentFile.parentFile.parentFile // 仓库根（含 Cargo.toml workspace）
-    commandLine(
+    // 先拼成 List<String>，再传给 commandLine，避免 vararg/DSL 解析歧义。
+    val args = listOf(
         "cargo", "ndk",
         "-t", rustTarget,
         "-P", "26", // 必须 ≥ 24，否则 NDK 链接找不到 libnativewindow.so
         "-o", jniLibsDir.asFile.absolutePath,
         "build",
         "-p", "hello_android_03",
-        if (cargoProfile == "release") "--release" else "",
-    ).filter { it.isNotEmpty() }
+    )
+    if (cargoProfile == "release") {
+        commandLine(args + "--release")
+    } else {
+        commandLine(args)
+    }
     // 让 Gradle 知道产物位置，便于增量判断。
     outputs.dir(jniLibsDir)
 }
