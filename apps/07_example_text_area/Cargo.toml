@@ -1,0 +1,48 @@
+[package]
+name = "text_area_07_android"
+version = "0.1.5"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+description = "07_example_text_area —— 多行文本框（桌面 / Android 同构，移植自 zed 的 example_text_area）"
+
+# Android 的 NativeActivity 加载的是 .so（cdylib）。桌面端另有一个 `src/main.rs`
+# 二进制（见文件底部），通过 `run()` 开窗口测试多行逻辑，绕开 Android IME 的坑。
+[lib]
+name = "text_area_07"
+# cdylib 给 Android NativeActivity 用；rlib 给同包的桌面二进制 main.rs 链接
+# （bin 不能和 cdylib 混用，但 rlib 可以，桌面端走 rlib）。
+crate-type = ["cdylib", "rlib"]
+
+# 桌面二进制：main.rs 内部用 cfg 保证只在非 Android 编译/运行
+# （Android 上只产 cdylib .so，不构建此 bin）。
+[[bin]]
+name = "text_area_07_desktop"
+path = "src/main.rs"
+
+[dependencies]
+gpui = { workspace = true }
+gpui-android = { path = "../../crates/gpui-android" }
+unicode-segmentation = "1.11"
+
+# 桌面 / 通用依赖：log 给诊断日志用。
+log = "0.4"
+# 桌面端 logger backend（Android 端用 gpui-android 的 android_logger）。
+# 初始化后 log::info! 才能在桌面终端输出；不初始化则被静默丢弃。
+env_logger = "0.11"
+
+# gpui_platform 提供桌面入口 application()，按平台开窗口后端（与 04_input 同写法的）。
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_os = "android", target_family = "wasm")))'.dependencies]
+gpui_platform = { workspace = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+gpui_platform = { workspace = true }
+wasm-bindgen = "0.2.120"
+
+[target.'cfg(target_os = "android")'.dependencies]
+# 版本与 crates/gpui-android/Cargo.toml 保持一致（android-activity 必须开 native-activity）。
+android-activity = { version = "0.6", features = ["native-activity"] }
+android_logger = "0.15"

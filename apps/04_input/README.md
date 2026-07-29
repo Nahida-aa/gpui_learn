@@ -11,9 +11,9 @@
 cargo run -p input_04
 
 # 方式二：package.json 脚本（IDE 会在旁边放运行按钮）
-npm run dev      # = cargo run -p input_04
-npm run build    # = cargo build -p input_04
-npm run check    # = cargo check -p input_04
+bun run dev      # = cargo run -p input_04
+bun run build    # = cargo build -p input_04
+bun run check    # = cargo check -p input_04
 ```
 
 ## 学什么

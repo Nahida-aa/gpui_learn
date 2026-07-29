@@ -9,9 +9,9 @@
 cargo run -p grid_layout_05
 
 # 方式二：package.json 脚本（IDE 会在旁边放运行按钮）
-npm run dev      # = cargo run -p grid_layout_05
-npm run build    # = cargo build -p grid_layout_05
-npm run check    # = cargo check -p grid_layout_05
+bun run dev      # = cargo run -p grid_layout_05
+bun run build    # = cargo build -p grid_layout_05
+bun run check    # = cargo check -p grid_layout_05
 ```
 
 ## 学什么

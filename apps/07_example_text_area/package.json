@@ -1,0 +1,20 @@
+{
+  "name": "text_area_07_android",
+  "version": "0.1.5",
+  "private": true,
+  "description": "07_example_text_area —— 用 gpui-android 后端在手机跑多行文本框（命令入口，IDE 会显示运行按钮）",
+  "scripts": {
+    "check": "cargo check -p text_area_07_android",
+    "run": "cargo run -p text_area_07_android",
+    "version:bump": "node -e \"const fs=require('fs');const p='package.json';const c='Cargo.toml';const j=JSON.parse(fs.readFileSync(p,'utf8'));let [maj,min,pat]=j.version.split('.').map(Number);pat++;j.version=[maj,min,pat].join('.');fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');const t=fs.readFileSync(c,'utf8').replace(/^version = \".*\"$/m,'version = \"'+j.version+'\"');fs.writeFileSync(c,t);console.log('bumped to v'+j.version);\"",
+    "android:init": "cargo run -p gpui-cli -- android init --example .",
+    "android:check": "cargo ndk -t arm64-v8a -P 26 check -p text_area_07_android",
+    "android:apk": "cd gen/android && ./gradlew assembleDebug",
+    "android:apk:release": "cd gen/android && ./gradlew assembleRelease -Prelease",
+    "android:install": "adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk",
+    "android:launch": "adb shell am start -n dev.gpui.learn.text_area_07/dev.gpui.mobile.GpuiActivity",
+    "android:run": "bun run android:init && bun run android:apk && bun run android:install && bun run android:launch",
+    "android:logs": "adb logcat -s text_area_07:V gpui-android:V",
+    "android:uninstall": "adb uninstall dev.gpui.learn.text_area_07"
+  }
+}

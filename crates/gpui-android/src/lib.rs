@@ -68,6 +68,10 @@ pub enum KeyboardType {
     NumberPad,
     URL,
     Decimal,
+    /// 多行文本：带 `TYPE_TEXT_FLAG_MULTI_LINE`，软键盘回车会向
+    /// `commitText("\n")` 提交（而不是触发 IME action）。多行输入框
+    /// （如 07 的 TextArea）必须用这个，否则回车没有换行效果。
+    MultiLine,
 }
 
 pub fn show_keyboard() {

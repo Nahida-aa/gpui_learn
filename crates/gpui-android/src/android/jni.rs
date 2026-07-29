@@ -1232,6 +1232,8 @@ pub fn show_keyboard_android(keyboard_type: crate::KeyboardType) {
         crate::KeyboardType::NumberPad => 2,
         crate::KeyboardType::URL => 17,
         crate::KeyboardType::Decimal => 8194,
+        // TYPE_CLASS_TEXT (1) | TYPE_TEXT_FLAG_MULTI_LINE (0x20000)
+        crate::KeyboardType::MultiLine => 1 | 0x20000,
     };
     let result = with_env(|env| {
         let activity = activity(env)?;
@@ -1362,7 +1364,16 @@ pub unsafe extern "C" fn Java_dev_gpui_mobile_GpuiActivity_nativeCommitText(
     _class: *mut std::ffi::c_void,
     text: *mut std::ffi::c_void,
 ) {
-    enqueue_string_ime_event(text, crate::ImeEvent::Commit);
+    // 诊断：每次 IME 提交的文本都打到 logcat，便于确认软键盘回车到底
+    // 有没有把 \n 送进来（adb logcat -s gpui-ime）。
+    let value_raw = text as jni::sys::jobject;
+    let _ = with_env(|env| {
+        let value = unsafe { JObject::from_raw(env, value_raw) };
+        let s = get_string(env, &value);
+        log::info!("nativeCommitText: {:?}", s);
+        crate::enqueue_ime_event(crate::ImeEvent::Commit(s));
+        Ok(())
+    });
 }
 
 /// Update the active marked/composing text.

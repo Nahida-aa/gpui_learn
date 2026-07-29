@@ -10,6 +10,7 @@ import android.security.keystore.KeyProperties;
 import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.util.Base64;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
@@ -63,16 +64,23 @@ public class GpuiActivity extends NativeActivity {
             if (sNativeLibLoaded) return;
             String libName = null;
             try {
-                android.content.pm.ApplicationInfo ai = ctx.getPackageManager()
-                        .getApplicationInfo(ctx.getPackageName(),
+                // `android.app.lib_name` 声明在本 <activity> 节点下，必须读
+                // ActivityInfo 的 metaData（而非 ApplicationInfo，后者读不到）。
+                android.content.pm.ActivityInfo ai = ctx.getPackageManager()
+                        .getActivityInfo(
+                                ((GpuiActivity) ctx).getComponentName(),
                                 android.content.pm.PackageManager.GET_META_DATA);
                 if (ai != null && ai.metaData != null) {
                     libName = ai.metaData.getString("android.app.lib_name");
                 }
             } catch (Throwable ignored) {
-                // fall through to default name
+                // fall through; libName stays null and we surface it below
             }
-            if (libName == null) libName = "input_05";
+            if (libName == null || libName.isEmpty()) {
+                throw new RuntimeException(
+                        "GpuiActivity: cannot determine native lib name from "
+                                + "android.app.lib_name meta-data");
+            }
             System.loadLibrary(libName);
             sNativeLibLoaded = true;
         }
@@ -248,8 +256,13 @@ public class GpuiActivity extends NativeActivity {
         @Override
         public InputConnection onCreateInputConnection(EditorInfo attributes) {
             attributes.inputType = inputType;
-            attributes.imeOptions = EditorInfo.IME_ACTION_NONE
-                    | EditorInfo.IME_FLAG_NO_EXTRACT_UI;
+            // 多行输入：inputType 带 TYPE_TEXT_FLAG_MULTI_LINE 时，多数输入法会向
+            // commitText("\n") 提交回车；但部分系统输入法仍会把回车当成 IME action
+            // 触发 performEditorAction 而不提交 \n。为兜底，下面重写了
+            // performEditorAction，在回车时也 nativeCommitText("\n")，确保换行必发生。
+            // 这里不声明 IME_FLAG_NO_ENTER_ACTION / IME_ACTION_NONE：前者反而可能让
+            // 某些输入法把回车当“无动作”，后者曾导致回车不提交（见 05 的调试记录）。
+            attributes.imeOptions = EditorInfo.IME_FLAG_NO_EXTRACT_UI;
             attributes.initialSelStart = editable.length();
             attributes.initialSelEnd = editable.length();
             return new BaseInputConnection(this, true) {
@@ -260,8 +273,42 @@ public class GpuiActivity extends NativeActivity {
 
                 @Override
                 public boolean commitText(CharSequence text, int newCursorPosition) {
+                    Log.i("text_area_07", "IME commitText: \"" + text + "\"");
                     nativeCommitText(text == null ? "" : text.toString());
                     return super.commitText(text, newCursorPosition);
+                }
+
+                // 软键盘把回车当成“完成/发送/下一个”等 IME action 时走这里。
+                // 多行输入框里回车=换行，所以直接提交一个 "\n"，复用与粘贴多行
+                // 完全相同的 Rust 路径（replace_text_in_range 插入 \n → 多行渲染）。
+                @Override
+                public boolean performEditorAction(int editorAction) {
+                    Log.i("gpui", "IME performEditorAction: " + editorAction);
+                    nativeCommitText("\n");
+                    return true;
+                }
+
+                // 多行输入（inputType 带 TYPE_TEXT_FLAG_MULTI_LINE）时，部分系统输入法
+                // 把回车当硬件键下发，走 sendKeyEvent 而非 performEditorAction /
+                // commitText。默认 BaseInputConnection 不处理会丢事件，这里把回车转成
+                // "\n" 提交（与粘贴多行同路径）。单行（TYPE_CLASS_TEXT）输入法通常走
+                // performEditorAction，不需要这条。
+                @Override
+                public boolean sendKeyEvent(android.view.KeyEvent event) {
+                    int keyCode = event.getKeyCode();
+                    Log.i("gpui", "IME sendKeyEvent: code=" + keyCode
+                            + " action=" + event.getAction());
+                    if (event.getAction() == android.view.KeyEvent.ACTION_DOWN) {
+                        if (keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
+                            nativeCommitText("\n");
+                            return true;
+                        }
+                        if (keyCode == android.view.KeyEvent.KEYCODE_DEL) {
+                            nativeDeleteSurroundingText(1, 0);
+                            return true;
+                        }
+                    }
+                    return super.sendKeyEvent(event);
                 }
 
                 @Override

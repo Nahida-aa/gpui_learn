@@ -51,7 +51,7 @@ gpui.conf.json）、默认 ABI 列表（`arm64-v8a` + `x86_64`）；并把例子
 （来自 `gpui-android`）也都一并生成/引用。
 
 > 这和 Tauri 的 `tauri android init` 同一个哲学——**配置极简，工具生成工程**，
-> 应用层完全不碰 kt。改了 `Cargo.toml` / `gpui.conf.json` 后重跑 `npm run init` 即可。
+> 应用层完全不碰 kt。改了 `Cargo.toml` / `gpui.conf.json` 后重跑 `bun run init` 即可。
 
 ## 命令入口（package.json）
 
@@ -59,18 +59,18 @@ gpui.conf.json）、默认 ABI 列表（`arm64-v8a` + `x86_64`）；并把例子
 脚本旁自动显示 **▶ 运行按钮**，比 `justfile` 更顺手：
 
 ```bash
-npm run init        # gpui-cli android init → 生成 gen/android/
-npm run rust:check  # 仅类型检查（aarch64-linux-android）
-npm run apk         # cd gen/android && ./gradlew assembleDebug
-npm run apk:release # release 版
-npm run install       # adb install 到真机
-npm run launch        # adb am start 启动 Activity
-npm run run           # apk + install + launch 一条龙
-npm run logs          # adb logcat 看 hello_android / gpui-android 日志
-npm run uninstall     # adb uninstall
+bun run init        # gpui-cli android init → 生成 gen/android/
+bun run rust:check  # 仅类型检查（aarch64-linux-android）
+bun run apk         # cd gen/android && ./gradlew assembleDebug
+bun run apk:release # release 版
+bun run install       # adb install 到真机
+bun run launch        # adb am start 启动 Activity
+bun run run           # apk + install + launch 一条龙
+bun run logs          # adb logcat 看 hello_android / gpui-android 日志
+bun run uninstall     # adb uninstall
 ```
 
-> 需要 Node.js（仅用来跑 npm 脚本，不参与任何构建）。
+> 需要 Node.js（仅用来跑 bun 脚本，不参与任何构建）。
 
 ## 工具链前置（一次性）
 
@@ -89,7 +89,7 @@ npm run uninstall     # adb uninstall
 ### A. 先生成工程（首次或改配置后）
 
 ```bash
-npm run init
+bun run init
 # = cargo run -p gpui-cli -- android init --example apps/03_hello_android
 # 生成 gen/android/（含 Gradle 8.9 wrapper + 从 Cargo.toml/gpui.conf.json 注入的配置）
 ```
@@ -117,7 +117,7 @@ cd gen/android
 它会自动跑 `cargo ndk`（多 ABI）把 `libhello_android.so` 放到 `jniLibs/`，
 再交给 Android 打包。
 
-> 若只想编 release：`npm run apk:release`（= `./gradlew assembleRelease -Prelease`）。
+> 若只想编 release：`bun run apk:release`（= `./gradlew assembleRelease -Prelease`）。
 > 注：debug 包约 345 MB（含完整调试符号）；release 会小很多。
 
 ## 装到真机
@@ -156,7 +156,7 @@ adb logcat -s hello_android:T gpui-android:T
   `NotoColorEmoji.ttf`（CBDT 格式，约 10 MB）放在例子的 `assets/fonts/` 目录，
   `gpui-cli android init` 会把它复制进 `gen/android/app/src/main/assets/fonts/`，
   由 `gpui-android` 在启动时从 `assets/fonts/` 加载，emoji（如标题里的 🤖）才能正常
-  渲染。该字体文件已提交进例子目录的 `assets/`，所以 `npm run init && npm run apk`
+  渲染。该字体文件已提交进例子目录的 `assets/`，所以 `bun run init && bun run apk`
   开箱即得，无需另下。若想减小 apk，可从例子 `assets/` 删掉它（代价是 emoji 变豆腐块）。
 - **`GpuiPlatformView` 可选类**：`gpui-android` 会反射 `dev.gpui.mobile.GpuiPlatformView`
   （platform-view 功能用），本例未启用该功能，找不到该类时只打 `debug` 级日志，不影响运行。

@@ -4,7 +4,7 @@
   "private": true,
   "description": "04_input —— GPUI 文本输入例子（IME / 选区 / 剪贴板 / 键盘布局），移植自官方 examples/input.rs",
   "scripts": {
-    "dev": "cargo run -p input_04",
+    "dev": "cargo watch -x run -p input_04",
     "run": "cargo run -p input_04",
     "build": "cargo build -p input_04",
     "check": "cargo check -p input_04"

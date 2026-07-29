@@ -55,8 +55,8 @@ window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
 生成与构建：
 
 ```bash
-npm run init     # gpui-cli android init → 生成 gen/android/
-npm run apk      # cd gen/android && ./gradlew assembleDebug
+bun run init     # gpui-cli android init → 生成 gen/android/
+bun run apk      # cd gen/android && ./gradlew assembleDebug
 ```
 
 `gpui-cli` 的模板里自动注入：`rustLibName` / `cargoPackage`（来自 Cargo.toml）、
@@ -66,19 +66,19 @@ npm run apk      # cd gen/android && ./gradlew assembleDebug
 ## 命令入口（package.json）
 
 ```bash
-npm run init     # 生成 gen/android/（首次或改了 Cargo.toml / gpui.conf.json 后重跑）
-npm run apk      # ./gradlew assembleDebug（内部自动跑 cargo ndk，多 ABI）
-npm run install  # adb install 到真机
-npm run launch   # adb am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity
-npm run run      # init + apk + install + launch 一条龙
-npm run logs     # adb logcat -s input_05:V gpui-android:V
+bun run init     # 生成 gen/android/（首次或改了 Cargo.toml / gpui.conf.json 后重跑）
+bun run apk      # ./gradlew assembleDebug（内部自动跑 cargo ndk，多 ABI）
+bun run install  # adb install 到真机
+bun run launch   # adb am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity
+bun run run      # init + apk + install + launch 一条龙
+bun run logs     # adb logcat -s input_05:V gpui-android:V
 ```
 
 ## 装到真机
 
 ```bash
-npm run init          # 生成 gen/android/
-npm run apk           # cd gen/android && ./gradlew assembleDebug
+bun run init          # 生成 gen/android/
+bun run apk           # cd gen/android && ./gradlew assembleDebug
 adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity
 ```

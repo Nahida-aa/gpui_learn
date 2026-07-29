@@ -745,7 +745,7 @@ mod imp_entry {
         std::panic::set_hook(Box::new(|info| {
             log::error!("input_05 panic: {info}");
         }));
-        log::info!("android_main: entered");
+        log::info!("android_main: entered (input_05 v{})", env!("CARGO_PKG_VERSION"));
 
         // 1) 创建并全局存储 AndroidPlatform；2) 取出交给 GPUI；3) 阻塞运行。
         let _platform = gpui_android::android::jni::init_platform(&app);

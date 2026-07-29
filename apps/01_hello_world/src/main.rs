@@ -44,23 +44,38 @@ struct HelloWorld {
 impl Render for HelloWorld {
     fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
         div()
+            // 以下方法名大多取自 Tailwind CSS，可对照理解
+            // 弹性布局（CSS display: flex）
             .flex()
+            // 主轴垂直（CSS flex-direction: column）
             .flex_col()
+            // 子元素间距 3 个单位（CSS gap: 0.75rem / 12px）
             .gap_3()
+            // 背景色深灰；rgb() 是 gpui 辅助函数，传 0xRRGGBB
             .bg(rgb(0x505050))
+            // 容器宽高 500px；px() 是 gpui 长度单位函数
             .size(px(500.0))
+            // 主轴居中（flex_col 下 = 垂直居中(上下等距)，CSS justify-content: center）
             .justify_center()
+            // 交叉轴居中（flex_col 下 = 水平居中，CSS align-items: center）
             .items_center()
+            // 大号阴影效果（CSS box-shadow: lg 级别）
             .shadow_lg()
+            // 1px 实线边框（CSS border: 1px solid）
             .border_1()
+            // 边框颜色蓝色
             .border_color(rgb(0x0000ff))
+            // 字号加大（CSS font-size: x-large）
             .text_xl()
+            // 文字颜色白色
             .text_color(rgb(0xffffff))
             .child(format!("Hello, {}!", &self.text))
             .child(
                 // 一行彩色方块，演示 div 的组合与背景色。
                 div()
+                    // 子元素水平排列（CSS display: flex; flex-direction: row）
                     .flex()
+                    // 方块间距 2 个单位
                     .gap_2()
                     .child(
                         div()
