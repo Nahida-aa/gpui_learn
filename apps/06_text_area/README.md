@@ -1,4 +1,4 @@
-# 07_example_text_area —— 用 `gpui-android` 后端在手机上跑**多行文本输入**
+# 06_text_area —— 用 `gpui-android` 后端在手机上跑**多行文本输入**
 
 第五个 Android 例子，是 `05_android_input`（**单行**文本输入）的**多行版**。
 
@@ -46,7 +46,7 @@ ElementInputHandler::new(bounds, editor), cx)`，经 gpui-android 的
 bun run init     # gpui-cli android init → 生成 gen/android/
 bun run apk      # cd gen/android && ./gradlew assembleDebug
 bun run install  # adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk
-bun run launch   # adb shell am start -n dev.gpui.learn.text_area_07/dev.gpui.mobile.GpuiActivity
+bun run launch   # adb shell am start -n dev.gpui.learn.text_area_06/dev.gpui.mobile.GpuiActivity
 ```
 
 IME 桥接排查记录见 `05_android_input/docs/IME_INPUT_DEBUG.md`（两例共用同一套

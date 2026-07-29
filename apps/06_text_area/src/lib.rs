@@ -1,6 +1,6 @@
 #![cfg_attr(target_family = "wasm", no_main)]
 
-//! # 07_example_text_area —— 多行文本输入示例（桌面 / Android 同构）
+//! # 06_text_area —— 多行文本输入示例（桌面 / Android 同构）
 //!
 //! 本例直接移植自 zed 仓库 `crates/gpui/examples/view_example/` 的三个文件：
 //! `example_editor.rs`（`Editor` 引擎）+ `example_text_area.rs`（`TextArea`
@@ -18,7 +18,7 @@
 //! `Editor`/`TextArea` 是 zed **官方教学示例**，从零演示多行输入怎么实现。
 //!
 //! 运行：
-//! - 桌面：`cargo run -p text_area_07_android`（在窗口里用硬键盘测试换行）。
+//! - 桌面：`cargo run -p text_area_06_android`（在窗口里用硬键盘测试换行）。
 //! - Android：见 `package.json` 的 `apk` / `install` / `launch`。
 
 mod app_view;
@@ -70,9 +70,9 @@ pub fn run() {
     // 初始化桌面 logger backend，使 log::info! 能输出到终端（RUST_LOG 控制级别，
     // 例如 RUST_LOG=info）。不初始化时 log 宏被静默丢弃。
     let _ = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info"))
-        .filter_module("text_area_07", log::LevelFilter::Info)
+        .filter_module("text_area_06", log::LevelFilter::Info)
         .try_init();
-    log::info!("text_area_07 v{} 桌面端启动", APP_VERSION);
+    log::info!("text_area_06 v{} 桌面端启动", APP_VERSION);
     gpui_platform::application().run(|cx: &mut App| {
         let window = open_example_window(cx);
         // 桌面端：自动聚焦顶层视图，硬键盘即可直接输入（含回车换行）。
@@ -98,12 +98,12 @@ mod android_entry {
         android_logger::init_once(
             android_logger::Config::default()
                 .with_max_level(log::LevelFilter::Debug)
-                .with_tag("text_area_07"),
+                .with_tag("text_area_06"),
         );
         std::panic::set_hook(Box::new(|info| {
-            log::error!("text_area_07 panic: {info}");
+            log::error!("text_area_06 panic: {info}");
         }));
-        log::info!("android_main: entered (text_area_07 v{})", APP_VERSION);
+        log::info!("android_main: entered (text_area_06 v{})", APP_VERSION);
 
         let _platform = gpui_android::android::jni::init_platform(&app);
         let Some(shared_platform) = gpui_android::android::jni::shared_platform() else {

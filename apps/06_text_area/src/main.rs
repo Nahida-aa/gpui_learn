@@ -3,5 +3,5 @@
 // 这里再加一层 cfg 兜底，确保即使被编译也是空 main，不会引用桌面专属的 run()。
 fn main() {
     #[cfg(not(target_os = "android"))]
-    text_area_07::run();
+    text_area_06::run();
 }

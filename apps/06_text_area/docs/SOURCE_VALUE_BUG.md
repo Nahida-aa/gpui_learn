@@ -1,11 +1,11 @@
 # 07 多行文本框：第一个框（Source::Value 路径）完全不能输入的排查记录
 
 > 关联：本仓库 `apps/05_android_input/docs/IME_INPUT_DEBUG.md`（IME 闪退修复）
-> 代码位置：`apps/07_example_text_area/src/text_area.rs`（`TextArea`）、`app_view.rs`（`MultilineExample`）
+> 代码位置：`apps/06_text_area/src/text_area.rs`（`TextArea`）、`app_view.rs`（`MultilineExample`）
 
 ## 现象
 
-`07_example_text_area` 在同一窗口里放了**两个** `TextArea`：
+`06_text_area` 在同一窗口里放了**两个** `TextArea`：
 
 - 第一个框：`TextArea::new(self.bio, 4)` —— 走 `Source::Value` 路径
   （内部用 `window.use_state(cx, |window, cx| Editor::over(value, ...))` 懒建 `Editor`）
@@ -80,7 +80,7 @@ let notes = window.use_state(cx, {
 
 ## 验证
 
-- 桌面（`bun run run` / `cargo run -p text_area_07_android`）：两个框都能输入、能换行、能来回切换焦点。
+- 桌面（`bun run run` / `cargo run -p text_area_06_android`）：两个框都能输入、能换行、能来回切换焦点。
 - Android（`bun run android:run`）：同逻辑经 gpui-android IME 桥接，两个框均可输入；
   软键盘回车换行需配合 `KeyboardType::MultiLine`（见 `text_area.rs` 的
   `focus_and_show_keyboard` 与 `crates/gpui-android` 的 `MultiLine` 输入类型）。

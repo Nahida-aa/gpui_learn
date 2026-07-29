@@ -5769,7 +5769,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "text_area_07_android"
+name = "text_area_06_android"
 version = "0.1.5"
 dependencies = [
  "android-activity",

@@ -7,8 +7,8 @@ plugins {
 // （identifier / app_name）。不要手写——改配置后重跑 `gpui-cli android init`。
 
 // ── 从生成时注入的常量 ──────────────────────────────────────────────────────
-val rustLibName = "text_area_07"          // cargo cdylib 的 [lib] name → lib<RUST_LIB_NAME>.so
-val cargoPackage = "text_area_07_android"         // workspace 里的 cargo 包名，用于 cargo ndk -p
+val rustLibName = "text_area_06"          // cargo cdylib 的 [lib] name → lib<RUST_LIB_NAME>.so
+val cargoPackage = "text_area_06_android"         // workspace 里的 cargo 包名，用于 cargo ndk -p
 val abiList = listOf("arm64-v8a", "x86_64")              // 目标 ABI 列表（默认 arm64-v8a + x86_64）
 
 // cargo ndk 的 -o 目录会**自动追加 ABI 子目录**，所以给 jniLibs 根即可。
