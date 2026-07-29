@@ -1,0 +1,20 @@
+[package]
+# 注意：Cargo 包名不能以数字开头，所以包名用 hello_web_02，
+# 目录名保留 02_hello_web 以体现学习顺序。
+# 本例完全照搬 zed 官方 crates/gpui_web/examples/hello_web，用 trunk 构建 Web。
+name = "hello_web_02"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[[bin]]
+name = "hello_web_02"
+path = "src/main.rs"
+
+[dependencies]
+gpui = { workspace = true }
+gpui_platform = { workspace = true }
+web-time = "1"
+# 锁定 wasm-bindgen 版本，与 zed 官方 Cargo.lock 保持一致（0.2.120）。
+# 0.2.121+ 在 shared memory 下注入线程 id 时会因找不到 __heap_base 而失败。
+wasm-bindgen = "=0.2.120"

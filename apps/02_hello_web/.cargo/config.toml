@@ -1,0 +1,28 @@
+# 与官方 crates/gpui_web/examples/hello_web/.cargo/config.toml 基本一致：
+# wasm 多线程需要 atomics + bulk-memory + mutable-globals，并把 memory 设为
+# shared（--shared-memory）。--import-memory 让宿主提供 memory，配合下面的
+# TLS 导出符号与 build-std 使用。
+#
+# 与官方唯一的不同：多了 `--export=__heap_base`。原因：新版 LLD（近年的 nightly）
+# 在 shared memory 配置下不再默认导出 __heap_base 全局符号，而 wasm-bindgen 在
+# 注入 worker 线程 id 时必须找到它，否则报：
+#   failed to find `__heap_base` for injecting thread id
+# 显式 --export=__heap_base 强制 LLD 生成并导出该符号即可解决。
+#
+# 另外本仓库 Cargo.lock 把 wasm-bindgen 锁定为 0.2.120（与 zed 官方一致），
+# 并安装对应 CLI：cargo install wasm-bindgen-cli --version 0.2.120。
+[target.wasm32-unknown-unknown]
+rustflags = [
+    "-C", "target-feature=+atomics,+bulk-memory,+mutable-globals",
+    "-C", "link-arg=--shared-memory",
+    "-C", "link-arg=--max-memory=1073741824",
+    "-C", "link-arg=--import-memory",
+    "-C", "link-arg=--export=__heap_base",
+    "-C", "link-arg=--export=__wasm_init_tls",
+    "-C", "link-arg=--export=__tls_size",
+    "-C", "link-arg=--export=__tls_align",
+    "-C", "link-arg=--export=__tls_base",
+]
+
+[unstable]
+build-std = ["std,panic_abort"]

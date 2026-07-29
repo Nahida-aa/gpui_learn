@@ -1,0 +1,37 @@
+[package]
+# 注意：Cargo 包名不能以数字开头，所以包名用 hello_world_01，
+# 而目录名保留 01_hello_world 以体现学习顺序。运行用包名：
+#   cargo run -p hello_world_01
+name = "hello_world_01"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# 第一个例子：直接用 gpui，不依赖任何内部共享库。
+# 目的——让学习者看到 GPUI 最真实的 API，没有任何封装层挡在中间。
+# gpui / gpui_platform 都来自根 Cargo.toml 的 [workspace.dependencies]，
+# 用 workspace = true 继承统一版本（那里已通过 [patch.crates-io] 指向 git 源）。
+[dependencies]
+gpui = { workspace = true }
+
+# 关键：gpui_platform 的 default-features 是空的（default = []），
+# 必须显式开启窗口后端，否则 open_window 会"成功"但屏幕上不出现窗口。
+# 这正是官方 gpui example 的写法（见 zed 仓库 crates/gpui/Cargo.toml:150）。
+# 用 target-specific 写法：仅 Linux/FreeBSD 桌面开 wayland+x11+font-kit；
+# wasm 走 gpui_web，不需要这些 feature（且 gpui_platform 在 wasm 下自动拉 gpui_web）。
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+# 其它桌面平台（macos/windows）用各自后端，这里保持默认（不手动开 feature）。
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_family = "wasm")))'.dependencies]
+gpui_platform = { workspace = true }
+
+# wasm 入口用到了 #[wasm_bindgen(start)] 和 gpui_platform::web_init()，
+# 所以用 target-specific 依赖，避免桌面也拉 wasm-bindgen。
+# 版本号对齐 zed 工作区（wasm-bindgen = "0.2.120"，但 Cargo.lock 实际解析 0.2.126），
+# 否则 gpui_web 内部用的版本可能不兼容。gpui_platform 在 wasm 下会由
+# cfg(target_family="wasm") 自动拉 gpui_web，是 wasm 入口必需的。
+[target.'cfg(target_family = "wasm")'.dependencies]
+gpui_platform = { workspace = true }
+wasm-bindgen = "0.2.120"

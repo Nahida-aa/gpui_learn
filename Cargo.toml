@@ -1,0 +1,77 @@
+# gpui_learn —— 一个用来学 GPUI 的 Rust monorepo 教学仓库
+#
+# 这个文件是「工作区（workspace）」的根清单。它本身不编译任何代码，
+# 只负责两件事：
+#   1. 声明哪些子包（crate）属于这个工作区；
+#   2. 把「依赖版本 / 公共配置」集中起来，让所有子包共享。
+#
+# 想深入理解 workspace，读 crates/gpui_learn_common/README.md 和
+# apps/hello_window/README.md，里面用文档注释逐条讲了下面的每个字段。
+
+[workspace]
+# resolver = "3" 是 Rust 2024 edition 引入的特性解析器。
+# 它决定了「同一个依赖的不同版本如何合并」「dev-dependencies 会不会泄漏到
+# 正常构建」等行为。edition = "2024" 会自动启用 resolver 3，但这里显式写出，
+# 是为了让读这个文件的人一眼看到我们在用 2024 的工作区语义。
+resolver = "3"
+
+# members：工作区里「所有」成员。cargo 在 `--workspace` 模式或 `cargo build`
+# 没有 default-members 限制时，会处理这里列出的每一个。
+# 用通配符 "apps/*" 和 "crates/*" 可以随例子增多自动纳入新包，无需手动维护列表。
+members = [
+    "apps/*",
+    "crates/*",
+]
+
+# default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
+# cargo 实际去构建哪些成员。这里只默认构建 apps/*（二进制例子），
+# 不碰 crates/*（库）。原因：
+#   - 库本身没有 main，单独 `cargo run` 无意义；
+#   - 新人clone后直接 `cargo run` 不会误触发所有内部库的编译，体验更轻。
+# 想全量构建时，用 `cargo build --workspace`。
+default-members = [
+    "apps/*",
+]
+
+# [workspace.package] 里写的字段会被子包用 `version.workspace = true` 继承。
+# 这样全仓库版本号、edition、license 统一改一处即可。
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false   # 教学仓库，不发布到 crates.io
+
+# [workspace.dependencies] 是 monorepo 共享依赖的核心机制。
+# 子包里写 `gpui = { workspace = true }` 就能拿到这里统一定义的源与版本，
+# 避免每个例子各写一遍 git 源导致版本漂移。
+[workspace.dependencies]
+# 注意这里的写法：子包声明的是「语义版本 0.2.2」（来自 crates.io），
+# 真正的 git 源在下面的 [patch.crates-io] 里把 crates.io 上的 gpui 整体
+# 替换成 zed 仓库的对应 commit。这样：
+#   - 声明侧保持语义化、可读、可复现；
+#   - git 源只出现在根清单一处，升级只改 [patch.crates-io] 的 rev。
+# 为什么不直接在 workspace.dependencies 里写 git 源？因为 [patch.crates-io]
+# 是 Rust 官方推荐的「覆盖依赖来源」机制，语义更清晰，也更容易演示给学习者。
+#
+# default-features = false：gpui 发布版默认会开 wayland/x11/font-kit，
+# 我们让库（gpui_learn_common）按需启用，见 crates/gpui_learn_common/README.md。
+gpui = { version = "0.2.2", default-features = false }
+# gpui_macros 与 gpui 同版本线（crates.io 上是 0.2.2），写错版本会导致 resolve 失败。
+gpui_macros = { version = "0.1.0" }
+# gpui_platform 提供平台入口（application()），是发布版例子实际需要的 crate。
+gpui_platform = { version = "0.1.0" }
+
+# 任何子包都可以用 `anyhow = { workspace = true }` 引用，版本由这里统一。
+anyhow = "1.0"
+
+# [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
+# 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），
+# cargo 就会用 git 源里的版本替掉 crates.io 的版本，并写进 Cargo.lock。
+# 这样我们既拿到了 crates.io 发布版的干净依赖图，又用上了 zed 仓库的
+# 最新代码（含尚未发布到 crates.io 的特性，如 gpui_web 的 HTML/WASM 编译）。
+[patch.crates-io]
+# version = "=0.2.2" 精确指定：zed 仓库在该 rev 的 git 源里同时存在 0.0.0（开发版）
+# 和历史上的 0.2.2 tag，cargo 要求显式锁定到我们要替换的那一个。
+gpui = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.2.2" }
+gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.1.0" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.1.0" }

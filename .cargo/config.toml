@@ -1,0 +1,32 @@
+# wasm32 目标开启多线程所需的配置（与官方 crates/gpui_web/examples/hello_web
+# 以及 apps/02_hello_web/.cargo/config.toml 对齐）。
+#
+# 为什么需要：GPUI 在 wasm 下的 WebDispatcher 默认想要多线程（wasm 的
+# SharedArrayBuffer + atomics + 工作线程）。如果不开这些，浏览器没有线程 API，
+# GPUI 会回退到单线程 dispatcher（日志里那条
+# "Required WebAssembly threading APIs are unavailable; falling back to
+# single-threaded dispatcher" WARN），且某些环境下渲染循环可能不 pump，导致
+# 浏览器里窗口初始化成功却无画面。
+#
+# 与官方唯一的不同：多了 `--export=__heap_base`。新版 LLD（近年的 nightly）在
+# shared memory 下不再默认导出 __heap_base，而 wasm-bindgen 注入线程 id 时必须
+# 找到它，否则报 "failed to find `__heap_base` for injecting thread id"。
+# 显式 --export=__heap_base 强制生成并导出即可。
+#
+# 注意：开启 atomics/shared-memory 后，编译必须用 nightly 的 build-std：
+#   cargo +nightly build -Zbuild-std=std,panic_abort --target wasm32-unknown-unknown -p hello_world_01
+[target.wasm32-unknown-unknown]
+rustflags = [
+    "-C", "target-feature=+atomics,+bulk-memory,+mutable-globals",
+    "-C", "link-arg=--shared-memory",
+    "-C", "link-arg=--max-memory=1073741824",
+    "-C", "link-arg=--import-memory",
+    "-C", "link-arg=--export=__heap_base",
+    "-C", "link-arg=--export=__wasm_init_tls",
+    "-C", "link-arg=--export=__tls_size",
+    "-C", "link-arg=--export=__tls_align",
+    "-C", "link-arg=--export=__tls_base",
+]
+
+[unstable]
+build-std = ["std", "panic_abort"]

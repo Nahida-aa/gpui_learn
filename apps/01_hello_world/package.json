@@ -1,0 +1,16 @@
+{
+  "name": "hello_world_01",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GPUI 第一个例子的 Web (WASM/HTML) 构建与本地预览脚本",
+  "scripts": {
+    "build:wasm": "cargo +nightly build -Zbuild-std=std,panic_abort --target wasm32-unknown-unknown -p hello_world_01",
+    "build:assets": "wasm-bindgen ../../target/wasm32-unknown-unknown/debug/hello_world_01.wasm --target web --no-typescript --out-dir ../../web_dist --out-name hello_world_01 && cp web/index.html ../../web_dist/index.html",
+    "build": "bun run build:wasm && bun run build:assets",
+    "serve": "cd ../../web_dist && bun run ../apps/01_hello_world/web/serve.ts 8001",
+    "dev": "bun run build && bun run serve"
+  },
+  "engines": {
+    "bun": ">=1.0"
+  }
+}

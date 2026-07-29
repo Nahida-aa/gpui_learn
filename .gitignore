@@ -1,0 +1,12 @@
+# Rust
+target/
+
+# Node
+node_modules/
+
+# 生成的 Web 产物（由 build_web.sh / trunk 生成，勿提交）
+web_dist/
+dist/
+
+# local
+.agents/*.local.md
