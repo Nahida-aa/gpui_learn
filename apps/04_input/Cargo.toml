@@ -1,13 +1,14 @@
 [package]
-name = "grid_layout_04"
+name = "input_04"
 version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
 publish = false
-description = "04_grid_layout —— GPUI 响应式网格布局（Holy Grail）+ container_query（桌面端）"
+description = "04_input —— GPUI 文本输入例子（IME / 选区 / 剪贴板 / 键盘布局），移植自官方 examples/input.rs"
 
 # 桌面二进制例子。GPUI 来自本仓库统一锁定的 zed 82aef443（见根 Cargo.toml 的
 # [patch.crates-io]），通过 workspace 依赖引入，版本随根清单一处管理。
 [dependencies]
 gpui = { workspace = true }
 gpui_platform = { workspace = true }
+unicode-segmentation = "1.11"

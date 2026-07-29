@@ -1,4 +1,4 @@
-//! # 04_grid_layout —— GPUI 响应式网格布局（Holy Grail）
+//! # 05_grid_layout —— GPUI 响应式网格布局（Holy Grail）
 //!
 //! 移植自 zed 官方例子 `crates/gpui/examples/grid_layout.rs`，演示两个核心布局能力：
 //!
@@ -14,12 +14,12 @@
 //! 「桌面 input 例子」，再之后才把 input 移植到 `gpui-android` 后端（移动端 input
 //! 应该排在桌面 input 之后学，道理见 `docs/mobile-backends.md`）。
 //!
-//! 运行：`cargo run -p grid_layout_04`（或 `npm run dev`）。拖动改变窗口大小，
+//! 运行：`cargo run -p grid_layout_05`（或 `npm run dev`）。拖动改变窗口大小，
 //! 观察 < 400px 时布局塌缩成单列。
 
 use gpui::{
-    App, Bounds, Context, Hsla, Window, WindowBounds, WindowOptions, container_query, div,
-    prelude::*, px, rgb, size,
+    container_query, div, prelude::*, px, rgb, size, App, Bounds, Context, Hsla, Window,
+    WindowBounds, WindowOptions,
 };
 use gpui_platform::application;
 

@@ -1,4 +1,4 @@
-# 04_grid_layout —— 响应式网格布局（桌面端）
+# 05_grid_layout —— 响应式网格布局（桌面端）
 
 移植自 zed 官方例子 [`crates/gpui/examples/grid_layout.rs`](https://github.com/zed-industries/zed/blob/main/crates/gpui/examples/grid_layout.rs)，演示 GPUI 的两个核心布局能力。这是**桌面端**例子（对应 `03` 是 Android 端）；之后会在它基础上加文本框做成「桌面 input 例子」，再之后才把 input 移植到 `gpui-android` 后端。
 
@@ -6,12 +6,12 @@
 
 ```bash
 # 方式一：cargo 直接跑
-cargo run -p grid_layout_04
+cargo run -p grid_layout_05
 
 # 方式二：package.json 脚本（IDE 会在旁边放运行按钮）
-npm run dev      # = cargo run -p grid_layout_04
-npm run build    # = cargo build -p grid_layout_04
-npm run check    # = cargo check -p grid_layout_04
+npm run dev      # = cargo run -p grid_layout_05
+npm run build    # = cargo build -p grid_layout_05
+npm run check    # = cargo check -p grid_layout_05
 ```
 
 ## 学什么
