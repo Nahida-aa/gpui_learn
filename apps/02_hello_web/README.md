@@ -20,6 +20,16 @@ COEP/COOP 根本不会生效——浏览器因此**不是跨源隔离**的，`Sh
 `Required WebAssembly threading APIs are unavailable` 以及随后的
 `gpui::window: app was released` 报错。**本目录用的是 `Trunk.toml`（大写）。**
 
+> **为什么 zed 官方示例是小写 `trunk.toml`？**
+> 翻 trunk 0.21.14 源码 `src/config/models/source/mod.rs`，配置候选列表只含
+> `"Trunk.toml" / ".trunk.toml" / "Trunk.yaml" / ...`，**根本没有小写**。
+> 注释写着 `Trunk.toml goes first, as it was the default for a long time`——
+> 说明更早的 trunk 版本曾把小写 `trunk.toml` 当作默认候选，官方写这个 Web 示例
+> （PR #50228「GPUI on the web」）时用的就是旧版 trunk，所以小写能正常读到配置。
+> 之后 trunk 把规范统一成大写并从候选列表里删掉了小写，新版（含你本机的
+> 0.21.14）便不再认小写。官方示例文件从加入起就是小写、也一直没改，属于「写于
+> 旧版、规范变更后没跟上」的遗留状态，**不是我们应该模仿的用法**。
+
 trunk 自动把 `fn main()` 包成 wasm 入口，所以这里：
 
 - **不要**写 `#![cfg_attr(target_family = "wasm", no_main)]`（会让 wasm 下 `main`

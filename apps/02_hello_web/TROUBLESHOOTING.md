@@ -31,6 +31,15 @@
 的 `trunk.toml`。写成小写时 trunk 静默忽略，于是 `[serve] headers` 里的
 `Cross-Origin-Embedder-Policy` / `Cross-Origin-Opener-Policy` 根本不发。
 
+> **为什么 zed 官方示例用小写 `trunk.toml`？**
+> 翻 trunk 0.21.14 源码 `src/config/models/source/mod.rs`，配置候选列表只含
+> `"Trunk.toml" / ".trunk.toml" / "Trunk.yaml" / ...`，**根本没有小写**。注释
+> `Trunk.toml goes first, as it was the default for a long time` 说明更早的 trunk
+> 版本曾把小写当作默认候选，官方写 Web 示例（PR #50228）时用的旧版 trunk 所以
+> 小写能跑；之后 trunk 统一成大写并删掉小写候选，新版（含本机 0.21.14）不再认
+> 小写。官方示例文件从加入起就是小写、一直没改，是「写于旧版、规范变更后没跟上」
+> 的遗留状态——**不是我们应该模仿的用法**，本目录用大写 `Trunk.toml`。
+
 浏览器因此**不是跨源隔离**的 → `SharedArrayBuffer` 不可用 → GPUI 回退单线程
 dispatcher。单线程本身还能跑，但它会连带触发下一个坑（见 §3）。
 
