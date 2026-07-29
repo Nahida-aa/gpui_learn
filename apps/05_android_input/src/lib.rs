@@ -802,13 +802,13 @@ mod imp_entry {
 
             window
                 .update(cx, |view, window, cx| {
-                    window.focus(&view.text_input.focus_handle(cx), cx);
+                    let input_focus = view.text_input.focus_handle(cx);
+                    window.focus(&input_focus, cx);
                     cx.activate(true);
 
                     // Android 上没有物理键盘，输入框获得焦点时必须主动弹出软键盘
                     // （IME）。借 GPUI 的 on_focus_in/on_focus_out 监听 TextInput
                     // 焦点变化：获得焦点 → 弹键盘；失去焦点 → 收键盘。
-                    let input_focus = view.text_input.focus_handle(cx);
                     let _ = window.on_focus_in(&input_focus, cx, |_window, _cx| {
                         gpui_android::android::jni::show_keyboard_android(
                             gpui_android::KeyboardType::Default,
@@ -817,6 +817,12 @@ mod imp_entry {
                     let _ = window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
                         gpui_android::android::jni::hide_keyboard_android();
                     });
+
+                    // 启动即聚焦输入框，直接弹出一次软键盘（on_focus_in 在初始聚焦时
+                    // 未必触发，这里兜底确保键盘出现）。
+                    gpui_android::android::jni::show_keyboard_android(
+                        gpui_android::KeyboardType::Default,
+                    );
                 })
                 .unwrap();
             cx.on_action(|_: &Quit, cx| cx.quit());

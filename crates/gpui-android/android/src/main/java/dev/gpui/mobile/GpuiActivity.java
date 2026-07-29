@@ -86,13 +86,18 @@ public class GpuiActivity extends NativeActivity {
     public void gpuiShowKeyboard(int inputType) {
         runOnUiThread(() -> {
             inputView.setInputType(inputType);
-            inputView.requestFocus();
-            InputMethodManager manager =
-                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (manager != null) {
-                manager.restartInput(inputView);
-                manager.showSoftInput(inputView, InputMethodManager.SHOW_IMPLICIT);
-            }
+            // post 到 view 的消息队列：确保 showSoftInput 在 inputView 已 attach 到
+            // window、完成布局之后执行。过早调用会因为没有有效 window token 被系统丢弃。
+            inputView.post(() -> {
+                inputView.requestFocus();
+                InputMethodManager manager =
+                        (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (manager != null) {
+                    // SHOW_FORCED 而非 SHOW_IMPLICIT：后者在窗口尚未完全布局或紧跟
+                    // restartInput 调用时经常被系统静默丢弃，导致软键盘不弹出。
+                    manager.showSoftInput(inputView, InputMethodManager.SHOW_FORCED);
+                }
+            });
         });
     }
 
