@@ -10,7 +10,7 @@
     "apk:release": "cd gradle && ./gradlew assembleRelease -Prelease",
     "install": "adb install -r gradle/app/build/outputs/apk/debug/app-debug.apk",
     "launch": "adb shell am start -n dev.gpui.learn.hello_android/dev.gpui.mobile.GpuiActivity",
-    "run": "npm run apk && npm run install && npm run launch",
+    "run": "bun run apk && bun run install && bun run launch",
     "logs": "adb logcat -s hello_android:V gpui-android:V",
     "uninstall": "adb uninstall dev.gpui.learn.hello_android"
   }
