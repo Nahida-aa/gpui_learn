@@ -1,0 +1,24 @@
+[package]
+name = "hello_android_03"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+description = "03_hello_android —— 用自有 gpui-android 后端在 Android 原生跑一个 GPUI 窗口"
+
+# 关键：Android 的 NativeActivity 加载的是 .so（cdylib）。
+# 桌面/其它 target 下这个 crate 不会编出任何有用的二进制，
+# 所以代码都用 #[cfg(target_os = "android")] 包住，非 android 编译时几乎是空壳。
+[lib]
+name = "hello_android"
+crate-type = ["cdylib"]
+
+[dependencies]
+gpui = { workspace = true }
+gpui-android = { path = "../../crates/gpui-android" }
+
+[target.'cfg(target_os = "android")'.dependencies]
+# 版本与 crates/gpui-android/Cargo.toml 保持一致（android-activity 必须开 native-activity）。
+android-activity = { version = "0.6", features = ["native-activity"] }
+android_logger = "0.15"
+log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }

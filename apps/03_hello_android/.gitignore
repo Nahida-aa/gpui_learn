@@ -1,0 +1,13 @@
+# 由 cargo ndk 编译生成的原生库（见 README「两种构建方式」），不提交，按需重建。
+gradle/app/src/main/jniLibs/
+
+# Gradle 构建产物
+gradle/app/build/
+gradle/.gradle/
+.gradle/
+build/
+
+# Gradle wrapper 生成的 jar（首次 gradle wrapper 后产生，按需本地生成）
+gradle/gradle/wrapper/gradle-wrapper.jar
+gradlew
+gradlew.bat

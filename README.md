@@ -13,9 +13,12 @@
 gpui_learn/
 ├── Cargo.toml              # 工作区根：members / default-members / 统一依赖
 ├── apps/                   # 二进制 crate（每个可 `cargo run`，是学习例子）
-│   └── 01_hello_world/     # 第一个例子：纯 GPUI 最小窗口（无封装）
+│   ├── 01_hello_world/     # 第一个例子：纯 GPUI 最小窗口（无封装，桌面）
+│   ├── 02_hello_web/       # 第二个例子：GPUI 编译成 WASM 在浏览器跑（trunk）
+│   └── 03_hello_android/   # 第三个例子：自有 gpui-android 后端原生跑在 Android
 ├── crates/                 # 库 crate（被 apps 共享的内部包）
-│   └── gpui_learn_common/  # 后续例子的「共享库」演示（暂未被引用）
+│   ├── gpui_learn_common/  # 后续例子的「共享库」演示（暂未被引用）
+│   └── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
 ├── justfile                # 常用命令快捷方式
 └── README.md               # 本文件
 ```
@@ -28,10 +31,12 @@ gpui_learn/
 
 - `edition = "2024"`，`resolver = "3"`（写在根 `Cargo.toml`）。
 - GPUI 通过 **git 源**引入（锁 `rev`），详见 `crates/gpui_learn_common/README.md`。
-- 本仓库的「移动端」例子走 `gpui_web` 编译成 WASM、在移动端浏览器运行（见
-  `apps/02_hello_web`，及它对可信源/HTTPS 的说明）。**原生** iOS/Android 后端
-  不在本仓库范围内——社区项目 `gpui-toolkit` 提供了完整的原生移动端平台层，
-  相关分析见 `docs/` 下的扩展阅读。
+- 本仓库的「移动端」有两个路线：
+  - **浏览器路线**：`apps/02_hello_web` 把 GPUI 编译成 WASM，在移动端浏览器运行
+    （需注意可信源/HTTPS，见其 `TROUBLESHOOTING.md`）。
+  - **原生路线**：`apps/03_hello_android` + `crates/gpui-android` 用 vendored 进来的
+    Android 平台层，在 Vulkan/wgpu 上**原生渲染**（不经过浏览器），对接本仓库自己的
+    GPUI `82aef443`。维护方式见 `docs/maintain-gpui-android.md`。
 
 ## 常用命令
 
@@ -47,9 +52,11 @@ just run hello_world_01          # justfile 提供的等价快捷命令
 
 ## 学习路线（例子索引）
 
-| 例子                  | 主题                                       |
-| --------------------- | ------------------------------------------ |
-| `apps/01_hello_world` | 纯 GPUI 最小窗口、`Render` trait、程序入口 |
+| 例子                    | 主题                                                      |
+| ----------------------- | --------------------------------------------------------- |
+| `apps/01_hello_world`   | 纯 GPUI 最小窗口、`Render` trait、程序入口                |
+| `apps/02_hello_web`     | GPUI 编译成 WASM，trunk 构建，浏览器/手机运行             |
+| `apps/03_hello_android` | 自有 `gpui-android` 后端，Android 原生渲染（Vulkan/wgpu） |
 
 > 教学顺序的设计：第一个例子**故意不用任何共享库**，让学习者先看 GPUI 原貌。
 > 等例子变多、样板开始重复时，再引入 `crates/gpui_learn_common` 演示
@@ -78,6 +85,11 @@ just run hello_world_01          # justfile 提供的等价快捷命令
   声明式 builder API（与 `02` 手写 `div` 同范式）、主题/设计系统机制。
 - [docs/charts.md](docs/charts.md) — `gpui-d3rs` / `gpui-px`：D3 风格可视化原语
   与 Plotly Express 风格图表 API（scatter/line/bar/heatmap/3D…）。
+- [docs/maintain-gpui-android.md](docs/maintain-gpui-android.md) — 如何把社区
+  `gpui-toolkit` 的 Android 后端 **vendor 进本仓库并对接自有 GPUI 版本**，以及
+  `apps/03_hello_android` 怎么用它跑起来。
 
-> 这些 crate 锁在 zed `v1.9.0`，与本仓库（zed `82aef443`）不兼容，不能直接作为
-> 依赖并入 workspace；笔记仅作「GPUI 能长到什么程度」的参考标杆。
+> `docs/` 里除了 `maintain-gpui-android.md` 之外的笔记，涉及的 crate 锁在 zed
+> `v1.9.0`，与本仓库（zed `82aef443`）不兼容，不能直接作为依赖并入 workspace；
+> 笔记仅作「GPUI 能长到什么程度」的参考标杆。只有 `gpui-android` 被我们主动
+> vendor 并适配到了 `82aef443`（见 `crates/gpui-android` 与 `maintain-gpui-android.md`）。
