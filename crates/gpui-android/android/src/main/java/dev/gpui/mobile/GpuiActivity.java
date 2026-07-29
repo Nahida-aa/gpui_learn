@@ -47,6 +47,37 @@ public class GpuiActivity extends NativeActivity {
     private static final String CREDENTIAL_PREFS = "gpui_secure_credentials";
     private GpuiInputView inputView;
 
+    // NativeActivity loads the .so named by `android.app.lib_name` into the
+    // *framework* class loader. Subclass-declared `native` methods (the IME /
+    // deep-link / accessibility bridges below) are resolved against the *app*
+    // class loader, which does not see that load — so JNI throws
+    // UnsatisfiedLinkError on first real input. Loading the same library from
+    // the app class loader (here, in onCreate) registers it in the right
+    // namespace. The name is read from the manifest metadata so this single
+    // file works for every generated app regardless of its cdylib name.
+    private static volatile boolean sNativeLibLoaded = false;
+
+    private static void ensureNativeLibLoaded(Context ctx) {
+        if (sNativeLibLoaded) return;
+        synchronized (GpuiActivity.class) {
+            if (sNativeLibLoaded) return;
+            String libName = null;
+            try {
+                android.content.pm.ApplicationInfo ai = ctx.getPackageManager()
+                        .getApplicationInfo(ctx.getPackageName(),
+                                android.content.pm.PackageManager.GET_META_DATA);
+                if (ai != null && ai.metaData != null) {
+                    libName = ai.metaData.getString("android.app.lib_name");
+                }
+            } catch (Throwable ignored) {
+                // fall through to default name
+            }
+            if (libName == null) libName = "input_05";
+            System.loadLibrary(libName);
+            sNativeLibLoaded = true;
+        }
+    }
+
     private static native boolean nativeIsInitialized();
     private static native void nativeOnDeepLink(String url);
     private static native void nativeCommitText(String text);
@@ -58,6 +89,7 @@ public class GpuiActivity extends NativeActivity {
 
     @Override
     protected void onCreate(Bundle state) {
+        ensureNativeLibLoaded(this);
         super.onCreate(state);
         inputView = new GpuiInputView(this);
         inputView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
