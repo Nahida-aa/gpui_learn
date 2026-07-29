@@ -60,6 +60,7 @@ gpui = { version = "0.2.2", default-features = false }
 gpui_macros = { version = "0.1.0" }
 # gpui_platform 提供平台入口（application()），是发布版例子实际需要的 crate。
 gpui_platform = { version = "0.1.0" }
+gpui_web = { version = "0.1.0" }
 
 # 任何子包都可以用 `anyhow = { workspace = true }` 引用，版本由这里统一。
 anyhow = "1.0"
@@ -75,3 +76,4 @@ anyhow = "1.0"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.2.2" }
 gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.1.0" }
 gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.1.0" }
+gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.1.0" }
