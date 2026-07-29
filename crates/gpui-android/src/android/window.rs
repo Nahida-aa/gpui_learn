@@ -578,13 +578,6 @@ impl AndroidWindow {
         let mut state = self.state.lock();
         let transparent = state.transparent;
 
-        // The local gpui_wgpu renderer does not expose a detachable surface API,
-        // so Android recreates the renderer whenever NativeActivity gives us a
-        // fresh ANativeWindow.
-        if let Some(mut renderer) = state.renderer.take() {
-            renderer.destroy();
-        }
-
         let ctx = if state.gpu_context.borrow().is_some() {
             Rc::clone(&state.gpu_context)
         } else {
@@ -592,10 +585,44 @@ impl AndroidWindow {
             state.gpu_context = Rc::clone(&gpu_context);
             gpu_context
         };
-        let renderer = Self::create_renderer(&native_window, ctx, width, height, transparent)?;
-        state.renderer = Some(renderer);
+
+        // 关键修复：前后台切换（TerminateWindow → InitWindow）时，**复用同一个
+        // WgpuRenderer / 同一个 atlas**，只替换底层 surface，而不是销毁后新建。
+        //
+        // 旧写法 `renderer.destroy()` + `create_renderer(...)` 会给一个**全新的、
+        // 空的 atlas**；但 GPUI 仍持有上一生命周期的 AtlasTextureId，下次渲染
+        // `atlas.get_texture_info(id)` 会在空 storage 上 index out of bounds →
+        // panic，并在析构里二次 panic → SIGABRT（真机从后台返回即崩溃）。
+        //
+        // gpui_wgpu (82aef443) 提供的 `replace_surface` 会保留 device/queue/
+        // atlas/管线，只把新 ANativeWindow 的 surface 接上，缓存的 AtlasTextureId
+        // 继续有效。仅当 renderer 尚不存在（首次启动）时才真正新建。
+        if let Some(renderer) = state.renderer.as_mut() {
+            let raw = Self::raw_window(&native_window);
+            let config = WgpuSurfaceConfig {
+                size: gpui::size(gpui::DevicePixels(width), gpui::DevicePixels(height)),
+                transparent,
+                preferred_present_mode: Some(wgpu::PresentMode::Mailbox),
+            };
+            let instance = {
+                let g = ctx.borrow();
+                g.as_ref()
+                    .expect("gpu_context 应已在 state 中")
+                    .instance
+                    .clone()
+            };
+            renderer.replace_surface(&raw, config, &instance)?;
+        } else {
+            let renderer = Self::create_renderer(&native_window, ctx, width, height, transparent)?;
+            state.renderer = Some(renderer);
+        }
         log::info!(
-            "AndroidWindow::init_window — created renderer {}×{}",
+            "AndroidWindow::init_window — {} renderer {}×{}",
+            if state.renderer.is_some() {
+                "reused"
+            } else {
+                "created"
+            },
             width,
             height
         );
@@ -619,9 +646,15 @@ impl AndroidWindow {
     pub fn term_window(&self) {
         let mut state = self.state.lock();
 
-        if let Some(mut renderer) = state.renderer.take() {
-            renderer.destroy();
-            log::info!("AndroidWindow::term_window — renderer destroyed");
+        // 关键修复：后台时**只解绑 surface**，保留 renderer 的 device/queue/atlas/
+        // 管线（见 init_window 注释）。下次 InitWindow 用 replace_surface 接回，
+        // 缓存的 AtlasTextureId 继续有效。若直接 destroy()，resume 时新建的空
+        // atlas 会让 GPUI 拿到过期 id 而崩溃。
+        if let Some(renderer) = state.renderer.as_mut() {
+            renderer.unconfigure_surface();
+            log::info!("AndroidWindow::term_window — surface unconfigured (renderer kept)");
+        } else {
+            log::info!("AndroidWindow::term_window — no renderer to unconfigure");
         }
 
         // Release our reference on the native window.
