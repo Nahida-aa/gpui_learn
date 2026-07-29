@@ -28,8 +28,10 @@ gpui_learn/
 
 - `edition = "2024"`，`resolver = "3"`（写在根 `Cargo.toml`）。
 - GPUI 通过 **git 源**引入（锁 `rev`），详见 `crates/gpui_learn_common/README.md`。
-- 目前 zed/gpui 没有原生 iOS/Android 后端；「移动端」的现实路径是
-  `gpui_web` 编译成 WASM 在移动端浏览器运行，后续例子会演示。
+- 本仓库的「移动端」例子走 `gpui_web` 编译成 WASM、在移动端浏览器运行（见
+  `apps/02_hello_web`，及它对可信源/HTTPS 的说明）。**原生** iOS/Android 后端
+  不在本仓库范围内——社区项目 `gpui-toolkit` 提供了完整的原生移动端平台层，
+  相关分析见 `docs/` 下的扩展阅读。
 
 ## 常用命令
 
@@ -62,3 +64,20 @@ just run hello_world_01          # justfile 提供的等价快捷命令
 包名用 `topic_nn` 这类合法名，依赖 `gpui`（必要时 `gpui_platform`），
 把讲解写进源码文档注释和包内 `README.md` 即可。workspace 的 `members`
 用通配符自动收纳，无需改根 `Cargo.toml`。
+
+## 扩展阅读（`docs/`）
+
+对 `gpui_learn` 之外的 GPUI 生态做代码级调研的笔记，均基于实际仓库阅读：
+
+- [docs/mobile-backends.md](docs/mobile-backends.md) — 移动端 GPUI 怎么落地：
+  对比 `gpui-mobile` 与 `gpui-toolkit` 的 iOS/Android 平台层，以及它们为何
+  从根上不存在 Web 端的 `app was released` 问题。
+- [docs/scaffolder.md](docs/scaffolder.md) — `gpui-scaffolder` CLI：如何一键
+  生成跨桌面/iOS/Android 的 GPUI mini-app 骨架。
+- [docs/ui-kit.md](docs/ui-kit.md) — `gpui-ui-kit` 组件库：~80 个成品组件、
+  声明式 builder API（与 `02` 手写 `div` 同范式）、主题/设计系统机制。
+- [docs/charts.md](docs/charts.md) — `gpui-d3rs` / `gpui-px`：D3 风格可视化原语
+  与 Plotly Express 风格图表 API（scatter/line/bar/heatmap/3D…）。
+
+> 这些 crate 锁在 zed `v1.9.0`，与本仓库（zed `82aef443`）不兼容，不能直接作为
+> 依赖并入 workspace；笔记仅作「GPUI 能长到什么程度」的参考标杆。
