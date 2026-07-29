@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- gpui-android 例子共用的全屏无标题主题。由共享 Gradle 模板通过 res srcDir 注入，
-         各例子无需手写自己的 styles.xml。 -->
+    <!-- gpui-android 例子共用的全屏无标题主题。由 gpui-cli 生成到每个例子的 res。 -->
     <style name="GpuiTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowActionBar">false</item>

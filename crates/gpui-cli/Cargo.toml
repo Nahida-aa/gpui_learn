@@ -1,0 +1,16 @@
+[package]
+name = "gpui-cli"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+description = "gpui-cli —— GPUI 工程的脚手架工具（android init 等），配置驱动生成 Android 工程"
+
+# 这是个「开发工具」crate，不进任何运行时依赖图。它复用本仓库锁定的 GPUI
+# 仅是为了读 Cargo.toml 时的版本一致性，实际不依赖 GPUI 运行时。
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1.0"
+toml = "0.8"

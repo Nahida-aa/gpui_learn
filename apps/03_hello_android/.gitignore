@@ -1,12 +1,11 @@
-# 由 cargo ndk 编译生成的原生库（见 README「两种构建方式」），不提交，按需重建。
-gradle/app/src/main/jniLibs/
+# gen/android/ 由 `gpui-cli android init` 生成，不提交（重新生成即可）。
+gen/
+
+# 由 cargo ndk 编译生成的原生库（在 gen/android/app/src/main/jniLibs/），不提交。
+gen/android/app/src/main/jniLibs/
 
 # Gradle 构建产物
-gradle/app/build/
-gradle/.gradle/
+gen/android/app/build/
+gen/android/.gradle/
 .gradle/
 build/
-
-# 注意：gradle-wrapper.jar / gradlew / gradlew.bat 已提交进仓库。
-# 本机系统 Gradle 是 9.x，而 AGP 8.7.3 只支持 Gradle 8.x，所以必须用仓库内
-# 锁定的 Gradle 8.9 wrapper（./gradlew）来构建，不要再忽略它们。

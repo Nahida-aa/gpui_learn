@@ -21,7 +21,8 @@ gpui_learn/
 │   └── 05_grid_layout/     # 第六个例子：CSS Grid 圣杯布局 + container_query 响应式（桌面）
 ├── crates/                 # 库 crate（被 apps 共享的内部包）
 │   ├── gpui_learn_common/  # 后续例子的「共享库」演示（暂未被引用）
-│   └── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
+│   ├── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
+│   └── gpui-cli/           # 开发工具：android init 等，配置驱动生成 Android 工程
 ├── justfile                # 常用命令快捷方式
 └── README.md               # 本文件
 ```

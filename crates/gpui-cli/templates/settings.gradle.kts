@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GPUILearnHelloAndroid"
+rootProject.name = "{ROOT_PROJECT_NAME}"
 include(":app")

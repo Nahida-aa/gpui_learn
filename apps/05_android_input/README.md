@@ -14,11 +14,11 @@
 `TextInput` 那套逻辑（光标 / 选区 / IME / 剪贴板 / 键盘布局回显）**原样复用**，
 只做了三处 Android 适配：
 
-| 差异 | 桌面 `04_input` | Android `05` |
-| --- | --- | --- |
-| 入口 | `fn main()` → `application().run(...)` | `android_main(app)` → `Application::with_platform(...).run(...)`（阻塞事件循环） |
-| 软键盘 | 物理键盘，无需处理 | 输入框获焦时调 `show_keyboard_android`，失焦时 `hide_keyboard_android`（Android 没物理键盘，必须主动弹 IME） |
-| 工程 | `cargo run` | 共享 Gradle 模板 + `gradle.properties` 配置（见下） |
+| 差异   | 桌面 `04_input`                        | Android `05`                                                                                                 |
+| ------ | -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 入口   | `fn main()` → `application().run(...)` | `android_main(app)` → `Application::with_platform(...).run(...)`（阻塞事件循环）                             |
+| 软键盘 | 物理键盘，无需处理                     | 输入框获焦时调 `show_keyboard_android`，失焦时 `hide_keyboard_android`（Android 没物理键盘，必须主动弹 IME） |
+| 工程   | `cargo run`                            | 共享 Gradle 模板 + `gradle.properties` 配置（见下）                                                          |
 
 软键盘的接法（在 `src/lib.rs` 的窗口 setup 里）：
 
@@ -32,42 +32,54 @@ window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
 });
 ```
 
-## 构建：零 Kotlin 脚本（复用 03 的共享模板）
+## 构建：零 Kotlin 脚本（`gpui-cli android init` 生成）
 
-本例子**不写任何 Gradle/Kotlin 脚本**。构建逻辑来自仓库根的
-`gradle/android-app.gradle`（和 `03` 同一个模板），`app/build.gradle.kts` 只有一行
-`apply`。所有可变项都在 `gradle.properties`：
+本例子**不写任何 Gradle/Kotlin 脚本**。工程由 `gpui-cli` 这个开发工具根据配置
+**生成**到 `gen/android/`（已 gitignore）。例子目录里只有两样东西：
 
-```properties
-appId=dev.gpui.learn.input_05      # 与 03 不同，两台例子可共存于同一手机
-appName=GPUI Learn · Input
-rustLibName=input_05               # → libinput_05.so
-cargoPackage=input_05_android      # cargo ndk -p 的包名
-rustTarget=arm64-v8a
+- `src/lib.rs` —— Rust 代码（TextInput + android_main + 软键盘）
+- `gpui.conf.json` —— 仅两个真正属于 Android、Cargo.toml 里没有的字段：
+
+```json
+{
+  "identifier": "dev.gpui.learn.input_05",
+  "app_name": "GPUI Learn · Input"
+}
 ```
 
-`AndroidManifest.xml`、`GpuiTheme`、`GpuiActivity.java` 也都来自共享模板/`gpui-android`，
-例子目录里只有 Rust 代码 + `gradle.properties`。
+> 为什么只有这两个？`cargo_package`（`input_05_android`）和 `rust_lib_name`
+> （`input_05`）由 `gpui-cli` 读本例子的 `Cargo.toml` 自动获取，不重复声明；
+> 目标 ABI 用默认值（`arm64-v8a` + `x86_64`，覆盖真机 + 模拟器），不写进配置。
+> 这正是 Tauri `tauri android init` 的哲学——配置极简，生成器补全其余。
+
+生成与构建：
+
+```bash
+npm run init     # gpui-cli android init → 生成 gen/android/
+npm run apk      # cd gen/android && ./gradlew assembleDebug
+```
+
+`gpui-cli` 的模板里自动注入：`rustLibName` / `cargoPackage`（来自 Cargo.toml）、
+`appId` / `appName`（来自 gpui.conf.json）、默认 ABI 列表；`AndroidManifest.xml`、
+`GpuiTheme`、`GpuiActivity.java`（来自 `gpui-android`）也都一并生成/引用，无需手写。
 
 ## 命令入口（package.json）
 
-和 `03` 同一套，包名/Activity 换成 `input_05`：
-
 ```bash
-npm run rust:build   # cargo ndk 编 libinput_05.so
-npm run apk          # ./gradlew assembleDebug（自动跑 cargo ndk）
-npm run install      # adb install 到真机
-npm run launch       # adb am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity
-npm run run          # apk + install + launch 一条龙
-npm run logs         # adb logcat -s input_05:V gpui-android:V
+npm run init     # 生成 gen/android/（首次或改了 Cargo.toml / gpui.conf.json 后重跑）
+npm run apk      # ./gradlew assembleDebug（内部自动跑 cargo ndk，多 ABI）
+npm run install  # adb install 到真机
+npm run launch   # adb am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity
+npm run run      # init + apk + install + launch 一条龙
+npm run logs     # adb logcat -s input_05:V gpui-android:V
 ```
 
 ## 装到真机
 
 ```bash
-cd apps/05_android_input/gradle
-./gradlew assembleDebug
-adb install -r app/build/outputs/apk/debug/app-debug.apk
+npm run init          # 生成 gen/android/
+npm run apk           # cd gen/android && ./gradlew assembleDebug
+adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity
 ```
 
