@@ -27,6 +27,9 @@ const TPL_WRAPPER_PROPS: &str = include_str!("../templates/wrapper/gradle-wrappe
 const TPL_GRADLEW: &str = include_str!("../templates/gradlew");
 const TPL_GRADLEW_BAT: &str = include_str!("../templates/gradlew.bat");
 const TPL_WRAPPER_JAR: &[u8] = include_bytes!("../templates/wrapper/gradle-wrapper.jar");
+/// gen/android/.gitignore：只忽略构建产物与拷贝资源，生成的 Gradle 源码纳入版本追踪
+/// （对齐 Tauri 的 src-tauri/gen/android/.gitignore）。
+const TPL_GITIGNORE: &str = include_str!("../templates/android.gitignore");
 
 /// 默认 ABI 列表：覆盖真机（arm64-v8a）与模拟器（x86_64）。
 /// 完整可选集见 `ALL_ABIS`，用 `--targets` 可任意组合。
@@ -197,6 +200,8 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
     write_file(&out.join("gradlew"), TPL_GRADLEW)?;
     write_file(&out.join("gradlew.bat"), TPL_GRADLEW_BAT)?;
     set_executable(&out.join("gradlew"))?;
+    // gen/android/.gitignore：构建产物/拷贝资源忽略，Gradle 源码纳入追踪。
+    write_file(&out.join(".gitignore"), TPL_GITIGNORE)?;
 
     // 复制例子自带的 assets/（如 emoji 字体）到生成的 app/src/main/assets/。
     // 例子目录里放 assets/fonts/NotoColorEmoji.ttf 即可，无需手动拷进 gen/。
