@@ -153,6 +153,16 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
 
     // 4) 生成 gen/android/
     let out = example.join("gen/android");
+
+    // 3.5) 找到 vendored gpui-android 的 Java 源码目录，并算出相对 gen/android/app/ 的路径。
+    // 这个路径因例子所处层级不同而变化，必须按实际位置计算，不能写死 `../../../../`。
+    let android_java_src = find_android_java_src(&example)
+        .context("找不到 crates/gpui-android/android/src/main/java，请确认 gpui-android 已 vendored 在仓库内")?;
+    let app_dir = out.join("app");
+    let android_java_dir = relative_path(&app_dir, &android_java_src)
+        .context("计算 gpui-android Java 源码相对路径失败")?;
+    println!("引用 gpui-android Java 源码：{android_java_dir}");
+
     println!("生成 Android 工程到 {}", out.display());
     write_file(
         &out.join("settings.gradle.kts"),
@@ -164,7 +174,8 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
         &TPL_APP_GRADLE
             .replace("{RUST_LIB_NAME}", &rust_lib_name)
             .replace("{CARGO_PACKAGE}", cargo_package)
-            .replace("{TARGETS}", &targets_literal),
+            .replace("{TARGETS}", &targets_literal)
+            .replace("{ANDROID_JAVA_DIR}", &android_java_dir),
     )?;
     write_file(&out.join("app/src/main/AndroidManifest.xml"), TPL_MANIFEST)?;
     write_file(&out.join("app/src/main/res/values/styles.xml"), TPL_STYLES)?;
@@ -200,6 +211,55 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
     println!("  cd {}", out.join("gradle").display());
     println!("  ./gradlew assembleDebug");
     Ok(())
+}
+
+/// 从例子目录向上查找 vendored 的 gpui-android Java 源码根
+/// (`.../crates/gpui-android/android/src/main/java`)，返回其绝对路径。
+fn find_android_java_src(example: &Path) -> Option<PathBuf> {
+    let candidate = Path::new("crates/gpui-android/android/src/main/java");
+    let mut dir = if example.is_absolute() {
+        example.to_path_buf()
+    } else {
+        std::env::current_dir().ok()?.join(example)
+    };
+    loop {
+        let try_path = dir.join(candidate);
+        if try_path.is_dir() {
+            return Some(try_path);
+        }
+        if !dir.pop() {
+            return None;
+        }
+    }
+}
+
+/// 计算 `from` 到 `to` 的相对路径（用 `../` 形式），用于在生成文件里引用。
+fn relative_path(from: &Path, to: &Path) -> Option<String> {
+    use std::path::Component;
+    let from = from.components().collect::<Vec<_>>();
+    let to = to.components().collect::<Vec<_>>();
+    // 找到公共前缀长度
+    let mut common = 0;
+    while common < from.len() && common < to.len() && from[common] == to[common] {
+        common += 1;
+    }
+    let mut rel = Vec::new();
+    // 从 from 退到公共前缀
+    for _ in common..from.len() {
+        rel.push(Component::Normal(std::ffi::OsStr::new("..")));
+    }
+    // 再从公共前缀走到 to
+    for &c in &to[common..] {
+        rel.push(c);
+    }
+    let mut s = String::new();
+    for (i, c) in rel.iter().enumerate() {
+        if i > 0 {
+            s.push('/');
+        }
+        s.push_str(c.as_os_str().to_str()?);
+    }
+    Some(s)
 }
 
 fn sanitize_ident(s: &str) -> String {
