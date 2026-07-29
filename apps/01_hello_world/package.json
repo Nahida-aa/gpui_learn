@@ -4,7 +4,7 @@
   "private": true,
   "description": "GPUI 第一个例子的 Web (WASM/HTML) 构建与本地预览脚本",
   "scripts": {
-    "dev": "cargo run -p hello_world_01",
+    "run": "cargo run -p hello_world_01",
     "build:wasm": "cargo +nightly build -Zbuild-std=std,panic_abort --target wasm32-unknown-unknown -p hello_world_01",
     "build:assets": "bun scripts/build_assets.ts",
     "build": "bun run build:wasm && bun run build:assets",

@@ -10,4 +10,16 @@ description = "05_grid_layout —— GPUI 响应式网格布局（Holy Grail）+
 # [patch.crates-io]），通过 workspace 依赖引入，版本随根清单一处管理。
 [dependencies]
 gpui = { workspace = true }
+
+# 关键：gpui_platform 的 default-features 是空的（default = []），必须显式开启
+# 窗口后端，否则 open_window 会"成功"但屏幕不出现窗口。这是官方 gpui example
+# 的写法（见 zed 仓库 crates/gpui/Cargo.toml）。
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_family = "wasm")))'.dependencies]
 gpui_platform = { workspace = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+gpui_platform = { workspace = true }
+wasm-bindgen = "0.2.120"

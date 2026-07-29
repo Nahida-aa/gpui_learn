@@ -2445,6 +2445,7 @@ version = "0.1.0"
 dependencies = [
  "gpui",
  "gpui_platform",
+ "wasm-bindgen",
 ]
 
 [[package]]
@@ -2851,6 +2852,7 @@ dependencies = [
  "gpui",
  "gpui_platform",
  "unicode-segmentation",
+ "wasm-bindgen",
 ]
 
 [[package]]
