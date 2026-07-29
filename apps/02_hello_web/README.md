@@ -52,6 +52,12 @@ trunk serve
 浏览器需要支持 **WebGPU**（Chrome/Edge 较新版本，必要时加启动参数
 `--enable-unsafe-webgpu`）。`gpui_web` 仅支持 WebGPU，没有 WebGL 回退。
 
+> **想在手机 / 局域网另一台设备访问？** 只把 `Trunk.toml` 的 `addresses` 改成
+> `0.0.0.0` 不够——局域网 IP（`http://192.168.x.x`）被浏览器判为「不可信源」，
+> 会忽略 COOP 头并拒绝 WebGPU 初始化。必须套一层本地 **HTTPS**（自签证书 +
+> Caddy 反代），让 origin 变可信。完整步骤见 `TROUBLESHOOTING.md` 第 6 节。
+> 本目录 `Trunk.toml` 的 `addresses` 已设为 `0.0.0.0`，配合 §6 的 HTTPS 代理即可。
+
 ## 多线程构建要点（坑）
 
 `apps/02_hello_web/.cargo/config.toml` 里的链接参数是官方同款：

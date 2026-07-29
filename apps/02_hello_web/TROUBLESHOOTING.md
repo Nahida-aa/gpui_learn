@@ -185,3 +185,94 @@ google-chrome-stable --no-sandbox \
   `/diag.html` 会返回首页 HTML，别被这个误导。
 - 本机默认浏览器是 `google-chrome-stable`（有谷歌版），`chromium` 是另一个无谷歌版，
   调试 WebGPU 时用有谷歌的那个。
+
+---
+
+## 6. 手机 / 局域网访问必须走 HTTPS
+
+想用手机（或同局域网另一台电脑）打开这个页面，光把 `Trunk.toml` 的
+`addresses` 改成 `0.0.0.0` 不够——**会卡在 WebGPU 初始化失败、或 COOP 被忽略**。
+
+### 6.1 根因：局域网 IP 不是「可信源」
+
+浏览器把跨源隔离（COOP/COEP 触发 `SharedArrayBuffer` + wasm 多线程）和 WebGPU
+都当成**强大特性（powerful feature）**，只在 **可信源（trustworthy origin）** 上生效。
+可信源只有：
+
+- `https://`
+- `http://localhost` / `http://127.0.0.1`（本机回环被特例认定）
+- `http://*.localhost`
+
+而 `http://192.168.x.x:8080`（局域网 IP）被判定为 **untrustworthy**。后果：
+
+```
+Cross-Origin-Opener-Policy header has been ignored, because the URL's origin
+was untrustworthy. ... Please deliver the response using the HTTPS protocol.
+```
+
+COOP 被忽略 → 页面不是跨源隔离的 → `SharedArrayBuffer` 不可用 → GPUI 回退单线程；
+更要命的是 WebGPU 也因非可信源被拒，报
+`Failed to request GPU adapter: No suitable graphics adapter found ... webgpu found no adapters`。
+（注意：这里 `no adapters` 不是没显卡，是 **WebGPU 在非可信源上被浏览器拒绝初始化**。）
+
+`127.0.0.1` 因为是回环、被当可信源，所以一切正常——这解释了「本机 127.0.0.1 正常、
+局域网 IP 不行」的现象。
+
+### 6.2 修法：本地 HTTPS + 反向代理
+
+给局域网 IP 签一张自签证书，再用 Caddy 做 HTTPS 反向代理指到 trunk 的 8080。
+这样 `https://192.168.0.106:8443` 是可信源，COOP/COEP/WebGPU 全部生效。
+（实测：`https://192.168.0.106:8443` 下 WebGPU 初始化成功、canvas 变真实尺寸、
+UI 正常渲染，与 `127.0.0.1` 表现一致。）
+
+前置：本机有 `openssl`（自签）和 `caddy`（反向代理）。
+
+**① 生成自签证书（含 IP SAN）**：
+
+```bash
+mkdir -p ~/.local/share/gpui_learn_certs
+cd ~/.local/share/gpui_learn_certs
+openssl req -x509 -newkey rsa:2048 -nodes \
+  -keyout key.pem -out cert.pem -days 365 \
+  -subj "/CN=192.168.0.106" \
+  -addext "subjectAltName=IP:192.168.0.106"
+# 把 192.168.0.106 换成你自己的局域网 IP（ip -4 addr 查）
+```
+
+**② Caddyfile**（证书目录旁，例如 `~/.local/share/gpui_learn_certs/Caddyfile`）：
+
+```caddy
+{
+    # 不监听 :80 做 HTTP->HTTPS 重定向（免 root），仅用 8443 的 HTTPS
+    auto_https disable_redirects
+}
+
+:8443 {
+    tls /home/你的用户/.local/share/gpui_learn_certs/cert.pem \
+        /home/你的用户/.local/share/gpui_learn_certs/key.pem
+    reverse_proxy 127.0.0.1:8080
+}
+```
+
+**③ 启动**（trunk 仍按 `0.0.0.0:8080` 跑着）：
+
+```bash
+caddy run --config ~/.local/share/gpui_learn_certs/Caddyfile
+# 然后访问 https://192.168.0.106:8443/
+```
+
+**④ 手机 / 局域网浏览器访问**：
+
+- 打开 `https://192.168.0.106:8443/`，会弹「证书不受信任」→ 高级 → 继续访问 / 信任。
+- **Android Chrome**：还需在 `chrome://flags` 启用 `WebGPU`（即 `#enable-unsafe-webgpu`），
+  重启浏览器，否则 WebGPU 拿不到 adapter。
+- **iOS（Safari / 任意 iOS 浏览器）**：目前**没有 WebGPU**，GPUI Web 跑不起来。
+
+### 6.3 其它不可行的旁路（为什么选 HTTPS）
+
+- **`--unsafely-treat-insecure-origin-as-secure=...`**：Chrome 启动参数可把某 origin
+  当可信源，但**只能救电脑上那个 Chrome 进程**，手机浏览器没法加这参数 → 手机仍不行。
+- **直接 `http://192.168.0.106:8080`**：永远 untrustworthy，已被 §6.1 证明不行。
+- **localhost 访问**：手机无法用（手机上没有 `localhost` 指向电脑）。
+
+所以要在**真实手机**上验证，HTTPS 反向代理是唯一靠谱路径。
