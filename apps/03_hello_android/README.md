@@ -23,18 +23,45 @@ NativeActivity (GpuiActivity.java)  ──  系统窗口 / ANativeWindow / JNI
 03_hello_android/
 ├── Cargo.toml                 # cdylib：crate-type = ["cdylib"]，只有 android target 真正编出 .so
 ├── src/lib.rs                 # android_main 入口 + HelloAndroid 视图（仅 #[cfg(target_os="android")] 编译）
+├── package.json               # 命令入口（见下），IDE 会显示运行按钮
 └── gradle/                    # Gradle 宿主：把 .so 打包成 apk
-    ├── build.gradle.kts
-    ├── settings.gradle.kts
-    ├── gradle.properties
-    ├── gradle-wrapper.properties      # 见下方「装 Gradle」
+    ├── settings.gradle.kts    # 含 AGP 版本/仓库镜像；rootProject.name 等
+    ├── build.gradle.kts       # 根：声明 AGP 8.7.3（apply false）
+    ├── gradle.properties      # ★ 本例子唯一需要改的配置：appId / appName / rustLibName / cargoPackage
+    ├── gradle-wrapper.*       # 见下方「装 Gradle」：锁 Gradle 8.9
     └── app/
-        ├── build.gradle.kts           # 内置 cargoBuild 任务：调用 cargo ndk 编 .so
+        ├── build.gradle.kts   # 只有一行：apply 共享模板（见下）
         └── src/main/
-            ├── AndroidManifest.xml
-            ├── res/values/{strings,styles}.xml
+            ├── AndroidManifest.xml   # 用 ${nativeLibraryName} 占位符
             └── jniLibs/arm64-v8a/libhello_android.so   # 由 cargo ndk 产出（见下）
 ```
+
+### 构建逻辑来自共享模板（Tauri 风格：不写 Kotlin/Gradle）
+
+所有 Android 例子的 Gradle 构建逻辑**抽到了仓库根的 `gradle/android-app.gradle`**
+（Groovy DSL 写的共享模板），由各例子的 `app/build.gradle.kts` 一行 apply 引入：
+
+```kotlin
+// apps/03_hello_android/gradle/app/build.gradle.kts
+apply(from = rootProject.file("../../../gradle/android-app.gradle"))
+```
+
+模板从 `gradle.properties` 读配置（`appId` / `appName` / `rustLibName` /
+`cargoPackage` / `rustTarget`），自动：
+
+- 注册 `cargoBuild` 任务调 `cargo ndk` 编 `.so`；
+- 把 `rustLibName` 注入 `AndroidManifest` 的 `android.app.lib_name`；
+- 用 `resValue` 注入 `app_name`，并引用仓库根的共享 `GpuiTheme`（`gradle/android-res`），
+  所以例子**不用写任何 `res/values/strings.xml` 或 `styles.xml`**；
+- 复用 `crates/gpui-android/android/src/main/java` 里的 `GpuiActivity`，不复制。
+
+> 为什么是 Groovy 而非 `.kts`：被 `apply from=` 的脚本在 Kotlin DSL 下拿不到
+> android 插件的类型安全访问器，Groovy 的动态访问器没有这个限制，从而做到
+> 「一份模板、多个例子零脚本复用」。这和 Tauri 用 `tauri.conf.json` 生成 Android
+> 工程是同一个哲学——**配置驱动，模板生成**，应用层完全不碰 kt。
+>
+> `05_android_input` 就是直接复用这份模板的第二个例子：它和 `03` 的 `gradle/`
+> 几乎一模一样，唯一的差异是 `gradle.properties` 里的那几个变量。
 
 > `GpuiActivity.java` **不复制**到这里：它随 `crates/gpui-android/android/src/main/java`
 > 一起 vendored 进了仓库，`app/build.gradle.kts` 通过 `java.srcDir` 直接引用，

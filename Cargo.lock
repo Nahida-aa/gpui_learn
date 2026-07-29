@@ -2856,6 +2856,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "input_05_android"
+version = "0.1.0"
+dependencies = [
+ "android-activity",
+ "android_logger",
+ "gpui",
+ "gpui-android",
+ "log",
+ "unicode-segmentation",
+]
+
+[[package]]
 name = "interpolate_name"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"

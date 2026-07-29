@@ -17,7 +17,8 @@ gpui_learn/
 │   ├── 02_hello_web/       # 第二个例子：GPUI 编译成 WASM 在浏览器跑（trunk）
 │   ├── 03_hello_android/   # 第三个例子：自有 gpui-android 后端原生跑在 Android
 │   ├── 04_input/           # 第四个例子：文本输入（IME / 选区 / 剪贴板 / 键盘布局），移植自官方 input.rs
-│   └── 05_grid_layout/     # 第五个例子：CSS Grid 圣杯布局 + container_query 响应式（桌面）
+│   ├── 05_android_input/   # 第五个例子：用 gpui-android 后端在手机跑文本输入（复用 04 逻辑 + 软键盘）
+│   └── 05_grid_layout/     # 第六个例子：CSS Grid 圣杯布局 + container_query 响应式（桌面）
 ├── crates/                 # 库 crate（被 apps 共享的内部包）
 │   ├── gpui_learn_common/  # 后续例子的「共享库」演示（暂未被引用）
 │   └── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
@@ -54,13 +55,14 @@ just run hello_world_01          # justfile 提供的等价快捷命令
 
 ## 学习路线（例子索引）
 
-| 例子                    | 主题                                                                 |
-| ----------------------- | -------------------------------------------------------------------- |
-| `apps/01_hello_world`   | 纯 GPUI 最小窗口、`Render` trait、程序入口                           |
-| `apps/02_hello_web`     | GPUI 编译成 WASM，trunk 构建，浏览器/手机运行                        |
-| `apps/03_hello_android` | 自有 `gpui-android` 后端，Android 原生渲染（Vulkan/wgpu）            |
-| `apps/04_input`         | 文本输入（IME / 选区 / 剪贴板 / 键盘布局），移植自官方 `input.rs`    |
-| `apps/05_grid_layout`   | CSS Grid 圣杯布局 + `container_query` 响应式（桌面，移植自官方例子） |
+| 例子                    | 主题                                                                             |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| `apps/01_hello_world`   | 纯 GPUI 最小窗口、`Render` trait、程序入口                                       |
+| `apps/02_hello_web`     | GPUI 编译成 WASM，trunk 构建，浏览器/手机运行                                    |
+| `apps/03_hello_android` | 自有 `gpui-android` 后端，Android 原生渲染（Vulkan/wgpu）                        |
+| `apps/04_input`         | 文本输入（IME / 选区 / 剪贴板 / 键盘布局），移植自官方 `input.rs`                |
+| `apps/05_android_input` | 用 `gpui-android` 后端在手机跑文本输入（复用 04 逻辑 + 软键盘；零 kt，配置驱动） |
+| `apps/05_grid_layout`   | CSS Grid 圣杯布局 + `container_query` 响应式（桌面，移植自官方例子）             |
 
 > 教学顺序的设计：第一个例子**故意不用任何共享库**，让学习者先看 GPUI 原貌。
 > 等例子变多、样板开始重复时，再引入 `crates/gpui_learn_common` 演示

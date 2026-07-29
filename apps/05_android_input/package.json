@@ -1,0 +1,17 @@
+{
+  "name": "input_05_android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "05_android_input —— 用 gpui-android 后端在手机上跑文本输入（命令入口，IDE 会显示运行按钮）",
+  "scripts": {
+    "rust:check": "cargo ndk -t arm64-v8a -P 26 check -p input_05_android",
+    "rust:build": "cargo ndk -t arm64-v8a -P 26 -o gradle/app/src/main/jniLibs build -p input_05_android",
+    "apk": "cd gradle && ./gradlew assembleDebug",
+    "apk:release": "cd gradle && ./gradlew assembleRelease -Prelease",
+    "install": "adb install -r gradle/app/build/outputs/apk/debug/app-debug.apk",
+    "launch": "adb shell am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity",
+    "run": "bun run apk && bun run install && bun run launch",
+    "logs": "adb logcat -s input_05:V gpui-android:V",
+    "uninstall": "adb uninstall dev.gpui.learn.input_05"
+  }
+}
