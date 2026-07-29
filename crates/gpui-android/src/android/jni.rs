@@ -210,8 +210,10 @@ pub fn find_app_class<'local>(
             // Print full Java stack trace to logcat, then clear.
             env.exception_describe();
             env.exception_clear();
+            // 注意：GpuiPlatformView 等类是「可选」的（只有 platform-view 功能才用，
+            // 本仓库 03 例子未启用）。找不到时按 debug 记，不要刷 error 干扰日志。
             let msg = format!("loadClass({class_name}) failed: {e}");
-            log::error!("{msg}");
+            log::debug!("{msg}");
             msg
         })?;
 

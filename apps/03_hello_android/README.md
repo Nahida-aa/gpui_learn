@@ -125,3 +125,10 @@ adb logcat -s hello_android:T gpui-android:T
 - 没接 `gpui-ui-kit`：界面是手写 `div`（和 `02` 同范式），保持依赖最小、便于理解原生后端本身。
 - 软键盘 / 无障碍走 `GpuiActivity` 的 `InputConnection` 与 AccessibilityNodeProvider 桥接，
   由 `gpui-android` 已实现的 JNI 方法支撑，本例未额外用到。
+- **emoji 字体**：Android 系统 emoji 字体是 COLR v1，cosmic-text 用不了；本例把
+  `NotoColorEmoji.ttf`（CBDT 格式，约 10 MB）作为 APK asset 打包，由 `gpui-android`
+  在启动时从 `assets/fonts/` 加载，emoji（如标题里的 🤖）才能正常渲染。该字体文件已
+  提交进仓库，所以 `./gradlew assembleDebug` 开箱即得，无需另下。若想减小 apk，可删掉
+  `gradle/app/src/main/assets/fonts/NotoColorEmoji.ttf`（代价是 emoji 变豆腐块）。
+- **`GpuiPlatformView` 可选类**：`gpui-android` 会反射 `dev.gpui.mobile.GpuiPlatformView`
+  （platform-view 功能用），本例未启用该功能，找不到该类时只打 `debug` 级日志，不影响运行。
