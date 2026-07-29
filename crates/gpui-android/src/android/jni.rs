@@ -372,6 +372,20 @@ fn process_input_events(app: &AndroidApp) {
         }
     };
 
+    // Drain key events forwarded from the soft keyboard's InputConnection
+    // (sendKeyEvent / performEditorAction) onto the GPUI main thread, so they
+    // go through the same handle_key_event path as hardware keys. These were
+    // enqueued from the IME Binder thread and must not touch window state there.
+    for fk in crate::drain_forwarded_keys() {
+        let key_event = crate::android::AndroidKeyEvent {
+            key_code: fk.key_code,
+            action: fk.action,
+            meta_state: fk.meta_state,
+            unicode_char: 0,
+        };
+        win.handle_key_event(key_event);
+    }
+
     match app.input_events_iter() {
         Ok(mut iter) => {
             loop {
@@ -1373,6 +1387,33 @@ pub unsafe extern "C" fn Java_dev_gpui_mobile_GpuiActivity_nativeCommitText(
         log::info!("nativeCommitText: {:?}", s);
         crate::enqueue_ime_event(crate::ImeEvent::Commit(s));
         Ok(())
+    });
+}
+
+/// Forward a key event produced by the soft keyboard's `InputConnection`
+/// (e.g. `sendKeyEvent` for KEYCODE_ENTER / KEYCODE_DEL, or `performEditorAction`)
+/// to GPUI as a native keystroke.
+///
+/// This deliberately does NOT commit text directly. The key is enqueued and
+/// drained on the GPUI main thread (see `process_input_events`), so it flows
+/// through the exact same `handle_key_event` path as a hardware key — and is
+/// safe, because IME callbacks arrive on a Binder thread, not the GPUI thread.
+/// The focused GPUI component decides what the key means: an Editor treats
+/// Enter as "insert newline" and Backspace as "delete", while a plain IME-only
+/// input just records it in its keystroke log. `enter` is just `enter`, not
+/// "newline".
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn Java_dev_gpui_mobile_GpuiActivity_nativeKeyEvent(
+    _env: *mut std::ffi::c_void,
+    _class: *mut std::ffi::c_void,
+    key_code: i32,
+    action: i32,
+    meta_state: i32,
+) {
+    crate::enqueue_forwarded_key(crate::ForwardedKey {
+        key_code,
+        action,
+        meta_state,
     });
 }
 

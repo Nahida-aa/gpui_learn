@@ -1858,26 +1858,16 @@ impl PlatformWindow for AndroidPlatformWindow {
                     AKEY_EVENT_ACTION_DOWN, AKEY_EVENT_ACTION_UP, android_key_to_keystroke,
                 };
 
-                // On KeyDown, dispatch text through the global callback so
-                // custom TextInput components (PENDING_TEXT) receive it.
-                if key_event.action == AKEY_EVENT_ACTION_DOWN {
-                    match key_event.key_code {
-                        67 => crate::dispatch_text_input("\x08"), // KEYCODE_DEL (backspace)
-                        21 => crate::dispatch_text_input("\x1b[D"), // DPAD_LEFT
-                        22 => crate::dispatch_text_input("\x1b[C"), // DPAD_RIGHT
-                        122 => crate::dispatch_text_input("\x1b[H"), // MOVE_HOME
-                        123 => crate::dispatch_text_input("\x1b[F"), // MOVE_END
-                        _ => {
-                            if key_event.unicode_char != 0 {
-                                if let Some(c) = char::from_u32(key_event.unicode_char) {
-                                    let s = c.to_string();
-                                    crate::dispatch_text_input(&s);
-                                }
-                            }
-                            false
-                        }
-                    };
-                }
+                // Every key (hardware KeyEvent or a soft-keyboard key forwarded
+                // via `nativeKeyEvent`) is delivered to GPUI as a normal
+                // keystroke. The focused component decides what to do with it:
+                // an Editor inserts "\n" on Enter / deletes on Backspace, while
+                // a plain IME-only input may just record it in its keystroke
+                // log. We no longer route keys through the legacy
+                // `dispatch_text_input` hack, which (a) inserted a literal
+                // backspace control char and crashed GPUI editors, and (b)
+                // double-inserted characters that also arrived via the normal
+                // keystroke path.
 
                 let keystroke = match android_key_to_keystroke(
                     key_event.key_code,

@@ -1,6 +1,6 @@
 {
   "name": "input_05_android",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "private": true,
   "description": "05_android_input —— 用 gpui-android 后端在手机跑文本输入（命令入口，IDE 会显示运行按钮）",
   "scripts": {
@@ -10,7 +10,7 @@
     "apk:release": "cd gen/android && ./gradlew assembleRelease -Prelease",
     "install": "adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk",
     "launch": "adb shell am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity",
-    "run": "npm run init && npm run apk && npm run install && npm run launch",
+    "run": "bun run init && bun run apk && bun run install && bun run launch",
     "logs": "adb logcat -s input_05:V gpui-android:V",
     "uninstall": "adb uninstall dev.gpui.learn.input_05"
   }

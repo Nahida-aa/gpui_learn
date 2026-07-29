@@ -131,6 +131,35 @@ pub(crate) fn drain_ime_events() -> Vec<ImeEvent> {
     IME_EVENTS.lock().unwrap().drain(..).collect()
 }
 
+/// A key event forwarded from the soft keyboard's `InputConnection`
+/// (`sendKeyEvent` / `performEditorAction`). Unlike hardware key events —
+/// which Android delivers on the GPUI main thread via `input_events_iter` —
+/// these arrive on the IME's Binder thread. We enqueue them here and drain
+/// them on the main thread inside `process_input_events`, so they go through
+/// the exact same `handle_key_event` path as hardware keys (and never touch
+/// GPUI window state from a foreign thread).
+#[cfg(target_os = "android")]
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct ForwardedKey {
+    pub key_code: i32,
+    pub action: i32,
+    pub meta_state: i32,
+}
+
+#[cfg(target_os = "android")]
+static FORWARDED_KEY_EVENTS: LazyLock<Mutex<VecDeque<ForwardedKey>>> =
+    LazyLock::new(|| Mutex::new(VecDeque::new()));
+
+#[cfg(target_os = "android")]
+pub(crate) fn enqueue_forwarded_key(key: ForwardedKey) {
+    FORWARDED_KEY_EVENTS.lock().unwrap().push_back(key);
+}
+
+#[cfg(target_os = "android")]
+pub(crate) fn drain_forwarded_keys() -> Vec<ForwardedKey> {
+    FORWARDED_KEY_EVENTS.lock().unwrap().drain(..).collect()
+}
+
 thread_local! {
     static TEXT_INPUT_CALLBACK: RefCell<Option<TextInputCallbackFn>> = RefCell::new(None);
 }

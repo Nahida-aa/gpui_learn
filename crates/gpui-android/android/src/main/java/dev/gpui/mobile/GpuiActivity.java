@@ -89,6 +89,7 @@ public class GpuiActivity extends NativeActivity {
     private static native boolean nativeIsInitialized();
     private static native void nativeOnDeepLink(String url);
     private static native void nativeCommitText(String text);
+    private static native void nativeKeyEvent(int keyCode, int action, int metaState);
     private static native void nativeSetComposingText(String text);
     private static native void nativeFinishComposingText();
     private static native void nativeDeleteSurroundingText(int before, int after);
@@ -278,37 +279,31 @@ public class GpuiActivity extends NativeActivity {
                     return super.commitText(text, newCursorPosition);
                 }
 
-                // 软键盘把回车当成“完成/发送/下一个”等 IME action 时走这里。
-                // 多行输入框里回车=换行，所以直接提交一个 "\n"，复用与粘贴多行
-                // 完全相同的 Rust 路径（replace_text_in_range 插入 \n → 多行渲染）。
+                // 软键盘把回车当成“完成/发送/下一个”等 IME action 时走这里
+                // （单行 inputType 下常见）。这里**不**直接提交文本：把回车作为一次
+                // 完整的 keystroke（DOWN+UP）发给 Rust，经 nativeKeyEvent →
+                // on_key_event → observe_keystrokes，让下方列表显示 “enter -> "\n"”。
+                // 是否换行由聚焦的 GPUI 组件决定（Editor 插入 \n；纯 IME 输入框可不处理）。
                 @Override
                 public boolean performEditorAction(int editorAction) {
                     Log.i("gpui", "IME performEditorAction: " + editorAction);
-                    nativeCommitText("\n");
+                    nativeKeyEvent(android.view.KeyEvent.KEYCODE_ENTER,
+                            android.view.KeyEvent.ACTION_DOWN, 0);
+                    nativeKeyEvent(android.view.KeyEvent.KEYCODE_ENTER,
+                            android.view.KeyEvent.ACTION_UP, 0);
                     return true;
                 }
 
-                // 多行输入（inputType 带 TYPE_TEXT_FLAG_MULTI_LINE）时，部分系统输入法
-                // 把回车当硬件键下发，走 sendKeyEvent 而非 performEditorAction /
-                // commitText。默认 BaseInputConnection 不处理会丢事件，这里把回车转成
-                // "\n" 提交（与粘贴多行同路径）。单行（TYPE_CLASS_TEXT）输入法通常走
-                // performEditorAction，不需要这条。
+                // 输入法把某些键当硬件键下发时走 sendKeyEvent（多行 inputType 下的回车、
+                // 退格等）。同样**不**拦截成文本，而是转发成 keystroke 给 Rust：
+                // 列表能看到 enter/backspace，且由 GPUI 组件自行决定作用。
                 @Override
                 public boolean sendKeyEvent(android.view.KeyEvent event) {
                     int keyCode = event.getKeyCode();
-                    Log.i("gpui", "IME sendKeyEvent: code=" + keyCode
-                            + " action=" + event.getAction());
-                    if (event.getAction() == android.view.KeyEvent.ACTION_DOWN) {
-                        if (keyCode == android.view.KeyEvent.KEYCODE_ENTER) {
-                            nativeCommitText("\n");
-                            return true;
-                        }
-                        if (keyCode == android.view.KeyEvent.KEYCODE_DEL) {
-                            nativeDeleteSurroundingText(1, 0);
-                            return true;
-                        }
-                    }
-                    return super.sendKeyEvent(event);
+                    int action = event.getAction();
+                    Log.i("gpui", "IME sendKeyEvent: code=" + keyCode + " action=" + action);
+                    nativeKeyEvent(keyCode, action, event.getMetaState());
+                    return true;
                 }
 
                 @Override
