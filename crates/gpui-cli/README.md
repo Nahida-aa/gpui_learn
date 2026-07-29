@@ -7,14 +7,17 @@
 ## 子命令
 
 ```
-gpui-cli android init --example <例子目录> [--targets arm64-v8a,x86_64]
+gpui-cli android init [-p <工程目录>] [--targets arm64-v8a,x86_64]
 ```
+
+工程目录默认**当前目录**（在例子目录下直接跑即可）；如需为别的目录生成，
+用 `-p / --project-dir` 指定（相对或绝对路径均可）。
 
 读取：
 
-- `<例子>/Cargo.toml` —— 取 `[package] name` 作为 cargo 包名（`cargo ndk -p`），
+- `<工程>/Cargo.toml` —— 取 `[package] name` 作为 cargo 包名（`cargo ndk -p`），
   取 `[lib] name` 作为 Rust 库名（→ `lib<name>.so`）。**不重复声明**。
-- `<例子>/gpui.conf.json` —— 只需两个真正属于 Android、Cargo.toml 里没有的字段：
+- `<工程>/gpui.conf.json` —— 只需两个真正属于 Android、Cargo.toml 里没有的字段：
 
   ```json
   {
@@ -23,7 +26,7 @@ gpui-cli android init --example <例子目录> [--targets arm64-v8a,x86_64]
   }
   ```
 
-生成：`<例子>/gen/android/` 完整 Gradle 工程（已 `gitignore`），内含：
+生成：`<工程>/gen/android/` 完整 Gradle 工程（已 `gitignore`），内含：
 
 - `settings.gradle.kts` / `build.gradle.kts`（根，声明 AGP 8.7.3 `apply false`）
 - `app/build.gradle.kts` —— 由内嵌模板注入 `rustLibName` / `cargoPackage` / ABI 列表，

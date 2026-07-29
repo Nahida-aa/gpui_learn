@@ -55,11 +55,11 @@ enum Command {
 
 #[derive(Subcommand)]
 enum AndroidCmd {
-    /// 为指定例子生成 gen/android/ Gradle 工程
+    /// 为指定工程生成 gen/android/ Gradle 工程
     Init {
-        /// 例子目录（含 Cargo.toml 与 gpui.conf.json）
-        #[arg(long, default_value = ".")]
-        example: PathBuf,
+        /// 工程目录（含 Cargo.toml 与 gpui.conf.json），默认当前目录
+        #[arg(short = 'p', long, default_value = ".")]
+        project_dir: PathBuf,
         /// 覆盖默认目标 ABI，逗号分隔，如 `--targets arm64-v8a,x86_64`
         #[arg(long, value_delimiter = ',')]
         targets: Option<Vec<String>>,
@@ -94,25 +94,28 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::Android { sub } => match sub {
-            AndroidCmd::Init { example, targets } => android_init(&example, targets),
+            AndroidCmd::Init {
+                project_dir,
+                targets,
+            } => android_init(&project_dir, targets),
         },
     }
 }
 
-fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
-    let example = if example.is_absolute() {
-        example.to_path_buf()
+fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> {
+    let project_dir = if project_dir.is_absolute() {
+        project_dir.to_path_buf()
     } else {
-        std::env::current_dir()?.join(example)
+        std::env::current_dir()?.join(project_dir)
     };
     anyhow::ensure!(
-        example.join("Cargo.toml").exists(),
-        "找不到 {}/Cargo.toml，请确认 --example 指向一个例子目录",
-        example.display()
+        project_dir.join("Cargo.toml").exists(),
+        "找不到 {}/Cargo.toml，请确认工程目录（默认当前目录，可用 -p/--project-dir 指定）",
+        project_dir.display()
     );
 
     // 1) 读 Cargo.toml：cargo_package = [package] name；rust_lib_name = [lib] name（缺省用 package name）
-    let cargo_text = std::fs::read_to_string(example.join("Cargo.toml"))
+    let cargo_text = std::fs::read_to_string(project_dir.join("Cargo.toml"))
         .with_context(|| "读取 Cargo.toml 失败")?;
     let cargo: CargoToml = toml::from_str(&cargo_text).context("解析 Cargo.toml 失败")?;
     let cargo_package = &cargo.package.name;
@@ -123,11 +126,11 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
         .unwrap_or_else(|| cargo_package.clone());
 
     // 2) 读 gpui.conf.json：identifier / app_name
-    let conf_path = example.join("gpui.conf.json");
+    let conf_path = project_dir.join("gpui.conf.json");
     anyhow::ensure!(
         conf_path.exists(),
         "找不到 {}/gpui.conf.json。请创建，至少含 {{\"identifier\": \"...\", \"app_name\": \"...\"}}",
-        example.display()
+        project_dir.display()
     );
     let conf_text =
         std::fs::read_to_string(&conf_path).with_context(|| "读取 gpui.conf.json 失败")?;
@@ -155,11 +158,11 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
     let root_project_name = format!("GPUILearn{}", sanitize_ident(&conf.app_name));
 
     // 4) 生成 gen/android/
-    let out = example.join("gen/android");
+    let out = project_dir.join("gen/android");
 
     // 3.5) 找到 vendored gpui-android 的 Java 源码目录，并算出相对 gen/android/app/ 的路径。
     // 这个路径因例子所处层级不同而变化，必须按实际位置计算，不能写死 `../../../../`。
-    let android_java_src = find_android_java_src(&example)
+    let android_java_src = find_android_java_src(&project_dir)
         .context("找不到 crates/gpui-android/android/src/main/java，请确认 gpui-android 已 vendored 在仓库内")?;
     let app_dir = out.join("app");
     let android_java_dir = relative_path(&app_dir, &android_java_src)
@@ -205,7 +208,7 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
 
     // 复制例子自带的 assets/（如 emoji 字体）到生成的 app/src/main/assets/。
     // 例子目录里放 assets/fonts/NotoColorEmoji.ttf 即可，无需手动拷进 gen/。
-    let src_assets = example.join("assets");
+    let src_assets = project_dir.join("assets");
     if src_assets.is_dir() {
         copy_dir(&src_assets, &out.join("app/src/main/assets"))
             .with_context(|| "复制 assets/ 失败")?;
@@ -218,14 +221,14 @@ fn android_init(example: &Path, targets: Option<Vec<String>>) -> Result<()> {
     Ok(())
 }
 
-/// 从例子目录向上查找 vendored 的 gpui-android Java 源码根
+/// 从工程目录向上查找 vendored 的 gpui-android Java 源码根
 /// (`.../crates/gpui-android/android/src/main/java`)，返回其绝对路径。
-fn find_android_java_src(example: &Path) -> Option<PathBuf> {
+fn find_android_java_src(project_dir: &Path) -> Option<PathBuf> {
     let candidate = Path::new("crates/gpui-android/android/src/main/java");
-    let mut dir = if example.is_absolute() {
-        example.to_path_buf()
+    let mut dir = if project_dir.is_absolute() {
+        project_dir.to_path_buf()
     } else {
-        std::env::current_dir().ok()?.join(example)
+        std::env::current_dir().ok()?.join(project_dir)
     };
     loop {
         let try_path = dir.join(candidate);

@@ -90,7 +90,8 @@ bun run uninstall     # adb uninstall
 
 ```bash
 bun run init
-# = cargo run -p gpui-cli -- android init --example apps/03_hello_android
+# = cargo run -p gpui-cli -- android init
+#   如需为别的目录生成：android init -p apps/03_hello_android
 # 生成 gen/android/（含 Gradle 8.9 wrapper + 从 Cargo.toml/gpui.conf.json 注入的配置）
 ```
 
