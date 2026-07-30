@@ -1,5 +1,19 @@
 {
+  "name": "uniform_list_07",
+  "version": "0.1.0",
+  "private": true,
+  "description": "07_uniform_list —— 用 gpui-android 后端在手机跑 uniform_list 虚拟列表",
   "scripts": {
-    "dev": "cargo watch -x run -p uniform_list_07"
+    "dev": "cargo watch -x run -p uniform_list_07",
+    "check": "cargo check -p uniform_list_07",
+    "android:init": "cargo run -p gpui-cli -- android init",
+    "android:check": "cargo ndk -t arm64-v8a -P 26 check -p uniform_list_07",
+    "android:apk": "cd gen/android && ./gradlew assembleDebug",
+    "android:apk:release": "cd gen/android && ./gradlew assembleRelease -Prelease",
+    "android:install": "adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk",
+    "android:launch": "adb shell am start -n dev.gpui.learn.uniform_list_07/dev.gpui.mobile.GpuiActivity",
+    "android:run": "bun run android:init && bun run android:apk && bun run android:install && bun run android:launch",
+    "android:logs": "adb logcat -s uniform_list_07:V gpui-android:V",
+    "android:uninstall": "adb uninstall dev.gpui.learn.uniform_list_07"
   }
 }

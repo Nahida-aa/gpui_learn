@@ -11,9 +11,21 @@ publish.workspace = true
 # 07：GPUI uniform_list —— 定高虚拟列表（长列表/滚动渲染的基础构件）。
 # 本例在官方 uniform_list 示例基础上补全官方省略、但真实 app 必需的能力：
 # 可变数据源、点击选中高亮、键盘上下导航 + 回车选中、滚动。
+#
+# 工程结构与 06 一致：桌面走 bin（main.rs → run()），Android 走 cdylib .so
+# （NativeActivity 加载）。lib 同时产 cdylib（给 Android）和 rlib（给桌面 bin
+# 链接；bin 不能和 cdylib 同名混用，但 rlib 可以）。
+[lib]
+name = "uniform_list_07"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "uniform_list_07"
+path = "src/main.rs"
+
 [dependencies]
 gpui = { workspace = true }
-# 桌面 / 通用依赖：log 给诊断日志用（env_logger 在 main 里初始化后输出）。
+# 桌面 / 通用依赖：log 给诊断日志用（env_logger 在 run() 里初始化后输出）。
 log = "0.4"
 # 桌面端 logger backend（初始化后 log::info! 才能在终端输出；不初始化则静默丢弃）。
 env_logger = "0.11"
@@ -22,9 +34,12 @@ env_logger = "0.11"
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
 
-[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_family = "wasm")))'.dependencies]
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_os = "android", target_family = "wasm")))'.dependencies]
 gpui_platform = { workspace = true }
 
-[target.'cfg(target_family = "wasm")'.dependencies]
-gpui_platform = { workspace = true }
-wasm-bindgen = "0.2.120"
+# Android：NativeActivity 加载 cdylib .so；gpui_android 提供 JNI/平台桥接，
+# android-activity 必须开 native-activity，android_logger 提供日志后端。
+[target.'cfg(target_os = "android")'.dependencies]
+gpui-android = { path = "../../crates/gpui-android" }
+android-activity = { version = "0.6", features = ["native-activity"] }
+android_logger = "0.15"

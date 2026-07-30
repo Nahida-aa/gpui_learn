@@ -117,6 +117,8 @@ cx.processor(|this, range, _window, cx| {
 
 ## 5. 运行
 
+### 5.1 桌面
+
 ```bash
 cargo run -p uniform_list_07
 ```
@@ -124,4 +126,39 @@ cargo run -p uniform_list_07
 窗口 360×520，顶部一行状态（项数 / 选中项 / 操作提示），下方 100 行虚拟列表：
 - 鼠标点击任意行 → 选中高亮；
 - ↑/↓ → 循环导航并自动滚到可视区；
-- Enter → 确认（logcat/终端打 `[uniform_list] confirmed item N=...`）。
+- Enter → 确认（终端打 `[uniform_list] confirmed item N=...`）。
+
+### 5.2 编译到 Android
+
+Android 上 GPUI 的入口不是 `main()`，而是 **NativeActivity 加载 cdylib 的 `.so`**。
+所以本工程是「桌面 bin + Android lib」双形态（与 06 同构，见 `lib.rs`）：
+
+- `Cargo.toml` 同时声明 `[lib] crate-type = ["cdylib", "rlib"]`（cdylib 给安卓
+  `.so`，rlib 给桌面 bin 链接）和 `[[bin]]`（桌面 `src/main.rs` → 调用 `run()`）。
+- `lib.rs` 顶部是无平台差异的视图代码；`run()`（`#[cfg(not(target_os="android"))]`）
+  用 `gpui_platform::application()` 跑桌面事件循环；`android_main`
+  （`#[cfg(target_os="android")]`）用 `Application::with_platform(...)` 跑安卓循环。
+  **注意 `gpui_platform` 只在桌面用到，必须从文件顶层 `use` 改成函数内全路径
+  调用**，否则 Android target 链接不到该 crate 直接编译失败。
+- 安卓专属依赖（`gpui-android` / `android-activity` / `android_logger`）放在
+  `[target.'cfg(target_os = "android")'.dependencies]`，桌面编译不引入。
+
+步骤（需 `bun` + NDK，已就绪）：
+
+```bash
+# 1. 首次：建 gpui.conf.json（identifier / app_name），再生成 Android 工程
+bun run android:init        # 生成 apps/07_uniform_list/gen/android
+
+# 2. 编译 + 安装 + 启动（设备需 adb 连接）
+bun run android:run         # = init && apk && install && launch
+# 或单独：
+bun run android:apk         # 仅编译 APK
+bun run android:install     # 仅 adb install
+bun run android:launch      # 仅 am start
+bun run android:logs        # adb logcat -s uniform_list_07:V gpui-android:V
+```
+
+`gen/android` 是 `gpui-cli` 生成的（不进 git）；改了 Rust 后必须
+`./gradlew installDebug --rerun-tasks`（gradle 的 `cargoBuild` 默认不感知
+Rust 改动，见 06 文档坑 5）。已实测：设备启动后 `android_main` 正常加载、
+列表渲染、触摸事件经 `gpui_android` 桥接正常。
