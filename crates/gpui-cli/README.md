@@ -17,14 +17,16 @@ gpui-cli android init [-p <工程目录>] [--targets arm64-v8a,x86_64]
 
 - `<工程>/Cargo.toml` —— 取 `[package] name` 作为 cargo 包名（`cargo ndk -p`），
   取 `[lib] name` 作为 Rust 库名（→ `lib<name>.so`）。**不重复声明**。
-- `<工程>/gpui.conf.json` —— 只需两个真正属于 Android、Cargo.toml 里没有的字段：
+- `<工程>/gpui.conf.json` —— **可选**。两个真正属于 Android、Cargo.toml 里没有的字段；都可省略，缺省从 Cargo.toml 推导：
 
   ```json
   {
-    "identifier": "dev.gpui.learn.input_05",
-    "app_name": "GPUI Learn · Input"
+    "identifier": "dev.gpui.learn.input_05",   // 缺省 → dev.gpui.learn.<package.name>
+    "app_name": "GPUI Learn · Input"            // 缺省 → <package.name>
   }
   ```
+
+  连文件都不存在也能 `init`——实现「配置极简」。
 
 生成：`<工程>/gen/android/` 完整 Gradle 工程（已 `gitignore`），内含：
 

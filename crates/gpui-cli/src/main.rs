@@ -66,11 +66,15 @@ enum AndroidCmd {
     },
 }
 
-/// gpui.conf.json 的内容（只需两个字段）
-#[derive(Deserialize)]
+/// gpui.conf.json 的内容（两个字段均可省略，缺省从 Cargo.toml 推导）。
+///
+/// - `app_name` 缺省 → Cargo.toml 的 `package.name`（用作安卓应用显示名）。
+/// - `identifier` 缺省 → `dev.gpui.learn.<package.name>`（安卓包名）。
+///   故连 gpui.conf.json 都不存在也能 init，实现「配置极简」。
+#[derive(Deserialize, Default)]
 struct GpuiConf {
-    identifier: String,
-    app_name: String,
+    identifier: Option<String>,
+    app_name: Option<String>,
 }
 
 /// 从 Cargo.toml 解析出 [package] name 与 [lib] name
@@ -125,16 +129,33 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
         .and_then(|l| l.name.clone())
         .unwrap_or_else(|| cargo_package.clone());
 
-    // 2) 读 gpui.conf.json：identifier / app_name
+    // 2) 读 gpui.conf.json：identifier / app_name（均可选，缺省从 Cargo.toml 推导）。
+    //    连文件都不存在也能 init——实现「配置极简」。
     let conf_path = project_dir.join("gpui.conf.json");
-    anyhow::ensure!(
-        conf_path.exists(),
-        "找不到 {}/gpui.conf.json。请创建，至少含 {{\"identifier\": \"...\", \"app_name\": \"...\"}}",
-        project_dir.display()
-    );
-    let conf_text =
-        std::fs::read_to_string(&conf_path).with_context(|| "读取 gpui.conf.json 失败")?;
-    let conf: GpuiConf = serde_json::from_str(&conf_text).context("解析 gpui.conf.json 失败")?;
+    let conf: GpuiConf = if conf_path.exists() {
+        let conf_text =
+            std::fs::read_to_string(&conf_path).with_context(|| "读取 gpui.conf.json 失败")?;
+        serde_json::from_str(&conf_text).context("解析 gpui.conf.json 失败")?
+    } else {
+        GpuiConf::default()
+    };
+    // 字段缺省推导：`app_name` → 包名；`identifier` → dev.gpui.learn.<包名>。
+    let app_name = conf
+        .app_name
+        .unwrap_or_else(|| cargo_package.clone());
+    let identifier = conf.identifier.unwrap_or_else(|| {
+        format!(
+            "dev.gpui.learn.{}",
+            cargo_package
+                .chars()
+                .map(|c| if c.is_alphanumeric() || c == '_' {
+                    c
+                } else {
+                    '_'
+                })
+                .collect::<String>()
+        )
+    });
 
     // 3) 解析目标 ABI
     let abis = match &targets {
@@ -155,7 +176,7 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
         .map(|a| format!("\"{a}\""))
         .collect::<Vec<_>>()
         .join(", ");
-    let root_project_name = format!("GPUILearn{}", sanitize_ident(&conf.app_name));
+    let root_project_name = format!("GPUILearn{}", sanitize_ident(&app_name));
 
     // 4) 生成 gen/android/
     let out = project_dir.join("gen/android");
@@ -188,7 +209,7 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     // gradle.properties：appId / appName + 通用 Android 配置
     let props = format!(
         "appId={}\nappName={}\nandroid.useAndroidX=true\nandroid.nonTransitiveRClass=true\norg.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8\n",
-        conf.identifier, conf.app_name
+        identifier, app_name
     );
     write_file(&out.join("gradle.properties"), &props)?;
     // wrapper
