@@ -141,23 +141,10 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
         GpuiConf::default()
     };
     // 字段缺省推导：`app_name` → 包名；`identifier` → <仓库名>.<包名>。
-    // 仓库名取 git 根目录名（如 gpui_learn），拿不到时回落到硬编码 "gpui_learn"，
-    // 保证默认包名是反向域名风格、带点、且带命名空间隔离（不撞别人）。
-    let repo_name = std::process::Command::new("git")
-        .args(["rev-parse", "--show-toplevel"])
-        .current_dir(&project_dir)
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .and_then(|o| String::from_utf8(o.stdout).ok())
-        .map(|s| {
-            Path::new(s.trim())
-                .file_name()
-                .map(|n| n.to_string_lossy().to_string())
-                .unwrap_or_default()
-        })
-        .filter(|s| !s.is_empty())
-        .unwrap_or_else(|| "gpui_learn".to_string());
+    // 仓库名取 git 根目录名（如 gpui_learn）。若不在 git 仓库内（拿不到 .git），
+    // 直接报错——不硬编码假名，避免默认包名语义失真。
+    let repo_name = repo_name_from(&project_dir)
+        .context("无法确定仓库名来推导默认 identifier：当前目录不在 git 仓库内（找不到 .git），请在 git 仓库中运行，或在 gpui.conf.json 显式写 identifier")?;
     let app_name = conf
         .app_name
         .unwrap_or_else(|| cargo_package.clone());
@@ -319,6 +306,47 @@ fn sanitize_ident(s: &str) -> String {
         .take(3)
         .collect::<Vec<_>>()
         .join("")
+}
+
+/// 推导仓库名（用于默认 identifier 的命名空间前缀）。
+///
+/// 优先用 `git rev-parse --show-toplevel` 拿仓库根目录名；若 git 不可用，
+/// 则向上回溯目录树找第一个含 `.git` 的祖先，取其目录名。**两者都拿不到
+/// （不在 git 仓库内）返回 None**——调用方据此报错，不兜底假名。
+fn repo_name_from(project_dir: &Path) -> Option<String> {
+    // 1) git 可用时直接用仓库根目录名（最可靠）。
+    if let Some(name) = std::process::Command::new("git")
+        .args(["rev-parse", "--show-toplevel"])
+        .current_dir(project_dir)
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .map(|s| {
+            Path::new(s.trim())
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default()
+        })
+        .filter(|s| !s.is_empty())
+    {
+        return Some(name);
+    }
+
+    // 2) git 不可用：向上找含 .git 的祖先目录，取其目录名。
+    let mut dir = project_dir.canonicalize().ok()?;
+    loop {
+        if dir.join(".git").exists() {
+            return dir
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .filter(|s| !s.is_empty());
+        }
+        if !dir.pop() {
+            break;
+        }
+    }
+    None
 }
 
 fn write_file(path: &Path, content: &str) -> Result<()> {

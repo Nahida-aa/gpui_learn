@@ -21,12 +21,17 @@ gpui-cli android init [-p <工程目录>] [--targets arm64-v8a,x86_64]
 
   ```json
   {
-    "identifier": "dev.gpui.learn.input_05",   // 缺省 → <仓库名>.<package.name>
+    "identifier": "gpui_learn.input_05",   // 缺省 → <仓库名>.<package.name>
     "app_name": "GPUI Learn · Input"            // 缺省 → <package.name>
   }
   ```
 
   连文件都不存在也能 `init`——实现「配置极简」。
+
+  默认 `identifier` 的命名空间前缀取**仓库名**（git 根目录名，git 不可用时向上找
+  含 `.git` 的祖先目录名）。**若当前目录不在任何 git 仓库内（找不到 .git），
+  `init` 直接报错**——此时请在 gpui.conf.json 显式写 `identifier`，或到 git 仓库内
+  运行。不兜底假名，避免默认包名语义失真。
 
 生成：`<工程>/gen/android/` 完整 Gradle 工程（已 `gitignore`），内含：
 
