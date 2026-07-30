@@ -21,7 +21,7 @@ gpui-cli android init [-p <工程目录>] [--targets arm64-v8a,x86_64]
 
   ```json
   {
-    "identifier": "dev.gpui.learn.input_05",   // 缺省 → dev.gpui.learn.<package.name>
+    "identifier": "dev.gpui.learn.input_05",   // 缺省 → <仓库名>.<package.name>
     "app_name": "GPUI Learn · Input"            // 缺省 → <package.name>
   }
   ```

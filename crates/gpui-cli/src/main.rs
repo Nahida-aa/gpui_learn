@@ -69,7 +69,8 @@ enum AndroidCmd {
 /// gpui.conf.json 的内容（两个字段均可省略，缺省从 Cargo.toml 推导）。
 ///
 /// - `app_name` 缺省 → Cargo.toml 的 `package.name`（用作安卓应用显示名）。
-/// - `identifier` 缺省 → `dev.gpui.learn.<package.name>`（安卓包名）。
+/// - `identifier` 缺省 → `<仓库名>.<package.name>`（安卓包名，反向域名风格）。
+///   仓库名取 git 根目录名的 basename（如 gpui_learn），拿不到回落 "gpui_learn"。
 ///   故连 gpui.conf.json 都不存在也能 init，实现「配置极简」。
 #[derive(Deserialize, Default)]
 struct GpuiConf {
@@ -139,13 +140,31 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     } else {
         GpuiConf::default()
     };
-    // 字段缺省推导：`app_name` → 包名；`identifier` → dev.gpui.learn.<包名>。
+    // 字段缺省推导：`app_name` → 包名；`identifier` → <仓库名>.<包名>。
+    // 仓库名取 git 根目录名（如 gpui_learn），拿不到时回落到硬编码 "gpui_learn"，
+    // 保证默认包名是反向域名风格、带点、且带命名空间隔离（不撞别人）。
+    let repo_name = std::process::Command::new("git")
+        .args(["rev-parse", "--show-toplevel"])
+        .current_dir(&project_dir)
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .map(|s| {
+            Path::new(s.trim())
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_default()
+        })
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| "gpui_learn".to_string());
     let app_name = conf
         .app_name
         .unwrap_or_else(|| cargo_package.clone());
     let identifier = conf.identifier.unwrap_or_else(|| {
         format!(
-            "dev.gpui.learn.{}",
+            "{}.{}",
+            repo_name,
             cargo_package
                 .chars()
                 .map(|c| if c.is_alphanumeric() || c == '_' {
