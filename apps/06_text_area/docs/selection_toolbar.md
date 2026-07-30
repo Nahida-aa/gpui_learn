@@ -220,6 +220,23 @@ padding），得到相对 TextArea 的坐标。`Editor` 上新增
 `adb devices` 有时显示一个、有时显示另一个，且 `get-state` 对「另一个」报
 `not found`。**以 `adb devices` 当前列出的为准**，不要硬编码旧序列号。
 
+### 坑 7：工具栏按钮点击冒泡到 TextArea，点「全选」后选区被折叠丢失
+
+**现象**：点「全选」按钮，整段先被选中，但**立即丢失选中**（选区折叠成光标），
+工具条也随之消失——和坑 4 的「误触剪切」表现相似，但根因不同。
+
+**根因**：工具栏（`selection_toolbar` 返回的 `div`）是 TextArea 的 `div` 的
+**子元素**。点击工具栏按钮时，按钮的 `on_mouse_down`（`toolbar_button` 里，负责
+派发 `select_all`）执行后，事件**继续冒泡到外层 TextArea 自身的 `on_mouse_down`**
+（`text_area.rs`），那里会用点击处坐标调 `move_to` / `select_word_at`，于是刚
+`select_all` 出来的整段选区又被折叠成光标。复制/剪切按钮点击其实也会冒泡触发
+`move_to`，只是复制不改选区、剪切本就要清选区，肉眼看不出。
+
+**修复**：按钮 `on_mouse_down` 在派发动作后调用 `cx.stop_propagation()`，阻断
+事件继续冒泡到外层（与 gpui `div.rs` 内部处理鼠标事件的做法一致）。所有工具栏
+按钮一并受益。
+
+
 ---
 
 ## 4. 设备验证方法（MIUI / 小米 amethyst）
