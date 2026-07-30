@@ -11,29 +11,47 @@ use std::ops::Range;
 use std::time::Duration;
 
 use gpui::{
-    App, Bounds, Context, Element, ElementInputHandler, Entity, EntityInputHandler, FocusHandle,
-    Focusable, IntoElement, LayoutId, PaintQuad, Pixels, Point, ShapedLine, SharedString,
-    Subscription, Task, TextRun, UTF16Selection, Window, actions, fill, hsla, point,
-    prelude::*, px, relative, size,
+    App, Bounds, ClipboardItem, Context, Element, ElementInputHandler, Entity, EntityInputHandler,
+    FocusHandle, Focusable, IntoElement, LayoutId, PaintQuad, Pixels, Point, ShapedLine,
+    SharedString, Subscription, Task, TextRun, UTF16Selection, Window, actions, fill, hsla,
+    point, prelude::*, px, relative, size,
 };
 use unicode_segmentation::*;
 
 // ── actions（与 zed view_example_main.rs 一致）──────────────────────────────
 actions!(
     view_example,
-    [Backspace, Delete, Left, Right, Home, End, Enter, Quit]
+    [Backspace, Delete, Left, Right, Home, End, Enter, Quit, Copy, Cut, Paste, SelectAll]
 );
 
 pub struct Editor {
     pub value: Entity<String>,
     pub focus_handle: FocusHandle,
-    pub cursor: usize,
+    /// 选区（UTF-8 字节范围）。空区间（start==end）即「折叠光标」。
+    /// 这是编辑器唯一的位置真相来源，替代旧的标量 `cursor`。
+    pub selection: Range<usize>,
+    /// 选区是否反向：true 表示活动端（光标）在 `selection.start`，
+    /// false 表示活动端在 `selection.end`。方向键/拖拽据此扩展或移动。
+    pub selection_reversed: bool,
+    /// 拖拽选区进行中（鼠标/触摸按住并移动）。由 TextArea 的鼠标事件维护。
+    pub is_selecting: bool,
     pub cursor_visible: bool,
     _blink_task: Task<()>,
     _subscriptions: Vec<Subscription>,
     /// 诊断用：把每次 IME 实际送进来的文本记到这里，方便在屏幕上看到
     /// 软键盘到底有没有把回车当 \n 提交（区别于硬键盘的按键事件）。
     debug_log: Option<Entity<String>>,
+    /// 最近一次 paint 的几何信息，供点击定位光标用。
+    /// `prepaint` 阶段把文本框边界、行高、每行起始字节偏移、以及各行
+    /// `ShapedLine` 写进来；点击时（桌面/移动端都走 TextArea::on_mouse_down）
+    /// 用它们把点击坐标换算成字符字节偏移。
+    last_bounds: Option<Bounds<Pixels>>,
+    last_line_height: Pixels,
+    last_line_starts: Vec<usize>,
+    last_lines: Vec<ShapedLine>,
+    /// 最近一次 paint 的文本总长度（字节），供 `selection_bounds` 计算末行
+    /// 选区结束位置（prepaint 的 `line_starts` 不包含末尾项）。
+    last_content_len: usize,
 }
 
 impl Editor {
@@ -73,31 +91,206 @@ impl Editor {
             }
         });
 
-        // 外部写 value 时把光标夹回字符边界，并通知重渲染。
+        // 外部写 value 时把选区夹回字符边界，并通知重渲染。
         let value_sub = cx.observe(&value, |this, value, cx| {
             let content = value.read(cx);
-            let mut cursor = this.cursor.min(content.len());
-            while cursor > 0 && !content.is_char_boundary(cursor) {
-                cursor -= 1;
+            let len = content.len();
+            let mut start = this.selection.start.min(len);
+            let mut end = this.selection.end.min(len);
+            while start > 0 && !content.is_char_boundary(start) {
+                start -= 1;
             }
-            this.cursor = cursor;
+            while end > 0 && !content.is_char_boundary(end) {
+                end -= 1;
+            }
+            this.selection = start..end;
             cx.notify();
         });
 
         Self {
             value,
             focus_handle,
-            cursor: 0,
+            selection: 0..0,
+            selection_reversed: false,
+            is_selecting: false,
             cursor_visible: false,
             _blink_task: Task::ready(()),
             _subscriptions: vec![focus_sub, blur_sub, value_sub],
             debug_log,
+            last_bounds: None,
+            last_line_height: px(0.),
+            last_line_starts: Vec::new(),
+            last_lines: Vec::new(),
+            last_content_len: 0,
         }
     }
 
     /// The current text. Read this from anywhere to get the value out.
     pub fn text(&self, cx: &App) -> String {
         self.value.read(cx).clone()
+    }
+
+    /// 活动端（光标）字节偏移。
+    pub fn cursor(&self) -> usize {
+        if self.selection_reversed {
+            self.selection.start
+        } else {
+            self.selection.end
+        }
+    }
+
+    /// 把选区收拢成 `offset` 处的折叠光标（无选区）。
+    pub fn collapse_to(&mut self, offset: usize) {
+        self.selection = offset..offset;
+        self.selection_reversed = false;
+    }
+
+    /// 移动活动端到 `offset`，保留锚点（另一端）不动 —— 用于 Shift+方向键 / 拖拽扩展。
+    pub fn move_active_to(&mut self, offset: usize, cx: &mut Context<Self>) {
+        let anchor = if self.selection_reversed {
+            self.selection.end
+        } else {
+            self.selection.start
+        };
+        self.selection_reversed = offset < anchor;
+        self.selection = anchor.min(offset)..anchor.max(offset);
+        self.reset_blink(cx);
+        cx.notify();
+    }
+
+    /// 把活动端移动到 `offset` 并收拢（无 Shift 的方向键 / 单击定位）。
+    pub fn move_to(&mut self, offset: usize, cx: &mut Context<Self>) {
+        let content = self.text(cx);
+        let mut cursor = offset.min(content.len());
+        while cursor > 0 && !content.is_char_boundary(cursor) {
+            cursor -= 1;
+        }
+        if cursor != self.cursor() {
+            log::info!(
+                "[editor] move_to id={:?} from={} to={}",
+                cx.entity().entity_id(),
+                self.cursor(),
+                cursor
+            );
+            self.collapse_to(cursor);
+            self.reset_blink(cx);
+            cx.notify();
+        }
+    }
+
+    /// 选区是否为空（折叠光标）。
+    pub fn is_empty_selection(&self) -> bool {
+        self.selection.is_empty()
+    }
+
+    /// 选区在编辑器内的像素包围盒（window-local，相对编辑器文本元素）。
+    ///
+    /// 基于 `prepaint` 写回的几何缓存（`last_bounds` / `last_line_starts` /
+    /// `last_lines`）计算，与选区高亮用同一套逐行求交逻辑，因此坐标空间
+    /// 与选区背景完全一致。供「选中文字上方浮动工具条」（方式 A）定位使用。
+    ///
+    /// 折叠光标或尚未 paint 过时返回 `None`。
+    pub fn selection_bounds(&self) -> Option<Bounds<Pixels>> {
+        if self.selection.is_empty() {
+            return None;
+        }
+        let bounds = self.last_bounds?;
+        let line_height = self.last_line_height;
+        let line_starts = &self.last_line_starts;
+        let lines = &self.last_lines;
+        // prepaint 写回的 `line_starts` 长度 = 行数（末尾不另存 content.len()），
+        // 末行结束位置用 `last_content_len`。
+        if lines.is_empty() || line_starts.len() != lines.len() {
+            return None;
+        }
+        let content_len = self.last_content_len;
+        let mut min_x = Pixels::MAX;
+        let mut min_y = Pixels::MAX;
+        let mut max_x = Pixels::MIN;
+        let mut max_y = Pixels::MIN;
+        let mut any = false;
+        for (line_idx, line) in lines.iter().enumerate() {
+            let line_start = line_starts[line_idx];
+            let line_end = if line_idx + 1 < line_starts.len() {
+                line_starts[line_idx + 1] - '\n'.len_utf8()
+            } else {
+                content_len
+            };
+            let seg_start = self.selection.start.max(line_start).min(line_end);
+            let seg_end = self.selection.end.max(line_start).min(line_end);
+            if seg_end <= seg_start {
+                continue;
+            }
+            let x_start = line.x_for_index(seg_start - line_start);
+            let x_end = line.x_for_index(seg_end - line_start);
+            let y = line_height * line_idx as f32;
+            min_x = min_x.min(bounds.left() + x_start);
+            max_x = max_x.max(bounds.left() + x_end);
+            min_y = min_y.min(bounds.top() + y);
+            max_y = max_y.max(bounds.top() + y + line_height);
+            any = true;
+        }
+        if !any {
+            return None;
+        }
+        Some(Bounds::new(
+            point(min_x, min_y),
+            size(max_x - min_x, max_y - min_y),
+        ))
+    }
+
+    /// 编辑器文本元素最近一次 prepaint 的窗口原点，供「选区上方浮动工具条」
+    /// （方式 A）把选区窗口坐标换算成相对 TextArea 的坐标。
+    pub fn last_bounds_origin(&self) -> Option<Point<Pixels>> {
+        self.last_bounds.map(|b| b.origin)
+    }
+
+    /// 选中光标所在的「词」（以空白/换行分隔），并进入选择态。
+    /// 用于移动端长按选词。词边界夹到字符边界。
+    pub fn select_word_at(&mut self, offset: usize, cx: &mut Context<Self>) {
+        let content = self.text(cx);
+        if content.is_empty() {
+            return;
+        }
+        let offset = offset.min(content.len()).max(0);
+        let is_word_char = |c: char| !c.is_whitespace() && c != '\n';
+        // 起点：向左找到第一个非词字符之后。
+        let mut start = offset;
+        while start > 0 {
+            let prev = previous_boundary(&content, start);
+            if !is_word_char(content[prev..offset].chars().next().unwrap_or(' ')) {
+                break;
+            }
+            start = prev;
+        }
+        // 终点：向右找到第一个非词字符之前。
+        let mut end = offset;
+        while end < content.len() {
+            let next = next_boundary(&content, end);
+            if !is_word_char(content[end..next].chars().next().unwrap_or(' ')) {
+                break;
+            }
+            end = next;
+        }
+        while start > 0 && !content.is_char_boundary(start) {
+            start -= 1;
+        }
+        while end > 0 && !content.is_char_boundary(end) {
+            end -= 1;
+        }
+        let (start, end) = if start < end { (start, end) } else { (offset, offset) };
+        log::info!(
+            "[editor] select_word_at id={:?} offset={} word=[{}..{}] {:?}",
+            cx.entity().entity_id(),
+            offset,
+            start,
+            end,
+            &content[start..end]
+        );
+        self.selection = start..end;
+        self.selection_reversed = false;
+        self.reset_blink(cx);
+        cx.notify();
     }
 
     fn start_blink(&mut self, cx: &mut Context<Self>) {
@@ -133,56 +326,130 @@ impl Editor {
         self._blink_task = Self::spawn_blink_task(cx);
     }
 
-    pub fn left(&mut self, _: &Left, _: &mut Window, cx: &mut Context<Self>) {
-        let content = self.text(cx);
-        if self.cursor > 0 {
-            self.cursor = previous_boundary(&content, self.cursor);
+    /// 把点击坐标换算成内容里的字符字节偏移。
+    /// 用 `prepaint` 阶段存下来的行几何信息（边界/行高/每行起始偏移/各 `ShapedLine`）。
+    /// 多行：先按 y 落在第几行，再在该行的 `ShapedLine` 上按 x 找最近字符边界。
+    pub fn index_for_point(&self, position: Point<Pixels>) -> usize {
+        let (Some(bounds), lines) = (self.last_bounds.as_ref(), &self.last_lines) else {
+            log::info!("[editor] index_for_point: NO geometry cached, pos={:?}", position);
+            return 0;
+        };
+        if lines.is_empty() {
+            return 0;
         }
-        self.reset_blink(cx);
-        cx.notify();
-    }
-
-    pub fn right(&mut self, _: &Right, _: &mut Window, cx: &mut Context<Self>) {
-        let content = self.text(cx);
-        if self.cursor < content.len() {
-            self.cursor = next_boundary(&content, self.cursor);
+        let line_height = self.last_line_height;
+        if line_height == px(0.) {
+            return 0;
         }
-        self.reset_blink(cx);
-        cx.notify();
+
+        // 纵向：落在第几行（点在框外则夹到首/尾行）。
+        let rel_y = position.y - bounds.top();
+        let mut line_idx = (rel_y / line_height).floor() as usize;
+        if line_idx >= lines.len() {
+            line_idx = lines.len() - 1;
+        }
+        // 横向：与行左边缘的相对 x（点在中线左侧也按 0 处理）。
+        let x = position.x - bounds.left();
+
+        let idx_in_line = lines[line_idx].closest_index_for_x(x);
+        let line_start = self.last_line_starts.get(line_idx).copied().unwrap_or(0);
+        let result = line_start + idx_in_line;
+        log::info!(
+            "[editor] index_for_point: pos={:?} bounds.top={} bounds.left={} line_h={} line_idx={} x={} idx_in_line={} line_start={} -> {}",
+            position, bounds.top(), bounds.left(), line_height, line_idx, x, idx_in_line, line_start, result
+        );
+        result
     }
 
-    pub fn home(&mut self, _: &Home, _: &mut Window, cx: &mut Context<Self>) {
-        self.cursor = 0;
-        self.reset_blink(cx);
-        cx.notify();
+    pub fn left(&mut self, _: &Left, window: &mut Window, cx: &mut Context<Self>) {
+        let content = self.text(cx);
+        let target = if self.cursor() > 0 {
+            previous_boundary(&content, self.cursor())
+        } else {
+            0
+        };
+        if window.modifiers().shift {
+            self.move_active_to(target, cx);
+        } else {
+            self.move_to(target, cx);
+        }
     }
 
-    pub fn end(&mut self, _: &End, _: &mut Window, cx: &mut Context<Self>) {
-        self.cursor = self.text(cx).len();
-        self.reset_blink(cx);
-        cx.notify();
+    pub fn right(&mut self, _: &Right, window: &mut Window, cx: &mut Context<Self>) {
+        let content = self.text(cx);
+        let target = if self.cursor() < content.len() {
+            next_boundary(&content, self.cursor())
+        } else {
+            content.len()
+        };
+        if window.modifiers().shift {
+            self.move_active_to(target, cx);
+        } else {
+            self.move_to(target, cx);
+        }
+    }
+
+    pub fn home(&mut self, _: &Home, window: &mut Window, cx: &mut Context<Self>) {
+        if window.modifiers().shift {
+            self.move_active_to(0, cx);
+        } else {
+            self.move_to(0, cx);
+        }
+    }
+
+    pub fn end(&mut self, _: &End, window: &mut Window, cx: &mut Context<Self>) {
+        let len = self.text(cx).len();
+        if window.modifiers().shift {
+            self.move_active_to(len, cx);
+        } else {
+            self.move_to(len, cx);
+        }
     }
 
     pub fn backspace(&mut self, _: &Backspace, _: &mut Window, cx: &mut Context<Self>) {
+        // 有选区：整段删掉，光标落到选区起点。
+        if !self.is_empty_selection() {
+            let start = self.selection.start;
+            self.value.update(cx, |s, cx| {
+                s.drain(self.selection.clone());
+                cx.notify();
+            });
+            self.collapse_to(start);
+            self.reset_blink(cx);
+            cx.notify();
+            return;
+        }
         let content = self.text(cx);
-        if self.cursor > 0 {
-            let prev = previous_boundary(&content, self.cursor);
-            let cursor = self.cursor;
+        if self.cursor() > 0 {
+            let prev = previous_boundary(&content, self.cursor());
+            let cursor = self.cursor();
             self.value.update(cx, |s, cx| {
                 s.drain(prev..cursor);
                 cx.notify();
             });
-            self.cursor = prev;
+            self.collapse_to(prev);
         }
         self.reset_blink(cx);
         cx.notify();
     }
 
     pub fn delete(&mut self, _: &Delete, _: &mut Window, cx: &mut Context<Self>) {
+        // 有选区：整段删掉，光标落到选区起点。
+        if !self.is_empty_selection() {
+            let start = self.selection.start;
+            self.value.update(cx, |s, cx| {
+                s.drain(self.selection.clone());
+                cx.notify();
+            });
+            self.collapse_to(start);
+            self.reset_blink(cx);
+            cx.notify();
+            return;
+        }
         let content = self.text(cx);
-        if self.cursor < content.len() {
-            let next = next_boundary(&content, self.cursor);
-            let cursor = self.cursor;
+        if self.cursor() < content.len() {
+            let next = next_boundary(&content, self.cursor());
+            let cursor = self.cursor();
             self.value.update(cx, |s, cx| {
                 s.drain(cursor..next);
                 cx.notify();
@@ -193,13 +460,24 @@ impl Editor {
     }
 
     /// 插入换行：软键盘/硬键盘的 Enter 都走这里，实现多行换行。
+    /// 若当前有选区，先删掉选区再插入换行（与主流编辑器一致）。
     pub fn insert_newline(&mut self, cx: &mut Context<Self>) {
-        let cursor = self.cursor;
+        let cursor = if !self.is_empty_selection() {
+            let start = self.selection.start;
+            self.value.update(cx, |s, cx| {
+                s.drain(self.selection.clone());
+                cx.notify();
+            });
+            self.collapse_to(start);
+            start
+        } else {
+            self.cursor()
+        };
         self.value.update(cx, |s, cx| {
             s.insert(cursor, '\n');
             cx.notify();
         });
-        self.cursor += 1;
+        self.collapse_to(cursor + 1);
         // 诊断：确认 Enter action 已触发、\n 已插入（与 IME 提交路径分开记录）。
         log::info!(
             "[editor] insert_newline id={:?} cursor={} text={:?}",
@@ -218,6 +496,67 @@ impl Editor {
                 cx.notify();
             });
         }
+        self.reset_blink(cx);
+        cx.notify();
+    }
+
+    /// 删除整段选区（有选区时）；否则无操作。供 IME 替换前清理选区用。
+    pub fn delete_selection_if_any(&mut self, cx: &mut Context<Self>) -> bool {
+        if self.is_empty_selection() {
+            return false;
+        }
+        let start = self.selection.start;
+        self.value.update(cx, |s, cx| {
+            s.drain(self.selection.clone());
+            cx.notify();
+        });
+        self.collapse_to(start);
+        self.reset_blink(cx);
+        cx.notify();
+        true
+    }
+
+    pub fn copy(&mut self, _: &Copy, _window: &mut Window, cx: &mut Context<Self>) {
+        if self.is_empty_selection() {
+            return;
+        }
+        let content = self.text(cx);
+        let text = content[self.selection.clone()].to_string();
+        cx.write_to_clipboard(ClipboardItem::new_string(text));
+    }
+
+    pub fn cut(&mut self, _: &Cut, _window: &mut Window, cx: &mut Context<Self>) {
+        if self.is_empty_selection() {
+            return;
+        }
+        let content = self.text(cx);
+        let text = content[self.selection.clone()].to_string();
+        cx.write_to_clipboard(ClipboardItem::new_string(text));
+        self.delete_selection_if_any(cx);
+    }
+
+    pub fn paste(&mut self, _: &Paste, _window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(item) = cx.read_from_clipboard() {
+            if let Some(text) = item.text() {
+                // 有选区先删选区，再插入（与主流编辑器一致）。
+                self.delete_selection_if_any(cx);
+                let cursor = self.cursor();
+                self.value.update(cx, |s, cx| {
+                    s.insert_str(cursor, &text);
+                    cx.notify();
+                });
+                self.collapse_to(cursor + text.len());
+                self.reset_blink(cx);
+                cx.notify();
+            }
+        }
+    }
+
+    /// 全选：把选区扩展到整段文本。供系统 ActionMode「全选」与桌面 Ctrl/Cmd+A 复用。
+    pub fn select_all(&mut self, _: &SelectAll, _window: &mut Window, cx: &mut Context<Self>) {
+        let len = self.text(cx).len();
+        self.selection = 0..len;
+        self.selection_reversed = false;
         self.reset_blink(cx);
         cx.notify();
     }
@@ -299,10 +638,10 @@ impl EntityInputHandler for Editor {
         cx: &mut Context<Self>,
     ) -> Option<UTF16Selection> {
         let content = self.text(cx);
-        let utf16_cursor = offset_to_utf16(&content, self.cursor);
+        let utf16_range = range_to_utf16(&content, &self.selection);
         Some(UTF16Selection {
-            range: utf16_cursor..utf16_cursor,
-            reversed: false,
+            range: utf16_range,
+            reversed: self.selection_reversed,
         })
     }
 
@@ -324,10 +663,17 @@ impl EntityInputHandler for Editor {
         cx: &mut Context<Self>,
     ) {
         let content = self.text(cx);
+        // IME 没给范围时：若有选区就替换选区，否则替换光标处。
         let range = range_utf16
             .as_ref()
             .map(|r| range_from_utf16(&content, r))
-            .unwrap_or(self.cursor..self.cursor);
+            .unwrap_or_else(|| {
+                if self.is_empty_selection() {
+                    self.cursor()..self.cursor()
+                } else {
+                    self.selection.clone()
+                }
+            });
 
         log::info!(
             "[editor] replace_text_in_range id={:?} new_text={:?}",
@@ -336,7 +682,10 @@ impl EntityInputHandler for Editor {
         );
 
         let new_content = content[..range.start].to_owned() + new_text + &content[range.end..];
-        self.cursor = range.start + new_text.len();
+        let new_cursor = range.start + new_text.len();
+        // 替换后收拢成光标（IME 提交会清掉选区）。
+        self.selection = new_cursor..new_cursor;
+        self.selection_reversed = false;
         self.value.update(cx, |s, cx| {
             *s = new_content;
             cx.notify();
@@ -384,11 +733,14 @@ impl EntityInputHandler for Editor {
 
     fn character_index_for_point(
         &mut self,
-        _point: Point<Pixels>,
+        point: Point<Pixels>,
         _window: &mut Window,
-        _cx: &mut Context<Self>,
+        cx: &mut Context<Self>,
     ) -> Option<usize> {
-        None
+        // 用与点击一致的几何换算；返回 UTF-16 偏移（IME 要求）。
+        let utf8 = self.index_for_point(point);
+        let content = self.text(&*cx);
+        Some(offset_to_utf16(&content, utf8))
     }
 }
 
@@ -412,6 +764,8 @@ struct EditorText {
 struct EditorTextPrepaint {
     lines: Vec<ShapedLine>,
     cursor: Option<PaintQuad>,
+    /// 选区高亮背景块（每行一段）。活动端光标单独用 `cursor` 画。
+    selection_quads: Vec<PaintQuad>,
 }
 
 impl IntoElement for EditorText {
@@ -462,7 +816,8 @@ impl Element for EditorText {
     ) -> Self::PrepaintState {
         let editor = self.editor.read(cx);
         let content = editor.value.read(cx).clone();
-        let cursor_offset = editor.cursor;
+        let cursor_offset = editor.cursor();
+        let selection = editor.selection.clone();
         let cursor_visible = editor.cursor_visible;
         let is_focused = editor.focus_handle.is_focused(window);
 
@@ -524,7 +879,73 @@ impl Element for EditorText {
             None
         };
 
-        EditorTextPrepaint { lines, cursor }
+        // 每行起始字节偏移：按 \n 切分的各段在原始 content 里的起点。
+        let line_starts: Vec<usize> = if is_placeholder {
+            vec![0]
+        } else {
+            let mut starts = Vec::with_capacity(content.split('\n').count());
+            let mut idx = 0;
+            starts.push(0);
+            for ch in content.chars() {
+                if ch == '\n' {
+                    idx += ch.len_utf8();
+                    starts.push(idx);
+                } else {
+                    idx += ch.len_utf8();
+                }
+            }
+            starts
+        };
+
+        // 选区高亮：把选区字节范围拆成「按行」的若干段，每段画一个背景块。
+        let selection_quads: Vec<PaintQuad> = if is_focused && !selection.is_empty() {
+            let sel_color = hsla(0.6, 0.4, 0.6, 0.3);
+            let mut quads = Vec::new();
+            for (line_idx, line) in lines.iter().enumerate() {
+                let line_start = line_starts.get(line_idx).copied().unwrap_or(0);
+                let line_end = if line_idx + 1 < line_starts.len() {
+                    line_starts[line_idx + 1] - '\n'.len_utf8()
+                } else {
+                    content.len()
+                };
+                // 本行与选区交集。
+                let seg_start = selection.start.max(line_start).min(line_end);
+                let seg_end = selection.end.max(line_start).min(line_end);
+                if seg_end <= seg_start {
+                    continue;
+                }
+                let x_start = line.x_for_index(seg_start - line_start);
+                let x_end = line.x_for_index(seg_end - line_start);
+                quads.push(fill(
+                    Bounds::new(
+                        point(
+                            bounds.left() + x_start,
+                            bounds.top() + line_height * line_idx as f32,
+                        ),
+                        size(x_end - x_start, line_height),
+                    ),
+                    sel_color,
+                ));
+            }
+            quads
+        } else {
+            Vec::new()
+        };
+
+        // 把本次 paint 的几何信息写回 Editor 实体，供点击定位光标用。
+        self.editor.update(cx, |editor, _cx| {
+            editor.last_bounds = Some(bounds);
+            editor.last_line_height = line_height;
+            editor.last_line_starts = line_starts.clone();
+            editor.last_lines = lines.clone();
+            editor.last_content_len = content.len();
+        });
+
+        EditorTextPrepaint {
+            lines,
+            cursor,
+            selection_quads,
+        }
     }
 
     fn paint(
@@ -547,6 +968,10 @@ impl Element for EditorText {
         );
 
         let line_height = window.line_height();
+        // 先画选区高亮背景，再画文字，最后画光标（保证光标在文字之上）。
+        for quad in prepaint.selection_quads.drain(..) {
+            window.paint_quad(quad);
+        }
         for (i, line) in prepaint.lines.iter().enumerate() {
             let origin = point(bounds.left(), bounds.top() + line_height * i as f32);
             line.paint(origin, line_height, gpui::TextAlign::Left, None, window, cx)
@@ -600,8 +1025,27 @@ pub fn standard_actions<E: InteractiveElement>(editor: Entity<Editor>) -> impl F
                     editor.update(cx, |e, cx| e.backspace(a, window, cx))
                 }
             })
-            .on_action(move |a: &Delete, window, cx| {
-                editor.update(cx, |e, cx| e.delete(a, window, cx))
+            .on_action({
+                let editor = editor.clone();
+                move |a: &Delete, window, cx| editor.update(cx, |e, cx| e.delete(a, window, cx))
+            })
+            .on_action({
+                let editor = editor.clone();
+                move |a: &Copy, _window, cx| editor.update(cx, |e, cx| e.copy(a, _window, cx))
+            })
+            .on_action({
+                let editor = editor.clone();
+                move |a: &Cut, _window, cx| editor.update(cx, |e, cx| e.cut(a, _window, cx))
+            })
+            .on_action({
+                let editor = editor.clone();
+                move |a: &Paste, _window, cx| editor.update(cx, |e, cx| e.paste(a, _window, cx))
+            })
+            .on_action({
+                let editor = editor.clone();
+                move |a: &SelectAll, _window, cx| {
+                    editor.update(cx, |e, cx| e.select_all(a, _window, cx))
+                }
             })
     }
 }

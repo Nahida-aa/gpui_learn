@@ -12,6 +12,10 @@ pub struct MultilineExample {
     bio: Entity<String>,
     debug_log: Entity<String>,
     focus_handle: FocusHandle,
+    /// 两个编辑器实体。在首次 render 经 `use_state` 创建后缓存到这里，
+    /// 供 Android 的选区工具条 `SelectionHandler` 定位「当前聚焦的编辑器」。
+    bio_editor: Option<Entity<Editor>>,
+    notes_editor: Option<Entity<Editor>>,
 }
 
 impl Focusable for MultilineExample {
@@ -28,7 +32,14 @@ impl MultilineExample {
             bio,
             debug_log,
             focus_handle: cx.focus_handle(),
+            bio_editor: None,
+            notes_editor: None,
         }
+    }
+
+    /// 两个编辑器实体（首次 render 后才有值），供 Android 选区工具条定位聚焦的编辑器。
+    pub fn selection_editors(&self) -> [Option<Entity<Editor>>; 2] {
+        [self.bio_editor.clone(), self.notes_editor.clone()]
     }
 }
 
@@ -49,9 +60,19 @@ impl Render for MultilineExample {
             let log = self.debug_log.clone();
             move |window, cx| Editor::over_with_log(notes_value, Some(log), window, cx)
         });
+        // 缓存编辑器实体，供 Android 选区工具条使用（只在首次 render 写入）。
+        if self.bio_editor.is_none() {
+            self.bio_editor = Some(bio_editor.clone());
+        }
+        if self.notes_editor.is_none() {
+            self.notes_editor = Some(notes.clone());
+        }
         div()
             .bg(rgb(0xf0f0f0))
             .track_focus(&self.focus_handle(cx))
+            .on_mouse_down(gpui::MouseButton::Left, |event: &gpui::MouseDownEvent, _window, _cx| {
+                log::info!("[appview] on_mouse_down pos={:?} click={}", event.position, event.click_count);
+            })
             .flex()
             .flex_col()
             .size_full()

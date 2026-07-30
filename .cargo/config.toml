@@ -28,5 +28,17 @@ rustflags = [
     "-C", "link-arg=--export=__tls_base",
 ]
 
+# Android 目标：直接用 NDK 自带的 clang 包装脚本作为链接器。
+# 注意：不能把它 symlink 到 /tmp/ndkbin 之类「旁边没有 clang」的目录——
+# 包装脚本内部用 `dirname "$0"/clang` 找 clang，symlink 会让 bin_dir 落到
+# 那个空目录而报 "No such file or directory"。这里直接指向 NDK 自己的 bin 目录，
+# 该目录里同时存在 clang 和 aarch64-linux-android26-clang，所以能正确解析。
+#
+# 还要用 android26 而不是 android21：app 的 minSdk=26，且 -lnativewindow 只在
+# API≥26 的 sysroot 里提供（21 没有 libnativewindow.so），否则链接报
+# "unable to find library -lnativewindow"。
+[target.aarch64-linux-android]
+linker = "/home/aa/Android/Sdk/ndk/29.0.13846066/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang"
+
 [unstable]
 build-std = ["std", "panic_abort"]

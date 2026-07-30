@@ -7,12 +7,12 @@
 //! （见 `focus_and_show_keyboard` 的 cfg 分支），桌面端点击只聚焦，不弹键盘。
 
 use gpui::{
-    App, CursorStyle, Entity, EntityId, Hsla, IntoElement, MouseButton, MouseDownEvent, View,
-    Window, div, hsla, px, white,
+    App, Context, CursorStyle, Entity, EntityId, Hsla, IntoElement, MouseButton, MouseDownEvent,
+    MouseMoveEvent, MouseUpEvent, View, Window, div, hsla, px, white,
 };
 use gpui::prelude::*;
 
-use crate::editor::{Editor, Enter, standard_actions};
+use crate::editor::{Copy, Cut, Editor, Enter, Paste, SelectAll, standard_actions};
 
 enum Source {
     Value(Entity<String>),
@@ -93,13 +93,48 @@ impl View for TextArea {
         div()
             .key_context("TextInput")
             .track_focus(&focus_handle)
+            .relative()
             .cursor(CursorStyle::IBeam)
             .on_mouse_down(MouseButton::Left, {
                 let focus_handle = focus_handle.clone();
                 let editor_id = editor.entity_id();
-                move |_event: &MouseDownEvent, window, cx| {
-                    log::info!("[textarea] on_mouse_down focus editor id={:?}", editor_id);
+                let editor = editor.clone();
+                move |event: &MouseDownEvent, window, cx| {
+                    log::info!("[textarea] on_mouse_down focus editor id={:?} pos={:?} click_count={}", editor_id, event.position, event.click_count);
                     focus_and_show_keyboard(&focus_handle, window, cx);
+                    let offset = editor.read(cx).index_for_point(event.position);
+                    editor.update(cx, |e, cx| {
+                        if event.click_count >= 2 {
+                            // 长按选词（gpui-android 用 click_count=2 标记长按）。
+                            e.is_selecting = true;
+                            e.select_word_at(offset, cx);
+                        } else if event.modifiers.shift {
+                            // Shift+点击：以当前选区为锚点，扩展到点击处。
+                            e.is_selecting = true;
+                            e.move_active_to(offset, cx);
+                        } else {
+                            // 普通点击：定位光标并开启拖拽选区（同一点即折叠）。
+                            e.is_selecting = true;
+                            e.move_to(offset, cx);
+                        }
+                    });
+                }
+            })
+            .on_mouse_move({
+                let editor = editor.clone();
+                move |event: &MouseMoveEvent, _window, cx| {
+                    // 仅拖拽中（按住左键移动）才扩展选区。
+                    if !editor.read(cx).is_selecting || !event.pressed_button.is_some() {
+                        return;
+                    }
+                    let offset = editor.read(cx).index_for_point(event.position);
+                    editor.update(cx, |e, cx| e.move_active_to(offset, cx));
+                }
+            })
+            .on_mouse_up(MouseButton::Left, {
+                let editor = editor.clone();
+                move |_event: &MouseUpEvent, _window, cx| {
+                    editor.update(cx, |e, _cx| e.is_selecting = false);
                 }
             })
             .map(standard_actions(editor.clone()))
@@ -123,6 +158,84 @@ impl View for TextArea {
             .line_height(row_height)
             .text_size(px(18.))
             .text_color(text_color)
-            .child(editor)
+            .child(editor.clone())
+            .child(selection_toolbar(editor, is_focused, window, cx))
     }
+}
+
+/// 工具条上的一个按钮：等宽文字，点击时把对应动作派发到 `editor`。
+/// 按钮自带 hitbox（因挂了 `on_mouse_down`），会拦截其区域内的点击，
+/// 不会穿透到底层编辑器。
+fn toolbar_button(
+    label: &'static str,
+    editor: Entity<Editor>,
+    action: impl Fn(&mut Editor, &mut Window, &mut Context<Editor>) + 'static,
+) -> impl IntoElement {
+    div()
+        .px(px(12.))
+        .h_full()
+        .flex()
+        .items_center()
+        .cursor(CursorStyle::PointingHand)
+        .on_mouse_down(MouseButton::Left, move |_event, window, cx| {
+            editor.update(cx, |e, ecx| action(e, window, ecx));
+        })
+        .child(label)
+}
+
+/// 选中文字时，在选区正上方（贴顶时翻到下方）绘制一个浮动工具条，
+/// 含 复制 / 剪切 / 全选 / 粘贴。这是「方式 A」——用 GPUI 自绘，位置
+/// 由 `editor.selection_bounds()` 决定，紧贴选区，不依赖系统 ActionMode。
+///
+/// 无焦点或折叠光标时返回一个零尺寸占位 `div`，不渲染任何内容。
+fn selection_toolbar(
+    editor: Entity<Editor>,
+    is_focused: bool,
+    _window: &mut Window,
+    cx: &mut App,
+) -> impl IntoElement {
+    // 只要有非空选区就显示工具条（方式 A）。不依赖焦点：焦点状态在
+    // Android 上随输入事件抖动，gating on focus 会让工具条闪烁/消失；
+    // 而非空选区本身就意味着「用户正在选择」，正是该显示工具条的时机。
+    let sel = editor.read(cx).selection_bounds();
+    let Some(b) = sel else {
+        return div();
+    };
+    // `b` 是窗口坐标（来自 editor 的 prepaint bounds）。工具栏用 `.absolute()`
+    // 定位，相对最近的 `relative` 祖先——本 TextArea 的 div——其原点是
+    // TextArea 的 padding 盒。editor 作为 child 位于 TextArea 的 padding(8px)
+    // 之内，故编辑器窗口原点减去 padding 即 TextArea padding 盒的窗口原点。
+    // 把 `b` 减掉这个原点，得到相对 TextArea 的坐标，工具栏才不会因
+    // `overflow_hidden` 被裁到框外。
+    let edit_origin = editor.read(cx).last_bounds_origin().unwrap_or_default();
+    let pad = px(8.);
+    let bar_h = px(36.);
+    let gap = px(4.);
+    let sel_top_rel = b.top() - (edit_origin.y + pad);
+    let sel_left_rel = b.left() - (edit_origin.x + pad);
+    let mut top = sel_top_rel - bar_h - gap;
+    if top < px(0.) {
+        // 选区贴顶，浮条翻转到选区下方，避免超出可视区。
+        let sel_bottom_rel = b.bottom() - (edit_origin.y + pad);
+        top = sel_bottom_rel + gap;
+    }
+    let left = sel_left_rel;
+
+    div()
+        .absolute()
+        .top(top)
+        .left(left)
+        .flex()
+        .items_center()
+        .h(bar_h)
+        .rounded(px(6.))
+        .bg(hsla(0.0, 0.0, 0.18, 0.96))
+        .border_1()
+        .border_color(hsla(0.0, 0.0, 1.0, 0.25))
+        .text_color(white())
+        .text_size(px(14.))
+        .child(toolbar_button("复制", editor.clone(), |e, window, cx| e.copy(&Copy, window, cx)))
+        .child(toolbar_button("剪切", editor.clone(), |e, window, cx| e.cut(&Cut, window, cx)))
+        .child(toolbar_button("全选", editor.clone(), |e, window, cx| e.select_all(&SelectAll, window, cx)))
+        .child(toolbar_button("粘贴", editor.clone(), |e, window, cx| e.paste(&Paste, window, cx)))
 }

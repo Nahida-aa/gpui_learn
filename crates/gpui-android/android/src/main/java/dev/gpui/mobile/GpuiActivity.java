@@ -11,7 +11,10 @@ import android.text.Editable;
 import android.text.SpannableStringBuilder;
 import android.util.Base64;
 import android.util.Log;
+import android.view.ActionMode;
 import android.view.Gravity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
 import android.view.inputmethod.EditorInfo;
@@ -47,6 +50,10 @@ public class GpuiActivity extends NativeActivity {
     private static final String KEYSTORE = "AndroidKeyStore";
     private static final String CREDENTIAL_PREFS = "gpui_secure_credentials";
     private GpuiInputView inputView;
+
+    // 系统选区工具条（ActionMode）。Rust 在选区从空变非空时调用
+    // gpuiStartActionMode 弹出，区回到空时调用 gpuiFinishActionMode 收起。
+    private ActionMode selectionActionMode;
 
     // NativeActivity loads the .so named by `android.app.lib_name` into the
     // *framework* class loader. Subclass-declared `native` methods (the IME /
@@ -95,6 +102,9 @@ public class GpuiActivity extends NativeActivity {
     private static native void nativeDeleteSurroundingText(int before, int after);
     private static native String nativeAccessibilitySnapshot();
     private static native boolean nativeAccessibilityAction(long nodeId, int action);
+
+    /** Called by Rust to show the system selection toolbar (复制/剪切/全选/粘贴). */
+    private static native void nativeSelectionAction(int code);
 
     @Override
     protected void onCreate(Bundle state) {
@@ -158,6 +168,89 @@ public class GpuiActivity extends NativeActivity {
     public void gpuiAccessibilityChanged() {
         runOnUiThread(() -> inputView.sendAccessibilityEvent(
                 AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED));
+    }
+
+    /**
+     * Called by Rust (selection.rs) to show the system selection toolbar.
+     * Runs on the UI thread because ActionMode can only be started there.
+     * The toolbar's menu is built by {@link SelectionActionModeCallback}.
+     */
+    public void gpuiStartActionMode() {
+        runOnUiThread(() -> {
+            if (selectionActionMode != null) {
+                // Already showing — refresh in case the selection changed.
+                selectionActionMode.invalidate();
+                return;
+            }
+            // Force a FLOATING action mode. On MIUI (and generally on
+            // NativeActivity, which has no ActionBar), the single-arg
+            // startActionMode() defaults to an ActionBar-overlay mode that has
+            // nowhere to render and is thus invisible. TYPE_FLOATING renders the
+            // toolbar as a free-floating bar above the selection. API 23+, and
+            // our minSdk is 26.
+            selectionActionMode = startActionMode(
+                    new SelectionActionModeCallback(), ActionMode.TYPE_FLOATING);
+        });
+    }
+
+    /** Called by Rust (selection.rs) to dismiss the system selection toolbar. */
+    public void gpuiFinishActionMode() {
+        runOnUiThread(() -> {
+            if (selectionActionMode != null) {
+                selectionActionMode.finish();
+                selectionActionMode = null;
+            }
+        });
+    }
+
+    /**
+     * Callback that builds the selection toolbar menu and routes clicks back
+     * to Rust via {@link #nativeSelectionAction}. The four verbs map to codes:
+     * 0=复制(copy), 1=剪切(cut), 2=全选(select-all), 3=粘贴(paste).
+     */
+    private class SelectionActionModeCallback implements ActionMode.Callback {
+        private static final int ID_COPY = 0;
+        private static final int ID_CUT = 1;
+        private static final int ID_SELECT_ALL = 2;
+        private static final int ID_PASTE = 3;
+
+        @Override
+        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+            menu.add(0, ID_COPY, 0, "复制").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            menu.add(0, ID_CUT, 1, "剪切").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+            menu.add(0, ID_SELECT_ALL, 2, "全选").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            menu.add(0, ID_PASTE, 3, "粘贴").setShowAsAction(MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            return true;
+        }
+
+        @Override
+        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+            return false;
+        }
+
+        @Override
+        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+            int code;
+            switch (item.getItemId()) {
+                case ID_COPY: code = 0; break;
+                case ID_CUT: code = 1; break;
+                case ID_SELECT_ALL: code = 2; break;
+                case ID_PASTE: code = 3; break;
+                default: return false;
+            }
+            nativeSelectionAction(code);
+            // 复制/全选 保留工具条；剪切/粘贴 会清空选区，Rust 会自行收起。
+            if (code == 1 || code == 3) {
+                selectionActionMode = null;
+                mode.finish();
+            }
+            return true;
+        }
+
+        @Override
+        public void onDestroyActionMode(ActionMode mode) {
+            selectionActionMode = null;
+        }
     }
 
     /** Encrypt and persist a credential using a non-exportable AES-GCM key. */

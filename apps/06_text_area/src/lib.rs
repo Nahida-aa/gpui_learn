@@ -45,6 +45,16 @@ fn bind_keys(cx: &mut App) {
         KeyBinding::new("end", editor::End, None),
         KeyBinding::new("enter", editor::Enter, None),
         KeyBinding::new("cmd-q", editor::Quit, None),
+        // 复制/剪切/粘贴：macOS 用 cmd，其它平台用 ctrl。
+        KeyBinding::new("cmd-c", editor::Copy, None),
+        KeyBinding::new("cmd-x", editor::Cut, None),
+        KeyBinding::new("cmd-v", editor::Paste, None),
+        KeyBinding::new("ctrl-c", editor::Copy, None),
+        KeyBinding::new("ctrl-x", editor::Cut, None),
+        KeyBinding::new("ctrl-v", editor::Paste, None),
+        // 全选：macOS 用 cmd，其它平台用 ctrl。
+        KeyBinding::new("cmd-a", editor::SelectAll, None),
+        KeyBinding::new("ctrl-a", editor::SelectAll, None),
     ]);
 }
 
@@ -91,7 +101,54 @@ pub fn run() {
 #[cfg(target_os = "android")]
 mod android_entry {
     use super::*;
-    use gpui::{App as _, Application};
+    use gpui::{AnyWindowHandle, App, Application, WindowHandle};
+    use std::sync::Arc;
+
+    /// 选区处理器：把系统 ActionMode 的工具条点击路由到「当前聚焦」的编辑器。
+    /// 两个编辑器在首次 render 时才创建，故这里只存窗口句柄，按需读取。
+    struct AndroidSelectionHandler {
+        window: WindowHandle<MultilineExample>,
+    }
+
+    impl gpui_android::SelectionHandler for AndroidSelectionHandler {
+        fn copy(&self, cx: &mut App) {
+            self.with_focused_editor(cx, editor::Copy);
+        }
+        fn cut(&self, cx: &mut App) {
+            self.with_focused_editor(cx, editor::Cut);
+        }
+        fn paste(&self, cx: &mut App) {
+            self.with_focused_editor(cx, editor::Paste);
+        }
+        fn select_all(&self, cx: &mut App) {
+            self.with_focused_editor(cx, editor::SelectAll);
+        }
+    }
+
+    impl AndroidSelectionHandler {
+        /// 在 GPUI 主线程上找到「聚焦中」的编辑器，对其执行给定动作。
+        /// 工具条点击经 gpui-android 的帧循环已在主线程出队，并带着 &mut App 进来。
+        fn with_focused_editor<A: gpui::Action>(&self, cx: &mut App, action: A) {
+            let action = Box::new(action) as Box<dyn gpui::Action>;
+            let window: AnyWindowHandle = self.window.into();
+            let target_window = self.window;
+            let _ = cx.update_window(window, |_view, window, cx| {
+                // update_window 给的是 AnyView（泛型），改用窗口句柄读取编辑器实体。
+                if let Ok(view) = target_window.read(cx) {
+                    let editors = view.selection_editors();
+                    for editor in editors.into_iter().flatten() {
+                        if editor.read(cx).focus_handle.is_focused(window) {
+                            // 复用 Editor 既有的 copy/cut/paste/select_all，
+                            // 与桌面快捷键完全一致（含剪贴板读写）。
+                            // dispatch_action 会发给当前聚焦的元素（即此编辑器）。
+                            cx.dispatch_action(action.as_ref());
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+    }
 
     #[unsafe(no_mangle)]
     pub fn android_main(app: android_activity::AndroidApp) {
@@ -114,6 +171,11 @@ mod android_entry {
             log::info!("Application::run 回调：打开窗口");
             let window = open_example_window(cx);
             cx.on_action(|_: &editor::Quit, cx| cx.quit());
+
+            // 注册系统 ActionMode 的选区处理器（点击时按需查找聚焦的编辑器）。
+            gpui_android::set_selection_handler(Arc::new(AndroidSelectionHandler {
+                window: window.clone(),
+            }));
 
             window
                 .update(cx, |view, window, cx| {

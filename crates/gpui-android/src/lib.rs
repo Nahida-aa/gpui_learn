@@ -19,6 +19,14 @@ pub fn current_platform(headless: bool) -> std::rc::Rc<dyn gpui::Platform> {
     android::current_platform(headless)
 }
 
+/// Selection-toolbar bridge (system Android `ActionMode`).
+///
+/// Apps register a [`SelectionHandler`] in their `android_main` so the native
+/// selection toolbar (复制 / 剪切 / 全选 / 粘贴) can drive the focused editor.
+/// Desktop builds don't expose this — the toolbar is Android-only by design.
+#[cfg(target_os = "android")]
+pub use android::selection::{set_selection_handler, SelectionHandler, SelectionVerb};
+
 #[cfg(not(target_os = "android"))]
 pub fn current_platform(_headless: bool) -> std::rc::Rc<dyn gpui::Platform> {
     panic!("gpui-android can only create a platform on Android")

@@ -10,3 +10,5 @@ dist/
 
 # local
 .agents/*.local.md
+
+assets/images
