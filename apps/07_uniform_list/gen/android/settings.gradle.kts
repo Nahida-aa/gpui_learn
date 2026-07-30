@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GPUILearnGPUILearnUniformList"
+rootProject.name = "GPUILearnuniformlist07"
 include(":app")
