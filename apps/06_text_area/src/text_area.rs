@@ -90,7 +90,8 @@ impl View for TextArea {
             hsla(0., 0., 0.75, 1.)
         };
 
-        div()
+        #[cfg_attr(not(target_os = "android"), allow(unused_mut))]
+        let mut box_div = div()
             .key_context("TextInput")
             .track_focus(&focus_handle)
             .relative()
@@ -158,14 +159,23 @@ impl View for TextArea {
             .line_height(row_height)
             .text_size(px(18.))
             .text_color(text_color)
-            .child(editor.clone())
-            .child(selection_toolbar(editor, is_focused, window, cx))
+            .child(editor.clone());
+
+        // 自绘选区工具条（方式 A）仅 Android 需要：桌面端有系统原生选区菜单，
+        // 无需自绘；且桌面端选区坐标换算与系统菜单会重叠。
+        #[cfg(target_os = "android")]
+        {
+            box_div = box_div.child(selection_toolbar(editor, is_focused, window, cx));
+        }
+
+        box_div
     }
 }
 
 /// 工具条上的一个按钮：等宽文字，点击时把对应动作派发到 `editor`。
 /// 按钮自带 hitbox（因挂了 `on_mouse_down`），会拦截其区域内的点击，
 /// 不会穿透到底层编辑器。
+#[cfg(target_os = "android")]
 fn toolbar_button(
     label: &'static str,
     editor: Entity<Editor>,
@@ -188,6 +198,7 @@ fn toolbar_button(
 /// 由 `editor.selection_bounds()` 决定，紧贴选区，不依赖系统 ActionMode。
 ///
 /// 无焦点或折叠光标时返回一个零尺寸占位 `div`，不渲染任何内容。
+#[cfg(target_os = "android")]
 fn selection_toolbar(
     editor: Entity<Editor>,
     is_focused: bool,
