@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "dev": "cargo watch -x run -p uniform_list_07"
+  }
+}

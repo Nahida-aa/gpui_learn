@@ -1,0 +1,30 @@
+[package]
+# 注意：Cargo 包名不能以数字开头，所以包名用 uniform_list_07，
+# 而目录名保留 07_uniform_list 以体现学习顺序。运行用包名：
+#   cargo run -p uniform_list_07
+name = "uniform_list_07"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+# 07：GPUI uniform_list —— 定高虚拟列表（长列表/滚动渲染的基础构件）。
+# 本例在官方 uniform_list 示例基础上补全官方省略、但真实 app 必需的能力：
+# 可变数据源、点击选中高亮、键盘上下导航 + 回车选中、滚动。
+[dependencies]
+gpui = { workspace = true }
+# 桌面 / 通用依赖：log 给诊断日志用（env_logger 在 main 里初始化后输出）。
+log = "0.4"
+# 桌面端 logger backend（初始化后 log::info! 才能在终端输出；不初始化则静默丢弃）。
+env_logger = "0.11"
+
+# gpui_platform 提供桌面入口 application()，按平台开窗口后端。
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_family = "wasm")))'.dependencies]
+gpui_platform = { workspace = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+gpui_platform = { workspace = true }
+wasm-bindgen = "0.2.120"
