@@ -37,10 +37,10 @@
 
 > 方式 B 的完整代码（`crates/gpui-android/src/android/selection.rs` 的
 > `SelectionHandler` / `SELECTION_COMMANDS` / `drain_selection_commands`、
-> `GpuiActivity.java` 的 `gpuiStartActionMode` 等）**保留未删**，作为可切换
-> fallback。当前 `window.rs` 的 `sync_selection_action_mode` 已不再调用
-> `start_action_mode` / `finish_action_mode`，所以系统 ActionMode 不会弹出。
-> 若将来想切回，只需在那两个分支重新调用即可。
+> `GpuiActivity.java` 的 `gpuiStartActionMode` 等）**保留在仓库中**，作为这次
+> 尝试的历史记录——证明我们两种方案都实做过。当前 `window.rs` 的
+> `sync_selection_action_mode` 已不再调用 `start_action_mode` / `finish_action_mode`，
+> 所以系统 ActionMode 不会弹出；方式 A 是自绘的正式方案。
 
 ---
 
@@ -99,6 +99,67 @@ fn toolbar_button(label, editor, action) -> impl IntoElement {
 ```
 
 按钮自带 `on_mouse_down`，点击时直接派发到 `editor.copy/cut/paste/select_all`。
+
+### 2.4 方式 B 实现要点（系统 `ActionMode`，已尝试、未启用）
+
+方式 B 不走 GPUI 自绘，而是让 Android 系统弹出原生 `ActionMode` 工具条，
+再把菜单点击路由回 `Editor`。代码在 `crates/gpui-android` 与 `GpuiActivity.java`：
+
+**Java 侧（`GpuiActivity.java`）**：
+
+```java
+// 必须用 TYPE_FLOATING：NativeActivity 没有 ActionBar，单参 startActionMode
+// 默认走 ActionBar 覆盖层，在 NativeActivity 上完全不可见（「从不显示」的根因）。
+public void gpuiStartActionMode() {
+    runOnUiThread(() -> {
+        if (selectionActionMode != null) {
+            selectionActionMode.invalidate();
+            return;
+        }
+        selectionActionMode = startActionMode(
+                new SelectionActionModeCallback(), ActionMode.TYPE_FLOATING);
+    });
+}
+// 菜单项点击 → nativeSelectionAction(code) → Rust
+```
+
+菜单项 verb code（Java→Rust）：`0=Copy 1=Cut 2=Paste 3=SelectAll`，
+与 Rust 侧 `SelectionVerb::from_code` 对应。
+
+**Rust 侧（`crates/gpui-android/src/android/selection.rs`）**：
+
+```rust
+// app 在 android_main 注册 SelectionHandler（实现 copy/cut/paste/select_all）
+pub trait SelectionHandler: Send + Sync {
+    fn copy(&self, cx: &mut App);
+    fn cut(&self, cx: &mut App);
+    fn paste(&self, cx: &mut App);
+    fn select_all(&self, cx: &mut App);
+}
+
+// Java 的 nativeSelectionAction 调用 enqueue_selection_command(verb)
+// → 入队 SELECTION_COMMANDS（Bender 线程安全队列）
+// → window.rs 每帧 on_request_frame 调 drain_selection_commands 出队
+// → handler.update_app(|app| dispatch_verb(verb, app)) 派发到聚焦 editor
+pub(crate) fn drain_selection_commands(input_handler: &Arc<...>) {
+    let commands = std::mem::take(&mut *SELECTION_COMMANDS.lock());
+    // ... 借聚焦 input_handler 的窗口上下文拿 &mut App，逐个执行
+    for verb in commands {
+        handler.update_app(|app| dispatch_verb(verb, app));
+    }
+}
+```
+
+**显示/隐藏的驱动**（`window.rs` 的 `sync_selection_action_mode`）：
+每帧检测聚焦 editor 选区是否非空，状态翻转时调用 `start_action_mode` /
+`finish_action_mode`（Rust→Java）。
+
+**方式 B 的不完美（设备验证结论）**：
+- `ActionMode` 在 `NativeActivity` 上用 `TYPE_FLOATING` 才能显示，但位置
+  **固定在应用顶部**，无法贴着选区（QQ / 系统短信那种「选区旁边」是系统给
+  原生 `TextView` 注入的，GPUI 自绘编辑器绕过了原生 TextView，系统无从定位）。
+- 同样**拿不到 MIUI 的「问小爱 / 翻译」增强按钮**（原理同上）。
+- 因此方式 B 仅作为历史尝试保留，未启用；实际方案是方式 A。
 
 ---
 
@@ -177,8 +238,9 @@ padding），得到相对 TextArea 的坐标。`Editor` 上新增
 
 ## 5. 当前状态
 
-- 方式 A 已设备验证：长按选词 → 工具条出现在选区**上方** → 复制 / 剪切 /
-  全选 / 粘贴四个按钮均正确派发到 `Editor`。
-- 方式 B 代码保留为 fallback，未启用。
-- 临时调试日志（在本文沉淀后已清理）：`[toolbar] SHOW`、`[toolbar] BTN`、
-  `[selbounds]*`、`[appview]`、`[textarea] RENDER` 等。
+- 方式 A（自绘）是正式启用方案，已设备验证：长按选词 → 工具条出现在选区
+  **上方** → 复制 / 剪切 / 全选 / 粘贴四个按钮均正确派发到 `Editor`。
+- 方式 B（系统 ActionMode）已实现并设备验证过，但因只能落顶部、拿不到 MIUI
+  增强，未启用；其代码保留在仓库作为尝试记录。
+- 调试日志（`[toolbar] SHOW`、`[toolbar] BTN`、`[selbounds]*`、`[appview]`、
+  `[textarea] RENDER` 等）仍保留在代码中，用于后续设备验证。
