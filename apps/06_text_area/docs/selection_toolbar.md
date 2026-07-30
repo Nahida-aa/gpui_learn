@@ -16,7 +16,7 @@
 | 依赖 | 必须 `ActionMode.TYPE_FLOATING`（NativeActivity 无 ActionBar） | 纯 GPUI，无系统依赖 |
 | 按钮定制 | 受系统菜单限制 | 任意按钮、任意样式 |
 | MIUI 增强（问小爱/翻译） | ❌ 拿不到（那是系统给原生 `TextView` 注入的，GPUI 自绘不触发） | ❌ 同样拿不到（原理同上） |
-| 现状 | **已禁用**，保留为可切换 fallback | **当前启用** |
+| 现状 | **已删除**（git 历史保留作为尝试记录） | **当前启用** |
 
 ### 两种都尝试过，以及不完美的结果
 
@@ -33,14 +33,14 @@
 
 **结论**：两种方式都拿不到 MIUI 的系统增强，这是「GPUI 自绘编辑器」的固有
 限制，不是实现疏漏。用户期望的「工具条在选区旁边」只有自绘（方式 A）能实现，
-故方式 A 作为实际启用方案，方式 B 代码保留作为历史记录与可切换 fallback。
+故方式 A 作为正式启用方案，方式 B 的代码已删除（git 历史里仍保留完整实现，
+作为这次尝试的证明）。
 
 > 方式 B 的完整代码（`crates/gpui-android/src/android/selection.rs` 的
 > `SelectionHandler` / `SELECTION_COMMANDS` / `drain_selection_commands`、
-> `GpuiActivity.java` 的 `gpuiStartActionMode` 等）**保留在仓库中**，作为这次
-> 尝试的历史记录——证明我们两种方案都实做过。当前 `window.rs` 的
-> `sync_selection_action_mode` 已不再调用 `start_action_mode` / `finish_action_mode`，
-> 所以系统 ActionMode 不会弹出；方式 A 是自绘的正式方案。
+> `GpuiActivity.java` 的 `gpuiStartActionMode` 等）**已删除**，仅留存在 git 历史中
+> 作为这次尝试的证明——证明我们两种方案都实做过。其专属依赖 `gpui::PlatformInputHandler::update_app`
+> （仅 `selection.rs` 调用）也已一并删除。方式 A 是自绘的正式方案。
 
 ---
 
@@ -100,10 +100,12 @@ fn toolbar_button(label, editor, action) -> impl IntoElement {
 
 按钮自带 `on_mouse_down`，点击时直接派发到 `editor.copy/cut/paste/select_all`。
 
-### 2.4 方式 B 实现要点（系统 `ActionMode`，已尝试、未启用）
+### 2.4 方式 B 实现要点（系统 `ActionMode`，曾尝试，现已删除）
 
 方式 B 不走 GPUI 自绘，而是让 Android 系统弹出原生 `ActionMode` 工具条，
-再把菜单点击路由回 `Editor`。代码在 `crates/gpui-android` 与 `GpuiActivity.java`：
+再把菜单点击路由回 `Editor`。以下为当时实现（代码已删除，仅作历史记录）：
+代码片段中的 `SelectionHandler` / `SELECTION_COMMANDS` / `drain_selection_commands`
+及 `gpuiStartActionMode` / `nativeSelectionAction` 等均已从仓库移除。
 
 **Java 侧（`GpuiActivity.java`）**：
 
@@ -159,7 +161,7 @@ pub(crate) fn drain_selection_commands(input_handler: &Arc<...>) {
   **固定在应用顶部**，无法贴着选区（QQ / 系统短信那种「选区旁边」是系统给
   原生 `TextView` 注入的，GPUI 自绘编辑器绕过了原生 TextView，系统无从定位）。
 - 同样**拿不到 MIUI 的「问小爱 / 翻译」增强按钮**（原理同上）。
-- 因此方式 B 仅作为历史尝试保留，未启用；实际方案是方式 A。
+- 因此方式 B 作为历史尝试后已删除（git 历史保留），实际方案是方式 A。
 
 ---
 
@@ -240,7 +242,7 @@ padding），得到相对 TextArea 的坐标。`Editor` 上新增
 
 - 方式 A（自绘）是正式启用方案，已设备验证：长按选词 → 工具条出现在选区
   **上方** → 复制 / 剪切 / 全选 / 粘贴四个按钮均正确派发到 `Editor`。
-- 方式 B（系统 ActionMode）已实现并设备验证过，但因只能落顶部、拿不到 MIUI
-  增强，未启用；其代码保留在仓库作为尝试记录。
+- 方式 B（系统 ActionMode）曾实现并设备验证过，但因只能落顶部、拿不到 MIUI
+  增强，已删除；完整代码留在 git 历史作为尝试记录。
 - 调试日志（`[toolbar] SHOW`、`[toolbar] BTN`、`[selbounds]*`、`[appview]`、
   `[textarea] RENDER` 等）仍保留在代码中，用于后续设备验证。

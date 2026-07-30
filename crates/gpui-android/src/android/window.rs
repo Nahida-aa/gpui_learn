@@ -1238,10 +1238,6 @@ pub struct AndroidPlatformWindow {
     /// replaced when `on_input` is called.
     momentum_input_cb:
         Arc<Mutex<Box<dyn FnMut(gpui::PlatformInput) -> DispatchEventResult + Send>>>,
-    /// Whether the system `ActionMode` selection toolbar is currently shown.
-    /// Toggled by [`Self::sync_selection_action_mode`] based on whether the
-    /// focused editor has a non-empty selection.
-    action_mode_active: Arc<AtomicBool>,
 }
 
 pub(crate) struct MainThreadInputHandler(Option<PlatformInputHandler>);
@@ -1281,7 +1277,6 @@ impl AndroidPlatformWindow {
                 pending_scroll_phase: gpui::TouchPhase::Moved,
             })),
             momentum_input_cb: Arc::new(Mutex::new(noop_input_cb)),
-            action_mode_active: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -1289,46 +1284,6 @@ impl AndroidPlatformWindow {
     pub fn inner(&self) -> &Arc<AndroidWindow> {
         &self.window
     }
-}
-
-/// Whether the focused editor currently has a non-empty selection.
-///
-/// Reads the focused `EntityInputHandler`'s `selected_text_range` (UTF-16).
-/// Returns `false` when there is no focused handler.
-pub(crate) fn focused_selection_nonempty(
-    input_handler: &Arc<Mutex<MainThreadInputHandler>>,
-) -> bool {
-    let mut guard = input_handler.lock();
-    match guard.inner_mut() {
-        Some(handler) => handler
-            .selected_text_range(true)
-            .is_some_and(|sel| !sel.range.is_empty()),
-        None => false,
-    }
-}
-
-/// Show or hide the system `ActionMode` toolbar to match the focused editor's
-/// selection state. Called once per frame from `on_request_frame` (already on
-/// the GPUI main thread). No-ops when the state is unchanged.
-///
-/// Implemented as a free function (not a method) so the `on_request_frame`
-/// `move` closure — which must be `Send` and therefore cannot capture `self`
-/// (it contains a non-`Send` `Rc`) — can call it with the two `Arc`s it needs.
-pub(crate) fn sync_selection_action_mode(
-    input_handler: &Arc<Mutex<MainThreadInputHandler>>,
-    action_mode_active: &Arc<AtomicBool>,
-) {
-    let has_selection = focused_selection_nonempty(input_handler);
-    let was_active = action_mode_active.load(Ordering::Relaxed);
-    if has_selection == was_active {
-        return;
-    }
-    action_mode_active.store(has_selection, Ordering::Relaxed);
-    // 显示/隐藏「选中文字浮动工具条」现在由应用层用 GPUI 自绘完成
-    // （见 apps/06_text_area 的 TextArea::selection_toolbar，方式 A），不再
-    // 走系统 ActionMode（方式 B）。系统 ActionMode 在 NativeActivity + 非原生
-    // TextView 上无法定位到选区旁，只能落在顶部，因此弃用。
-    // 这里的 `action_mode_active` 状态仍保留，便于将来切回方式 B 时复用。
 }
 
 impl HasWindowHandle for AndroidPlatformWindow {
@@ -1509,8 +1464,6 @@ impl PlatformWindow for AndroidPlatformWindow {
         // on the struct so on_request_frame can capture it.
         let input_cb = Arc::clone(&self.momentum_input_cb);
         let input_handler = Arc::clone(&self.input_handler);
-        // 系统 ActionMode 当前是否显示；move 闭包持有克隆用于每帧同步选区状态。
-        let action_mode_active = Arc::clone(&self.action_mode_active);
         // 长按检测需要读 touch_state；move 闭包持有自己的克隆。
         let frame_touch_state = Arc::clone(&self.window.touch_state);
 
@@ -1546,14 +1499,6 @@ impl PlatformWindow for AndroidPlatformWindow {
                     }
                 }
             }
-
-            // ── 选区 → 系统 ActionMode 同步 ─────────────────────
-            // 选区从「空」变「非空」（长按选词 / 拖拽选段）时弹出系统工具条；
-            // 选区回到「空」（点击收拢 / 剪切 / 粘贴）时收起。每帧只检测一次。
-            sync_selection_action_mode(&input_handler, &action_mode_active);
-            // 系统工具条的菜单点击（复制/剪切/粘贴/全选）经 JNI 入队，
-            // 这里在 GPUI 主线程上出队并执行（借聚焦 input_handler 取 &mut App）。
-            crate::android::selection::drain_selection_commands(&input_handler);
 
             // ── 长按检测 ───────────────────────────────────────────
             // 手指按下后既没移动超 slop、也没抬起，超过阈值就判为长按，

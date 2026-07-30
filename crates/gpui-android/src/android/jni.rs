@@ -1474,30 +1474,6 @@ pub unsafe extern "C" fn Java_dev_gpui_mobile_GpuiActivity_nativeAccessibilityAc
     u8::from(node_id >= 0 && crate::accessibility::perform_action(node_id as u64, action))
 }
 
-/// JNI bridge: a click on the system `ActionMode` selection toolbar
-/// (复制 / 剪切 / 全选 / 粘贴).
-///
-/// `code` maps to [`crate::android::selection::SelectionVerb`]: 0=复制,
-/// 1=剪切, 2=全选, 3=粘贴. We enqueue it; `window.rs`'s per-frame callback
-/// drains and dispatches it on the GPUI main thread.
-///
-/// # Safety
-/// Must only be called from the JVM on a valid JNI thread.
-#[unsafe(no_mangle)]
-pub unsafe extern "C" fn Java_dev_gpui_mobile_GpuiActivity_nativeSelectionAction(
-    _env: *mut std::ffi::c_void,
-    _class: *mut std::ffi::c_void,
-    code: i32,
-) {
-    match crate::android::selection::SelectionVerb::from_code(code) {
-        Some(verb) => {
-            log::info!("nativeSelectionAction: code={} -> {:?}", code, verb);
-            crate::android::selection::enqueue_selection_command(verb);
-        }
-        None => log::warn!("nativeSelectionAction: unknown code {code}"),
-    }
-}
-
 /// JNI bridge: receive a media action from `GpuiMediaSession` system controls.
 ///
 /// Actions: "play", "pause", "stop", "next", "previous"

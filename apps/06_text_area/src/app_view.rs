@@ -13,7 +13,7 @@ pub struct MultilineExample {
     debug_log: Entity<String>,
     focus_handle: FocusHandle,
     /// 两个编辑器实体。在首次 render 经 `use_state` 创建后缓存到这里，
-    /// 供 Android 的选区工具条 `SelectionHandler` 定位「当前聚焦的编辑器」。
+    /// 供需要时读取（如调试或外部定位当前聚焦的编辑器）。
     bio_editor: Option<Entity<Editor>>,
     notes_editor: Option<Entity<Editor>>,
 }
