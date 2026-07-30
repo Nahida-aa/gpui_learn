@@ -189,6 +189,11 @@ fn toolbar_button(
         .cursor(CursorStyle::PointingHand)
         .on_mouse_down(MouseButton::Left, move |_event, window, cx| {
             editor.update(cx, |e, ecx| action(e, window, ecx));
+            // 阻止事件冒泡到外层 TextArea 的 on_mouse_down：否则点击会先命中
+            // 工具栏按钮（如「全选」选中整段），再冒泡触发 TextArea 用点击坐标
+            // 调 move_to / select_word_at，把刚选好的选区折叠成光标，表现为
+            // 「点全选反而丢失选中」。stop_propagation 让按钮点击到此为止。
+            cx.stop_propagation();
         })
         .child(label)
 }
