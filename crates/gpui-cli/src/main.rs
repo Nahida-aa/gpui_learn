@@ -143,24 +143,15 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     // 字段缺省推导：`app_name` → 包名；`identifier` → <仓库名>.<包名>。
     // 仓库名取 git 根目录名（如 gpui_learn）。若不在 git 仓库内（拿不到 .git），
     // 直接报错——不硬编码假名，避免默认包名语义失真。
+    // repo_name 与 cargo_package 都过 pkg_segment 规范化，保证拼出的 identifier
+    // 是合法 Android applicationId（每段仅 ASCII 字母/数字/下划线、小写、不以数字开头）。
     let repo_name = repo_name_from(&project_dir)
         .context("无法确定仓库名来推导默认 identifier：当前目录不在 git 仓库内（找不到 .git），请在 git 仓库中运行，或在 gpui.conf.json 显式写 identifier")?;
     let app_name = conf
         .app_name
         .unwrap_or_else(|| cargo_package.clone());
     let identifier = conf.identifier.unwrap_or_else(|| {
-        format!(
-            "{}.{}",
-            repo_name,
-            cargo_package
-                .chars()
-                .map(|c| if c.is_alphanumeric() || c == '_' {
-                    c
-                } else {
-                    '_'
-                })
-                .collect::<String>()
-        )
+        format!("{}.{}", pkg_segment(&repo_name), pkg_segment(&cargo_package))
     });
 
     // 3) 解析目标 ABI
@@ -347,6 +338,50 @@ fn repo_name_from(project_dir: &Path) -> Option<String> {
         }
     }
     None
+}
+
+/// 把一个字符串规范成 Android `applicationId` 的「合法段」：
+/// - 仅保留 ASCII 字母/数字/下划线，其余（含 `-`、空格、中文、点等）替换为 `_`；
+/// - 整体转小写（反向域名惯例全小写）；
+/// - 若段以数字开头，前缀补 `_`（Java 标识符不能以数字开头）。
+/// 仓库目录名可能含 `-`/大写，包名（cargo package name）应以同样规则约束，
+/// 故 repo_name 与 cargo_package 都过这一道，保证拼出的 identifier 合法。
+fn pkg_segment(s: &str) -> String {
+    let mut seg: String = s
+        .chars()
+        .map(|c| {
+            if c.is_ascii_alphanumeric() || c == '_' {
+                c.to_ascii_lowercase()
+            } else {
+                '_'
+            }
+        })
+        .collect();
+    if seg.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+        seg.insert(0, '_');
+    }
+    seg
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pkg_segment_normalizes_repo_and_package_names() {
+        // 大写 + 连字符 → 小写 + 下划线
+        assert_eq!(pkg_segment("My-Repo2"), "my_repo2");
+        // 纯小写带连字符
+        assert_eq!(pkg_segment("gpui-learn"), "gpui_learn");
+        // 以数字开头 → 前缀补 _
+        assert_eq!(pkg_segment("3repo"), "_3repo");
+        // 中文等非 ASCII → 下划线（4 个汉字 → 4 个下划线）
+        assert_eq!(pkg_segment("我的仓库"), "____");
+        // 合法名不变
+        assert_eq!(pkg_segment("uniform_list_07"), "uniform_list_07");
+        // 混合：数字开头 + 非法字符
+        assert_eq!(pkg_segment("2-My.App"), "_2_my_app");
+    }
 }
 
 fn write_file(path: &Path, content: &str) -> Result<()> {
