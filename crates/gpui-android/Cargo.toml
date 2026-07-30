@@ -2,7 +2,7 @@
 name = "gpui-android"
 version = "0.9.3"
 edition = "2024"
-description = "Android platform backend for GPUI (vendored into gpui_learn, pinned to zed 82aef443)"
+description = "Android platform backend for GPUI (vendored into gpui_learn, pinned to zed d88f6821)"
 license = "Apache-2.0"
 publish = false
 
@@ -23,14 +23,14 @@ spinorama = []
 tokio = []
 urlencoding = []
 
-# GPUI 依赖统一指向本仓库根 [patch.crates-io] 的 zed 82aef443（与 01/02 同源）。
+# GPUI 依赖统一指向本仓库根 [patch.crates-io] 的 zed d88f6821（与 01/02 同源）。
 # 注意：本仓库根已把 gpui / gpui_wgpu patch 到该 rev，这里用相同的 git 源即可。
 [dependencies]
 accesskit = "0.24.0"
 anyhow = "1.0"
 futures = "0.3"
-gpui = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.2.2", default-features = false }
-gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "82aef44308540b576e4e51fb379efa71614e5c91", version = "=0.1.0" }
+gpui = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.2.2", default-features = false }
+gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.1.0" }
 log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
 parking_lot = "0.12"
 raw-window-handle = "0.6"

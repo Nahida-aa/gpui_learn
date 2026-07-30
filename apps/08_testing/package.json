@@ -1,0 +1,19 @@
+{
+  "name": "testing_08",
+  "version": "0.1.0",
+  "private": true,
+  "description": "08_testing —— 用 gpui-android 后端在手机跑 GPUI 测试示例（计数器）",
+  "scripts": {
+    "dev": "cargo watch -x run -p testing_08",
+    "check": "cargo check -p testing_08",
+    "android:init": "cargo run -p gpui-cli -- android init",
+    "android:check": "cargo ndk -t arm64-v8a -P 26 check -p testing_08",
+    "android:apk": "cd gen/android && ./gradlew assembleDebug",
+    "android:apk:release": "cd gen/android && ./gradlew assembleRelease -Prelease",
+    "android:install": "adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk",
+    "android:launch": "adb shell am start -n gpui_learn.testing_08/dev.gpui.mobile.GpuiActivity",
+    "android:run": "bun run android:init && bun run android:apk && bun run android:install && bun run android:launch",
+    "android:logs": "adb logcat -s testing_08:V gpui-android:V",
+    "android:uninstall": "adb uninstall gpui_learn.testing_08"
+  }
+}
