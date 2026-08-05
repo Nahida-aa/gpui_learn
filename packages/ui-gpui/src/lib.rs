@@ -18,7 +18,7 @@ pub mod base;
 
 pub use base::geometry::{quantize, Scale};
 pub use base::slider::element::{DragSlider, Slider, SliderEvent};
-pub use base::slider::slider_state::SliderState;
+pub use base::slider::slider_state::{SliderState, ThumbMode};
 pub use base::slider::slider_value::SliderValue;
 
 /// 复用 gpui 的轴方向类型，方便调用方设置 `SliderState::axis`。

@@ -5,7 +5,7 @@
 //! 与所有交互事件（鼠标按下、拖动、松开、hover、键盘、无障碍）。值的换算与
 //! 事件发射都在 `SliderState` 里，元素只调用它。
 
-use crate::base::slider::slider_state::SliderState;
+use crate::base::slider::slider_state::{SliderState, ThumbMode};
 use crate::base::slider::slider_value::SliderValue;
 use gpui::{
     AccessibleAction, Axis, Background, Bounds, DragMoveEvent, Entity, EntityId, Focusable,
@@ -144,15 +144,29 @@ impl RenderOnce for Slider {
                 thumb_normal.into()
             }
         };
-        // thumb 大小：普通态用基础值（默认 16px，可定制），hover/拖动时 ×1.125
-        // （16→18px 的比例），保持普通态到高亮态的相对放大。
+        // thumb 基础大小（默认 16px，可定制）。Always 模式 hover/拖动时 ×1.125 放大。
         let thumb_base = self.thumb_size.unwrap_or(px(16.0));
         let thumb_highlight_size = thumb_base * 1.125;
         let thumb_size = |is_start: bool| -> Pixels {
-            if state.thumb_highlighted(is_start) {
+            if state.thumb_highlighted(is_start)
+                && matches!(state.get_thumb_mode(), ThumbMode::Always)
+            {
                 thumb_highlight_size
             } else {
                 thumb_base
+            }
+        };
+        // 是否显示某个 thumb：
+        // - Always：一直显示。
+        // - OnHover：悬停到轨道（整个 slider hover）或正在拖动时才显示。
+        let thumb_visible = |is_start: bool| -> bool {
+            match state.get_thumb_mode() {
+                ThumbMode::Always => true,
+                ThumbMode::OnHover => {
+                    state.is_hovered()
+                        || state.active_thumb.is_some()
+                        || state.thumb_highlighted(is_start)
+                }
             }
         };
         // 轨道细条厚度（水平=高、垂直=宽），可定制，默认 6px。
@@ -172,7 +186,8 @@ impl RenderOnce for Slider {
         let slider_state = self.state.clone();
 
         // 起点 thumb（Range 才有），终点 thumb（Single 也用）。
-        let start_thumb = is_range.then(|| {
+        // OnHover 模式在未悬停/未拖动时隐藏 thumb（render None）。
+        let start_thumb = (is_range && thumb_visible(true)).then(|| {
             render_thumb(
                 &slider_state,
                 entity_id,
@@ -185,17 +200,19 @@ impl RenderOnce for Slider {
                 percentage.start,
             )
         });
-        let end_thumb = render_thumb(
-            &slider_state,
-            entity_id,
-            horizontal,
-            thumb_size(false),
-            track_thickness,
-            thumb_bg(false),
-            disabled,
-            false,
-            percentage.end,
-        );
+        let end_thumb = thumb_visible(false).then(|| {
+            render_thumb(
+                &slider_state,
+                entity_id,
+                horizontal,
+                thumb_size(false),
+                track_thickness,
+                thumb_bg(false),
+                disabled,
+                false,
+                percentage.end,
+            )
+        });
 
         // 轨道 = 全区域点击/拖动热区，也是 on_children_prepainted 的参考 bounds。
         // 内部放一根「细条 bar」作为视觉轨道，fill/thumb 挂在 bar 上。
@@ -231,7 +248,7 @@ impl RenderOnce for Slider {
                     )
                     // thumb(s)：Range 两个，Single 一个。
                     .when_some(start_thumb, |b, t| b.child(t))
-                    .child(end_thumb),
+                    .when_some(end_thumb, |b, t| b.child(t)),
             );
         if !disabled {
             // 单值滑块：点轨道任意处按住即可拖动跟手（不只 thumb）。
@@ -261,6 +278,11 @@ impl RenderOnce for Slider {
                 }
             })
             .id(("slider", entity_id))
+            // 整个 slider 的 hover 态（OnHover 模式据此显示 thumb）。
+            .on_hover({
+                let st = slider_state.clone();
+                move |hovered, _window, cx| st.update(cx, |s, cx| s.set_hovered(*hovered, cx))
+            })
             // 无障碍：暴露 role/aria + 键盘/读屏的增减动作。
             .role(Role::Slider)
             .aria_numeric_value(percentage.end as f64)

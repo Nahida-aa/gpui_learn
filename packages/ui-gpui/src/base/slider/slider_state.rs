@@ -16,6 +16,16 @@ use gpui::{
 };
 use std::ops::Range;
 
+/// thumb 的显示模式。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ThumbMode {
+    /// 一直显示 thumb；悬停/拖动时变大变色（默认）。
+    #[default]
+    Always,
+    /// 默认不显示，悬停到轨道上时显示；靠近（点击/拖动）只变色、不变大。
+    OnHover,
+}
+
 /// 滑块的持久状态，由 `Entity<SliderState>` 持有。
 pub struct SliderState {
     /// 值域下界。
@@ -44,6 +54,10 @@ pub struct SliderState {
     /// 悬停在哪个 thumb 上：None=没悬停（或在轨道上），Some(true)=起点，Some(false)=终点。
     /// Single 恒为 Some(false)。每个 thumb 独立高亮（Range 不会两个同时变色）。
     pub(crate) hovered_thumb: Option<bool>,
+    /// 整个 slider 是否 hover（外层 on_hover），OnHover 模式用于决定是否显示 thumb。
+    pub(crate) hovered: bool,
+    /// thumb 显示模式。
+    pub(crate) thumb_mode: ThumbMode,
     /// 是否禁用（禁用则不响应交互）。
     pub(crate) disabled: bool,
 }
@@ -64,6 +78,8 @@ impl SliderState {
             active_thumb: None,
             start_value: SliderValue::Single(0.0),
             hovered_thumb: None,
+            hovered: false,
+            thumb_mode: ThumbMode::Always,
             disabled: false,
         }
     }
@@ -116,6 +132,13 @@ impl SliderState {
         self
     }
 
+    /// 设置 thumb 显示模式（[`ThumbMode::Always`] 一直显示 / [`ThumbMode::OnHover`]
+    /// 悬停轨道才显示）。默认 `Always`。
+    pub fn thumb_mode(mut self, mode: ThumbMode) -> Self {
+        self.thumb_mode = mode;
+        self
+    }
+
     // ----- 运行时读写 -----
 
     /// 当前值（单值或区间）。
@@ -143,6 +166,16 @@ impl SliderState {
     /// 某个 thumb 是否处于「高亮」态（被悬停或正在拖动）。`is_start` 选端。
     pub fn thumb_highlighted(&self, is_start: bool) -> bool {
         self.hovered_thumb == Some(is_start) || self.active_thumb == Some(is_start)
+    }
+
+    /// thumb 显示模式。
+    pub fn get_thumb_mode(&self) -> ThumbMode {
+        self.thumb_mode
+    }
+
+    /// 整个 slider 是否 hover（OnHover 模式据此决定是否显示 thumb）。
+    pub fn is_hovered(&self) -> bool {
+        self.hovered
     }
 
     pub fn is_disabled(&self) -> bool {
@@ -362,6 +395,14 @@ impl SliderState {
         let target = if hovered { Some(is_start) } else { None };
         if self.hovered_thumb != target {
             self.hovered_thumb = target;
+            cx.notify();
+        }
+    }
+
+    /// 记录整个 slider 的 hover 态（OnHover 模式据此决定是否显示 thumb）。
+    pub fn set_hovered(&mut self, hovered: bool, cx: &mut Context<Self>) {
+        if self.hovered != hovered {
+            self.hovered = hovered;
             cx.notify();
         }
     }
@@ -669,5 +710,26 @@ mod tests {
         // 松开后：不再高亮。
         slider.update(cx, |s, cx| s.end_drag(cx));
         assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+    }
+
+    #[gpui::test]
+    fn thumb_mode_and_whole_hover_state(cx: &mut TestAppContext) {
+        // 默认 Always 模式，未 hover。
+        let slider = cx.new(|_| SliderState::new());
+        assert_eq!(slider.read_with(cx, |s, _| s.get_thumb_mode()), ThumbMode::Always);
+        assert!(!slider.read_with(cx, |s, _| s.is_hovered()));
+
+        // 换一个 OnHover 模式的 slider，hover 整个 slider。
+        let slider_onhover = cx.new(|_| SliderState::new().thumb_mode(ThumbMode::OnHover));
+        slider_onhover.update(cx, |s, cx| s.set_hovered(true, cx));
+        assert_eq!(
+            slider_onhover.read_with(cx, |s, _| s.get_thumb_mode()),
+            ThumbMode::OnHover
+        );
+        assert!(slider_onhover.read_with(cx, |s, _| s.is_hovered()));
+
+        // 离开 hover。
+        slider_onhover.update(cx, |s, cx| s.set_hovered(false, cx));
+        assert!(!slider_onhover.read_with(cx, |s, _| s.is_hovered()));
     }
 }
