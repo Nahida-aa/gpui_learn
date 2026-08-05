@@ -7,7 +7,8 @@ use gpui::{
 use gpui_platform::application;
 use ui_gpui::{Scale, Slider, SliderEvent, SliderState};
 
-/// 一行：标签 + 滑块 + 当前值文本。
+/// 一行：标签 + 滑块 + 当前值文本。按滑块轴方向给合适尺寸：
+/// 水平滑块 → 高条横向铺满；垂直滑块 → 细长的竖条。
 fn slider_row(
     label: SharedString,
     slider: &Entity<SliderState>,
@@ -17,15 +18,22 @@ fn slider_row(
     let min = slider.read(cx).min_value();
     let max = slider.read(cx).max_value();
     let pct = slider.read(cx).percentage();
+    let vertical = matches!(slider.read(cx).get_axis(), Axis::Vertical);
     div()
         .flex()
         .flex_row()
         .items_center()
         .gap_2()
-        .h(px(48.0))
+        .h(if vertical { px(180.0) } else { px(48.0) })
         .w_full()
         .child(div().w(px(96.0)).text_size(px(14.0)).child(label.clone()))
-        .child(div().flex_1().h(px(32.0)).child(Slider::new(slider)))
+        // 滑块盒子：垂直 → 窄而高；水平 → 高而宽。Slider 会 size_full 填满它。
+        .child(
+            div()
+                .when(vertical, |d| d.w(px(32.0)).h(px(160.0)))
+                .when(!vertical, |d| d.flex_1().h(px(32.0)))
+                .child(Slider::new(slider)),
+        )
         .child(
             div()
                 .w(px(130.0))
@@ -150,7 +158,7 @@ impl Render for SliderDemo {
 
 fn run_example() {
     application().run(|cx: &mut App| {
-        let bounds = Bounds::centered(None, size(px(560.0), px(520.0)), cx);
+        let bounds = Bounds::centered(None, size(px(600.0), px(640.0)), cx);
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),

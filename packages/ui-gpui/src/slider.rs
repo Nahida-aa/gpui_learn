@@ -63,10 +63,11 @@ impl RenderOnce for Slider {
         let thumb_size = if hovered || focused { px(18.0) } else { px(16.0) };
 
         // 颜色：尽量不依赖主题 token（本仓库没有 gpui-component 的主题系统）。
+        // 轨道色要比常见深色主背景亮一档，否则和背景糊成一片。
         let track_bg: Background = if disabled {
-            rgb(0x33_33_33).into()
+            rgb(0x3a_3a_3a).into()
         } else {
-            rgb(0x44_44_44).into()
+            rgb(0x55_55_55).into()
         };
         let fill_bg: Background = rgb(0x4c_8b_f5).into();
         let thumb_bg: Background = if hovered || focused {
@@ -78,70 +79,74 @@ impl RenderOnce for Slider {
         let thumb_pct = percentage * 100.0; // 用于 relative() 定位
         let slider_state = self.state.clone();
 
-        // 轨道（第一个子元素，bounds 被外层 on_children_prepainted 捕获）。
-        // on_drag_move 之后继续链式挂 on_drag 会把 track 变成 Stateful<Div>；
-        // 由于 on_drag 返回 Self，我们把它赋回 track 再塞进外层。
+        // thumb（手柄）。拖动能力挂在 thumb 上：因为 thumb 的 on_mouse_down 会
+        // stop_propagation，若把 on_drag 挂在父级，thumb 的按下不会冒泡，drag 永远
+        // 启动不了。所以 on_drag + on_drag_move 必须和 on_mouse_down 同在 thumb 上，
+        // 与 gpui-component slider.rs:508-535 同构。
+        let thumb = div()
+            .absolute()
+            .id(("thumb", entity_id))
+            .when(horizontal, |th| th.left(relative(thumb_pct / 100.0)).top(px(0.0)))
+            .when(!horizontal, |th| th.bottom(relative(thumb_pct / 100.0)).left(px(0.0)))
+            .size(thumb_size)
+            .rounded_full()
+            .bg(thumb_bg)
+            // thumb 上按下：阻止冒泡到外层（避免外层 on_mouse_down 重复跳值），
+            // 同时本元素启动自己的 drag。
+            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+            .on_drag(
+                DragSlider(entity_id),
+                |drag, _, _, cx| cx.new(|_| drag.clone()),
+            )
+            .on_drag_move({
+                let slider_state = slider_state.clone();
+                move |e: &DragMoveEvent<DragSlider>, _window, cx| {
+                    if let DragSlider(id) = e.drag(cx)
+                        && *id == entity_id
+                    {
+                        slider_state.update(cx, |s, cx| {
+                            s.update_value_by_position(e.event.position, cx);
+                        });
+                    }
+                }
+            });
+
+        // 轨道 = 全区域点击/拖动热区，同时也是 on_children_prepainted 的参考 bounds。
+        // 内部放一根「细条 bar」作为视觉轨道（thin bar），fill/thumb 挂在 bar 上，
+        // 而不是把整个热区涂成轨道色（否则滑轨和主背景糊成一片）。
         let track = div()
             .id("track")
             .relative()
             .when(horizontal, |t| t.h_full().w_full().flex().items_center())
             .when(!horizontal, |t| t.w_full().h_full().flex().flex_col().justify_center())
-            .bg(track_bg)
-            .rounded_full()
-            // fill（已填充部分）
+            // 细条 bar：水平 → 高 6px 铺满宽；垂直 → 宽 6px 铺满高。
             .child(
                 div()
-                    .absolute()
-                    .when(horizontal, |f| {
-                        f.left(px(0.0)).top(px(0.0)).bottom(px(0.0))
-                            .w(relative(thumb_pct / 100.0))
-                    })
-                    .when(!horizontal, |f| {
-                        f.left(px(0.0)).right(px(0.0)).bottom(px(0.0))
-                            .h(relative(thumb_pct / 100.0))
-                    })
-                    .bg(fill_bg)
-                    .rounded_full(),
-            )
-            // thumb（手柄）。拖动能力挂在 thumb 上：因为 thumb 的 on_mouse_down 会
-            // stop_propagation，若把 on_drag 挂在父级 track 上，thumb 的按下不会
-            // 冒泡上去，drag 永远启动不了（这正是之前"拖不动"的根因）。所以
-            // on_drag + on_drag_move 必须和 on_mouse_down 同在 thumb 这一个元素上，
-            // 与 gpui-component slider.rs:508-535 同构。
-            .child(
-                div()
-                    .absolute()
-                    .id(("thumb", entity_id))
-                    .when(horizontal, |th| {
-                        th.left(relative(thumb_pct / 100.0)).top(px(0.0))
-                    })
-                    .when(!horizontal, |th| {
-                        th.bottom(relative(thumb_pct / 100.0)).left(px(0.0))
-                    })
-                    .size(thumb_size)
+                    .relative()
+                    .when(horizontal, |b| b.w_full().h(px(6.0)).flex().items_center())
+                    .when(!horizontal, |b| b.h_full().w(px(6.0)).flex().flex_col().justify_center())
+                    .bg(track_bg)
                     .rounded_full()
-                    .bg(thumb_bg)
-                    // thumb 上按下：阻止冒泡到外层（避免外层 on_mouse_down 重复跳值），
-                    // 同时本元素启动自己的 drag。
-                    .on_mouse_down(MouseButton::Left, |_, _, cx| {
-                        cx.stop_propagation();
-                    })
-                    .on_drag(
-                        DragSlider(entity_id),
-                        |drag, _, _, cx| cx.new(|_| drag.clone()),
+                    // fill（已填充部分）
+                    .child(
+                        div()
+                            .absolute()
+                            .when(horizontal, |f| {
+                                f.left(px(0.0)).top(px(0.0)).bottom(px(0.0))
+                                    .w(relative(thumb_pct / 100.0))
+                            })
+                            .when(!horizontal, |f| {
+                                f.left(px(0.0)).right(px(0.0)).bottom(px(0.0))
+                                    .h(relative(thumb_pct / 100.0))
+                            })
+                            .bg(fill_bg)
+                            .rounded_full(),
                     )
-                    .on_drag_move({
-                        let slider_state = slider_state.clone();
-                        move |e: &DragMoveEvent<DragSlider>, _window, cx| {
-                            if let DragSlider(id) = e.drag(cx)
-                                && *id == entity_id
-                            {
-                                slider_state.update(cx, |s, cx| {
-                                    s.update_value_by_position(e.event.position, cx);
-                                });
-                            }
-                        }
-                    }),
+                    // thumb（手柄）。拖动能力挂在 thumb 上：因为 thumb 的 on_mouse_down
+                    // 会 stop_propagation，若把 on_drag 挂在父级，thumb 的按下不会冒泡，
+                    // drag 永远启动不了（这正是之前"拖不动"的根因）。所以 on_drag +
+                    // on_drag_move 必须和 on_mouse_down 同在 thumb 这一个元素上。
+                    .child(thumb),
             );
         // 外层容器：track 作为第一个直接子元素，便于 on_children_prepainted 取 bounds。
         // 注意调用顺序：on_children_prepainted 只定义在 Div 上（本 rev 没有 on_prepaint），
@@ -149,6 +154,8 @@ impl RenderOnce for Slider {
         // 所以「捕获 track bounds」必须在 .id() 之前、还在 Div 上时调用。
         div()
             .flex()
+            // 撑满调用方给定的盒子：水平滑块需要宽度、垂直滑块需要高度。
+            .size_full()
             .cursor(if horizontal {
                 gpui::CursorStyle::ResizeLeftRight
             } else {
