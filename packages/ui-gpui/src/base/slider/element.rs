@@ -9,8 +9,8 @@ use crate::base::slider::slider_state::SliderState;
 use crate::base::slider::slider_value::SliderValue;
 use gpui::{
     AccessibleAction, Axis, Background, Bounds, DragMoveEvent, Entity, EntityId, Focusable,
-    IntoElement, MouseButton, MouseDownEvent, Orientation, Pixels, RenderOnce, Role, Window, div,
-    prelude::*, px, relative, rgb,
+    IntoElement, MouseButton, MouseDownEvent, Orientation, Pixels, RenderOnce, Rgba, Role, Window,
+    div, prelude::*, px, relative, rgb, rgba,
 };
 
 /// 拖动外层轨道时挂到 `cx.active_drag` 的标记，携带「哪个 slider」。
@@ -53,17 +53,44 @@ pub enum SliderEvent {
 #[derive(IntoElement)]
 pub struct Slider {
     state: Entity<SliderState>,
+    /// 轨道底色；None 用内置默认。
+    track_color: Option<Rgba>,
+    /// 填充色；None 用内置默认。
+    fill_color: Option<Rgba>,
+    /// thumb 圆点基础色；None 用内置默认。hover/拖动时会向白提亮。
+    thumb_color: Option<Rgba>,
 }
 
 impl Slider {
     /// 从一个 `Entity<SliderState>` 构建元素。
     ///
     /// 配置（min/max/step/scale/axis/reverse/disabled/默认值）都在
-    /// `SliderState` 上设置；这里只引用它的状态。
+    /// `SliderState` 上设置；这里只引用它的状态，并可选覆盖颜色。
     pub fn new(state: &Entity<SliderState>) -> Self {
         Self {
             state: state.clone(),
+            track_color: None,
+            fill_color: None,
+            thumb_color: None,
         }
+    }
+
+    /// 轨道底色（未填充部分的灰条）。
+    pub fn track_color(mut self, color: impl Into<Rgba>) -> Self {
+        self.track_color = Some(color.into());
+        self
+    }
+
+    /// 填充色（已填充的蓝色条）。
+    pub fn fill_color(mut self, color: impl Into<Rgba>) -> Self {
+        self.fill_color = Some(color.into());
+        self
+    }
+
+    /// thumb 圆点基础色；hover/拖动时自动向白提亮，disabled 时置灰。
+    pub fn thumb_color(mut self, color: impl Into<Rgba>) -> Self {
+        self.thumb_color = Some(color.into());
+        self
     }
 }
 
@@ -77,25 +104,26 @@ impl RenderOnce for Slider {
         let disabled = state.is_disabled();
         let is_range = state.value().is_range();
 
-        // 颜色：尽量不依赖主题 token（本仓库没有 gpui-component 的主题系统）。
-        let track_bg: Background = if disabled {
-            rgb(0x3a_3a_3a).into()
-        } else {
-            rgb(0x55_55_55).into()
-        };
-        let fill_bg: Background = if disabled {
-            rgb(0x55_55_55).into()
-        } else {
-            rgb(0x4c_8b_f5).into()
-        };
-        // 每个 thumb 独立高亮（悬停或拖动），Range 不会两个同时变色。
+        // 颜色：支持调用方覆盖（track/fill/thumb），未设时用内置默认。
+        // disabled 时一律置灰。
+        let track_bg: Background = self
+            .track_color
+            .unwrap_or(if disabled { rgb(0x3a_3a_3a) } else { rgb(0x55_55_55) })
+            .into();
+        let fill_bg: Background = self
+            .fill_color
+            .unwrap_or(if disabled { rgb(0x55_55_55) } else { rgb(0x4c_8b_f5) })
+            .into();
+        // thumb 普通态颜色；hover/拖动时向白提亮 50%，disabled 置灰。
+        let thumb_normal = self.thumb_color.unwrap_or(rgb(0xff_ff_ff));
+        let thumb_highlight = thumb_normal.blend(rgba(0xff_ff_ff_80));
         let thumb_bg = |is_start: bool| -> Background {
             if disabled {
                 rgb(0x88_88_88).into()
             } else if state.thumb_highlighted(is_start) {
-                rgb(0x9e_c4_ff).into()
+                thumb_highlight.into()
             } else {
-                rgb(0xff_ff_ff).into()
+                thumb_normal.into()
             }
         };
         // 悬停/拖动的 thumb 略大。

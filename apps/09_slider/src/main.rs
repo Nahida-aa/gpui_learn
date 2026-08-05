@@ -42,6 +42,43 @@ fn slider_row(
         )
 }
 
+/// 同 `slider_row`，但给 Slider 元素应用自定义颜色（演示颜色覆盖）。
+fn slider_row_colored(
+    label: SharedString,
+    slider: &Entity<SliderState>,
+    cx: &mut Context<SliderDemo>,
+) -> impl IntoElement {
+    let value = slider.read(cx).value();
+    let min = slider.read(cx).min_value();
+    let max = slider.read(cx).max_value();
+    let dragging = slider.read(cx).is_dragging();
+    div()
+        .flex()
+        .flex_row()
+        .items_center()
+        .gap_2()
+        .h(px(48.0))
+        .w_full()
+        .child(div().w(px(96.0)).text_size(px(14.0)).child(label.clone()))
+        .child(
+            div()
+                .flex_1()
+                .h(px(32.0))
+                .child(
+                    Slider::new(slider)
+                        .track_color(rgb(0x2a_2a_2a))
+                        .fill_color(rgb(0xff_a0_40))
+                        .thumb_color(rgb(0xff_80_20)),
+                ),
+        )
+        .child(
+            div()
+                .w(px(170.0))
+                .text_size(px(13.0))
+                .child(format!("v={value} [{min:.1},{max:.1}] drag={dragging}")),
+        )
+}
+
 struct SliderDemo {
     /// 通用值滑块（水平、线性、step=1）。
     basic: Entity<SliderState>,
@@ -57,6 +94,8 @@ struct SliderDemo {
     range: Entity<SliderState>,
     /// 反向填充滑块（reverse）。
     reversed: Entity<SliderState>,
+    /// 自定义颜色滑块（演示 track/fill/thumb 颜色覆盖）。
+    colored: Entity<SliderState>,
     /// 事件日志（最新在前，最多 6 条）。
     log: Vec<String>,
     focus_handle: FocusHandle,
@@ -76,6 +115,7 @@ impl SliderDemo {
                 .default_value((20.0, 80.0))
         });
         let reversed = cx.new(|_| SliderState::new().min(0.0).max(100.0).reverse(true));
+        let colored = cx.new(|_| SliderState::new().min(0.0).max(100.0));
 
         let demo = Self {
             basic,
@@ -85,6 +125,7 @@ impl SliderDemo {
             stepped,
             range,
             reversed,
+            colored,
             log: vec![],
             focus_handle: cx.focus_handle(),
         };
@@ -98,6 +139,7 @@ impl SliderDemo {
             &demo.stepped,
             &demo.range,
             &demo.reversed,
+            &demo.colored,
         ] {
             cx.subscribe(slider, |view, _slider, event, cx| {
                 let msg = match event {
@@ -145,6 +187,7 @@ impl Render for SliderDemo {
             .child(slider_row("step=10".into(), &self.stepped, cx))
             .child(slider_row("区间[20,80]".into(), &self.range, cx))
             .child(slider_row("反向填充".into(), &self.reversed, cx))
+            .child(slider_row_colored("自定义颜色".into(), &self.colored, cx))
             .child(slider_row("垂直".into(), &self.vertical, cx))
             .child(
                 div()
@@ -182,7 +225,7 @@ impl Render for SliderDemo {
 
 fn run_example() {
     application().run(|cx: &mut App| {
-        let bounds = Bounds::centered(None, size(px(640.0), px(680.0)), cx);
+        let bounds = Bounds::centered(None, size(px(640.0), px(720.0)), cx);
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
