@@ -69,7 +69,8 @@ fn slider_row_colored(
                         .track_color(rgb(0x2a_2a_2a))
                         .fill_color(rgb(0xff_a0_40))
                         .thumb_color(rgb(0xff_80_20))
-                        .thumb_size(px(24.0)),
+                        .thumb_size(px(24.0))
+                        .track_size(px(10.0)),
                 ),
         )
         .child(

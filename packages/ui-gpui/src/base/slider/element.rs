@@ -61,6 +61,8 @@ pub struct Slider {
     thumb_color: Option<Rgba>,
     /// thumb 圆点基础大小（普通态）；None 用内置默认 16px，hover/拖动时 +2px。
     thumb_size: Option<Pixels>,
+    /// 轨道细条厚度（水平=高、垂直=宽）；None 用内置默认 6px。
+    track_size: Option<Pixels>,
 }
 
 impl Slider {
@@ -75,6 +77,7 @@ impl Slider {
             fill_color: None,
             thumb_color: None,
             thumb_size: None,
+            track_size: None,
         }
     }
 
@@ -99,6 +102,12 @@ impl Slider {
     /// thumb 圆点基础大小（普通态）。默认 16px，hover/拖动时自动 +2px。
     pub fn thumb_size(mut self, size: impl Into<Pixels>) -> Self {
         self.thumb_size = Some(size.into());
+        self
+    }
+
+    /// 轨道细条厚度（水平=高、垂直=宽）。默认 6px。
+    pub fn track_size(mut self, size: impl Into<Pixels>) -> Self {
+        self.track_size = Some(size.into());
         self
     }
 }
@@ -146,6 +155,8 @@ impl RenderOnce for Slider {
                 thumb_base
             }
         };
+        // 轨道细条厚度（水平=高、垂直=宽），可定制，默认 6px。
+        let track_thickness = self.track_size.unwrap_or(px(6.0));
 
         // fill 的起止百分比（0..1）。
         // Single：fill 从 min 端(0)到当前值，reverse 时从当前值到 max 端(1)。
@@ -194,8 +205,8 @@ impl RenderOnce for Slider {
             .child(
                 div()
                     .relative()
-                    .when(horizontal, |b| b.w_full().h(px(6.0)).flex().items_center())
-                    .when(!horizontal, |b| b.h_full().w(px(6.0)).flex().flex_col().justify_center())
+                    .when(horizontal, |b| b.w_full().h(track_thickness).flex().items_center())
+                    .when(!horizontal, |b| b.h_full().w(track_thickness).flex().flex_col().justify_center())
                     .bg(track_bg)
                     .rounded_full()
                     // fill（已填充部分）
