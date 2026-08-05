@@ -105,16 +105,15 @@ impl RenderOnce for Slider {
             rgb(0xff_ff_ff).into()
         };
 
-        // fill 的起止百分比（0..1）。reverse 时从 max 端往 min 端填。
-        let bar_start = if self.reverse && !is_range {
-            percentage.end
+        // fill 的起止百分比（0..1）。
+        // Single：fill 从 min 端(0)到当前值，reverse 时从当前值到 max 端(1)。
+        // Range：fill 夹在两个 thumb 之间（start..end）。
+        let (bar_start, bar_end) = if is_range {
+            (percentage.start, 1.0 - percentage.end)
+        } else if self.reverse {
+            (percentage.end, 0.0)
         } else {
-            percentage.start
-        };
-        let bar_end = if self.reverse && !is_range {
-            0.0
-        } else {
-            1.0 - percentage.end
+            (0.0, 1.0 - percentage.end)
         };
 
         let slider_state = self.state.clone();
