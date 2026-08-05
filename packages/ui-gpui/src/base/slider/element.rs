@@ -59,6 +59,8 @@ pub struct Slider {
     fill_color: Option<Rgba>,
     /// thumb 圆点基础色；None 用内置默认。hover/拖动时会向白提亮。
     thumb_color: Option<Rgba>,
+    /// thumb 圆点基础大小（普通态）；None 用内置默认 16px，hover/拖动时 +2px。
+    thumb_size: Option<Pixels>,
 }
 
 impl Slider {
@@ -72,6 +74,7 @@ impl Slider {
             track_color: None,
             fill_color: None,
             thumb_color: None,
+            thumb_size: None,
         }
     }
 
@@ -90,6 +93,12 @@ impl Slider {
     /// thumb 圆点基础色；hover/拖动时自动向白提亮，disabled 时置灰。
     pub fn thumb_color(mut self, color: impl Into<Rgba>) -> Self {
         self.thumb_color = Some(color.into());
+        self
+    }
+
+    /// thumb 圆点基础大小（普通态）。默认 16px，hover/拖动时自动 +2px。
+    pub fn thumb_size(mut self, size: impl Into<Pixels>) -> Self {
+        self.thumb_size = Some(size.into());
         self
     }
 }
@@ -126,12 +135,15 @@ impl RenderOnce for Slider {
                 thumb_normal.into()
             }
         };
-        // 悬停/拖动的 thumb 略大。
+        // thumb 大小：普通态用基础值（默认 16px，可定制），hover/拖动时 ×1.125
+        // （16→18px 的比例），保持普通态到高亮态的相对放大。
+        let thumb_base = self.thumb_size.unwrap_or(px(16.0));
+        let thumb_highlight_size = thumb_base * 1.125;
         let thumb_size = |is_start: bool| -> Pixels {
             if state.thumb_highlighted(is_start) {
-                px(18.0)
+                thumb_highlight_size
             } else {
-                px(16.0)
+                thumb_base
             }
         };
 
