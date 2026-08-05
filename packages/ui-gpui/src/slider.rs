@@ -53,23 +53,17 @@ pub enum SliderEvent {
 #[derive(IntoElement)]
 pub struct Slider {
     state: Entity<SliderState>,
-    /// fill 反向（从 max 端往 min 端填充）。默认 false。
-    reverse: bool,
 }
 
 impl Slider {
     /// 从一个 `Entity<SliderState>` 构建元素。
+    ///
+    /// 配置（min/max/step/scale/axis/reverse/disabled/默认值）都在
+    /// `SliderState` 上设置；这里只引用它的状态。
     pub fn new(state: &Entity<SliderState>) -> Self {
         Self {
             state: state.clone(),
-            reverse: false,
         }
-    }
-
-    /// fill 反向（从 max 端往 min 端填充，视觉用）。
-    pub fn reverse(mut self, reverse: bool) -> Self {
-        self.reverse = reverse;
-        self
     }
 }
 
@@ -118,7 +112,7 @@ impl RenderOnce for Slider {
         // Range：fill 夹在两个 thumb 之间（start..end）。
         let (bar_start, bar_end) = if is_range {
             (percentage.start, 1.0 - percentage.end)
-        } else if self.reverse {
+        } else if state.is_reverse() {
             (percentage.end, 0.0)
         } else {
             (0.0, 1.0 - percentage.end)
