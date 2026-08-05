@@ -36,12 +36,14 @@ pub struct SliderState {
     pub(crate) bounds: Bounds<Pixels>,
     /// 当前值对应的百分比(0..1)缓存，渲染 fill/thumb 用。Single 时 start==end。
     pub(crate) percentage: Range<f32>,
-    /// 是否正在拖动（用于只在真拖动后才发 Release，也供外部查 is_dragging）。
-    pub(crate) dragging: bool,
+    /// 正在拖动哪个 thumb：None=没在拖，Some(true)=拖起点，Some(false)=拖终点。
+    /// Single 恒为 Some(false)。用于发 Release 以及拖动中保持高亮。
+    pub(crate) active_thumb: Option<bool>,
     /// 按下时的初始值，拖动中按 Esc 取消回退用。
     pub(crate) start_value: SliderValue,
-    /// 是否 hover（视觉态）。
-    pub(crate) hovered: bool,
+    /// 悬停在哪个 thumb 上：None=没悬停（或在轨道上），Some(true)=起点，Some(false)=终点。
+    /// Single 恒为 Some(false)。每个 thumb 独立高亮（Range 不会两个同时变色）。
+    pub(crate) hovered_thumb: Option<bool>,
     /// 是否禁用（禁用则不响应交互）。
     pub(crate) disabled: bool,
 }
@@ -59,9 +61,9 @@ impl SliderState {
             reverse: false,
             bounds: Bounds::default(),
             percentage: 0.0..0.0,
-            dragging: false,
+            active_thumb: None,
             start_value: SliderValue::Single(0.0),
-            hovered: false,
+            hovered_thumb: None,
             disabled: false,
         }
     }
@@ -138,8 +140,9 @@ impl SliderState {
         self.percentage.clone()
     }
 
-    pub fn is_hovered(&self) -> bool {
-        self.hovered
+    /// 某个 thumb 是否处于「高亮」态（被悬停或正在拖动）。`is_start` 选端。
+    pub fn thumb_highlighted(&self, is_start: bool) -> bool {
+        self.hovered_thumb == Some(is_start) || self.active_thumb == Some(is_start)
     }
 
     pub fn is_disabled(&self) -> bool {
@@ -152,7 +155,7 @@ impl SliderState {
 
     /// 是否正在拖动。aa-player 拖动 seek 时用它触发 MuteAudio 等副作用。
     pub fn is_dragging(&self) -> bool {
-        self.dragging
+        self.active_thumb.is_some()
     }
 
     pub fn get_axis(&self) -> Axis {
@@ -191,8 +194,8 @@ impl SliderState {
     /// Single 时忽略（移动唯一值）。各端 clamp：起点不越过终点，终点不越过起点。
     ///
     /// 与 gpui-component `update_value_by_position` 同构（`slider.rs:358`）。
-    /// 注意：会把 `dragging` 置 true（gpui-component 同款语义），松手后
-    /// `end_drag` 才能发 `Release`。返回是否真的变化了值（避免无意义事件）。
+    /// 注意：会把 `active_thumb` 置 Some(is_start)，让被拖的 thumb 保持高亮，
+    /// 松手后 `end_drag` 才发 `Release`。返回是否真的变化了值（避免无意义事件）。
     pub fn update_value_by_position(
         &mut self,
         position: Point<Pixels>,
@@ -202,7 +205,7 @@ impl SliderState {
         if self.disabled {
             return false;
         }
-        self.dragging = true;
+        self.active_thumb = Some(is_start);
         let new = position_to_value(
             self.axis,
             self.scale,
@@ -228,21 +231,21 @@ impl SliderState {
         changed
     }
 
-    /// 按下：记录起点值（Esc 取消用），置 dragging，跳到指针位置并发 Change。
+    /// 按下：记录起点值（Esc 取消用），置 active_thumb，跳到指针位置并发 Change。
     /// `is_start` 语义同 `update_value_by_position`。
     pub fn begin_drag(&mut self, position: Point<Pixels>, is_start: bool, cx: &mut Context<Self>) {
         if self.disabled {
             return;
         }
         self.start_value = self.value;
-        self.dragging = true;
+        self.active_thumb = Some(is_start);
         self.update_value_by_position(position, is_start, cx);
     }
 
-    /// 松手：若真在拖动，发一次 `Release`，清 dragging。drag 与 click 都走这。
+    /// 松手：若真在拖动，发一次 `Release`，清 active_thumb。drag 与 click 都走这。
     pub fn end_drag(&mut self, cx: &mut Context<Self>) {
-        if self.dragging {
-            self.dragging = false;
+        if self.active_thumb.is_some() {
+            self.active_thumb = None;
             cx.emit(SliderEvent::Release(self.value));
         }
     }
@@ -292,12 +295,12 @@ impl SliderState {
 
     /// 拖动中取消：回退到按下时的值，发 Release，结束拖动。
     pub fn cancel_drag(&mut self, cx: &mut Context<Self>) {
-        if !self.dragging {
+        if self.active_thumb.is_none() {
             return;
         }
         self.value = self.start_value;
         self.refresh();
-        self.dragging = false;
+        self.active_thumb = None;
         cx.notify();
         cx.emit(SliderEvent::Release(self.value));
     }
@@ -334,9 +337,12 @@ impl SliderState {
         cx.emit(SliderEvent::Release(self.value));
     }
 
-    pub fn set_hovered(&mut self, hovered: bool, cx: &mut Context<Self>) {
-        if self.hovered != hovered {
-            self.hovered = hovered;
+    /// 记录某个 thumb 的悬停态（`is_start` 选端）。每个 thumb 独立，Range 不会
+    /// 两个同时变色。悬停离开该 thumb 时置 None（清除那个端的高亮）。
+    pub fn set_thumb_hovered(&mut self, is_start: bool, hovered: bool, cx: &mut Context<Self>) {
+        let target = if hovered { Some(is_start) } else { None };
+        if self.hovered_thumb != target {
+            self.hovered_thumb = target;
             cx.notify();
         }
     }
@@ -586,5 +592,46 @@ mod tests {
         let pct = slider.read_with(cx, |s, _| s.percentage());
         assert!((pct.end - 0.8).abs() < 1e-6);
         assert!(slider.read_with(cx, |s, _| s.is_reverse()));
+    }
+
+    #[gpui::test]
+    fn range_hover_highlights_only_one_thumb(cx: &mut TestAppContext) {
+        let slider = cx.new(|_| {
+            SliderState::new()
+                .min(0.0)
+                .max(100.0)
+                .default_value((20.0, 80.0))
+        });
+        // 悬停起点 thumb：只有起点高亮，终点不高亮。
+        slider.update(cx, |s, cx| s.set_thumb_hovered(true, true, cx));
+        assert!(slider.read_with(cx, |s, _| s.thumb_highlighted(true)));
+        assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+
+        // 悬停移到终点：起点熄灭、终点点亮。
+        slider.update(cx, |s, cx| {
+            s.set_thumb_hovered(true, false, cx);
+            s.set_thumb_hovered(false, true, cx);
+        });
+        assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(true)));
+        assert!(slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+
+        // 都离开：都不高亮。
+        slider.update(cx, |s, cx| s.set_thumb_hovered(false, false, cx));
+        assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(true)));
+        assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+    }
+
+    #[gpui::test]
+    fn dragging_keeps_thumb_highlighted_until_release(cx: &mut TestAppContext) {
+        let slider = new_slider(cx);
+        slider.update(cx, |s, _| s.set_bounds(h_bounds()));
+        // 拖动中：is_dragging 为 true，且该 thumb 保持高亮（即使没悬停）。
+        slider.update(cx, |s, cx| s.begin_drag(point(px(200.0), px(5.0)), false, cx));
+        assert!(slider.read_with(cx, |s, _| s.is_dragging()));
+        assert!(slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+        // 松开后：不再高亮（未悬停）。
+        slider.update(cx, |s, cx| s.end_drag(cx));
+        assert!(!slider.read_with(cx, |s, _| s.is_dragging()));
+        assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
     }
 }

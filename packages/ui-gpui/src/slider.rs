@@ -80,10 +80,8 @@ impl RenderOnce for Slider {
         let percentage = state.percentage();
         let axis = state.get_axis();
         let horizontal = matches!(axis, Axis::Horizontal);
-        let hovered = state.is_hovered();
         let disabled = state.is_disabled();
         let is_range = state.value().is_range();
-        let thumb_size = if hovered { px(18.0) } else { px(16.0) };
 
         // 颜色：尽量不依赖主题 token（本仓库没有 gpui-component 的主题系统）。
         let track_bg: Background = if disabled {
@@ -96,12 +94,23 @@ impl RenderOnce for Slider {
         } else {
             rgb(0x4c_8b_f5).into()
         };
-        let thumb_bg: Background = if disabled {
-            rgb(0x88_88_88).into()
-        } else if hovered {
-            rgb(0x9e_c4_ff).into()
-        } else {
-            rgb(0xff_ff_ff).into()
+        // 每个 thumb 独立高亮（悬停或拖动），Range 不会两个同时变色。
+        let thumb_bg = |is_start: bool| -> Background {
+            if disabled {
+                rgb(0x88_88_88).into()
+            } else if state.thumb_highlighted(is_start) {
+                rgb(0x9e_c4_ff).into()
+            } else {
+                rgb(0xff_ff_ff).into()
+            }
+        };
+        // 悬停/拖动的 thumb 略大。
+        let thumb_size = |is_start: bool| -> Pixels {
+            if state.thumb_highlighted(is_start) {
+                px(18.0)
+            } else {
+                px(16.0)
+            }
         };
 
         // fill 的起止百分比（0..1）。
@@ -123,8 +132,8 @@ impl RenderOnce for Slider {
                 &slider_state,
                 entity_id,
                 horizontal,
-                thumb_size,
-                thumb_bg,
+                thumb_size(true),
+                thumb_bg(true),
                 disabled,
                 true,
                 percentage.start,
@@ -134,8 +143,8 @@ impl RenderOnce for Slider {
             &slider_state,
             entity_id,
             horizontal,
-            thumb_size,
-            thumb_bg,
+            thumb_size(false),
+            thumb_bg(false),
             disabled,
             false,
             percentage.end,
@@ -265,10 +274,6 @@ impl RenderOnce for Slider {
         }
 
         outer = outer
-            .on_hover({
-                let st = slider_state.clone();
-                move |hovered, _window, cx| st.update(cx, |s, cx| s.set_hovered(*hovered, cx))
-            })
             .on_key_down({
                 let st = slider_state.clone();
                 move |e: &gpui::KeyDownEvent, _window, cx| {
@@ -325,7 +330,14 @@ fn render_thumb(
         })
         .size(thumb_size)
         .rounded_full()
-        .bg(thumb_bg);
+        .bg(thumb_bg)
+        // 每个 thumb 独立记录悬停，Range 两个圆点不会同时变色。
+        .on_hover({
+            let st = slider_state.clone();
+            move |hovered, _window, cx| {
+                st.update(cx, |s, cx| s.set_thumb_hovered(is_start, *hovered, cx));
+            }
+        });
     if !disabled {
         // thumb 上按下：阻止冒泡到外层（避免外层 on_mouse_down 重复跳值），
         // 同时本元素启动自己的 drag。
