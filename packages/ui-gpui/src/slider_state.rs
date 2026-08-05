@@ -242,6 +242,18 @@ impl SliderState {
         self.update_value_by_position(position, is_start, cx);
     }
 
+    /// 按在某个 thumb 上（还没开始拖动、没跳值）时，立刻把它置为 active，
+    /// 让它在「悬停 → 按下 → 拖动开始」的过渡中保持高亮，不闪回原色。
+    /// 拖动真正开始后由 `update_value_by_position` 继续置 active。
+    pub fn begin_thumb_press(&mut self, is_start: bool, cx: &mut Context<Self>) {
+        if self.disabled {
+            return;
+        }
+        self.start_value = self.value;
+        self.active_thumb = Some(is_start);
+        cx.notify();
+    }
+
     /// 松手：若真在拖动，发一次 `Release`，清 active_thumb。drag 与 click 都走这。
     pub fn end_drag(&mut self, cx: &mut Context<Self>) {
         if self.active_thumb.is_some() {
@@ -632,6 +644,23 @@ mod tests {
         // 松开后：不再高亮（未悬停）。
         slider.update(cx, |s, cx| s.end_drag(cx));
         assert!(!slider.read_with(cx, |s, _| s.is_dragging()));
+        assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+    }
+
+    #[gpui::test]
+    fn thumb_press_keeps_highlight_through_hover_loss(cx: &mut TestAppContext) {
+        let slider = new_slider(cx);
+        slider.update(cx, |s, _| s.set_bounds(h_bounds()));
+        // 悬停 → 高亮。
+        slider.update(cx, |s, cx| s.set_thumb_hovered(false, true, cx));
+        assert!(slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+        // 按下 thumb（还没开始拖动）：仍高亮，即使悬停随即丢失。
+        slider.update(cx, |s, cx| s.begin_thumb_press(false, cx));
+        slider.update(cx, |s, cx| s.set_thumb_hovered(false, false, cx));
+        assert!(slider.read_with(cx, |s, _| s.is_dragging()));
+        assert!(slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
+        // 松开后：不再高亮。
+        slider.update(cx, |s, cx| s.end_drag(cx));
         assert!(!slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
     }
 }

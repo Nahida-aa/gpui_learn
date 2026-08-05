@@ -343,10 +343,14 @@ fn render_thumb(
         });
     if !disabled {
         // thumb 上按下：阻止冒泡到外层（避免外层 on_mouse_down 重复跳值），
-        // 同时本元素启动自己的 drag。
+        // 并立刻把该 thumb 置 active，避免「悬停→按下→拖动开始」的间隙闪回原色。
         let st = slider_state.clone();
+        let press_st = slider_state.clone();
         th = th
-            .on_mouse_down(MouseButton::Left, |_, _, cx| cx.stop_propagation())
+            .on_mouse_down(MouseButton::Left, move |_, _, cx| {
+                press_st.update(cx, |s, cx| s.begin_thumb_press(is_start, cx));
+                cx.stop_propagation();
+            })
             .on_drag(
                 DragThumb(entity_id, is_start),
                 |drag, _, _, cx| cx.new(|_| drag.clone()),
