@@ -5,8 +5,8 @@
 //! 与所有交互事件（鼠标按下、拖动、松开、hover、键盘、无障碍）。值的换算与
 //! 事件发射都在 `SliderState` 里，元素只调用它。
 
-use crate::slider_state::SliderState;
-use crate::slider_value::SliderValue;
+use crate::base::slider::slider_state::SliderState;
+use crate::base::slider::slider_value::SliderValue;
 use gpui::{
     AccessibleAction, Axis, Background, Bounds, DragMoveEvent, Entity, EntityId, Focusable,
     IntoElement, MouseButton, MouseDownEvent, Orientation, Pixels, RenderOnce, Role, Window, div,
