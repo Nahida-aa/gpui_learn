@@ -171,6 +171,13 @@ impl SliderState {
         cx.notify();
     }
 
+    /// 运行时改值域上界（如进度条随视频时长更新）。
+    pub fn set_max(&mut self, max: f32, cx: &mut Context<Self>) {
+        self.max = max;
+        self.refresh();
+        cx.notify();
+    }
+
     /// 由 prepaint 回写布局边界。
     pub fn set_bounds(&mut self, bounds: Bounds<Pixels>) {
         self.bounds = bounds;
