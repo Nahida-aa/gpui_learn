@@ -448,7 +448,9 @@ fn pick_is_start(state: &SliderState, position: gpui::Point<Pixels>) -> bool {
 #[cfg(all(test, feature = "test-support"))]
 mod tests {
     use super::*;
-    use gpui::{TestAppContext, point, px, size};
+    use gpui::{
+        Context, Modifiers, Render, TestAppContext, VisualTestContext, point, px, size,
+    };
 
     /// 水平轨道 bounds：x 从 100 到 300（宽 200），y 0..10。默认 Range(20,80)。
     fn range_state(cx: &mut TestAppContext) -> Entity<SliderState> {
@@ -476,5 +478,98 @@ mod tests {
         // 点击 x=200（值 50，正好中点）→ 选起点端（pos < center 为 false 当相等时）。
         let is_start = s.read_with(cx, |st, _| pick_is_start(st, point(px(200.0), px(5.0))));
         assert!(!is_start);
+    }
+
+    /// 承载 Slider 的测试视图：固定 200x32 盒子渲染单值 Slider，
+    /// 订阅 Change/Release 事件记录到 `events`。
+    struct SliderHarness {
+        slider: Entity<SliderState>,
+        events: Vec<SliderValue>,
+    }
+
+    impl SliderHarness {
+        fn new(cx: &mut Context<Self>) -> Self {
+            let slider = cx.new(|_| SliderState::new().min(0.0).max(100.0).step(1.0));
+            let mut this = Self {
+                slider,
+                events: Vec::new(),
+            };
+            cx.subscribe(&this.slider, |this, _slider, event, _cx| {
+                match event {
+                    SliderEvent::Change(v) | SliderEvent::Release(v) => {
+                        this.events.push(*v);
+                    }
+                }
+            })
+            .detach();
+            this
+        }
+    }
+
+    impl Render for SliderHarness {
+        fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+            div().w(px(200.0)).h(px(32.0)).child(Slider::new(&self.slider))
+        }
+    }
+
+    /// 模拟**真正的拖动**：按下 → 按住移动（超过 2px 阈值触发 drag）→ 松开。
+    /// 应触发 Change（移动中）+ Release（松开）。
+    #[gpui::test]
+    fn drag_via_mouse_moves_value_and_emits_change_release(cx: &mut TestAppContext) {
+        let window = cx.open_window(size(px(200.0), px(32.0)), |_, cx| {
+            SliderHarness::new(cx)
+        });
+        let mut cx = VisualTestContext::from_window(window.into(), cx);
+        let harness = window.root(&mut cx).unwrap();
+
+        // Slider 填满 200x32 盒子，轨道从 x=0..200。初始值 0（thumb 在最左）。
+        // 按下轨道中部 (x=100, y=16)，按住向右拖到 x=160，松开。
+        cx.simulate_mouse_down(
+            point(px(100.0), px(16.0)),
+            MouseButton::Left,
+            Modifiers::default(),
+        );
+        cx.simulate_mouse_move(
+            point(px(160.0), px(16.0)),
+            Some(MouseButton::Left),
+            Modifiers::default(),
+        );
+        cx.simulate_mouse_up(
+            point(px(160.0), px(16.0)),
+            MouseButton::Left,
+            Modifiers::default(),
+        );
+
+        // 值应 >0（拖动了）。
+        let value = harness.read_with(&cx, |h, _| {
+            h.slider.read_with(&cx, |s, _| s.value().end())
+        });
+        assert!(value > 0.0, "拖动后值应增大，实际 {value}");
+        // 应至少发出 Change + Release。
+        let event_count = harness.read_with(&cx, |h, _| h.events.len());
+        assert!(event_count >= 2, "拖动应发出 Change+Release，实际 {event_count}");
+        // 最后一个事件应是 Release（值 = 松开位置）。
+        let last = harness.read_with(&cx, |h, _| h.events.last().copied());
+        assert!(last.is_some(), "应有 Release 事件");
+    }
+
+    /// 纯点击（按下立即松开，无移动）：值跳到点击位置，但**不是**拖动
+    /// （无持续 Change 流，只有一次跳值 + Release）。
+    #[gpui::test]
+    fn click_jumps_value_without_drag(cx: &mut TestAppContext) {
+        let window = cx.open_window(size(px(200.0), px(32.0)), |_, cx| {
+            SliderHarness::new(cx)
+        });
+        let mut cx = VisualTestContext::from_window(window.into(), cx);
+        let harness = window.root(&mut cx).unwrap();
+
+        // 点击轨道中部 (x=100)，立即松开。
+        cx.simulate_click(point(px(100.0), px(16.0)), Modifiers::default());
+
+        let value = harness.read_with(&cx, |h, _| {
+            h.slider.read_with(&cx, |s, _| s.value().end())
+        });
+        // 点击 100/200 = 50%。
+        assert!((value - 50.0).abs() < 2.0, "点击应跳到约 50，实际 {value}");
     }
 }
