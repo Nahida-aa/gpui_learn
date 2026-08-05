@@ -21,6 +21,7 @@ resolver = "3"
 members = [
     "apps/*",
     "crates/*",
+    "packages/*",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，

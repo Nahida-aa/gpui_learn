@@ -1,0 +1,12 @@
+[package]
+name = "ui-gpui"
+version = "0.1.0"
+edition.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+gpui.workspace = true
+gpui_macros.workspace = true

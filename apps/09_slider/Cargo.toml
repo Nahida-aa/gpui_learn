@@ -1,0 +1,23 @@
+[package]
+name = "slider_09"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+description = "09_slider —— 自研 ui-gpui 的 Slider 演示（进度条 / 音量 / 刻度 / 禁用 / 键盘）"
+
+# 桌面二进制例子，引入自研控件库 ui-gpui 与本仓库锁定的 gpui。
+[dependencies]
+gpui = { workspace = true }
+ui-gpui = { path = "../../packages/ui-gpui" }
+
+# 与 04 相同：桌面窗口后端需要显式开启，否则 open_window 不出窗口。
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_family = "wasm")))'.dependencies]
+gpui_platform = { workspace = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+gpui_platform = { workspace = true }
+wasm-bindgen = "0.2.120"
