@@ -90,8 +90,14 @@ struct SliderDemo {
     range: Entity<SliderState>,
     /// 反向填充滑块（reverse）。
     reversed: Entity<SliderState>,
-    /// 自定义颜色滑块（演示 track/fill/thumb 颜色覆盖）。
-    colored: Entity<SliderState>,
+    /// 样式示例的 4 个状态：共享模式下全用 style_a（进度连动），
+    /// 独立模式下各自独立。
+    style_a: Entity<SliderState>,
+    style_b: Entity<SliderState>,
+    style_c: Entity<SliderState>,
+    style_d: Entity<SliderState>,
+    /// 样式示例是否共享同一个进度。
+    shared: bool,
     /// 事件日志（最新在前，最多 6 条）。
     log: Vec<String>,
     focus_handle: FocusHandle,
@@ -111,7 +117,10 @@ impl SliderDemo {
                 .default_value((20.0, 80.0))
         });
         let reversed = cx.new(|_| SliderState::new().min(0.0).max(100.0).reverse(true));
-        let colored = cx.new(|_| SliderState::new().min(0.0).max(100.0));
+        let style_a = cx.new(|_| SliderState::new().min(0.0).max(100.0));
+        let style_b = cx.new(|_| SliderState::new().min(0.0).max(100.0));
+        let style_c = cx.new(|_| SliderState::new().min(0.0).max(100.0));
+        let style_d = cx.new(|_| SliderState::new().min(0.0).max(100.0));
 
         let demo = Self {
             basic,
@@ -121,7 +130,11 @@ impl SliderDemo {
             stepped,
             range,
             reversed,
-            colored,
+            style_a,
+            style_b,
+            style_c,
+            style_d,
+            shared: true,
             log: vec![],
             focus_handle: cx.focus_handle(),
         };
@@ -135,7 +148,10 @@ impl SliderDemo {
             &demo.stepped,
             &demo.range,
             &demo.reversed,
-            &demo.colored,
+            &demo.style_a,
+            &demo.style_b,
+            &demo.style_c,
+            &demo.style_d,
         ] {
             cx.subscribe(slider, |view, _slider, event, cx| {
                 let msg = match event {
@@ -157,6 +173,12 @@ impl SliderDemo {
         let cur = self.progress.read(cx).value().end();
         let next = (cur + 10.0) % 101.0;
         self.progress.update(cx, |s, cx| s.set_value(next, cx));
+    }
+
+    /// 切换样式示例是否共享同一进度。
+    fn on_toggle_shared(&mut self, _: &MouseUpEvent, _window: &mut Window, cx: &mut Context<Self>) {
+        self.shared = !self.shared;
+        cx.notify();
     }
 }
 
@@ -183,33 +205,58 @@ impl Render for SliderDemo {
             .child(slider_row("step=10".into(), &self.stepped, cx))
             .child(slider_row("区间[20,80]".into(), &self.range, cx))
             .child(slider_row("反向填充".into(), &self.reversed, cx))
-            // ---- 样式定制示例（同一 state，多个 Slider 元素展示不同视觉）----
-            .child(slider_row_styled(
-                "橙色+大点粗轨".into(),
-                &self.colored,
-                cx,
-                |s| {
+            // ---- 样式定制示例 ----
+            // 共享模式：4 行都绑 style_a，进度连动；独立模式：各自独立。
+            .child(
+                div()
+                    .flex()
+                    .flex_row()
+                    .items_center()
+                    .gap_2()
+                    .w_full()
+                    .child(div().text_size(px(14.0)).child("样式定制："))
+                    .child(
+                        div()
+                            .border_1()
+                            .border_color(rgb(0x666666))
+                            .px_2()
+                            .py_1()
+                            .child(if self.shared { "共享进度" } else { "独立进度" })
+                            .on_mouse_up(MouseButton::Left, cx.listener(Self::on_toggle_shared)),
+                    ),
+            )
+            .child({
+                slider_row_styled("橙色+大点粗轨".into(), &self.style_a, cx, |s| {
                     s.track_color(rgb(0x2a_2a_2a))
                         .fill_color(rgb(0xff_a0_40))
                         .thumb_color(rgb(0xff_80_20))
                         .thumb_size(px(24.0))
                         .track_size(px(10.0))
-                },
-            ))
-            .child(slider_row_styled("绿色系".into(), &self.colored, cx, |s| {
-                s.fill_color(rgb(0x4a_c0_5a)).thumb_color(rgb(0x2f_a0_3f))
-            }))
-            .child(slider_row_styled("紫色系".into(), &self.colored, cx, |s| {
-                s.fill_color(rgb(0xa0_6f_d0))
-                    .thumb_color(rgb(0x8a_4f_c0))
-                    .track_color(rgb(0x3a_3a_4a))
-            }))
-            .child(slider_row_styled("红+细轨".into(), &self.colored, cx, |s| {
-                s.fill_color(rgb(0xe0_5a_5a))
-                    .thumb_color(rgb(0xc0_3a_3a))
-                    .track_size(px(3.0))
-                    .thumb_size(px(12.0))
-            }))
+                })
+            })
+            .child({
+                let s = if self.shared { &self.style_a } else { &self.style_b };
+                slider_row_styled("绿色系".into(), s, cx, |s| {
+                    s.fill_color(rgb(0x4a_c0_5a)).thumb_color(rgb(0x2f_a0_3f))
+                })
+            })
+            .child({
+                let s = if self.shared { &self.style_a } else { &self.style_c };
+                slider_row_styled("紫色系".into(), s, cx, |s| {
+                    s.fill_color(rgb(0xa0_6f_d0))
+                        .thumb_color(rgb(0x8a_4f_c0))
+                        .track_color(rgb(0x3a_3a_4a))
+                })
+            })
+            .child({
+                let s = if self.shared { &self.style_a } else { &self.style_d };
+                slider_row_styled("红+细轨".into(), s, cx, |s| {
+                    s.fill_color(rgb(0xe0_5a_5a))
+                        .thumb_color(rgb(0xc0_3a_3a))
+                        .track_size(px(3.0))
+                        .thumb_size(px(12.0))
+                })
+            })
             .child(slider_row("垂直".into(), &self.vertical, cx))
             .child(
                 div()
