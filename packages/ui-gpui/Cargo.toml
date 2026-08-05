@@ -10,3 +10,12 @@ workspace = true
 [dependencies]
 gpui.workspace = true
 gpui_macros.workspace = true
+
+# 交互/状态逻辑测试（SliderState 的 update_value_by_position 等）需要 gpui 的
+# test-support 特性与 #[gpui::test] 宏。feature 开关供 `cargo test -F test-support`。
+[features]
+test-support = ["gpui/test-support"]
+
+[dev-dependencies]
+rand = "0.9"
+futures = "0.3"

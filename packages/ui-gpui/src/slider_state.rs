@@ -165,6 +165,10 @@ impl SliderState {
     /// 与 gpui-component `update_value_by_position` 同构（`slider.rs:358`）：
     /// 取布局 bounds → 像素百分比 → 按刻度转值 → step 取整 + 夹紧，
     /// 然后 `emit Change`。返回是否真的变化了值（用于避免无意义事件）。
+    ///
+    /// 注意：这里会把 `dragging` 置 true（gpui-component 同款语义）。这样 thumb
+    /// 直接拖动（不经过 `begin_drag`）时，`dragging` 也会置位，松手后 `end_drag`
+    /// 才能发 `Release`。`begin_drag` 已置 true，重复置无副作用。
     pub fn update_value_by_position(
         &mut self,
         position: Point<Pixels>,
@@ -173,6 +177,7 @@ impl SliderState {
         if self.disabled {
             return false;
         }
+        self.dragging = true;
         let new = position_to_value(
             self.axis,
             self.scale,
@@ -287,3 +292,128 @@ impl Render for SliderState {
         div()
     }
 }
+
+#[cfg(all(test, feature = "test-support"))]
+mod tests {
+    use super::*;
+    use gpui::{Entity, TestAppContext, point, px, size};
+
+    /// 一块水平 track bounds：x 从 100 到 300（宽 200），y 0..10。
+    fn h_bounds() -> Bounds<Pixels> {
+        Bounds::new(point(px(100.0), px(0.0)), size(px(200.0), px(10.0)))
+    }
+
+    /// 新建一个默认水平线性 [0,100] step=1 的 slider。
+    fn new_slider(cx: &mut TestAppContext) -> Entity<SliderState> {
+        cx.new(|_| SliderState::new())
+    }
+
+    #[gpui::test]
+    fn update_value_by_position_maps_pixels_to_value(cx: &mut TestAppContext) {
+        let slider = new_slider(cx);
+        slider.update(cx, |s, _| s.set_bounds(h_bounds()));
+
+        // 左端 x=100 → 0；右端 x=300 → 100；中点 x=200 → 50。
+        let v = slider.read_with(cx, |s, _| s.value());
+        assert_eq!(v, 0.0);
+
+        slider.update(cx, |s, cx| {
+            s.update_value_by_position(point(px(200.0), px(5.0)), cx);
+        });
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 50.0);
+
+        slider.update(cx, |s, cx| {
+            s.update_value_by_position(point(px(300.0), px(5.0)), cx);
+        });
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 100.0);
+
+        // 超出右边界 → clamp 到 100。
+        slider.update(cx, |s, cx| {
+            s.update_value_by_position(point(px(999.0), px(5.0)), cx);
+        });
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 100.0);
+    }
+
+    #[gpui::test]
+    fn update_value_by_position_sets_dragging(cx: &mut TestAppContext) {
+        let slider = new_slider(cx);
+        slider.update(cx, |s, _| s.set_bounds(h_bounds()));
+        // update_value_by_position 应置 dragging=true（gpui-component 同款语义），
+        // 这样 thumb 直接拖动后松手能发 Release。
+        slider.update(cx, |s, cx| {
+            s.update_value_by_position(point(px(150.0), px(5.0)), cx);
+        });
+        assert!(slider.read_with(cx, |s, _| s.dragging));
+
+        // 点击（begin_drag → end_drag）后 dragging 复位。
+        slider.update(cx, |s, cx| s.begin_drag(point(px(150.0), px(5.0)), cx));
+        assert!(slider.read_with(cx, |s, _| s.dragging));
+        slider.update(cx, |s, cx| s.end_drag(cx));
+        assert!(!slider.read_with(cx, |s, _| s.dragging));
+    }
+
+    #[gpui::test]
+    fn nudge_respects_step_and_clamps(cx: &mut TestAppContext) {
+        let slider = cx.new(|_| SliderState::new().min(0.0).max(100.0).step(10.0));
+        // 0 + 4 → 取整到 0（step=10），值不变。
+        slider.update(cx, |s, cx| s.nudge(4.0, cx));
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 0.0);
+        // 0 + 16 → 16 → 取整到 20。
+        slider.update(cx, |s, cx| s.nudge(16.0, cx));
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 20.0);
+        // 远超上限 → clamp 到 max。
+        slider.update(cx, |s, cx| s.nudge(1000.0, cx));
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 100.0);
+    }
+
+    #[gpui::test]
+    fn cancel_drag_reverts_to_start_value(cx: &mut TestAppContext) {
+        let slider = new_slider(cx);
+        slider.update(cx, |s, _| s.set_bounds(h_bounds()));
+        slider.update(cx, |s, cx| s.set_value(20.0, cx));
+        // 按下并拖到 80。
+        slider.update(cx, |s, cx| s.begin_drag(point(px(200.0), px(5.0)), cx));
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 50.0);
+        // Esc 取消 → 回到按下时的 20。
+        slider.update(cx, |s, cx| s.cancel_drag(cx));
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 20.0);
+        assert!(!slider.read_with(cx, |s, _| s.dragging));
+    }
+
+    #[gpui::test]
+    fn set_value_quantizes_and_clamps(cx: &mut TestAppContext) {
+        let slider = cx.new(|_| SliderState::new().min(0.0).max(95.0).step(10.0));
+        slider.update(cx, |s, cx| s.set_value(99.0, cx)); // 99 → 取整 100 → clamp 95
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 95.0);
+        slider.update(cx, |s, cx| s.set_value(-5.0, cx)); // 越下界 → clamp 0
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 0.0);
+        slider.update(cx, |s, cx| s.set_value(37.0, cx)); // 37 → 取整 40
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 40.0);
+    }
+
+    #[gpui::test]
+    fn disabled_slider_ignores_interaction(cx: &mut TestAppContext) {
+        let slider = cx.new(|_| SliderState::new().disabled(true));
+        slider.update(cx, |s, _| s.set_bounds(h_bounds()));
+        slider.update(cx, |s, cx| {
+            let changed = s.update_value_by_position(point(px(200.0), px(5.0)), cx);
+            assert!(!changed);
+        });
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 0.0);
+        assert!(!slider.read_with(cx, |s, _| s.dragging));
+    }
+
+    #[gpui::test]
+    fn vertical_slider_flips_y(cx: &mut TestAppContext) {
+        let slider = cx.new(|_| SliderState::new().axis(Axis::Vertical));
+        // 垂直：bounds y 从 0 到 200，底(y=200)→1.0，顶(y=0)→0.0。
+        let bounds = Bounds::new(point(px(0.0), px(0.0)), size(px(10.0), px(200.0)));
+        slider.update(cx, |s, _| s.set_bounds(bounds));
+        // y=100（中点）→ 0.5 → 值 50。
+        slider.update(cx, |s, cx| {
+            s.update_value_by_position(point(px(5.0), px(100.0)), cx);
+        });
+        assert_eq!(slider.read_with(cx, |s, _| s.value()), 50.0);
+    }
+}
+

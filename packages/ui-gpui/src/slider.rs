@@ -81,7 +81,7 @@ impl RenderOnce for Slider {
         // 轨道（第一个子元素，bounds 被外层 on_children_prepainted 捕获）。
         // on_drag_move 之后继续链式挂 on_drag 会把 track 变成 Stateful<Div>；
         // 由于 on_drag 返回 Self，我们把它赋回 track 再塞进外层。
-        let mut track = div()
+        let track = div()
             .id("track")
             .relative()
             .when(horizontal, |t| t.h_full().w_full().flex().items_center())
@@ -103,10 +103,15 @@ impl RenderOnce for Slider {
                     .bg(fill_bg)
                     .rounded_full(),
             )
-            // thumb（手柄）
+            // thumb（手柄）。拖动能力挂在 thumb 上：因为 thumb 的 on_mouse_down 会
+            // stop_propagation，若把 on_drag 挂在父级 track 上，thumb 的按下不会
+            // 冒泡上去，drag 永远启动不了（这正是之前"拖不动"的根因）。所以
+            // on_drag + on_drag_move 必须和 on_mouse_down 同在 thumb 这一个元素上，
+            // 与 gpui-component slider.rs:508-535 同构。
             .child(
                 div()
                     .absolute()
+                    .id(("thumb", entity_id))
                     .when(horizontal, |th| {
                         th.left(relative(thumb_pct / 100.0)).top(px(0.0))
                     })
@@ -116,27 +121,28 @@ impl RenderOnce for Slider {
                     .size(thumb_size)
                     .rounded_full()
                     .bg(thumb_bg)
-                    // thumb 上按下：阻止冒泡到 track（避免重复跳值）。
+                    // thumb 上按下：阻止冒泡到外层（避免外层 on_mouse_down 重复跳值），
+                    // 同时本元素启动自己的 drag。
                     .on_mouse_down(MouseButton::Left, |_, _, cx| {
                         cx.stop_propagation();
+                    })
+                    .on_drag(
+                        DragSlider(entity_id),
+                        |drag, _, _, cx| cx.new(|_| drag.clone()),
+                    )
+                    .on_drag_move({
+                        let slider_state = slider_state.clone();
+                        move |e: &DragMoveEvent<DragSlider>, _window, cx| {
+                            if let DragSlider(id) = e.drag(cx)
+                                && *id == entity_id
+                            {
+                                slider_state.update(cx, |s, cx| {
+                                    s.update_value_by_position(e.event.position, cx);
+                                });
+                            }
+                        }
                     }),
-            )
-            // 拖动轨道（thumb 之外的区域）也能跟手。on_drag_move / on_drag 都返回 Self，
-            // 所以把结果再赋回 track。这里 clone 一份 slider_state 供闭包用，保留原值给外层。
-            .on_drag_move({
-                let slider_state = slider_state.clone();
-                move |e: &DragMoveEvent<DragSlider>, _window, cx| {
-                    if let DragSlider(id) = e.drag(cx)
-                        && *id == entity_id
-                    {
-                        slider_state.update(cx, |s, cx| {
-                            s.update_value_by_position(e.event.position, cx);
-                        });
-                    }
-                }
-            });
-        // on_drag 返回 Self，把它挂回 track，再把 DragSlider 标记挂到全局 active_drag。
-        track = track.on_drag(DragSlider(entity_id), |drag, _, _, cx| cx.new(|_| drag.clone()));
+            );
         // 外层容器：track 作为第一个直接子元素，便于 on_children_prepainted 取 bounds。
         // 注意调用顺序：on_children_prepainted 只定义在 Div 上（本 rev 没有 on_prepaint），
         // 而 .id() 会把它变成 Stateful<Div>，之后就只能用 on_mouse_down 等 Stateful 方法。
@@ -217,6 +223,25 @@ impl RenderOnce for Slider {
                             }
                         }
                         _ => {}
+                    }
+                }
+            })
+            // 轨道整条可拖：点 track 任意处按住即可拖动跟手（不只 thumb）。
+            // on_drag_move 会在「任一」元素上以 Capture 阶段派发（div.rs:342），
+            // 所以外层与 thumb 都注册无妨——update_value_by_position 幂等，不会重复发 Change。
+            .on_drag(
+                DragSlider(entity_id),
+                |drag, _, _, cx| cx.new(|_| drag.clone()),
+            )
+            .on_drag_move({
+                let slider_state = slider_state.clone();
+                move |e: &DragMoveEvent<DragSlider>, _window, cx| {
+                    if let DragSlider(id) = e.drag(cx)
+                        && *id == entity_id
+                    {
+                        slider_state.update(cx, |s, cx| {
+                            s.update_value_by_position(e.event.position, cx);
+                        });
                     }
                 }
             })
