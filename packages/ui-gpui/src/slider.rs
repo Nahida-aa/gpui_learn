@@ -262,11 +262,14 @@ impl RenderOnce for Slider {
                     move |e: &DragMoveEvent<DragSlider>, _window, cx| {
                         // 该 handler 仅在 active_drag 类型为 DragSlider 时才被派发，
                         // 故 e.drag(cx) 必然成功（div.rs:344 的类型守卫）。
-                        // 先把 id 拷出来再 update，避免 cx 借用冲突。
+                        // 先拷出 id 再 update，避免 cx 借用冲突。
                         let DragSlider(drag_id) = *e.drag(cx);
                         if drag_id == entity_id {
                             st.update(cx, |s, cx| {
-                                s.update_value_by_position(e.event.position, false, cx);
+                                // 用点击时 pick 出的 active_thumb 决定移动哪个端，
+                                // 否则点左边拖动会错误地移动终点 thumb。
+                                let is_start = s.active_thumb.unwrap_or(false);
+                                s.update_value_by_position(e.event.position, is_start, cx);
                             });
                         }
                     }
@@ -384,4 +387,38 @@ fn pick_is_start(state: &SliderState, position: gpui::Point<Pixels>) -> bool {
     // 两个 thumb 的像素中点 = (pct_start+pct_end)/2 * total。
     let center = (pct_end + pct_start) / 2.0 * total.as_f32();
     pos.as_f32() < center
+}
+
+#[cfg(all(test, feature = "test-support"))]
+mod tests {
+    use super::*;
+    use gpui::{TestAppContext, point, px, size};
+
+    /// 水平轨道 bounds：x 从 100 到 300（宽 200），y 0..10。默认 Range(20,80)。
+    fn range_state(cx: &mut TestAppContext) -> Entity<SliderState> {
+        let s = cx.new(|_| {
+            SliderState::new()
+                .min(0.0)
+                .max(100.0)
+                .default_value((20.0, 80.0))
+        });
+        s.update(cx, |s, _| {
+            s.set_bounds(Bounds::new(point(px(100.0), px(0.0)), size(px(200.0), px(10.0))))
+        });
+        s
+    }
+
+    #[gpui::test]
+    fn pick_is_start_left_of_midpoint(cx: &mut TestAppContext) {
+        let s = range_state(cx);
+        // 范围 (20,80)，中点 = 50。点击 x=150（值 25，偏左）→ 应选起点端。
+        let is_start = s.read_with(cx, |st, _| pick_is_start(st, point(px(150.0), px(5.0))));
+        assert!(is_start);
+        // 点击 x=250（值 75，偏右）→ 应选终点端。
+        let is_start = s.read_with(cx, |st, _| pick_is_start(st, point(px(250.0), px(5.0))));
+        assert!(!is_start);
+        // 点击 x=200（值 50，正好中点）→ 选起点端（pos < center 为 false 当相等时）。
+        let is_start = s.read_with(cx, |st, _| pick_is_start(st, point(px(200.0), px(5.0))));
+        assert!(!is_start);
+    }
 }
