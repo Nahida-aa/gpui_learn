@@ -13,16 +13,11 @@ use gpui::{Axis, Bounds, Pixels, Point, Window};
 /// - `Linear`：值沿轨道均匀分布（默认，进度条/通用滑块用）。
 /// - `Log`：对数刻度（`value = min * (max/min)^p`），适合音量、频率等
 ///   感知非线性的量。要求 `min > 0`，否则对数无意义。
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub enum Scale {
+    #[default]
     Linear,
     Log,
-}
-
-impl Default for Scale {
-    fn default() -> Self {
-        Scale::Linear
-    }
 }
 
 impl Scale {
