@@ -6375,8 +6375,10 @@ dependencies = [
 name = "ui-gpui"
 version = "0.1.0"
 dependencies = [
+ "futures",
  "gpui",
  "gpui_macros",
+ "rand 0.9.5",
 ]
 
 [[package]]

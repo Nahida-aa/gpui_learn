@@ -14,6 +14,12 @@
     "android:launch": "adb shell am start -n dev.gpui.learn.uniform_list_07/dev.gpui.mobile.GpuiActivity",
     "android:run": "bun run android:init && bun run android:apk && bun run android:install && bun run android:launch",
     "android:logs": "adb logcat -s uniform_list_07:V gpui-android:V",
-    "android:uninstall": "adb uninstall dev.gpui.learn.uniform_list_07"
+    "android:uninstall": "adb uninstall dev.gpui.learn.uniform_list_07",
+    "waydroid:apk": "cd gen/android && ./gradlew assembleDebug",
+    "waydroid:install": "/usr/bin/python3 /usr/bin/waydroid app install gen/android/app/build/outputs/apk/debug/app-debug.apk",
+    "waydroid:launch": "/usr/bin/python3 /usr/bin/waydroid app launch dev.gpui.learn.uniform_list_07",
+    "waydroid:run": "bun run android:init && bun run waydroid:apk && bun run waydroid:install && bun run waydroid:launch",
+    "waydroid:shell": "/usr/bin/python3 /usr/bin/waydroid shell",
+    "waydroid:uninstall": "/usr/bin/python3 /usr/bin/waydroid app uninstall dev.gpui.learn.uniform_list_07"
   }
 }

@@ -10,8 +10,8 @@
 //! uniform_list 的关键能力与踩坑见 `docs/uniform_list.md`。
 
 use gpui::{
-    actions, App, Bounds, Context, FocusHandle, ScrollStrategy, UniformListScrollHandle, Window,
-    WindowBounds, WindowOptions, div, prelude::*, px, rgb, size, uniform_list,
+    App, Bounds, Context, FocusHandle, ScrollStrategy, UniformListScrollHandle, Window,
+    WindowBounds, WindowOptions, actions, div, prelude::*, px, rgb, size, uniform_list,
 };
 use std::ops::Range;
 
@@ -91,6 +91,8 @@ impl Render for UniformListExample {
             .bg(rgb(0xffffff))
             // 让列表容器可聚焦，键盘事件才会进来。
             .track_focus(&self.focus_handle)
+            // 键盘 context：与 run() 里的 bind_keys 对应，使 ↑/↓/Enter 生效。
+            .key_context("uniform_list_07")
             .on_action(cx.listener(Self::select_next))
             .on_action(cx.listener(Self::select_previous))
             .on_action(cx.listener(Self::confirm))
@@ -153,9 +155,8 @@ impl Render for UniformListExample {
                                             // 统一走 select（含滚动跟随 + notify）。
                                             // 必须经由 entity.update 而非 this，
                                             // 否则闭包无法 'static（this 是借用）。
-                                            entity.update(cx, |this, cx| {
-                                                this.select(ix, window, cx)
-                                            });
+                                            entity
+                                                .update(cx, |this, cx| this.select(ix, window, cx));
                                         }
                                     })
                                     .child(this.items[ix].clone())
@@ -209,6 +210,15 @@ pub fn run() {
     env_logger::init();
     log::info!("[uniform_list] starting 07_uniform_list v{}", APP_VERSION);
     gpui_platform::application().run(|cx: &mut App| {
+        // 把物理按键映射到 action（key_context 与视图 div 上的 key_context 对应）。
+        // 没有这一步，on_action 永远收不到 action，↑/↓/Enter 就不生效
+        // —— 这正是 08 有而本例之前缺的关键绑定。
+        cx.bind_keys([
+            gpui::KeyBinding::new("up", SelectPrev, Some("uniform_list_07")),
+            gpui::KeyBinding::new("down", SelectNext, Some("uniform_list_07")),
+            gpui::KeyBinding::new("enter", Confirm, Some("uniform_list_07")),
+        ]);
+
         let window = open_window(cx);
         // 桌面端：自动聚焦顶层视图，键盘（↑/↓/Enter）即可直接操作。
         let _ = window.update(cx, |view, window, cx| {

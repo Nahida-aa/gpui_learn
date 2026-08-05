@@ -5,6 +5,7 @@
   "description": "08_testing —— 用 gpui-android 后端在手机跑 GPUI 测试示例（计数器）",
   "scripts": {
     "dev": "cargo watch -x run -p testing_08",
+    "run": "cargo run -p testing_08",
     "check": "cargo check -p testing_08",
     "android:init": "cargo run -p gpui-cli -- android init",
     "android:check": "cargo ndk -t arm64-v8a -P 26 check -p testing_08",
@@ -14,6 +15,12 @@
     "android:launch": "adb shell am start -n gpui_learn.testing_08/dev.gpui.mobile.GpuiActivity",
     "android:run": "bun run android:init && bun run android:apk && bun run android:install && bun run android:launch",
     "android:logs": "adb logcat -s testing_08:V gpui-android:V",
-    "android:uninstall": "adb uninstall gpui_learn.testing_08"
+    "android:uninstall": "adb uninstall gpui_learn.testing_08",
+    "waydroid:apk": "cd gen/android && ./gradlew assembleDebug",
+    "waydroid:install": "/usr/bin/python3 /usr/bin/waydroid app install gen/android/app/build/outputs/apk/debug/app-debug.apk",
+    "waydroid:launch": "/usr/bin/python3 /usr/bin/waydroid app launch gpui_learn.testing_08",
+    "waydroid:run": "bun run android:init && bun run waydroid:apk && bun run waydroid:install && bun run waydroid:launch",
+    "waydroid:shell": "/usr/bin/python3 /usr/bin/waydroid shell",
+    "waydroid:uninstall": "/usr/bin/python3 /usr/bin/waydroid app uninstall gpui_learn.testing_08"
   }
 }

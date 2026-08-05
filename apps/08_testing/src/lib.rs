@@ -16,7 +16,7 @@ use gpui::{
     WindowOptions, actions, div, prelude::*, px, rgb, size,
 };
 
-actions!(counter, [Increment, Decrement]);
+actions!(counter, [Increment, Decrement, Reset]);
 
 struct Counter {
     count: i32,
@@ -72,6 +72,11 @@ impl Counter {
         })
         .detach();
     }
+
+    fn reset(&mut self, _: &Reset, _window: &mut Window, cx: &mut Context<Self>) {
+        self.count = 0;
+        cx.notify();
+    }
 }
 
 impl Focusable for Counter {
@@ -87,6 +92,7 @@ impl Render for Counter {
             .key_context("Counter")
             .on_action(cx.listener(Self::increment))
             .on_action(cx.listener(Self::decrement))
+            .on_action(cx.listener(Self::reset))
             .track_focus(&self.focus_handle)
             .flex()
             .flex_col()
@@ -169,6 +175,21 @@ impl Render for Counter {
                                 this.reload(cx);
                             }))
                             .child("Reload"),
+                    )
+                    .child(
+                        div()
+                            .id("reset")
+                            .px_4()
+                            .py_2()
+                            .bg(rgb(0x313244))
+                            .hover(|s| s.bg(rgb(0x45475a)))
+                            .rounded_md()
+                            .cursor_pointer()
+                            .text_color(rgb(0xcdd6f4))
+                            .on_click(cx.listener(|this, _, window, cx| {
+                                this.reset(&Reset, window, cx);
+                            }))
+                            .child("Reset"),
                     ),
             )
             .child(
