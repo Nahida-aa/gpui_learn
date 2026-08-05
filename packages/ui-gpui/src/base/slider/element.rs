@@ -202,6 +202,13 @@ impl RenderOnce for Slider {
         let mut track = div()
             .id("track")
             .relative()
+            // track 也设 resize 光标：单值拖动的 on_drag 在 track 上，
+            // drag 光标取启动元素的 mouse_cursor，缺了拖动中会退默认。
+            .cursor(if horizontal {
+                gpui::CursorStyle::ResizeLeftRight
+            } else {
+                gpui::CursorStyle::ResizeUpDown
+            })
             .when(horizontal, |t| t.h_full().w_full().flex().items_center())
             .when(!horizontal, |t| t.w_full().h_full().flex().flex_col().justify_center())
             .child(
@@ -386,6 +393,13 @@ fn render_thumb(
         .size(thumb_size)
         .rounded_full()
         .bg(thumb_bg)
+        // thumb 也设 resize 光标：拖动由 thumb 启动时，gpui 用启动元素的
+        // mouse_cursor 作为 drag 光标（div.rs:2734），否则拖动中会退回默认光标。
+        .cursor(if horizontal {
+            gpui::CursorStyle::ResizeLeftRight
+        } else {
+            gpui::CursorStyle::ResizeUpDown
+        })
         // 每个 thumb 独立记录悬停，Range 两个圆点不会同时变色。
         .on_hover({
             let st = slider_state.clone();
