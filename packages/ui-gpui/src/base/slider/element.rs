@@ -178,6 +178,7 @@ impl RenderOnce for Slider {
                 entity_id,
                 horizontal,
                 thumb_size(true),
+                track_thickness,
                 thumb_bg(true),
                 disabled,
                 true,
@@ -189,6 +190,7 @@ impl RenderOnce for Slider {
             entity_id,
             horizontal,
             thumb_size(false),
+            track_thickness,
             thumb_bg(false),
             disabled,
             false,
@@ -362,19 +364,24 @@ fn render_thumb(
     entity_id: EntityId,
     horizontal: bool,
     thumb_size: Pixels,
+    track_thickness: Pixels,
     thumb_bg: Background,
     disabled: bool,
     is_start: bool,
     pct: f32,
 ) -> impl IntoElement {
+    // 居中偏移按实际尺寸算，避免轨道/thumb 改大后错位：
+    // 交叉轴偏移 = (轨道厚度 - thumb 大小) / 2；顺轴偏移 = -thumb/2 使中心对齐 pct。
+    let cross_offset = (track_thickness.as_f32() - thumb_size.as_f32()) / 2.0;
+    let align_offset = -thumb_size.as_f32() / 2.0;
     let mut th = div()
         .absolute()
         .id(format!("thumb-{entity_id}-{is_start}"))
         .when(horizontal, |t| {
-            t.top(px(-5.0)).left(relative(pct)).ml(-px(8.0))
+            t.top(px(cross_offset)).left(relative(pct)).ml(px(align_offset))
         })
         .when(!horizontal, |t| {
-            t.bottom(relative(pct)).left(px(-5.0)).mb(-px(8.0))
+            t.bottom(relative(pct)).left(px(cross_offset)).mb(px(align_offset))
         })
         .size(thumb_size)
         .rounded_full()

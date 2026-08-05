@@ -42,11 +42,12 @@ fn slider_row(
         )
 }
 
-/// 同 `slider_row`，但给 Slider 元素应用自定义颜色（演示颜色覆盖）。
-fn slider_row_colored(
+/// 带自定义样式的滑块行：`style` 闭包对 `Slider` 应用颜色/大小覆盖。
+fn slider_row_styled(
     label: SharedString,
     slider: &Entity<SliderState>,
     cx: &mut Context<SliderDemo>,
+    style: impl FnOnce(Slider) -> Slider,
 ) -> impl IntoElement {
     let value = slider.read(cx).value();
     let min = slider.read(cx).min_value();
@@ -64,14 +65,7 @@ fn slider_row_colored(
             div()
                 .flex_1()
                 .h(px(32.0))
-                .child(
-                    Slider::new(slider)
-                        .track_color(rgb(0x2a_2a_2a))
-                        .fill_color(rgb(0xff_a0_40))
-                        .thumb_color(rgb(0xff_80_20))
-                        .thumb_size(px(24.0))
-                        .track_size(px(10.0)),
-                ),
+                .child(style(Slider::new(slider))),
         )
         .child(
             div()
@@ -189,7 +183,33 @@ impl Render for SliderDemo {
             .child(slider_row("step=10".into(), &self.stepped, cx))
             .child(slider_row("区间[20,80]".into(), &self.range, cx))
             .child(slider_row("反向填充".into(), &self.reversed, cx))
-            .child(slider_row_colored("自定义颜色".into(), &self.colored, cx))
+            // ---- 样式定制示例（同一 state，多个 Slider 元素展示不同视觉）----
+            .child(slider_row_styled(
+                "橙色+大点粗轨".into(),
+                &self.colored,
+                cx,
+                |s| {
+                    s.track_color(rgb(0x2a_2a_2a))
+                        .fill_color(rgb(0xff_a0_40))
+                        .thumb_color(rgb(0xff_80_20))
+                        .thumb_size(px(24.0))
+                        .track_size(px(10.0))
+                },
+            ))
+            .child(slider_row_styled("绿色系".into(), &self.colored, cx, |s| {
+                s.fill_color(rgb(0x4a_c0_5a)).thumb_color(rgb(0x2f_a0_3f))
+            }))
+            .child(slider_row_styled("紫色系".into(), &self.colored, cx, |s| {
+                s.fill_color(rgb(0xa0_6f_d0))
+                    .thumb_color(rgb(0x8a_4f_c0))
+                    .track_color(rgb(0x3a_3a_4a))
+            }))
+            .child(slider_row_styled("红+细轨".into(), &self.colored, cx, |s| {
+                s.fill_color(rgb(0xe0_5a_5a))
+                    .thumb_color(rgb(0xc0_3a_3a))
+                    .track_size(px(3.0))
+                    .thumb_size(px(12.0))
+            }))
             .child(slider_row("垂直".into(), &self.vertical, cx))
             .child(
                 div()
@@ -227,7 +247,7 @@ impl Render for SliderDemo {
 
 fn run_example() {
     application().run(|cx: &mut App| {
-        let bounds = Bounds::centered(None, size(px(640.0), px(720.0)), cx);
+        let bounds = Bounds::centered(None, size(px(640.0), px(900.0)), cx);
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
