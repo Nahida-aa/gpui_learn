@@ -81,10 +81,9 @@ impl RenderOnce for Slider {
         let axis = state.get_axis();
         let horizontal = matches!(axis, Axis::Horizontal);
         let hovered = state.is_hovered();
-        let focused = state.is_focused();
         let disabled = state.is_disabled();
         let is_range = state.value().is_range();
-        let thumb_size = if hovered || focused { px(18.0) } else { px(16.0) };
+        let thumb_size = if hovered { px(18.0) } else { px(16.0) };
 
         // 颜色：尽量不依赖主题 token（本仓库没有 gpui-component 的主题系统）。
         let track_bg: Background = if disabled {
@@ -99,7 +98,7 @@ impl RenderOnce for Slider {
         };
         let thumb_bg: Background = if disabled {
             rgb(0x88_88_88).into()
-        } else if hovered || focused {
+        } else if hovered {
             rgb(0x9e_c4_ff).into()
         } else {
             rgb(0xff_ff_ff).into()
@@ -235,7 +234,6 @@ impl RenderOnce for Slider {
                         let fh = st.read(cx).focus_handle(cx);
                         window.focus(&fh, cx);
                         st.update(cx, |s, cx| {
-                            s.set_focused(true, cx);
                             let is_start = s.value().is_range()
                                 && pick_is_start(s, e.position);
                             s.begin_drag(e.position, is_start, cx);

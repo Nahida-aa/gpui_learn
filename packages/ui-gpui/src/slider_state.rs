@@ -42,8 +42,6 @@ pub struct SliderState {
     pub(crate) start_value: SliderValue,
     /// 是否 hover（视觉态）。
     pub(crate) hovered: bool,
-    /// 是否聚焦（视觉态 + 键盘交互前提）。
-    pub(crate) focused: bool,
     /// 是否禁用（禁用则不响应交互）。
     pub(crate) disabled: bool,
 }
@@ -64,7 +62,6 @@ impl SliderState {
             dragging: false,
             start_value: SliderValue::Single(0.0),
             hovered: false,
-            focused: false,
             disabled: false,
         }
     }
@@ -143,10 +140,6 @@ impl SliderState {
 
     pub fn is_hovered(&self) -> bool {
         self.hovered
-    }
-
-    pub fn is_focused(&self) -> bool {
-        self.focused
     }
 
     pub fn is_disabled(&self) -> bool {
@@ -344,13 +337,6 @@ impl SliderState {
     pub fn set_hovered(&mut self, hovered: bool, cx: &mut Context<Self>) {
         if self.hovered != hovered {
             self.hovered = hovered;
-            cx.notify();
-        }
-    }
-
-    pub fn set_focused(&mut self, focused: bool, cx: &mut Context<Self>) {
-        if self.focused != focused {
-            self.focused = focused;
             cx.notify();
         }
     }
