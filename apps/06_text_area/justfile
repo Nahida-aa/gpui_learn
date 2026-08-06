@@ -1,0 +1,37 @@
+# adb 目标设备：多设备时必须显式指定，否则 "more than one device/emulator"。
+# 用环境变量 ADB_DEVICE（或 just --set device=...）覆盖。
+device := env_var_or_default("ADB_DEVICE", "7fb0ee72")
+
+# 与生成工程 applicationId 一致（= gpui.conf.json 的 identifier）
+android_pkg := "gpui_learn.text_area_06"
+apk := "gen/android/app/build/outputs/apk/debug/app-debug.apk"
+
+# 初始化并生成 Android 工程（gen/android + android 资源）
+android_init:
+    cargo run -p gpui-cli -- android init
+
+# 用 cargo-ndk 交叉编译 native 库（仅检查）
+android_check:
+    cargo ndk -t arm64-v8a -P 26 check -p 06_text_area
+
+# 用 Gradle 打包 debug APK
+android_apk:
+    cd gen/android && ./gradlew assembleDebug
+
+android_apk_release:
+    cd gen/android && ./gradlew assembleRelease -Prelease
+
+# 安装 APK 到设备
+android_install:
+    adb -s {{device}} install -r {{apk}}
+
+# 启动 MainActivity
+android_launch:
+    adb -s {{device}} shell am start -n {{android_pkg}}/dev.gpui.mobile.GpuiActivity
+
+# 一键：init → 打包 → 安装 → 启动
+android_run:
+    just android_init
+    just android_apk
+    just android_install
+    just android_launch

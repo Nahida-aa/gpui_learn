@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GPUILearnGPUILearnTextArea"
+rootProject.name = "GPUILearnTextArea"
 include(":app")
