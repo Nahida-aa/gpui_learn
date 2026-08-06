@@ -1,5 +1,6 @@
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.android")
 }
 
 // 本文件由 `gpui-cli android init` 生成（模板见 crates/gpui-cli）。
@@ -37,6 +38,15 @@ android {
     namespace = providers.gradleProperty("appId").get()
     compileSdk = 35
 
+    // Java 与 Kotlin 的 JVM 目标必须一致，否则 AGP 报 Inconsistent JVM-target。
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+
     defaultConfig {
         applicationId = providers.gradleProperty("appId").get()
         minSdk = 26
@@ -67,8 +77,9 @@ android {
     sourceSets {
         getByName("main") {
             jniLibs.srcDirs("src/main/jniLibs")
-            // 复用 vendored gpui-android 提供的 GpuiActivity.java（NativeActivity 子类 +
+            // 复用 vendored gpui-android 提供的 GpuiActivity（Kotlin，NativeActivity 子类 +
             // 软键盘 InputConnection + 无障碍桥接）。不复制，直接引用源码目录。
+            // kotlin-android 插件会把 java/kotlin 源集合并，.kt 放该目录即可被编译。
             // 路径由 `gpui-cli` 在生成时按例子实际位置算出（相对 gen/android/app/）。
             java.srcDir("{ANDROID_JAVA_DIR}")
         }
