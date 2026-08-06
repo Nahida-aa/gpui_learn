@@ -10,7 +10,7 @@ workspace = true
 [dependencies]
 gpui.workspace = true
 gpui_macros.workspace = true
-# 复用工作区共享的 assets crate（crates/assets）：图标等资源内嵌在仓库根
+# 复用工作区共享的 assets crate（packages/assets）：图标等资源内嵌在仓库根
 # assets/ 下，由该 crate 的 RustEmbed 统一加载。ui-gpui 不再自带资源。
 # 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。
 assets.workspace = true

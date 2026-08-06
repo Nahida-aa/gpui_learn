@@ -1,0 +1,23 @@
+# 08_testing —— GPUI 测试框架与最佳实践
+# 包名：testing_08
+#
+# 使用：
+#   just run      # 桌面运行应用（带日志输出）
+#   just test      # 运行 GPUI 测试（需 test-support 特性）
+#   just test-show # 运行测试并显示 println 输出（-- --nocapture）
+
+# 桌面运行应用
+run:
+    cargo run -p testing_08
+
+# 运行 GPUI 测试（完整输出，含事件/任务等诊断）
+test:
+    cargo test -p testing_08 --features test-support
+
+# 运行测试并显示捕获的输出（用于查看 distributed_systems 的执行顺序）
+test-show:
+    cargo test -p testing_08 --features test-support -- --nocapture
+
+# 关闭警告运行
+test-quiet:
+    cargo test -p testing_08 --features test-support 2>&1 | grep -v "warning"

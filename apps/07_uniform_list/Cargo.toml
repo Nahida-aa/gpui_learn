@@ -40,6 +40,6 @@ gpui_platform = { workspace = true }
 # Android：NativeActivity 加载 cdylib .so；gpui_android 提供 JNI/平台桥接，
 # android-activity 必须开 native-activity，android_logger 提供日志后端。
 [target.'cfg(target_os = "android")'.dependencies]
-gpui-android = { path = "../../crates/gpui-android" }
+gpui-android = { path = "../../packages/gpui-android" }
 android-activity = { version = "0.6", features = ["native-activity"] }
 android_logger = "0.15"

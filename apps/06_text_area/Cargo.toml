@@ -22,7 +22,7 @@ path = "src/main.rs"
 
 [dependencies]
 gpui = { workspace = true }
-gpui-android = { path = "../../crates/gpui-android" }
+gpui-android = { path = "../../packages/gpui-android" }
 unicode-segmentation = "1.11"
 
 # 桌面 / 通用依赖：log 给诊断日志用。
@@ -43,6 +43,6 @@ gpui_platform = { workspace = true }
 wasm-bindgen = "0.2.120"
 
 [target.'cfg(target_os = "android")'.dependencies]
-# 版本与 crates/gpui-android/Cargo.toml 保持一致（android-activity 必须开 native-activity）。
+# 版本与 packages/gpui-android/Cargo.toml 保持一致（android-activity 必须开 native-activity）。
 android-activity = { version = "0.6", features = ["native-activity"] }
 android_logger = "0.15"

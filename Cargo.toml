@@ -69,9 +69,9 @@ anyhow = "1.0"
 
 rust-embed = { version = "8.11", features = ["include-exclude"] }
 
-# 工作区共享的资源 crate（crates/assets）：内嵌仓库根 assets/ 下的字体/图标等。
+# 工作区共享的资源 crate（packages/assets）：内嵌仓库根 assets/ 下的字体/图标等。
 # 子包用 `assets.workspace = true` 引用，位置统一在此声明，避免各包散写相对路径。
-assets = { path = "crates/assets" }
+assets = { path = "packages/assets" }
 
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
 # 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），
@@ -88,7 +88,7 @@ gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b37
 gpui_util = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.1.0" }
 
 # [workspace.lints]：统一的 lint 配置，供子包用 `lints.workspace = true` 继承
-# （如 crates/assets）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
+# （如 packages/assets）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
 [workspace.lints.rust]
 # 允许 #[cfg(...)] 属性中出现未识别的配置条件
 unexpected_cfgs = { level = "allow" }
