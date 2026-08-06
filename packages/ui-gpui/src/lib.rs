@@ -14,9 +14,12 @@
 //! - [`base`]：通用基础控件层（`geometry` 数学换算 + `slider` 滑块）。
 //!   未来其他组件（button/input 等）可并排放在 `base/` 下。
 
+pub mod assets;
 pub mod base;
 
+pub use assets::Assets;
 pub use base::geometry::{quantize, Scale};
+pub use base::icon::{Icon, IconName};
 pub use base::slider::element::{DragSlider, Slider, SliderEvent};
 pub use base::slider::slider_state::{SliderState, ThumbMode};
 pub use base::slider::slider_value::SliderValue;
