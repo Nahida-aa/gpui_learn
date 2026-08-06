@@ -31,6 +31,10 @@ pub enum IconName {
     VolumeOff,
     /// 更多（垂直三点）。
     More,
+    /// 快退（双左箭头）。
+    Rewind,
+    /// 快进（双右箭头）。
+    FastForward,
 }
 
 impl IconName {
@@ -42,6 +46,8 @@ impl IconName {
             IconName::VolumeOn => "icons/audio_on.svg",
             IconName::VolumeOff => "icons/audio_off.svg",
             IconName::More => "icons/ellipsis_vertical.svg",
+            IconName::Rewind => "icons/player_backward.svg",
+            IconName::FastForward => "icons/player_forward.svg",
         }
     }
 }
