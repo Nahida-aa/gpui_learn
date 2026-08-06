@@ -17,10 +17,9 @@ resolver = "3"
 
 # members：工作区里「所有」成员。cargo 在 `--workspace` 模式或 `cargo build`
 # 没有 default-members 限制时，会处理这里列出的每一个。
-# 用通配符 "apps/*" 和 "crates/*" 可以随例子增多自动纳入新包，无需手动维护列表。
+# 用通配符 "apps/*" 和 "packages/*" 可以随例子增多自动纳入新包，无需手动维护列表。
 members = [
     "apps/*",
-    "crates/*",
     "packages/*",
 ]
 

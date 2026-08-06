@@ -39,3 +39,5 @@ test_slider:
 lint_slider:
     cargo clippy -p ui-gpui -p slider_09
 
+stats:
+    scc . --exclude-dir node_modules,dist,build,target,venv,.venv,__pycache__,.git,vendor,out,cmake-build-debug,CMakeFiles --exclude-ext lock,json,md,yaml,yml,toml,ini,conf
