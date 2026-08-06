@@ -12,7 +12,8 @@ gpui.workspace = true
 gpui_macros.workspace = true
 # 复用工作区共享的 assets crate（crates/assets）：图标等资源内嵌在仓库根
 # assets/ 下，由该 crate 的 RustEmbed 统一加载。ui-gpui 不再自带资源。
-assets = { path = "../../crates/assets" }
+# 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。
+assets.workspace = true
 
 # 交互/状态逻辑测试（SliderState 的 update_value_by_position 等）需要 gpui 的
 # test-support 特性与 #[gpui::test] 宏。feature 开关供 `cargo test -F test-support`。
