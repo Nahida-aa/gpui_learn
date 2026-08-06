@@ -13,7 +13,7 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{Context, Result};
+use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use serde::Deserialize;
 
@@ -140,11 +140,10 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     } else {
         GpuiConf::default()
     };
-    // 字段缺省推导：`app_name` → 包名；`identifier` → <仓库名>.<包名>。
+    // 字段缺省推导（repo_name 与 cargo_package 都过 pkg_segment 规范化，拼出的
+    // identifier 保证合法）：`app_name` → 包名；`identifier` → <仓库名>.<包名>。
     // 仓库名取 git 根目录名（如 gpui_learn）。若不在 git 仓库内（拿不到 .git），
     // 直接报错——不硬编码假名，避免默认包名语义失真。
-    // repo_name 与 cargo_package 都过 pkg_segment 规范化，保证拼出的 identifier
-    // 是合法 Android applicationId（每段仅 ASCII 字母/数字/下划线、小写、不以数字开头）。
     let repo_name = repo_name_from(&project_dir)
         .context("无法确定仓库名来推导默认 identifier：当前目录不在 git 仓库内（找不到 .git），请在 git 仓库中运行，或在 gpui.conf.json 显式写 identifier")?;
     let app_name = conf
@@ -153,6 +152,9 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     let identifier = conf.identifier.unwrap_or_else(|| {
         format!("{}.{}", pkg_segment(&repo_name), pkg_segment(&cargo_package))
     });
+    // 统一校验最终 identifier（无论来自 conf 还是自动推导）：段必须以字母开头、
+    // 仅含字母/数字/下划线；用户显式写的非法值直接报错，避免静默写坏包名。
+    validate_identifier(&identifier)?;
 
     // 3) 解析目标 ABI
     let abis = match &targets {
@@ -181,7 +183,7 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     // 3.5) 找到 vendored gpui-android 的 Java 源码目录，并算出相对 gen/android/app/ 的路径。
     // 这个路径因例子所处层级不同而变化，必须按实际位置计算，不能写死 `../../../../`。
     let android_java_src = find_android_java_src(&project_dir)
-        .context("找不到 crates/gpui-android/android/src/main/java，请确认 gpui-android 已 vendored 在仓库内")?;
+        .context("找不到 packages/gpui-android/android/src/main/java，请确认 gpui-android 已 vendored 在仓库内")?;
     let app_dir = out.join("app");
     let android_java_dir = relative_path(&app_dir, &android_java_src)
         .context("计算 gpui-android Java 源码相对路径失败")?;
@@ -240,23 +242,30 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
 }
 
 /// 从工程目录向上查找 vendored 的 gpui-android Java 源码根
-/// (`.../crates/gpui-android/android/src/main/java`)，返回其绝对路径。
+/// (`.../packages/gpui-android/android/src/main/java`)，返回其绝对路径。
 fn find_android_java_src(project_dir: &Path) -> Option<PathBuf> {
-    let candidate = Path::new("crates/gpui-android/android/src/main/java");
-    let mut dir = if project_dir.is_absolute() {
-        project_dir.to_path_buf()
-    } else {
-        std::env::current_dir().ok()?.join(project_dir)
-    };
-    loop {
-        let try_path = dir.join(candidate);
-        if try_path.is_dir() {
-            return Some(try_path);
-        }
-        if !dir.pop() {
-            return None;
+    // gpui-android 的规范位置是仓库根的 packages/（见根 Cargo.toml 的 members）。
+    // 兼容旧的 crates/ 布局以平滑迁移，但以 packages/ 为准。
+    for candidate in [
+        "packages/gpui-android/android/src/main/java",
+        "crates/gpui-android/android/src/main/java",
+    ] {
+        let mut dir = if project_dir.is_absolute() {
+            project_dir.to_path_buf()
+        } else {
+            std::env::current_dir().ok()?.join(project_dir)
+        };
+        loop {
+            let try_path = dir.join(candidate);
+            if try_path.is_dir() {
+                return Some(try_path);
+            }
+            if !dir.pop() {
+                break;
+            }
         }
     }
+    None
 }
 
 /// 计算 `from` 到 `to` 的相对路径（用 `../` 形式），用于在生成文件里引用。
@@ -340,12 +349,16 @@ fn repo_name_from(project_dir: &Path) -> Option<String> {
     None
 }
 
-/// 把一个字符串规范成 Android `applicationId` 的「合法段」：
+/// 把一个字符串规范成 Android `applicationId` 的「合法段」(`[A-Za-z][A-Za-z0-9_]*`)：
 /// - 仅保留 ASCII 字母/数字/下划线，其余（含 `-`、空格、中文、点等）替换为 `_`；
 /// - 整体转小写（反向域名惯例全小写）；
-/// - 若段以数字开头，前缀补 `_`（Java 标识符不能以数字开头）。
+/// - **剔除开头所有非字母**（数字/下划线不能作段首：Android 段必须为字母开头，而
+///   不是给它们补 `_` —— 补 `_` 后仍是非法段）。如 `_09_a11y` → `a11y`、`3repo` → `repo`；
+/// - 若剔除后不含任何字母（纯符号/中文名），兜底为单段 `x`，保证拼出的 identifier
+///   段非空且合法。
+///
 /// 仓库目录名可能含 `-`/大写，包名（cargo package name）应以同样规则约束，
-/// 故 repo_name 与 cargo_package 都过这一道，保证拼出的 identifier 合法。
+/// 故 repo_name 与 cargo_package 都过这一道。
 fn pkg_segment(s: &str) -> String {
     let mut seg: String = s
         .chars()
@@ -357,10 +370,34 @@ fn pkg_segment(s: &str) -> String {
             }
         })
         .collect();
-    if seg.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
-        seg.insert(0, '_');
+    while seg.chars().next().map(|c| !c.is_ascii_alphabetic()).unwrap_or(false) {
+        seg.remove(0);
+    }
+    if seg.is_empty() {
+        seg.push('x');
     }
     seg
+}
+
+/// 校验完整 identifier（`a`本身、各段 `.` 分隔）：每段须 `[A-Za-z][A-Za-z0-9_]*`。
+/// 用户显式写在 `gpui.conf.json` 的 identifier 走这里——非法时**报错**而非静默改写，
+/// 避免悄悄改变用户预期的包名。
+fn validate_identifier(id: &str) -> Result<()> {
+    let ok = id
+        .split('.')
+        .all(|seg| {
+            let mut chars = seg.chars();
+            let first_ok = chars.next().map(|c| c.is_ascii_alphabetic()).unwrap_or(false);
+            first_ok && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+        });
+    if !ok {
+        bail!(
+            "identifier `{id}` 不是合法 Android applicationId：每段必须以字母开头、\
+             仅含字母/数字/下划线。请修改 `gpui.conf.json` 的 identifier，或删除该项以按 \
+             <仓库名>.<包名> 自动推导。"
+        );
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -373,14 +410,30 @@ mod tests {
         assert_eq!(pkg_segment("My-Repo2"), "my_repo2");
         // 纯小写带连字符
         assert_eq!(pkg_segment("gpui-learn"), "gpui_learn");
-        // 以数字开头 → 前缀补 _
-        assert_eq!(pkg_segment("3repo"), "_3repo");
-        // 中文等非 ASCII → 下划线（4 个汉字 → 4 个下划线）
-        assert_eq!(pkg_segment("我的仓库"), "____");
+        // 以数字开头 → 剔除数字，不能前缀补 _
+        assert_eq!(pkg_segment("3repo"), "repo");
+        // 中文等非 ASCII → 下划线；剔光后兜底为单个合法段
+        assert_eq!(pkg_segment("我的仓库"), "x");
         // 合法名不变
         assert_eq!(pkg_segment("uniform_list_07"), "uniform_list_07");
-        // 混合：数字开头 + 非法字符
-        assert_eq!(pkg_segment("2-My.App"), "_2_my_app");
+        // 混合：下划线/数字开头 + 非法字符 → 剔除前导非字母
+        assert_eq!(pkg_segment("_09_a11y"), "a11y");
+        assert_eq!(pkg_segment("2-My.App"), "my_app");
+    }
+
+    #[test]
+    fn validate_identifier_accepts_good_and_rejects_bad() {
+        assert!(validate_identifier("gpui_learn.a11y_09").is_ok());
+        assert!(validate_identifier("dev.gpui.mobile").is_ok());
+        // 段以下划线开头 → 非法
+        assert!(validate_identifier("gpui_learn._09_a11y").is_err());
+        // 段以数字开头 → 非法
+        assert!(validate_identifier("gpui_learn.09a").is_err());
+        // 含非法字符 → 非法
+        assert!(validate_identifier("gpui-lean.a11y_09").is_err());
+        // 空段 / 空串 → 非法
+        assert!(validate_identifier("").is_err());
+        assert!(validate_identifier("gpui_learn..a11y").is_err());
     }
 }
 
