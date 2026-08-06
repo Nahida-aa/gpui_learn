@@ -2710,7 +2710,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b40ca9252762c466af32d0b1002e91e4e1bc5398f77455e55474deb466355ff5"
 
 [[package]]
-name = "grid_layout_05"
+name = "grid_layout_09"
 version = "0.1.0"
 dependencies = [
  "gpui",
@@ -6375,12 +6375,11 @@ dependencies = [
 name = "ui-gpui"
 version = "0.1.0"
 dependencies = [
- "anyhow",
+ "assets",
  "futures",
  "gpui",
  "gpui_macros",
  "rand 0.9.5",
- "rust-embed",
 ]
 
 [[package]]

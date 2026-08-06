@@ -14,9 +14,10 @@
 //! - [`base`]：通用基础控件层（`geometry` 数学换算 + `slider` 滑块）。
 //!   未来其他组件（button/input 等）可并排放在 `base/` 下。
 
-pub mod assets;
 pub mod base;
 
+/// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
+/// ui-gpui 复用它，不自带资源目录。
 pub use assets::Assets;
 pub use base::geometry::{quantize, Scale};
 pub use base::icon::{Icon, IconName};
