@@ -18,11 +18,17 @@ gpui_learn/
 │   ├── 03_hello_android/   # 第三个例子：自有 gpui-android 后端原生跑在 Android
 │   ├── 04_input/           # 第四个例子：文本输入（IME / 选区 / 剪贴板 / 键盘布局），移植自官方 input.rs
 │   ├── 05_android_input/   # 第五个例子：用 gpui-android 后端在手机跑文本输入（复用 04 逻辑 + 软键盘）
-│   └── 05_grid_layout/     # 第六个例子：CSS Grid 圣杯布局 + container_query 响应式（桌面）
-├── crates/                 # 库 crate（被 apps 共享的内部包）
-│   ├── gpui_learn_common/  # 后续例子的「共享库」演示（暂未被引用）
+│   ├── 05_grid_layout/     # 第六个例子：CSS Grid 圣杯布局 + container_query 响应式（桌面）
+│   ├── 06_text_area/       # 文本框 / 多行文本编辑（桌面 + Android）
+│   ├── 07_uniform_list/    # 虚拟化列表（UniformList）
+│   ├── 08_testing/         # GPUI 测试框架（#[gpui::test] / TestAppContext）
+│   ├── _09_a11y/           # 无障碍（AccessKit）演示（桌面 / WASM / Android 同构）
+│   └── 09_slider/          # Slider 组件
+├── packages/               # 库 crate（被 apps 共享的内部包）
+│   ├── assets/             # 内嵌资源（字体/图标），供各 app 引用
 │   ├── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
-│   └── gpui-cli/           # 开发工具：android init 等，配置驱动生成 Android 工程
+│   ├── gpui-cli/           # 开发工具：android init 等，配置驱动生成 Android 工程
+│   └── ui-gpui/            # 组件库（后续例子的「共享库」演示）
 ├── justfile                # 常用命令快捷方式
 └── README.md               # 本文件
 ```
@@ -34,11 +40,11 @@ gpui_learn/
 ## Rust 版本与 workspace
 
 - `edition = "2024"`，`resolver = "3"`（写在根 `Cargo.toml`）。
-- GPUI 通过 **git 源**引入（锁 `rev`），详见 `crates/gpui_learn_common/README.md`。
+- GPUI 通过 **git 源**引入（锁 `rev`）；共享库与平台层见 `packages/ui-gpui/README.md`。
 - 本仓库的「移动端」有两个路线：
   - **浏览器路线**：`apps/02_hello_web` 把 GPUI 编译成 WASM，在移动端浏览器运行
     （需注意可信源/HTTPS，见其 `TROUBLESHOOTING.md`）。
-  - **原生路线**：`apps/03_hello_android` + `crates/gpui-android` 用 vendored 进来的
+  - **原生路线**：`apps/03_hello_android` + `packages/gpui-android` 用 vendored 进来的
     Android 平台层，在 Vulkan/wgpu 上**原生渲染**（不经过浏览器），对接本仓库自己的
     GPUI `82aef443`。维护方式见 `docs/maintain-gpui-android.md`。
 
@@ -66,7 +72,7 @@ just run hello_world_01          # justfile 提供的等价快捷命令
 | `apps/05_grid_layout`   | CSS Grid 圣杯布局 + `container_query` 响应式（桌面，移植自官方例子）             |
 
 > 教学顺序的设计：第一个例子**故意不用任何共享库**，让学习者先看 GPUI 原貌。
-> 等例子变多、样板开始重复时，再引入 `crates/gpui_learn_common` 演示
+> 等例子变多、样板开始重复时，再引入 `packages/ui-gpui` 演示
 > 「monorepo 如何用内部共享库收敛重复」——此时共享包的概念才自然出场。
 >
 > 后续会逐步加入：绘制图形、文本输入、布局（flex/taffy）、状态管理、
@@ -99,4 +105,4 @@ just run hello_world_01          # justfile 提供的等价快捷命令
 > `docs/` 里除了 `maintain-gpui-android.md` 之外的笔记，涉及的 crate 锁在 zed
 > `v1.9.0`，与本仓库（zed `82aef443`）不兼容，不能直接作为依赖并入 workspace；
 > 笔记仅作「GPUI 能长到什么程度」的参考标杆。只有 `gpui-android` 被我们主动
-> vendor 并适配到了 `82aef443`（见 `crates/gpui-android` 与 `maintain-gpui-android.md`）。
+> vendor 并适配到了 `82aef443`（见 `packages/gpui-android` 与 `maintain-gpui-android.md`）。

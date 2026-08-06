@@ -154,6 +154,6 @@ bun run android:run         # = android:init → android:apk → android:install
   是正常的——内置已占坑，外部模块插不进也无需插。不要为此重编内核或装
   `binder_linux-dkms`（zen 下它和内置 rust_binder 冲突、等于无用）。
 - **`gpui-android` 必须跟 workspace 同 gpui rev**：升级根 `[patch.crates-io]` 的 gpui
-  pin 后，`crates/gpui-android/Cargo.toml` 里的 gpui / gpui_wgpu `rev` 也要同步升，
+  pin 后，`packages/gpui-android/Cargo.toml` 里的 gpui / gpui_wgpu `rev` 也要同步升，
   否则 Android 构建会出现「两份 `gpui::Platform` trait」，`Application::with_platform`
   类型不匹配。

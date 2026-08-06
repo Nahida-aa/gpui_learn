@@ -70,7 +70,7 @@ android {
             // 复用 vendored gpui-android 提供的 GpuiActivity.java（NativeActivity 子类 +
             // 软键盘 InputConnection + 无障碍桥接）。不复制，直接引用源码目录。
             // 路径由 `gpui-cli` 在生成时按例子实际位置算出（相对 gen/android/app/）。
-            java.srcDir("../../../../../crates/gpui-android/android/src/main/java")
+            java.srcDir("../../../../../packages/gpui-android/android/src/main/java")
         }
     }
 

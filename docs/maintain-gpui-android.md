@@ -1,7 +1,7 @@
 # 维护自己的 gpui-android（vendor 进本仓库，对接自有 GPUI 版本）
 
 目标：把社区 `gpui-toolkit` 里的 `gpui-android` 平台层**复制进本仓库**
-（`crates/gpui-android/`），并把它依赖的 GPUI 改成**本仓库自己的版本**
+（`packages/gpui-android/`），并把它依赖的 GPUI 改成**本仓库自己的版本**
 （zed `82aef443`，见根 `Cargo.toml`），遇到编译不兼容就**改 `gpui-android`
 的代码去适配本仓库的 GPUI**，而不是反过来升级本仓库的 GPUI。
 
@@ -43,12 +43,12 @@ cargo ndk -t arm64-v8a build     # 能在任意 crate 下编出 aarch64-linux-an
 ```bash
 # 1. 复制源码（保留其结构，不带动 toolkit 的其它 crate）
 cp -r /home/aa/repos/ide_ls/gpui-toolkit/crates/gpui-android \
-      /home/aa/repos/ide_ls/gpui_learn/crates/gpui-android
+      /home/aa/repos/ide_ls/gpui_learn/packages/gpui-android
 
 # 2. 加进 workspace（根 Cargo.toml 的 members 通配符通常会自动收纳；
-#    若用显式列表则手动加 "crates/gpui-android"）
+#    若用显式列表则手动加 "packages/gpui-android"）
 
-# 3. 改 crates/gpui-android/Cargo.toml 的 GPUI 依赖：
+# 3. 改 packages/gpui-android/Cargo.toml 的 GPUI 依赖：
 #    把 gpui / gpui_wgpu 从 zed v1.9.0 改成和根 Cargo.toml 一致的 82aef443 写法
 ```
 

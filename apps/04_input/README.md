@@ -42,5 +42,5 @@ bun run check    # = cargo check -p input_04
 
 ## 下一步
 
-- 把本例的 `TextInput` 逻辑移植到 `crates/gpui-android` 后端，作为「移动端 input 例子」（移动端 input 应排在桌面 input 之后学，见 `docs/mobile-backends.md`）。
+- 把本例的 `TextInput` 逻辑移植到 `packages/gpui-android` 后端，作为「移动端 input 例子」（移动端 input 应排在桌面 input 之后学，见 `docs/mobile-backends.md`）。
 - 可在 `05_grid_layout` 的 center 区域嵌入输入框，组合练习布局 + 输入。

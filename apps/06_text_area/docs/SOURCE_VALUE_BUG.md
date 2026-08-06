@@ -83,7 +83,7 @@ let notes = window.use_state(cx, {
 - 桌面（`bun run run` / `cargo run -p text_area_06_android`）：两个框都能输入、能换行、能来回切换焦点。
 - Android（`bun run android:run`）：同逻辑经 gpui-android IME 桥接，两个框均可输入；
   软键盘回车换行需配合 `KeyboardType::MultiLine`（见 `text_area.rs` 的
-  `focus_and_show_keyboard` 与 `crates/gpui-android` 的 `MultiLine` 输入类型）。
+  `focus_and_show_keyboard` 与 `packages/gpui-android` 的 `MultiLine` 输入类型）。
 
 ## 结论 / 教训
 

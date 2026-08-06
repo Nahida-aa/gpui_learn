@@ -36,9 +36,9 @@
 故方式 A 作为正式启用方案，方式 B 的代码已删除（git 历史里仍保留完整实现，
 作为这次尝试的证明）。
 
-> 方式 B 的完整代码（`crates/gpui-android/src/android/selection.rs` 的
+> 方式 B 的完整代码（`packages/gpui-android/src/android/selection.rs` 的
 > `SelectionHandler` / `SELECTION_COMMANDS` / `drain_selection_commands`、
-> `GpuiActivity.java` 的 `gpuiStartActionMode` 等）**已删除**，仅留存在 git 历史中
+> `GpuiActivity.kt` 的 `gpuiStartActionMode` 等）**已删除**，仅留存在 git 历史中
 > 作为这次尝试的证明——证明我们两种方案都实做过。其专属依赖 `gpui::PlatformInputHandler::update_app`
 > （仅 `selection.rs` 调用）也已一并删除。方式 A 是自绘的正式方案。
 
@@ -107,7 +107,7 @@ fn toolbar_button(label, editor, action) -> impl IntoElement {
 代码片段中的 `SelectionHandler` / `SELECTION_COMMANDS` / `drain_selection_commands`
 及 `gpuiStartActionMode` / `nativeSelectionAction` 等均已从仓库移除。
 
-**Java 侧（`GpuiActivity.java`）**：
+**Java 侧（`GpuiActivity.kt`）**：
 
 ```java
 // 必须用 TYPE_FLOATING：NativeActivity 没有 ActionBar，单参 startActionMode
@@ -128,7 +128,7 @@ public void gpuiStartActionMode() {
 菜单项 verb code（Java→Rust）：`0=Copy 1=Cut 2=Paste 3=SelectAll`，
 与 Rust 侧 `SelectionVerb::from_code` 对应。
 
-**Rust 侧（`crates/gpui-android/src/android/selection.rs`）**：
+**Rust 侧（`packages/gpui-android/src/android/selection.rs`）**：
 
 ```rust
 // app 在 android_main 注册 SelectionHandler（实现 copy/cut/paste/select_all）

@@ -50,4 +50,4 @@ bun run launch   # adb shell am start -n dev.gpui.learn.text_area_06/dev.gpui.mo
 ```
 
 IME 桥接排查记录见 `05_android_input/docs/IME_INPUT_DEBUG.md`（两例共用同一套
-`GpuiActivity.java`，修复也通用）。
+`GpuiActivity.kt`，修复也通用）。

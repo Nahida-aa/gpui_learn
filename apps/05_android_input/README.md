@@ -5,7 +5,7 @@
 
 > **`gpui-android` 后端原生支持 input**——`handle_input` 是 `Window` 的方法，
 > `text_system` / 剪贴板 / 键盘布局 / IME 合成（`Commit` / `SetComposing` /
-> `FinishComposing`）在 `crates/gpui-android` 里都已实现。所以「把 input 移植到
+> `FinishComposing`）在 `packages/gpui-android` 里都已实现。所以「把 input 移植到
 > Android」不是给后端补功能，而是**应用层把同一个 `TextInput` 逻辑接到 Android 入口**
 > 并在需要时弹软键盘。
 
@@ -61,7 +61,7 @@ bun run apk      # cd gen/android && ./gradlew assembleDebug
 
 `gpui-cli` 的模板里自动注入：`rustLibName` / `cargoPackage`（来自 Cargo.toml）、
 `appId` / `appName`（来自 gpui.conf.json）、默认 ABI 列表；`AndroidManifest.xml`、
-`GpuiTheme`、`GpuiActivity.java`（来自 `gpui-android`）也都一并生成/引用，无需手写。
+`GpuiTheme`、`GpuiActivity.kt`（来自 `gpui-android`）也都一并生成/引用，无需手写。
 
 ## 命令入口（package.json）
 

@@ -37,7 +37,7 @@ cargo run -p hello_world_01
 > 差异就在于这一行 feature。
 
 5. **二进制 crate 的本质**：本包有 `main` 函数、能被 `cargo run`，是一个
-   「二进制 crate」。对比 `crates/gpui_learn_common`（库 crate，没有 main）。
+   「二进制 crate」。对比 `packages/gpui_learn_common`（库 crate，没有 main）。
 
 > **关于 WASM / HTML 入口（已实测验证）**：
 >
@@ -133,7 +133,7 @@ bun run start          # = build:wasm + build:web + serve，一步到位
 
 ## 为什么这里不先引入共享库
 
-`crates/gpui_learn_common` 是一个「把样板收敛起来的共享库」，属于 **monorepo
+`packages/gpui_learn_common` 是一个「把样板收敛起来的共享库」，属于 **monorepo
 共享包**的演示内容。如果第一个例子就用它，学习者会先看到封装、后看到 GPUI 本身，
 顺序就反了。所以：先看懂这个纯 GPUI 例子 → 后续再学「如何用库消除重复样板」。
 

@@ -3,7 +3,7 @@
 第三个例子，对应「移动端原生后端」路线。它和 `01`/`02` 最大的不同：
 
 - `01_hello_world` / `02_hello_web` 走 `gpui_platform`（桌面 / wasm 后端，浏览器或 X11/wayland）。
-- `03` 走 `crates/gpui-android`（vendored 进本仓库、**对接本仓库自己的 GPUI `82aef443`**），
+- `03` 走 `packages/gpui-android`（vendored 进本仓库、**对接本仓库自己的 GPUI `82aef443`**），
   由 Android 的 `NativeActivity` 加载本例子编出的 `libhello_android.so`，
   在 **Vulkan / wgpu** 上真正原生渲染 —— 不经过任何浏览器。
 
@@ -11,10 +11,10 @@
 GPUI 应用 (src/lib.rs, android_main)
    │  Application::with_platform(shared_platform.into_rc()).run(...)
    ▼
-crates/gpui-android  (AndroidPlatform: impl gpui::Platform)
+packages/gpui-android  (AndroidPlatform: impl gpui::Platform)
    │  Vulkan / wgpu 渲染 + 触控/键盘/剪贴板/无障碍
    ▼
-NativeActivity (GpuiActivity.java)  ──  系统窗口 / ANativeWindow / JNI
+NativeActivity (GpuiActivity.kt)  ──  系统窗口 / ANativeWindow / JNI
 ```
 
 ## 目录结构
@@ -47,7 +47,7 @@ NativeActivity (GpuiActivity.java)  ──  系统窗口 / ANativeWindow / JNI
 `gpui-cli` 内嵌了 Gradle 模板与 Gradle 8.9 wrapper，生成时自动注入：
 `rustLibName` / `cargoPackage`（来自 Cargo.toml）、`appId` / `appName`（来自
 gpui.conf.json）、默认 ABI 列表（`arm64-v8a` + `x86_64`）；并把例子的 `assets/`
-复制进 `app/src/main/assets/`。`AndroidManifest.xml`、`GpuiTheme`、`GpuiActivity.java`
+复制进 `app/src/main/assets/`。`AndroidManifest.xml`、`GpuiTheme`、`GpuiActivity.kt`
 （来自 `gpui-android`）也都一并生成/引用。
 
 > 这和 Tauri 的 `tauri android init` 同一个哲学——**配置极简，工具生成工程**，
@@ -138,13 +138,13 @@ adb logcat -s hello_android:T gpui-android:T
 
 |          | 02_hello_web                                       | 03_hello_android                                                                          |
 | -------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| 平台后端 | `gpui_platform`（wasm / WebGPU）                   | `crates/gpui-android`（Vulkan/wgpu）                                                      |
+| 平台后端 | `gpui_platform`（wasm / WebGPU）                   | `packages/gpui-android`（Vulkan/wgpu）                                                      |
 | 入口     | `fn main()`（trunk 包成 wasm）                     | `android_main(app)`（NativeActivity 调起）                                                |
 | 运行模型 | `run_embedded` + `mem::forget` 防止 app 被释放白屏 | `Application::with_platform(...).run(...)` **阻塞**在事件循环，App 随栈帧存活，无白屏问题 |
 | 编译目标 | wasm32-unknown-unknown                             | aarch64-linux-android（cdylib .so）                                                       |
 | 部署     | trunk serve + HTTPS（手机需可信源）                | Gradle 打 apk + adb 安装                                                                  |
 
-三个例子共用同一个 `gpui`（`82aef443`）：`crates/gpui-android` 是把社区
+三个例子共用同一个 `gpui`（`82aef443`）：`packages/gpui-android` 是把社区
 `gpui-toolkit` 的 Android 后端迁就到我们版本的结果（见 `docs/maintain-gpui-android.md`）。
 
 ## 已知限制（教学向）

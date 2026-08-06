@@ -139,9 +139,9 @@ vs 原生永久事件循环** 的本质差异——也是为什么 Web 端必须
 
 gpui-toolkit（fork 自 gpui-mobile）：
 
-- `crates/gpui-android/src/lib.rs` — 公开 API + 「ported from gpui-mobile」声明
-- `crates/gpui-android/src/android/platform.rs` — `AndroidPlatform` 实现 `gpui::Platform`，`run()` 阻塞事件循环
-- `crates/gpui-android/src/android/window.rs` — `ANativeWindow` + wgpu Vulkan surface
+- `packages/gpui-android/src/lib.rs` — 公开 API + 「ported from gpui-mobile」声明
+- `packages/gpui-android/src/android/platform.rs` — `AndroidPlatform` 实现 `gpui::Platform`，`run()` 阻塞事件循环
+- `packages/gpui-android/src/android/window.rs` — `ANativeWindow` + wgpu Vulkan surface
 - `crates/gpui-ios/src/ios/platform.rs` / `window/ios_window.rs` — Metal/CAMetalLayer 后端
 - `crates/gpui-miniapp/src/misc.rs` — 按 `target_os` 选后端的统一入口
 - `crates/gpui-miniapp/src/mini_app.rs` — `Application::with_platform(platform).run(...)`

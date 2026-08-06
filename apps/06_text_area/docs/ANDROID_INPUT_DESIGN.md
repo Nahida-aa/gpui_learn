@@ -30,10 +30,10 @@
 
 GPUI 文本输入的核心抽象是 `EntityInputHandler` / `ElementInputHandler` 的
 `replace_text_in_range`、`selected_text_range`、`marked_text_range` 等方法。
-安卓端由 `crates/gpui-android` 实现这套接口，软键盘通过 Android 的
+安卓端由 `packages/gpui-android` 实现这套接口，软键盘通过 Android 的
 `InputConnection` 协议调用它。
 
-`GpuiActivity.java` 的 `GpuiInputView.onCreateInputConnection` 返回一个
+`GpuiActivity.kt` 的 `GpuiInputView.onCreateInputConnection` 返回一个
 `BaseInputConnection`，重写了以下方法（**这些是 gpui-android 原本就有的桥接**）：
 
 - `commitText(text, ...)` → `nativeCommitText(text)` → `ImeEvent::Commit`
@@ -108,7 +108,7 @@ InputEvent::KeyEvent(key_event)
 **正确的做法**是新增 `nativeKeyEvent(code, action, meta)`：
 
 ```java
-// GpuiActivity.java —— sendKeyEvent / performEditorAction 都改调它
+// GpuiActivity.kt —— sendKeyEvent / performEditorAction 都改调它
 @Override
 public boolean sendKeyEvent(android.view.KeyEvent event) {
     nativeKeyEvent(event.getKeyCode(), event.getAction(), event.getMetaState());

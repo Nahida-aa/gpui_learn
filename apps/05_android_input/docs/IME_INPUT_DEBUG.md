@@ -52,11 +52,11 @@ private static void ensureNativeLibLoaded(Context ctx) {
 ```
 
 库名从 `AndroidManifest.xml` 的 `android.app.lib_name` 元数据读取（值为 `input_05`），
-使这一份 vendored 的 `GpuiActivity.java` 对所有生成的应用通用，不写死库名。
+使这一份 vendored 的 `GpuiActivity.kt` 对所有生成的应用通用，不写死库名。
 
-该修复已提交（commit `acbc43f`），位于 `crates/gpui-android/android/src/main/java/dev/gpui/mobile/GpuiActivity.java`。
+该修复已提交（commit `acbc43f`），位于 `packages/gpui-android/android/src/main/java/dev/gpui/mobile/GpuiActivity.kt`。
 由于各生成项目（`gen/android/app/build.gradle.kts`）以源码目录方式直接引用该 Java 文件
-（`java.srcDir("../../../../../crates/gpui-android/android/src/main/java")`），改一处即对所有 Android 例子生效。
+（`java.srcDir("../../../../../packages/gpui-android/android/src/main/java")`），改一处即对所有 Android 例子生效。
 
 ## 验证
 
