@@ -1,0 +1,84 @@
+# 09_a11y —— GPUI 无障碍（AccessKit）演示
+# 包名：_09_a11y
+#
+# 使用：
+#   just run            # 桌面运行（暴露无障碍树，供 AT 驱动）
+#   just check          # 编译检查（桌面）
+#   just android_run    # 打包＋安装＋启动到真实 Android 设备/模拟器
+#   just waydroid_run   # 打包＋安装＋启动到 Waydroid
+#
+# Note: 与 08_testing 一致，Android/Waydroid 需要先 android_init 生成 gen/android，
+# 并保证 Cargo.toml 具备 cdylib + gpui-android 结构后才能编译。
+
+# ---- 桌面 ----
+run:
+    cargo run -p _09_a11y
+
+check:
+    cargo check -p _09_a11y
+
+# ---- Android（真实设备 / 模拟器）----
+# adb 目标设备：多设备时必须显式指定，否则 "more than one device/emulator"。
+# 用环境变量 ADB_DEVICE（或 just --set device=...）覆盖。
+device := env_var_or_default("ADB_DEVICE", "7fb0ee72")
+# APK 包名 = "gpui_learn.<包名>"，与 gpui.conf.json 的 identifier / gpui-cli 生成的 applicationId 一致
+android_pkg := "gpui_learn.a11y"
+apk := "gen/android/app/build/outputs/apk/debug/app-debug.apk"
+
+# 初始化并生成 Android 工程（gen/android + android 资源）
+android_init:
+    cargo run -p gpui-cli -- android init
+
+# 用 cargo-ndk 交叉编译 native 库（仅检查）
+android_check:
+    cargo ndk -t arm64-v8a -P 26 check -p _09_a11y
+
+# 用 Gradle 打包 debug APK
+android_apk:
+    cd gen/android && ./gradlew assembleDebug
+
+android_apk_release:
+    cd gen/android && ./gradlew assembleRelease -Prelease
+
+# 安装 APK 到设备
+android_install:
+    adb -s {{device}} install -r {{apk}}
+
+# 启动 MainActivity
+android_launch:
+    adb -s {{device}} shell am start -n {{android_pkg}}/dev.gpui.mobile.GpuiActivity
+
+# 一键：init → 打包 → 安装 → 启动
+android_run:
+    just android_init
+    just android_apk
+    just android_install
+    just android_launch
+
+# 查看 app 日志（过滤当前应用与 gpui-android）
+android_logs:
+    adb -s {{device}} logcat -s _09_a11y:V gpui-android:V
+
+android_uninstall:
+    adb -s {{device}} uninstall {{android_pkg}}
+
+# ---- Waydroid（Linux 上的 Android 容器）----
+waydroid_apk: android_apk
+
+waydroid_install:
+    /usr/bin/python3 /usr/bin/waydroid app install {{apk}}
+
+waydroid_launch:
+    /usr/bin/python3 /usr/bin/waydroid app launch {{android_pkg}}
+
+waydroid_run:
+    just android_init
+    just waydroid_apk
+    just waydroid_install
+    just waydroid_launch
+
+waydroid_shell:
+    /usr/bin/python3 /usr/bin/waydroid shell
+
+waydroid_uninstall:
+    /usr/bin/python3 /usr/bin/waydroid app uninstall {{android_pkg}}

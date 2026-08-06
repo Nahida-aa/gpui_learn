@@ -5,7 +5,41 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
+# Android：NativeActivity 加载 cdylib .so；lib 同时产 rlib 给桌面 bin 链接。
+[lib]
+name = "_09_a11y"
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "_09_a11y"
+path = "src/main.rs"
+
 [dependencies]
+gpui = { workspace = true }
+
+# 日志走 tracing 体系：桌面/WASM 用 tracing_subscriber 初始化，
+# gpui 内部仍走 `log` 宏，用 LogTracer 桥接统一汇入 tracing。
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-log = "0.2"
+log = "0.4"
+
+# gpui_platform 提供桌面/WASM 平台入口 application()。
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_os = "android", target_family = "wasm")))'.dependencies]
+gpui_platform = { workspace = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+gpui_platform = { workspace = true }
+wasm-bindgen = "0.2.120"
+
+# Android：NativeActivity 加载 cdylib .so；gpui-android 走 packages/（自有后端）。
+[target.'cfg(target_os = "android")'.dependencies]
+gpui-android = { path = "../../packages/gpui-android" }
+android-activity = { version = "0.6", features = ["native-activity"] }
+android_logger = "0.15"
 
 [lints]
 workspace = true

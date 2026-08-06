@@ -1,0 +1,5 @@
+run:
+    cargo run -p _11_grid_layout
+
+check:
+    cargo check -p _11_grid_layout

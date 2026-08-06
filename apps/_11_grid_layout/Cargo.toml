@@ -1,10 +1,10 @@
 [package]
-name = "grid_layout_09"
+name = "_11_grid_layout"
 version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
 publish = false
-description = "09_grid_layout —— GPUI 响应式网格布局（Holy Grail）+ container_query（桌面端）"
+description = "_11_grid_layout —— GPUI 响应式网格布局（Holy Grail）+ container_query（桌面端）"
 
 # 桌面二进制例子。GPUI 来自本仓库统一锁定的 zed 82aef443（见根 Cargo.toml 的
 # [patch.crates-io]），通过 workspace 依赖引入，版本随根清单一处管理。

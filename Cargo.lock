@@ -3,6 +3,35 @@
 version = 4
 
 [[package]]
+name = "_09_a11y"
+version = "0.1.0"
+dependencies = [
+ "android-activity",
+ "android_logger",
+ "gpui",
+ "gpui-android",
+ "gpui_platform",
+ "log",
+ "tracing",
+ "tracing-log",
+ "tracing-subscriber",
+ "wasm-bindgen",
+]
+
+[[package]]
+name = "_10_i11n"
+version = "0.1.0"
+
+[[package]]
+name = "_11_grid_layout"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "gpui_platform",
+ "wasm-bindgen",
+]
+
+[[package]]
 name = "accesskit"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2469,15 +2498,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpui_learn_common"
-version = "0.1.0"
-dependencies = [
- "gpui",
- "gpui_macros",
- "gpui_platform",
-]
-
-[[package]]
 name = "gpui_linux"
 version = "0.1.0"
 source = "git+https://github.com/zed-industries/zed?rev=d88f68217b370f7a66d0c4b4971db31c0dff6df7#d88f68217b370f7a66d0c4b4971db31c0dff6df7"
@@ -2708,15 +2728,6 @@ name = "grid"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b40ca9252762c466af32d0b1002e91e4e1bc5398f77455e55474deb466355ff5"
-
-[[package]]
-name = "grid_layout_09"
-version = "0.1.0"
-dependencies = [
- "gpui",
- "gpui_platform",
- "wasm-bindgen",
-]
 
 [[package]]
 name = "half"
@@ -3598,6 +3609,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "matchers"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d1525a2a28c7f4fa0fc98bb91ae755d1e2d1505079e05539e35bc876b5d65ae9"
+dependencies = [
+ "regex-automata",
 ]
 
 [[package]]
@@ -6331,10 +6351,14 @@ version = "0.3.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb7f578e5945fb242538965c2d0b04418d38ec25c79d160cd279bf0731c8d319"
 dependencies = [
+ "matchers",
  "nu-ansi-term",
+ "once_cell",
+ "regex-automata",
  "sharded-slab",
  "smallvec",
  "thread_local",
+ "tracing",
  "tracing-core",
  "tracing-log",
 ]
