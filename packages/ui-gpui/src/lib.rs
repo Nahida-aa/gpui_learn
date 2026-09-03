@@ -19,8 +19,11 @@ pub mod base;
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
 /// ui-gpui 复用它，不自带资源目录。
 pub use assets::Assets;
+pub use base::button::{Button, ButtonVariant};
 pub use base::geometry::{quantize, Scale};
 pub use base::icon::{Icon, IconName};
+pub use base::input::input_state::{InputEvent, InputState};
+pub use base::input::{TextElement, bind_input_keys};
 pub use base::slider::element::{DragSlider, Slider, SliderEvent};
 pub use base::slider::slider_state::{SliderState, ThumbMode};
 pub use base::slider::slider_value::SliderValue;

@@ -3158,6 +3158,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "input_button_10"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "gpui_platform",
+ "ui-gpui",
+]
+
+[[package]]
 name = "interpolate_name"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6404,6 +6413,7 @@ dependencies = [
  "gpui",
  "gpui_macros",
  "rand 0.9.5",
+ "unicode-segmentation",
 ]
 
 [[package]]

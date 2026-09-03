@@ -1,0 +1,18 @@
+[package]
+name = "input_button_10"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+publish = false
+description = "10_input_button —— 自研 ui-gpui 的 Input 与 Button 演示（输入 / IME / 选区 / 事件）"
+
+[dependencies]
+gpui = { workspace = true }
+ui-gpui = { path = "../../packages/ui-gpui" }
+
+# 桌面窗口后端需要显式开启，否则 open_window 不出窗口。
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_family = "wasm")))'.dependencies]
+gpui_platform = { workspace = true }

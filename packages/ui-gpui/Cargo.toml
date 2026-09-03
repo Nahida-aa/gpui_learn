@@ -15,6 +15,9 @@ gpui_macros.workspace = true
 # 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。
 assets.workspace = true
 
+# 输入框按「字素簇」(grapheme) 移动光标，避免切断 emoji / 组合字符。
+unicode-segmentation = "1"
+
 # 交互/状态逻辑测试（SliderState 的 update_value_by_position 等）需要 gpui 的
 # test-support 特性与 #[gpui::test] 宏。feature 开关供 `cargo test -F test-support`。
 [features]
