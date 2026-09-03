@@ -80,11 +80,11 @@ assets = { path = "packages/assets" }
 [patch.crates-io]
 # version = "=0.2.2" 精确指定：zed 仓库在该 rev 的 git 源里同时存在 0.0.0（开发版）
 # 和历史上的 0.2.2 tag，cargo 要求显式锁定到我们要替换的那一个。
-gpui = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.2.2" }
-gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.1.0" }
-gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.1.0" }
-gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.1.0" }
-gpui_util = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.1.0" }
+gpui = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.2.2" }
+gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
+gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
+gpui_util = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
 
 # [workspace.lints]：统一的 lint 配置，供子包用 `lints.workspace = true` 继承
 # （如 packages/assets）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
