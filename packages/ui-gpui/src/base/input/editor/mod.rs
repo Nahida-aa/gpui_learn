@@ -37,8 +37,18 @@ pub(super) use selection::Selection;
 pub(super) use undo::{Change, EditIntent};
 
 use super::engine::{OffsetUtf16, Rope};
+use super::input::InputEvent;
 pub use selection::SelectionGoal;
 pub use undo::UndoManager;
+
+impl Editor {
+    /// 单行模式下的旧 API 兼容事件(多行不发)。
+    fn emit_input_change(&self, cx: &mut Context<Self>) {
+        if self.mode.is_single_line() {
+            cx.emit(InputEvent::Change(self.rope.to_string().into()));
+        }
+    }
+}
 
 /// 编辑器的 key_context 名,[`bind_editor_keys`] 与渲染时的
 /// `.key_context(..)` 共用。
@@ -122,7 +132,13 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(mode: EditorMode, cx: &mut Context<Self>) -> Self {
+    /// 兼容旧 `InputState::new(cx)` 的入口:单行输入框。
+    pub fn new(cx: &mut Context<Self>) -> Self {
+        Self::single_line(cx)
+    }
+
+    /// 按 mode 构造(原 `new`;改名以让位给上面的兼容入口)。
+    pub fn with_mode(mode: EditorMode, cx: &mut Context<Self>) -> Self {
         Self {
             rope: Rope::new(),
             selection: Selection::default(),
@@ -152,7 +168,7 @@ impl Editor {
 
     /// 单行输入框(对齐 zed `Editor::single_line`)。
     pub fn single_line(cx: &mut Context<Self>) -> Self {
-        Self::new(EditorMode::SingleLine, cx)
+        Self::with_mode(EditorMode::SingleLine, cx)
     }
 
     // ---- builder(从旧 InputState 平移,外部 API 保持)----
@@ -255,6 +271,7 @@ impl Editor {
         edit(self, cx);
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
+        self.emit_input_change(cx);
         cx.notify();
     }
 
@@ -341,6 +358,7 @@ impl Editor {
         }
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
+        self.emit_input_change(cx);
         cx.notify();
     }
 
@@ -497,7 +515,8 @@ impl Editor {
         row_start + line.closest_index_for_x(position.x - bounds.left())
     }
 
-    /// 光标像素位置(窗口坐标),渲染层做自动滚动用。
+    /// 光标像素位置(窗口坐标),渲染层做自动滚动用(自动滚动后续接入)。
+    #[allow(dead_code)]
     pub(crate) fn cursor_pixel_position(&self) -> Option<gpui::Point<Pixels>> {
         let bounds = self.last_content_bounds.as_ref()?;
         let head = self.selection.head();
@@ -528,9 +547,15 @@ impl gpui::Focusable for Editor {
 
 impl Render for Editor {
     fn render(&mut self, _window: &mut gpui::Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let key_context = if self.mode.is_single_line() {
+            // 单行兼容:bind_input_keys 绑定的旧 context 名
+            super::input::INPUT_KEY_CONTEXT
+        } else {
+            EDITOR_KEY_CONTEXT
+        };
         div()
             .id("editor-root")
-            .key_context(EDITOR_KEY_CONTEXT)
+            .key_context(key_context)
             .track_focus(&self.focus_handle)
             .cursor(CursorStyle::IBeam)
             .on_action(cx.listener(Self::backspace))
@@ -663,7 +688,7 @@ mod tests {
     #[gpui::test]
     fn test_multiline_newline_inherits_indent(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| {
-            Editor::new(EditorMode::MultiLine { rows: 5 }, cx).default_value("  fn main()")
+            Editor::with_mode(EditorMode::MultiLine { rows: 5 }, cx).default_value("  fn main()")
         });
         editor.update(cx, |editor, cx| {
             let end = editor.rope.len();
@@ -690,7 +715,7 @@ mod tests {
     #[gpui::test]
     fn test_multiline_vertical_movement(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| {
-            Editor::new(EditorMode::MultiLine { rows: 3 }, cx).default_value("abcd\nef\nghijk")
+            Editor::with_mode(EditorMode::MultiLine { rows: 3 }, cx).default_value("abcd\nef\nghijk")
         });
         editor.update(cx, |editor, cx| {
             // 光标到第一行行尾(offset 4)
@@ -711,7 +736,7 @@ mod tests {
     #[gpui::test]
     fn test_multiline_backspace_across_lines(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| {
-            Editor::new(EditorMode::MultiLine { rows: 3 }, cx).default_value("ab\ncd")
+            Editor::with_mode(EditorMode::MultiLine { rows: 3 }, cx).default_value("ab\ncd")
         });
         editor.update(cx, |editor, cx| {
             // 光标在第二行行首(offset 3),退格应删除换行合并两行

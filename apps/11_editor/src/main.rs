@@ -18,7 +18,7 @@ use gpui::{
 };
 use gpui_platform::application;
 use ui_gpui::base::input::editor::{bind_editor_keys, Editor, EditorMode, EDITOR_KEY_CONTEXT};
-use ui_gpui::base::input::input_state::{bind_input_keys, InputState};
+use ui_gpui::base::input::input::{bind_input_keys, InputState};
 
 actions!(
     editor_demo,
@@ -33,7 +33,7 @@ struct EditorDemo {
 impl EditorDemo {
     fn new(cx: &mut App) -> Self {
         let multi = cx.new(|cx| {
-            Editor::new(
+            Editor::with_mode(
                 EditorMode::MultiLine { rows: 8 },
                 cx,
             )

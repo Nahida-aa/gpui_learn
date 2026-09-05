@@ -118,6 +118,16 @@ input/
 - 诊断/indent/LSP 按需后置
 - 验收：语法高亮多行编辑器 + 搜索跳转
 
+## 5. 进度(2026-09)
+
+- [x] 阶段 0:sum_tree 接入 + 自研 Rope(e28158a)
+- [x] 阶段 A:核心引擎 selection/undo/Editor 骨架(de54a39)
+- [x] 阶段 B:display_map 软换行映射 + movement 原语(a9130cb)
+- [x] 阶段 C:EditorElement 渲染 + Textarea facade + apps/11_editor(5cbdc52)
+- [x] 阶段 D:Input facade 收口(旧 input_state 删除,10_input_button 零改动)
+- 待办:渲染接入真实软换行度量(map 已就绪)、movement 切 display 空间、
+  光标自动滚动(cursor_pixel_position 已备)、多光标/高亮/搜索
+
 ## 5. 不做的事
 
 - 不等 zed examples「走完」：上表之外示例（image/gif/animation/menus/

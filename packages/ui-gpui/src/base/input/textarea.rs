@@ -13,7 +13,7 @@ use crate::base::input::editor::EditorMode;
 impl Textarea {
     /// 固定行数的多行文本域(内容超出时滚动)。
     pub fn textarea(rows: usize, cx: &mut gpui::Context<Self>) -> Self {
-        Self::new(EditorMode::MultiLine { rows }, cx)
+        Self::with_mode(EditorMode::MultiLine { rows }, cx)
     }
 
     /// 高度随内容自适应(限行数)。
@@ -22,6 +22,6 @@ impl Textarea {
         max_rows: usize,
         cx: &mut gpui::Context<Self>,
     ) -> Self {
-        Self::new(EditorMode::AutoHeight { min_rows, max_rows }, cx)
+        Self::with_mode(EditorMode::AutoHeight { min_rows, max_rows }, cx)
     }
 }
