@@ -72,7 +72,8 @@ impl Element for TextElement {
         cx: &mut App,
     ) -> Self::PrepaintState {
         let input = self.input.read(cx);
-        let content = input.content.clone();
+        // Rope → String：单行绘制需要连续文本给 shape_line。
+        let content = input.content.to_string();
         let selected_range: Range<usize> = input.selected_range.clone();
         let cursor = input.cursor_offset();
         let placeholder_color = input.placeholder_color;
@@ -80,7 +81,7 @@ impl Element for TextElement {
 
         // 内容为空时显示 placeholder（用专门的灰，避免和正文混淆）。
         let (display_text, text_color) = if content.is_empty() {
-            (input.placeholder.clone(), placeholder_color)
+            (input.placeholder.to_string(), placeholder_color)
         } else {
             (content, style.color)
         };
@@ -124,7 +125,7 @@ impl Element for TextElement {
         let font_size = style.font_size.to_pixels(window.rem_size());
         let line = window
             .text_system()
-            .shape_line(display_text, font_size, &runs, None);
+            .shape_line(display_text.into(), font_size, &runs, None);
 
         let cursor_pos = line.x_for_index(cursor);
         let (selection, cursor) = if selected_range.is_empty() {

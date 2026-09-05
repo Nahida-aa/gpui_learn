@@ -14,6 +14,7 @@
 //!   不再像示例那样全局（None）绑定。
 
 pub mod element;
+pub mod engine;
 pub mod input_state;
 
 pub use element::TextElement;

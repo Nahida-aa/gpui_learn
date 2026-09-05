@@ -17,6 +17,7 @@ use gpui::{
 use unicode_segmentation::*;
 
 use super::element::TextElement;
+use super::engine::{OffsetUtf16, Rope};
 
 /// 输入框的 key_context 名，[`bind_input_keys`] 与渲染时的 `.key_context(..)` 共用。
 pub const INPUT_KEY_CONTEXT: &str = "ui-gpui-input";
@@ -52,9 +53,13 @@ pub enum InputEvent {
 }
 
 /// 输入框的持久状态，由 `Entity<InputState>` 持有。
+///
+/// 文本存储用自研 [`Rope`]（`engine` 模块，sum_tree 底座）：
+/// 编辑是 O(log n) 的区间替换，UTF-16 换算（IME 接口）走树内维度查询，
+/// 不再全串遍历。选区/组字区间继续以 UTF-8 字节下标表示。
 pub struct InputState {
     pub(crate) focus_handle: FocusHandle,
-    pub(crate) content: SharedString,
+    pub(crate) content: Rope,
     pub(crate) placeholder: SharedString,
     pub(crate) selected_range: Range<usize>,
     pub(crate) selection_reversed: bool,
@@ -77,7 +82,7 @@ impl InputState {
     pub fn new(cx: &mut Context<Self>) -> Self {
         Self {
             focus_handle: cx.focus_handle(),
-            content: "".into(),
+            content: Rope::new(),
             placeholder: "".into(),
             selected_range: 0..0,
             selection_reversed: false,
@@ -101,7 +106,7 @@ impl InputState {
 
     /// 初始内容（仅在构造时设置，不会触发 [`InputEvent::Change`]）。
     pub fn default_value(mut self, value: impl Into<SharedString>) -> Self {
-        self.content = value.into();
+        self.content = Rope::from(value.into().as_str());
         self
     }
 
@@ -131,7 +136,7 @@ impl InputState {
 
     /// 当前内容。
     pub fn value(&self) -> SharedString {
-        self.content.clone()
+        self.content.to_string().into()
     }
 
     /// 是否禁用。
@@ -141,7 +146,7 @@ impl InputState {
 
     /// 程序化设置内容：**不**触发 [`InputEvent::Change`]，光标移到末尾。
     pub fn set_value(&mut self, value: impl Into<SharedString>, cx: &mut Context<Self>) {
-        self.content = value.into();
+        self.content = Rope::from(value.into().as_str());
         let end = self.content.len();
         self.selected_range = end..end;
         self.selection_reversed = false;
@@ -226,48 +231,35 @@ impl InputState {
     }
 
     /// 上一个字素边界（按 grapheme，避免切断 emoji / 组合字符）。
+    ///
+    /// 单行场景直接物化前缀后查询；字素移动下沉到 engine（跨 chunk 的
+    /// GraphemeCursor）是光标移动阶段的工作，见 docs/editor-roadmap.md。
     fn previous_boundary(&self, offset: usize) -> usize {
-        self.content
-            .grapheme_indices(true)
-            .rev()
-            .find_map(|(idx, _)| (idx < offset).then_some(idx))
+        let head = self.content.text_in_range(0..offset);
+        head.grapheme_indices(true)
+            .last()
+            .map(|(idx, _)| idx)
             .unwrap_or(0)
     }
 
     /// 下一个字素边界。
     fn next_boundary(&self, offset: usize) -> usize {
-        self.content
-            .grapheme_indices(true)
+        let text = self.content.to_string();
+        text.grapheme_indices(true)
             .find_map(|(idx, _)| (idx > offset).then_some(idx))
-            .unwrap_or(self.content.len())
+            .unwrap_or(text.len())
     }
 
     // ---- UTF-16 ↔ UTF-8 下标换算（IME / 剪贴板接口都用 UTF-16 下标）----
+    // 走 Rope 的树内维度查询，O(log n)；落在多字节字符中间的 UTF-16 偏移
+    // 由引擎收敛到字符边界（原实现无此保证，但 IME 不会给出这种偏移）。
 
     fn offset_from_utf16(&self, offset: usize) -> usize {
-        let mut utf8_offset = 0;
-        let mut utf16_count = 0;
-        for ch in self.content.chars() {
-            if utf16_count >= offset {
-                break;
-            }
-            utf16_count += ch.len_utf16();
-            utf8_offset += ch.len_utf8();
-        }
-        utf8_offset
+        self.content.offset_utf16_to_offset(OffsetUtf16(offset))
     }
 
     fn offset_to_utf16(&self, offset: usize) -> usize {
-        let mut utf16_offset = 0;
-        let mut utf8_count = 0;
-        for ch in self.content.chars() {
-            if utf8_count >= offset {
-                break;
-            }
-            utf8_count += ch.len_utf8();
-            utf16_offset += ch.len_utf16();
-        }
-        utf16_offset
+        self.content.offset_to_offset_utf16(offset).0
     }
 
     fn range_to_utf16(&self, range: &Range<usize>) -> Range<usize> {
@@ -344,7 +336,7 @@ impl InputState {
     }
 
     fn enter(&mut self, _: &Enter, _window: &mut Window, cx: &mut Context<Self>) {
-        let value = self.content.clone();
+        let value = self.content.to_string().into();
         cx.emit(InputEvent::Submit(value));
     }
 
@@ -365,17 +357,15 @@ impl InputState {
 
     fn copy(&mut self, _: &Copy, _: &mut Window, cx: &mut Context<Self>) {
         if !self.selected_range.is_empty() {
-            cx.write_to_clipboard(ClipboardItem::new_string(
-                self.content[self.selected_range.clone()].to_string(),
-            ));
+            let selected = self.content.text_in_range(self.selected_range.clone());
+            cx.write_to_clipboard(ClipboardItem::new_string(selected));
         }
     }
 
     fn cut(&mut self, _: &Cut, window: &mut Window, cx: &mut Context<Self>) {
         if !self.selected_range.is_empty() {
-            cx.write_to_clipboard(ClipboardItem::new_string(
-                self.content[self.selected_range.clone()].to_string(),
-            ));
+            let selected = self.content.text_in_range(self.selected_range.clone());
+            cx.write_to_clipboard(ClipboardItem::new_string(selected));
             self.replace_text_in_range(None, "", window, cx);
         }
     }
@@ -415,7 +405,7 @@ impl EntityInputHandler for InputState {
     ) -> Option<String> {
         let range = self.range_from_utf16(&range_utf16);
         actual_range.replace(self.range_to_utf16(&range));
-        Some(self.content[range].to_string())
+        Some(self.content.text_in_range(range))
     }
 
     fn selected_text_range(
@@ -456,13 +446,12 @@ impl EntityInputHandler for InputState {
             .or(self.marked_range.clone())
             .unwrap_or_else(|| self.selected_range.clone());
 
-        self.content =
-            (self.content[0..range.start].to_owned() + new_text + &self.content[range.end..]).into();
+        self.content.replace(range.clone(), new_text);
         self.selected_range = range.start + new_text.len()..range.start + new_text.len();
         self.marked_range.take();
         cx.notify();
         // 上屏（含键入 / 粘贴 / 删除）才算一次变更；组字中不发，避免高频噪音。
-        let value = self.content.clone();
+        let value: SharedString = self.content.to_string().into();
         cx.emit(InputEvent::Change(value));
     }
 
@@ -483,8 +472,7 @@ impl EntityInputHandler for InputState {
             .or(self.marked_range.clone())
             .unwrap_or_else(|| self.selected_range.clone());
 
-        self.content =
-            (self.content[0..range.start].to_owned() + new_text + &self.content[range.end..]).into();
+        self.content.replace(range.clone(), new_text);
         if !new_text.is_empty() {
             self.marked_range = Some(range.start..range.start + new_text.len());
         } else {

@@ -6696,6 +6696,7 @@ dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
  "gpui_macros 0.1.0 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
  "rand 0.9.5",
+ "sum_tree 0.1.0 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
  "unicode-segmentation",
 ]
 

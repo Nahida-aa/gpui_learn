@@ -66,6 +66,12 @@ gpui_util = { version = "0.1.0" }
 # 任何子包都可以用 `anyhow = { workspace = true }` 引用，版本由这里统一。
 anyhow = "1.0"
 
+# sum_tree：zed 的并发友好 B-tree（gpui 内部也在用，见 gpui/src/tab_stop.rs）。
+# zed 未把它发布到 crates.io（publish = false），因此这里直接写 git 源；
+# rev 与下方 [patch.crates-io] 的 gpui 保持一致，cargo 会把同一 rev 的仓库
+# 去重成一次 clone，且 gpui 内部的 sum_tree 与我们引用的是同一个包实例。
+sum_tree = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19" }
+
 rust-embed = { version = "8.11", features = ["include-exclude"] }
 
 # 工作区共享的资源 crate（packages/assets）：内嵌仓库根 assets/ 下的字体/图标等。
