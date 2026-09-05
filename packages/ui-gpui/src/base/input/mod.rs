@@ -13,6 +13,7 @@
 //! - 按键绑定收进 [`bind_input_keys`]，并用 key_context 限定作用域，
 //!   不再像示例那样全局（None）绑定。
 
+pub mod editor;
 pub mod element;
 pub mod engine;
 pub mod input_state;
