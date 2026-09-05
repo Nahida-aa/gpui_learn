@@ -16,6 +16,7 @@ mod actions;
 // Editor 动作切到 display 空间在阶段 C 渲染度量接入时完成。
 #[allow(dead_code)]
 mod display_map;
+pub mod element;
 #[allow(dead_code)]
 mod movement;
 mod selection;
@@ -24,18 +25,24 @@ mod undo;
 use std::ops::Range;
 
 use gpui::{
-    App, Bounds, Context, EntityInputHandler, EventEmitter, FocusHandle, Hsla, Pixels, Rgba,
-    ShapedLine, SharedString, UTF16Selection, rgb,
+    div, prelude::*, px, App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter,
+    FocusHandle, Hsla, KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
+    Pixels, Render, Rgba, ScrollWheelEvent, ShapedLine, SharedString, UTF16Selection, Window, rgb,
 };
 
 pub use actions::*;
 pub use display_map::{DisplayMap, DisplayPoint, DisplayRow};
+pub use element::EditorElement;
 pub(super) use selection::Selection;
 pub(super) use undo::{Change, EditIntent};
 
 use super::engine::{OffsetUtf16, Rope};
 pub use selection::SelectionGoal;
 pub use undo::UndoManager;
+
+/// 编辑器的 key_context 名,[`bind_editor_keys`] 与渲染时的
+/// `.key_context(..)` 共用。
+pub const EDITOR_KEY_CONTEXT: &str = "Editor";
 
 /// 编辑器的布局模式,对齐 zed `EditorMode`(editor.rs:469-487)的精简子集。
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -88,8 +95,24 @@ pub struct Editor {
     /// 单行模式:粘贴时把 \n 换成空格(见计划文档差异 1)。
     pub(super) submit_on_enter: bool,
     // ---- 渲染缓存(LastLayout 快照,prepaint 写入、命中测试/IME 读取)----
+    /// 单行模式的整行布局。
     pub(super) last_layout: Option<ShapedLine>,
+    /// 单行模式的文本区域。
     pub(super) last_bounds: Option<Bounds<Pixels>>,
+    /// 多行模式:可见行的布局(与 `first_visible_row` 对齐)。
+    pub(super) last_lines: Vec<ShapedLine>,
+    /// 多行模式:`last_lines[0]` 对应的 buffer 行。
+    pub(super) first_visible_row: u32,
+    /// 多行模式:整个内容区的 bounds(含滚动裁剪前)。
+    pub(super) last_content_bounds: Option<Bounds<Pixels>>,
+    /// 多行模式:视口高度(像素),渲染层写入供自动滚动用。
+    pub(super) viewport_height: Pixels,
+    /// 多行模式:垂直滚动偏移(阶段 C 手动管理,后续可换 ScrollHandle)。
+    pub(super) scroll_top: Pixels,
+    /// 最近一帧的行高(命中测试用)。
+    pub(super) last_line_height: Pixels,
+    /// 鼠标拖拽选区进行中。
+    pub(super) is_selecting: bool,
     // ---- 视觉样式 ----
     pub(super) bg_color: Rgba,
     pub(super) border_color: Rgba,
@@ -113,6 +136,13 @@ impl Editor {
             submit_on_enter: false,
             last_layout: None,
             last_bounds: None,
+            last_lines: Vec::new(),
+            first_visible_row: 0,
+            last_content_bounds: None,
+            viewport_height: px(0.),
+            scroll_top: px(0.),
+            last_line_height: px(0.),
+            is_selecting: false,
             bg_color: rgb(0x1e1e2e),
             border_color: rgb(0x45475a),
             placeholder_color: gpui::hsla(0., 0., 0.55, 1.),
@@ -274,7 +304,11 @@ impl Editor {
 
     // ---- undo / redo ----
 
-    pub fn undo(&mut self, cx: &mut Context<Self>) {
+    pub fn undo(&mut self, _: &Undo, _: &mut Window, cx: &mut Context<Self>) {
+        self.undo_core(cx);
+    }
+
+    pub(crate) fn undo_core(&mut self, cx: &mut Context<Self>) {
         let Some(changes) = self.undo_manager.undo() else {
             return;
         };
@@ -291,7 +325,11 @@ impl Editor {
         cx.notify();
     }
 
-    pub fn redo(&mut self, cx: &mut Context<Self>) {
+    pub fn redo(&mut self, _: &Redo, _: &mut Window, cx: &mut Context<Self>) {
+        self.redo_core(cx);
+    }
+
+    pub(crate) fn redo_core(&mut self, cx: &mut Context<Self>) {
         let Some(changes) = self.undo_manager.redo() else {
             return;
         };
@@ -306,8 +344,97 @@ impl Editor {
         cx.notify();
     }
 
-    // ---- UTF-16 ↔ UTF-8(IME 接口,走 Rope 树内查询)----
+    // ---- 鼠标 / 滚动(Render 注册)----
 
+    fn on_mouse_down(&mut self, event: &MouseDownEvent, _: &mut Window, cx: &mut Context<Self>) {
+        if self.disabled {
+            return;
+        }
+        self.is_selecting = true;
+        let offset = self.index_for_mouse_position(event.position);
+        if event.modifiers.shift {
+            self.selection.set_head(offset, SelectionGoal::None);
+        } else {
+            self.selection.collapse_to(offset, SelectionGoal::None);
+        }
+        self.change_selections(cx);
+    }
+
+    fn on_mouse_up(&mut self, _: &MouseUpEvent, _: &mut Window, _: &mut Context<Self>) {
+        self.is_selecting = false;
+    }
+
+    fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
+        if self.is_selecting {
+            let offset = self.index_for_mouse_position(event.position);
+            self.selection.set_head(offset, SelectionGoal::None);
+            self.change_selections(cx);
+        }
+    }
+
+    fn on_scroll_wheel(&mut self, event: &ScrollWheelEvent, _: &mut Window, cx: &mut Context<Self>) {
+        if !self.mode.is_multi_line() {
+            return;
+        }
+        let line = if self.last_line_height > px(0.) {
+            self.last_line_height
+        } else {
+            px(20.)
+        };
+        let delta_y = event.delta.pixel_delta(line).y;
+        let content_rows = self.rope.summary().lines.row + 1;
+        let max_scroll = (content_rows as f32 * line_height_px(self)
+            - self.viewport_height.as_f32())
+        .max(0.);
+        let next = (self.scroll_top - delta_y).clamp(px(0.), px(max_scroll));
+        if next != self.scroll_top {
+            self.scroll_top = next;
+            cx.emit(EditorEvent::ScrollPositionChanged);
+            cx.notify();
+        }
+    }
+}
+
+fn line_height_px(editor: &Editor) -> f32 {
+    if editor.last_line_height > px(0.) {
+        editor.last_line_height.as_f32()
+    } else {
+        20.
+    }
+}
+
+/// 把编辑动作绑到 [`EDITOR_KEY_CONTEXT`] 上。
+///
+/// 剪贴板/全选用 `secondary`(macOS→cmd,其余→ctrl),见
+/// `bind_input_keys` 的说明。
+pub fn bind_editor_keys(cx: &mut App) {
+    cx.bind_keys([
+        KeyBinding::new("backspace", Backspace, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("delete", Delete, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("left", Left, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("right", Right, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("up", Up, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("down", Down, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("shift-left", SelectLeft, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("shift-right", SelectRight, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("shift-up", SelectUp, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("shift-down", SelectDown, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-a", SelectAll, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-v", Paste, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-c", Copy, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-x", Cut, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-z", Undo, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-shift-z", Redo, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("home", Home, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("end", End, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("ctrl-cmd-space", ShowCharacterPalette, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("enter", Newline, Some(EDITOR_KEY_CONTEXT)),
+    ]);
+}
+
+// ---- UTF-16 ↔ UTF-8(IME 接口,走 Rope 树内查询)----
+
+impl Editor {
     pub(super) fn offset_from_utf16(&self, offset: usize) -> usize {
         self.rope.offset_utf16_to_offset(OffsetUtf16(offset))
     }
@@ -327,9 +454,121 @@ impl Editor {
 
 impl EventEmitter<EditorEvent> for Editor {}
 
+// ---- 命中测试与鼠标(渲染层把布局快照写回后调用)----
+
+impl Editor {
+    /// 鼠标位置 → 文本字节下标(单行/多行统一)。
+    pub(crate) fn index_for_mouse_position(&self, position: gpui::Point<Pixels>) -> usize {
+        if self.mode.is_single_line() {
+            if self.rope.is_empty() {
+                return 0;
+            }
+            let (Some(bounds), Some(line)) =
+                (self.last_bounds.as_ref(), self.last_layout.as_ref())
+            else {
+                return 0;
+            };
+            if position.y < bounds.top() {
+                return 0;
+            }
+            if position.y > bounds.bottom() {
+                return self.rope.len();
+            }
+            return line.closest_index_for_x(position.x - bounds.left());
+        }
+
+        // 多行:根据 y 找 buffer 行,行内用该行的 ShapedLine 命中
+        let Some(bounds) = self.last_content_bounds else {
+            return 0;
+        };
+        if self.last_lines.is_empty() || self.last_line_height <= px(0.) {
+            return 0;
+        }
+        let rel_y = position.y - bounds.top() + self.scroll_top;
+        let row = self.first_visible_row + (rel_y / self.last_line_height) as u32;
+        let row = row.min(self.rope.summary().lines.row);
+        let row_start = self.rope.point_to_offset(super::engine::Point::new(row, 0));
+        let Some(line) = self
+            .last_lines
+            .get((row - self.first_visible_row) as usize)
+        else {
+            return row_start;
+        };
+        row_start + line.closest_index_for_x(position.x - bounds.left())
+    }
+
+    /// 光标像素位置(窗口坐标),渲染层做自动滚动用。
+    pub(crate) fn cursor_pixel_position(&self) -> Option<gpui::Point<Pixels>> {
+        let bounds = self.last_content_bounds.as_ref()?;
+        let head = self.selection.head();
+        if self.mode.is_single_line() {
+            let line = self.last_layout.as_ref()?;
+            let x = line.x_for_index(head);
+            return Some(gpui::point(bounds.left() + x, bounds.top()));
+        }
+        let point = self.rope.offset_to_point(head);
+        let row = point.row;
+        if row < self.first_visible_row {
+            return Some(gpui::point(bounds.left(), bounds.top() - self.scroll_top));
+        }
+        let line_idx = (row - self.first_visible_row) as usize;
+        let line = self.last_lines.get(line_idx)?;
+        let row_start = self.rope.point_to_offset(super::engine::Point::new(row, 0));
+        let x = line.x_for_index(head - row_start);
+        let y = bounds.top() + (line_idx as f32) * self.last_line_height - self.scroll_top;
+        Some(gpui::point(bounds.left() + x, y))
+    }
+}
+
 impl gpui::Focusable for Editor {
     fn focus_handle(&self, _: &App) -> FocusHandle {
         self.focus_handle.clone()
+    }
+}
+
+impl Render for Editor {
+    fn render(&mut self, _window: &mut gpui::Window, cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .id("editor-root")
+            .key_context(EDITOR_KEY_CONTEXT)
+            .track_focus(&self.focus_handle)
+            .cursor(CursorStyle::IBeam)
+            .on_action(cx.listener(Self::backspace))
+            .on_action(cx.listener(Self::delete))
+            .on_action(cx.listener(Self::move_left))
+            .on_action(cx.listener(Self::move_right))
+            .on_action(cx.listener(Self::move_up))
+            .on_action(cx.listener(Self::move_down))
+            .on_action(cx.listener(Self::select_left))
+            .on_action(cx.listener(Self::select_right))
+            .on_action(cx.listener(Self::select_up))
+            .on_action(cx.listener(Self::select_down))
+            .on_action(cx.listener(Self::select_all))
+            .on_action(cx.listener(Self::home))
+            .on_action(cx.listener(Self::end))
+            .on_action(cx.listener(Self::newline))
+            .on_action(cx.listener(Self::paste))
+            .on_action(cx.listener(Self::copy))
+            .on_action(cx.listener(Self::cut))
+            .on_action(cx.listener(Self::undo))
+            .on_action(cx.listener(Self::redo))
+            .on_action(cx.listener(Self::show_character_palette))
+            .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
+            .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
+            .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
+            .on_mouse_move(cx.listener(Self::on_mouse_move))
+            .on_scroll_wheel(cx.listener(Self::on_scroll_wheel))
+            .overflow_hidden()
+            .px_2()
+            .py_1()
+            .border_1()
+            .rounded_md()
+            .bg(self.bg_color)
+            .border_color(self.border_color)
+            .text_size(px(14.))
+            .child(EditorElement {
+                editor: cx.entity(),
+            })
     }
 }
 
@@ -368,7 +607,7 @@ mod tests {
             "hello world"
         );
 
-        editor.update(cx, |editor, cx| editor.undo(cx));
+        editor.update(cx, |editor, cx| editor.undo_core(cx));
         assert_eq!(editor.read_with(cx, |e, _| e.value().to_string()), "hello");
         assert_eq!(
             editor.read_with(cx, |e, _| e.selection.head()),
@@ -376,7 +615,7 @@ mod tests {
             "undo 应恢复事务前选区"
         );
 
-        editor.update(cx, |editor, cx| editor.redo(cx));
+        editor.update(cx, |editor, cx| editor.redo_core(cx));
         assert_eq!(
             editor.read_with(cx, |e, _| e.value().to_string()),
             "hello world"
@@ -394,7 +633,7 @@ mod tests {
         });
         assert_eq!(editor.read_with(cx, |e, _| e.value().to_string()), "abc");
 
-        editor.update(cx, |editor, cx| editor.undo(cx));
+        editor.update(cx, |editor, cx| editor.undo_core(cx));
         assert_eq!(
             editor.read_with(cx, |e, _| e.value().to_string()),
             "",
@@ -414,7 +653,7 @@ mod tests {
             "hello gpui"
         );
 
-        editor.update(cx, |editor, cx| editor.undo(cx));
+        editor.update(cx, |editor, cx| editor.undo_core(cx));
         assert_eq!(
             editor.read_with(cx, |e, _| e.value().to_string()),
             "hello world"

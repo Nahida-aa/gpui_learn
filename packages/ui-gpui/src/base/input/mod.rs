@@ -17,6 +17,7 @@ pub mod editor;
 pub mod element;
 pub mod engine;
 pub mod input_state;
+pub mod textarea;
 
 pub use element::TextElement;
 pub use input_state::{
