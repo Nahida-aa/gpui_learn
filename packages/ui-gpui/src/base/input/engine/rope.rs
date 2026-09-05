@@ -232,6 +232,17 @@ impl Rope {
         self.chunks.extent(())
     }
 
+    /// 某 buffer 行的长度(不含换行符)。
+    pub fn line_len(&self, row: u32) -> usize {
+        let row_start = self.point_to_offset(Point::new(row, 0));
+        let max_row = self.summary().lines.row;
+        if row >= max_row {
+            return self.len() - row_start;
+        }
+        let next_start = self.point_to_offset(Point::new(row + 1, 0));
+        next_start - row_start - 1 // 去掉 '\n'
+    }
+
     pub fn cursor(&self, offset: usize) -> Cursor<'_> {
         Cursor::new(self, offset)
     }

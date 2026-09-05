@@ -12,6 +12,12 @@
 //! 把 \n 显示为 ⋯);显示映射链只做软换行一层。
 
 mod actions;
+// 阶段 B 先落地 display_map/movement 纯函数库(带完整测试);
+// Editor 动作切到 display 空间在阶段 C 渲染度量接入时完成。
+#[allow(dead_code)]
+mod display_map;
+#[allow(dead_code)]
+mod movement;
 mod selection;
 mod undo;
 
@@ -23,6 +29,7 @@ use gpui::{
 };
 
 pub use actions::*;
+pub use display_map::{DisplayMap, DisplayPoint, DisplayRow};
 pub(super) use selection::Selection;
 pub(super) use undo::{Change, EditIntent};
 
