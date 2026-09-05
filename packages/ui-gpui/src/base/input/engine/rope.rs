@@ -730,6 +730,45 @@ mod tests {
         assert_eq!(rope.clip_offset(99, Bias::Left), rope.len());
     }
 
+    /// InputState 的 copy/paste 链路：text_in_range 取选中段 →
+    /// replace 插到光标处。含单 chunk 与跨 chunk 两种情形。
+    #[test]
+    fn test_copy_paste_flow() {
+        let mut rope = Rope::from("hello world");
+        let copied = rope.text_in_range(6..11);
+        assert_eq!(copied, "world");
+
+        // 末尾粘贴
+        rope.replace(11..11, &copied);
+        assert!(rope == "hello worldworld", "got {:?}", rope.to_string());
+
+        // 中间粘贴（光标在 5，即 "hello| worldworld" 的空格前）
+        rope.replace(5..5, &copied);
+        assert!(
+            rope == "helloworld worldworld",
+            "got {:?}",
+            rope.to_string()
+        );
+
+        // 全选复制 → 全选替换（覆盖粘贴）
+        let all = rope.text_in_range(0..rope.len());
+        let upper = all.to_uppercase();
+        rope.replace(0..rope.len(), &upper);
+        assert!(rope == upper.as_str());
+
+        // 跨 chunk 拷贝：>128 字节，取中段
+        let big = Rope::from("y".repeat(300).as_str());
+        let mid = big.text_in_range(100..200);
+        assert_eq!(mid.len(), 100);
+
+        // 跨 chunk 粘贴多字节文本
+        let mut rope2 = Rope::from("y".repeat(300).as_str());
+        rope2.replace(150..150, "中文\u{1F600}");
+        assert_eq!(rope2.len(), 300 + 2 * 3 + 4);
+        let expected = format!("{}中文\u{1F600}{}", "y".repeat(150), "y".repeat(150));
+        assert!(rope2 == expected.as_str(), "got {:?}", rope2.to_string());
+    }
+
     fn random_text(rng: &mut impl rand::Rng, len: usize) -> String {
         // 混入 ASCII / 中文 / emoji / 换行，覆盖 1-4 字节字符
         let alphabet = [

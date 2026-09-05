@@ -163,6 +163,10 @@ impl InputState {
 /// 把输入框需要的按键绑到 [`INPUT_KEY_CONTEXT`] 上。
 ///
 /// 必须在应用启动回调里调用一次，否则光标移动/删除/粘贴等全部失效。
+///
+/// 剪贴板/全选用 `secondary` 修饰符——gpui 的跨平台语法：
+/// macOS 映射 `cmd`，Linux/Windows 映射 `ctrl`。写成 `"cmd-c"` 在 Linux
+/// 上会要求按 Super+C（`Modifiers::platform` = super 键），Ctrl+C 无反应。
 pub fn bind_input_keys(cx: &mut App) {
     cx.bind_keys([
         KeyBinding::new("backspace", Backspace, Some(INPUT_KEY_CONTEXT)),
@@ -171,10 +175,10 @@ pub fn bind_input_keys(cx: &mut App) {
         KeyBinding::new("right", Right, Some(INPUT_KEY_CONTEXT)),
         KeyBinding::new("shift-left", SelectLeft, Some(INPUT_KEY_CONTEXT)),
         KeyBinding::new("shift-right", SelectRight, Some(INPUT_KEY_CONTEXT)),
-        KeyBinding::new("cmd-a", SelectAll, Some(INPUT_KEY_CONTEXT)),
-        KeyBinding::new("cmd-v", Paste, Some(INPUT_KEY_CONTEXT)),
-        KeyBinding::new("cmd-c", Copy, Some(INPUT_KEY_CONTEXT)),
-        KeyBinding::new("cmd-x", Cut, Some(INPUT_KEY_CONTEXT)),
+        KeyBinding::new("secondary-a", SelectAll, Some(INPUT_KEY_CONTEXT)),
+        KeyBinding::new("secondary-v", Paste, Some(INPUT_KEY_CONTEXT)),
+        KeyBinding::new("secondary-c", Copy, Some(INPUT_KEY_CONTEXT)),
+        KeyBinding::new("secondary-x", Cut, Some(INPUT_KEY_CONTEXT)),
         KeyBinding::new("home", Home, Some(INPUT_KEY_CONTEXT)),
         KeyBinding::new("end", End, Some(INPUT_KEY_CONTEXT)),
         KeyBinding::new("ctrl-cmd-space", ShowCharacterPalette, Some(INPUT_KEY_CONTEXT)),

@@ -1,7 +1,7 @@
 //! # 10_input_button —— ui-gpui 的 Input 与 Button 演示
 //!
 //! 验证清单（手动过一遍）：
-//! - 输入、退格、删除、左右移动、Shift 选区、Cmd+A/C/V/X；
+//! - 输入、退格、删除、左右移动、Shift 选区、Ctrl/Cmd+A/C/V/X（secondary）；
 //! - 中文 IME 组字（应有下划线）与上屏；
 //! - Enter 触发 [`InputEvent::Submit`]；
 //! - 两个按钮的点击 / hover / 禁用态；
