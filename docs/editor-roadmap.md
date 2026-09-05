@@ -50,8 +50,20 @@ input/
    mode 差异与 API 包装，逻辑全部下沉引擎层。
 2. **一个引擎 + mode 区分**：参照 `kind.rs`，用
    `InputMode/TextareaMode/EditorMode` 统一三种组件，避免三份复制。
-3. **文本存储上 Rope**：gpui-component 用 `ropey`；现 `SharedString` 单行
-   够用，多行/大文本必须 O(log n) 编辑。阶段 0 定选型。
+3. **文本存储：sum_tree + 自研 Rope（已定，不用 ropey）**：
+   - `sum_tree` 是 zed 的并发友好 B-tree（`publish = false`，crates.io 无，
+     需 git 依赖 zed 仓库、与 gpui 的 `[patch.crates-io]` 用同一 rev）
+   - Rope 参照 zed `crates/rope/src/rope.rs` 自研精简版：
+     `pub struct Rope { chunks: SumTree<Chunk> }`
+   - 选型依据（2026-09 调研）：IDE 级编辑器（display_map、软换行、折叠）
+     本就在路线图内，sum_tree 的 `TextDimension`/`Dimensions<D1, D2>`
+     多坐标系联合查询（字节/UTF-16/行列一棵树内 O(log n) 互转）是
+     ropey 给不了的；与其 ropey 先上再迁移，不如一步到位
+   - 不直接依赖 zed `crates/rope` 的原因：硬依赖 `util`
+     （anyhow/serde/regex/rust-embed 等大闭包）；且 Rope 引擎正是本仓库
+     的核心学习对象。rope 对 util 的实际使用仅
+     `debug_panic`/`is_utf8_char_boundary`/`RandomCharIter`（测试），
+     自行补三行即可绕开
 4. **`mod.rs` 作为外部缝**：公开 re-export 只放 `mod.rs`，内部文件用显式
    `#[path]` 组织，重组不破坏调用方。
 5. **布局/选区索引约定**：沿用现有 UTF-16（`UTF16Selection`，与平台 IME
@@ -63,12 +75,18 @@ input/
 每阶段 = 迁移/新写 + 一个可运行验证（复用或新增 apps/1x_*）。
 「课前阅读」指 zed `crates/gpui/examples/` 下对应示例，需要时再走。
 
-### 阶段 0｜存储选型与引擎地基（现在即可开工）
-- 引入 `ropey`（或自裁剪），在 `base/input` 下建 `engine/`（或对齐
-  gpui-component 叫 `base/`）
-- 把现有 `InputState` 的 `SharedString` 存量逻辑抽象为对 Rope 的操作；
-  `InputEdit` 增量编辑记录参照 gpui-component `base/rope_ext.rs`
-- 验收：单行 Input 行为与 `10_input_button` 清单完全一致（回归）
+### 阶段 0｜sum_tree 接入与自研 Rope（现在即可开工）
+- 根 `Cargo.toml` 增加 `sum_tree = { git = "https://github.com/zed-industries/zed",
+  rev = "<与 gpui 的 [patch.crates-io] 同 rev>" }`，升级时同 rev 一起 bump
+- 在 `base/input` 下建 `engine/`，参照 zed `crates/rope/src/rope.rs` 自研
+  精简 Rope：`SumTree<Chunk>` + `TextSummary`（含 chars/len/PointUtf16 等
+  摘要）+ `Point`/`PointUtf16`/`OffsetUtf16` 坐标类型；chunk 内仍是连续
+  `String` 段
+- 把现有 `InputState` 的 `SharedString` 存量逻辑迁到 Rope 之上；编辑操作
+  产出 `InputEdit` 式增量记录（参照 gpui-component `base/rope_ext.rs`，
+  供 undo/display map 复用）
+- 验收：单行 Input 行为与 `10_input_button` 清单完全一致（回归）；
+  补一个 Rope 单元/property 测试（随机编辑序列 vs `String` 参照实现）
 
 ### 阶段 1｜布局引擎多行化
 - 课前阅读：zed `text_layout`、`text_wrapper`、`text`
