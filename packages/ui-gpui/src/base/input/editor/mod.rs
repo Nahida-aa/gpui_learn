@@ -526,17 +526,31 @@ impl Render for Editor {
         } else {
             EDITOR_KEY_CONTEXT
         };
-        // 多行模式:外层是官方滚动容器(overflow_scroll + track_scroll),
+
+        // ---- 外框尺寸(按 mode)----
+        // 关键:滚动容器的 size_full 需要有界的父高度,因此外框必须显式给高,
+        // 否则百分比高度在 auto 容器里解析为 0,滚动面塌陷、无法滚动。
+        let line_height = if self.last_line_height > px(0.) {
+            self.last_line_height
+        } else {
+            window.line_height()
+        };
+        let total_rows = self.rope.summary().lines.row + 1;
+        let (frame_height, scrollable) = match self.mode {
+            EditorMode::SingleLine => (window.line_height(), false),
+            EditorMode::AutoHeight { min_rows, max_rows } => {
+                // 内容行数 clamp 到 [min, max];超出 max 的部分走滚动
+                let rows = (total_rows as usize).clamp(min_rows.max(1), max_rows.max(min_rows.max(1)));
+                (px(line_height.as_f32() * rows as f32), true)
+            }
+            EditorMode::MultiLine { rows } => {
+                (px(line_height.as_f32() * rows.max(1) as f32), true)
+            }
+        };
+
+        // 多行/可滚模式:外层是官方滚动容器(overflow_scroll + track_scroll),
         // gpui 接管滚轮/拖拽;内容 div 撑出全高滚动面,行绘制坐标即内容坐标。
-        // 单行模式:直接放元素(无滚动)。
-        let editor_element = if self.mode.is_multi_line() {
-            let total_rows = self.rope.summary().lines.row + 1;
-            // 首帧 last_line_height 还没量出来,用窗口行高兜底,保证滚动面非零
-            let line_height = if self.last_line_height > px(0.) {
-                self.last_line_height
-            } else {
-                window.line_height()
-            };
+        let editor_element = if scrollable {
             let content_height = px(line_height.as_f32() * total_rows as f32);
             div()
                 // stateful id:overflow_scroll 的硬性前提;拼上实体 id,
@@ -589,6 +603,8 @@ impl Render for Editor {
             .py_1()
             .border_1()
             .rounded_md()
+            .w_full()
+            .h(frame_height)
             .bg(self.bg_color)
             .border_color(self.border_color)
             .text_size(px(14.))
