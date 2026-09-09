@@ -55,6 +55,21 @@ impl Editor {
 /// `.key_context(..)` 共用。
 pub const EDITOR_KEY_CONTEXT: &str = "Editor";
 
+/// 内容不足一屏时是否允许继续滚动,对齐 zed `ScrollBeyondLastLine`
+/// (crates/settings_content/src/editor.rs)。
+///
+/// zed 默认为 `OnePage`:编辑区可以把最后一行滚到视口顶部,下方留空白——
+/// 长文件里把当前行放在视口中上部更好读,这是编辑器的通行做法
+/// (VS Code 的 scrollBeyondLastLine 同理)。
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum ScrollBeyondLastLine {
+    /// 不允许滚过最后一行:滚到底时最后一行在视口底部。
+    Off,
+    /// 允许滚到「最后一行贴视口顶」,下方留空白(zed 默认)。
+    #[default]
+    OnePage,
+}
+
 /// 编辑器的布局模式,对齐 zed `EditorMode`(editor.rs:469-487)的精简子集。
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EditorMode {
@@ -125,6 +140,8 @@ pub struct Editor {
     pub(super) scroll_position: Pixels,
     /// 多行模式:视口高度(视口 = 滚动裁剪区域,prepaint 写入)。
     pub(super) viewport_height: Pixels,
+    /// 内容不足一屏时是否允许继续滚(对齐 zed,默认 OnePage)。
+    pub(super) scroll_beyond_last_line: ScrollBeyondLastLine,
     /// 下一帧 prepaint 时把光标滚入视口(编辑/移动选区后置位)。
     pub(super) needs_autoscroll: bool,
     /// 鼠标拖拽选区进行中。
@@ -163,6 +180,7 @@ impl Editor {
             last_line_height: px(0.),
             scroll_position: px(0.),
             viewport_height: px(0.),
+            scroll_beyond_last_line: ScrollBeyondLastLine::OnePage,
             needs_autoscroll: false,
             is_selecting: false,
             bg_color: rgb(0x1e1e2e),
@@ -186,6 +204,13 @@ impl Editor {
 
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
+        self
+    }
+
+    /// 内容不足一屏时是否允许继续滚(默认 [`ScrollBeyondLastLine::OnePage`],
+    /// 同 zed)。设为 `Off` 即普通滚动行为。
+    pub fn scroll_beyond_last_line(mut self, mode: ScrollBeyondLastLine) -> Self {
+        self.scroll_beyond_last_line = mode;
         self
     }
 
@@ -416,25 +441,14 @@ impl Editor {
             px(20.)
         };
         let delta_y = event.delta.pixel_delta(line).y;
-        let content_rows = self.rope.summary().lines.row + 1;
-        let max_scroll = (content_rows as f32 * line_height_px(self)
-            - self.viewport_height.as_f32())
-        .max(0.);
-        let next = (self.scroll_position - delta_y).clamp(px(0.), px(max_scroll));
+        let max_scroll = self.max_scroll_offset();
+        let next = (self.scroll_position - delta_y).clamp(px(0.), max_scroll);
         if next != self.scroll_position {
             tracing::debug!(from_y = delta_y.as_f32(), next = next.as_f32(), "wheel scroll");
             self.scroll_position = next;
             cx.emit(EditorEvent::ScrollPositionChanged);
             cx.notify();
         }
-    }
-}
-
-fn line_height_px(editor: &Editor) -> f32 {
-    if editor.last_line_height > px(0.) {
-        editor.last_line_height.as_f32()
-    } else {
-        20.
     }
 }
 
@@ -492,6 +506,28 @@ impl EventEmitter<EditorEvent> for Editor {}
 // ---- 命中测试与鼠标(渲染层把布局快照写回后调用)----
 
 impl Editor {
+    /// 垂直滚动上限(像素),对齐 zed element.rs 的 `max_scroll_top`:
+    /// - OnePage: `max_row` 行 → 最后一行可贴视口顶,下方留空白;
+    /// - Off: `max_row - 视口行数 + 1` → 滚到底即最后一行在视口底。
+    ///
+    /// 注意 OnePage 下内容不足一屏时上限仍 > 0,这就是「内容不多也能滚」的来源。
+    pub(crate) fn max_scroll_offset(&self) -> Pixels {
+        let line_h = if self.last_line_height > px(0.) {
+            self.last_line_height
+        } else {
+            px(20.)
+        };
+        let max_row = self.rope.summary().lines.row as f32;
+        let rows = match self.scroll_beyond_last_line {
+            ScrollBeyondLastLine::OnePage => max_row,
+            ScrollBeyondLastLine::Off => {
+                let viewport_lines = self.viewport_height / line_h;
+                (max_row - viewport_lines + 1.).max(0.)
+            }
+        };
+        px(rows * line_h.as_f32()).max(px(0.))
+    }
+
     /// 鼠标位置 → 文本字节下标(单行/多行统一)。
     pub(crate) fn index_for_mouse_position(&self, position: gpui::Point<Pixels>) -> usize {
         if self.mode.is_single_line() {
@@ -1020,5 +1056,68 @@ mod autoscroll_tests {
             final_scroll > 0.,
             "光标下移到行 19(视口 4 行)后应自动滚动, got scroll={final_scroll}"
         );
+    }
+
+    /// 内容不足一屏时也能继续滚(对齐 zed 的 ScrollBeyondLastLine::OnePage):
+    /// 两行内容、8 行视口,滚轮向下后 scroll_position 应 > 0。
+    #[gpui::test]
+    fn test_scroll_beyond_last_line_when_content_is_short(
+        cx: &mut gpui::TestAppContext,
+    ) {
+        let mut editor_slot = None;
+        let window = cx.add_window(|window, cx| {
+            let editor = Editor::with_mode(EditorMode::MultiLine { rows: 8 }, cx)
+                .default_value("two\nlines");
+            let handle = editor.focus_handle.clone();
+            window.focus(&handle, cx);
+            editor_slot = Some(cx.entity());
+            editor
+        });
+        let editor = editor_slot.expect("editor captured");
+        let mut cx = VisualTestContext::from_window(window.into(), &cx);
+
+        // 先绘制一帧,让 last_line_height / viewport_height 量出来
+        cx.update(|window, cx| {
+            window.refresh();
+            let _ = window.draw(cx);
+        });
+
+        // 内容只有 2 行,视口 8 行:OnePage 下上限仍应 > 0
+        let max_scroll =
+            cx.update(|_, cx| editor.read(cx).max_scroll_offset()).as_f32();
+        assert!(
+            max_scroll > 0.,
+            "内容不足一屏时也应能滚(scroll beyond last line), got max={max_scroll}"
+        );
+
+        // 向下滚轮一格
+        cx.simulate_event(ScrollWheelEvent {
+            // 位置必须在 editor 元素内,否则 hitbox 命中不到
+            position: gpui::point(px(50.), px(50.)),
+            delta: gpui::ScrollDelta::Pixels(gpui::point(px(0.), px(-40.))),
+            ..Default::default()
+        });
+
+        let scrolled = cx.update(|_, cx| editor.read(cx).scroll_position).as_f32();
+        assert!(
+            scrolled > 0.,
+            "滚轮向下后应产生滚动, got scroll={scrolled}, max={max_scroll}"
+        );
+    }
+
+    /// Off 模式:内容不足一屏时上限为 0(普通滚动行为)。
+    #[gpui::test]
+    fn test_scroll_beyond_last_line_off(cx: &mut gpui::TestAppContext) {
+        let editor = cx.new(|cx| {
+            Editor::with_mode(EditorMode::MultiLine { rows: 8 }, cx)
+                .default_value("two\nlines")
+                .scroll_beyond_last_line(ScrollBeyondLastLine::Off)
+        });
+        editor.update(cx, |editor, _| {
+            editor.last_line_height = px(20.);
+            editor.viewport_height = px(160.);
+        });
+        let max_scroll = editor.read_with(cx, |e, _| e.max_scroll_offset());
+        assert_eq!(max_scroll, px(0.), "Off 模式下内容不足一屏不可滚");
     }
 }

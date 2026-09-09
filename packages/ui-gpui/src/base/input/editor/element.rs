@@ -157,8 +157,6 @@ impl Element for EditorElement {
             // 光标行顶在内容坐标里的位置(内容坐标以内容顶为 0)
             let cursor_y = head_row as f32 * line_height.as_f32();
             let viewport_h = bounds.size.height.as_f32();
-            let total_rows_f = display_rows.len() as f32;
-            let content_h = total_rows_f * line_height.as_f32();
             let mut next = scroll_position.as_f32();
             if cursor_y < next {
                 // 光标在视口上方: 该行贴住视口顶
@@ -167,8 +165,13 @@ impl Element for EditorElement {
                 // 光标在视口下方: 该行贴住视口底
                 next = cursor_y + line_height.as_f32() - viewport_h;
             }
-            let next = next.clamp(0., (content_h - viewport_h).max(0.));
-            tracing::debug!(cursor_y = head_row as f32 * line_height.as_f32(), next, "autoscroll computed");
+            // 上限同样走 scroll_beyond_last_line(内容不足一屏时也能把光标滚上去)
+            let next = next.clamp(0., self.editor.read(cx).max_scroll_offset().as_f32());
+            tracing::debug!(
+                cursor_y = head_row as f32 * line_height.as_f32(),
+                next,
+                "autoscroll computed"
+            );
             if next != scroll_position.as_f32() {
                 scroll_position = px(next);
                 self.editor.update(cx, |editor, cx| {
