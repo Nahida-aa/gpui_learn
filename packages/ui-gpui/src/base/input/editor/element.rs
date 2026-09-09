@@ -16,7 +16,7 @@ use gpui::{
 };
 use std::ops::Range;
 
-use super::{Editor, EditorMode};
+use super::{DisplayMap, Editor, EditorMode};
 
 /// 一次性渲染元素:持有 `Entity<Editor>`。
 pub struct EditorElement {
@@ -33,8 +33,10 @@ impl IntoElement for EditorElement {
 
 /// prepaint 产出、paint 消费的中间状态。
 pub struct PrepaintState {
-    /// 排版结果:每行 (布局, 内容区 y 偏移)。
+    /// 排版结果:每个**视觉行** (布局, 内容区 y 偏移)。
     lines: Vec<(ShapedLine, Pixels)>,
+    /// 与 `lines` 对齐:每个视觉行覆盖的 buffer 字节区间(命中测试用)。
+    ranges: Vec<Range<usize>>,
     selection_quads: Vec<PaintQuad>,
     cursor_quad: Option<PaintQuad>,
 }
@@ -144,9 +146,10 @@ impl Element for EditorElement {
         // ---- 自动滚动(对齐 zed:在 prepaint 阶段调整, 本帧绘制即生效)----
         // 仅在 needs_autoscroll 置位(编辑/移动选区)时执行, 避免用户手动滚走后被拉回。
         if is_multi_line && needs_autoscroll {
+            // 视觉行号(软换行下 ≠ buffer 行号)
             let head_row = {
                 let editor = self.editor.read(cx);
-                editor.rope.offset_to_point(editor.selection.head()).row
+                editor.display_row_for_offset(editor.selection.head())
             };
             tracing::debug!(
                 head_row,
@@ -183,54 +186,120 @@ impl Element for EditorElement {
         }
 
         let content_origin_y = bounds.top() - scroll_position;
-        let mut lines: Vec<(ShapedLine, Pixels, Range<usize>)> = Vec::new();
-        let mut row_start = 0usize;
-        let mut row_ix = 0u32;
-        for row_text in &display_rows {
-            let row_len = row_text.len();
-            let mut runs: Vec<TextRun> = Vec::new();
-            if !show_placeholder {
-                if let Some(marked) = marked_range.as_ref() {
-                    let m_start = marked.start.saturating_sub(row_start).min(row_len);
-                    let m_end = marked.end.saturating_sub(row_start).min(row_len);
-                    runs.push(TextRun {
-                        len: m_start,
-                        ..base_run.clone()
-                    });
-                    runs.push(TextRun {
-                        len: m_end - m_start,
-                        underline: Some(UnderlineStyle {
-                            color: Some(base_run.color),
-                            thickness: px(1.0),
-                            wavy: false,
-                        }),
-                        ..base_run.clone()
-                    });
-                    runs.push(TextRun {
-                        len: row_len - m_end,
-                        ..base_run.clone()
-                    });
+
+        // ---- 软换行:同步 display_map,按视口宽算出每行的视觉分段 ----
+        // 对齐 zed 的 WrapMap:用 gpui 的 LineWrapper 求断行点(Boundary.ix),
+        // 只把「分段」写进映射;排版/绘制仍按段 shape,与 zed 的 LineLayout
+        // (每段一个 ShapedLine)同构。
+        let wrap_enabled = is_multi_line && self.editor.read(cx).soft_wrap;
+        if wrap_enabled {
+            let wrap_width = bounds.size.width;
+            let buffer_rows = display_rows.len() as u32;
+            // 行数变化(编辑增删行)时重建映射
+            self.editor.update(cx, |editor, _| {
+                if editor.display_map.buffer_rows() != buffer_rows {
+                    editor.display_map = DisplayMap::new(buffer_rows);
                 }
+            });
+            let mut wrapper = window.text_system().line_wrapper(style.font(), font_size);
+            for (row_ix, row_text) in display_rows.iter().enumerate() {
+                if row_text.is_empty() {
+                    continue;
+                }
+                let fragments = [gpui::LineFragment::text(row_text.as_str())];
+                let mut segments: Vec<Range<usize>> = Vec::new();
+                let mut prev = 0usize;
+                for boundary in wrapper.wrap_line(&fragments, wrap_width) {
+                    if boundary.ix > prev {
+                        segments.push(prev..boundary.ix);
+                        prev = boundary.ix;
+                    }
+                }
+                if prev < row_text.len() {
+                    segments.push(prev..row_text.len());
+                }
+                // 只分出一段 = 未超宽,记为空(约定:空 = 不换行)
+                let segments = if segments.len() <= 1 {
+                    Vec::new()
+                } else {
+                    segments
+                };
+                self.editor.update(cx, |editor, _| {
+                    editor
+                        .display_map
+                        .set_row_segments(row_ix as u32, segments);
+                });
             }
-            let runs = if runs.is_empty() {
-                vec![TextRun {
-                    len: row_len,
-                    ..base_run.clone()
-                }]
+        }
+
+        // ---- 逐视觉行排版 ----
+        // 软换行开启时一个 buffer 行可能拆成多条视觉行,每条单独 shape,
+        // y 按「视觉行号」累加(不再是 buffer 行号)。
+        let mut lines: Vec<(ShapedLine, Pixels, Range<usize>)> = Vec::new();
+        let mut display_row = 0u32;
+        let mut row_start = 0usize;
+        for (row_ix, row_text) in display_rows.iter().enumerate() {
+            let segments: Vec<Range<usize>> = if wrap_enabled {
+                let segs = self.editor.read(cx).display_map.row_segments(row_ix as u32);
+                if segs.is_empty() {
+                    vec![0..row_text.len()]
+                } else {
+                    segs
+                }
             } else {
-                runs.into_iter().filter(|run| run.len > 0).collect()
+                vec![0..row_text.len()]
             };
 
-            let line = window.text_system().shape_line(
-                row_text.as_str().into(),
-                font_size,
-                &runs,
-                None,
-            );
-            let y = content_origin_y + (row_ix as f32) * line_height;
-            lines.push((line, y, row_start..row_start + row_len));
+            for seg in segments {
+                let seg_text = &row_text[seg.clone()];
+                let seg_len = seg_text.len();
+                let seg_start = row_start + seg.start;
+
+                // runs:组字下划线按视觉段裁剪(只在本段与组字区相交时生效)
+                let mut runs: Vec<TextRun> = Vec::new();
+                if !show_placeholder {
+                    if let Some(marked) = marked_range.as_ref() {
+                        let m_start = marked.start.saturating_sub(seg_start).min(seg_len);
+                        let m_end = marked.end.saturating_sub(seg_start).min(seg_len);
+                        if m_end > m_start {
+                            runs.push(TextRun {
+                                len: m_start,
+                                ..base_run.clone()
+                            });
+                            runs.push(TextRun {
+                                len: m_end - m_start,
+                                underline: Some(UnderlineStyle {
+                                    color: Some(base_run.color),
+                                    thickness: px(1.0),
+                                    wavy: false,
+                                }),
+                                ..base_run.clone()
+                            });
+                            runs.push(TextRun {
+                                len: seg_len - m_end,
+                                ..base_run.clone()
+                            });
+                        }
+                    }
+                }
+                let runs = if runs.is_empty() {
+                    vec![TextRun {
+                        len: seg_len,
+                        ..base_run.clone()
+                    }]
+                } else {
+                    runs.into_iter().filter(|run| run.len > 0).collect()
+                };
+
+                let line =
+                    window
+                        .text_system()
+                        .shape_line(seg_text.into(), font_size, &runs, None);
+                let y = content_origin_y + (display_row as f32) * line_height;
+                lines.push((line, y, seg_start..seg_start + seg_len));
+                display_row += 1;
+            }
             row_start += row_text.len() + 1; // +1 为 '\n'
-            row_ix += 1;
         }
 
         // ---- 选区与光标 ----
@@ -272,11 +341,18 @@ impl Element for EditorElement {
             }
         }
 
+        // 三元组 (布局, y, 字节区间) 拆成两个平行数组:paint 用前者,
+        // 命中测试的区间在 paint 尾部写回 Editor 快照
+        let ranges = lines
+            .iter()
+            .map(|(_, _, range)| range.clone())
+            .collect::<Vec<_>>();
         PrepaintState {
             lines: lines
                 .into_iter()
                 .map(|(line, y, _)| (line, y))
                 .collect(),
+            ranges,
             selection_quads,
             cursor_quad,
         }
@@ -311,6 +387,7 @@ impl Element for EditorElement {
 
         let PrepaintState {
             lines,
+            ranges,
             selection_quads,
             cursor_quad,
         } = prepaint;
@@ -353,7 +430,9 @@ impl Element for EditorElement {
             editor.last_content_bounds = Some(bounds);
             editor.viewport_height = bounds.size.height;
             if is_multi_line {
+                // 视觉行布局 + 每行覆盖的 buffer 字节区间(命中测试用)
                 editor.last_lines = lines.iter().map(|(line, _)| line.clone()).collect();
+                editor.last_line_ranges = ranges.clone();
             } else if let Some((line, _)) = lines.first() {
                 editor.last_layout = Some(line.clone());
                 editor.last_bounds = Some(bounds);

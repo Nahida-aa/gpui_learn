@@ -246,6 +246,39 @@ impl DisplayMap {
         wrap.segments.get(sub_ix).map(|s| s.len() as u32)
     }
 
+    /// 某个 buffer 行的换行分段(空 = 不换行,整行一个 display 行)。
+    pub fn row_segments(&self, buffer_row: u32) -> Vec<Range<usize>> {
+        let mut cursor = self.wraps.cursor::<BufferRows>(());
+        cursor.seek(&BufferRowCount(buffer_row), Bias::Right);
+        cursor
+            .item()
+            .map(|item| item.segments.clone())
+            .unwrap_or_default()
+    }
+
+    /// display 行总数(软换行展开后的视觉行数)。
+    pub fn display_rows(&self) -> u32 {
+        self.wraps.summary().display_lines
+    }
+
+    /// display 行 → (所属 buffer 行, 该 display 行覆盖的字节 range)。
+    pub fn display_row_info(&self, display_row: u32) -> Option<(u32, Range<usize>)> {
+        let mut cursor = self.wraps.cursor::<DisplayRows>(());
+        cursor.seek(&DisplayRowCount(display_row), Bias::Right);
+        let wrap = cursor.item()?;
+        let buffer_row = cursor.start().1 .0;
+        let display_start = cursor.start().0 .0;
+        let sub_ix = (display_row - display_start) as usize;
+        if wrap.segments.is_empty() {
+            // 未换行行:整行一个 display 行,range 需调用方结合 rope 行首确定
+            return Some((buffer_row, 0..usize::MAX));
+        }
+        wrap.segments
+            .get(sub_ix)
+            .cloned()
+            .map(|range| (buffer_row, range))
+    }
+
     pub fn snapshot(&self) -> DisplaySnapshot {
         DisplaySnapshot { map: self.clone() }
     }
@@ -277,6 +310,21 @@ impl DisplaySnapshot {
 
     pub fn buffer_rows(&self) -> u32 {
         self.map.buffer_rows
+    }
+
+    /// display 行总数(软换行展开后)。
+    pub fn display_rows(&self) -> u32 {
+        self.map.display_rows()
+    }
+
+    /// 某 buffer 行的换行分段。
+    pub fn row_segments(&self, buffer_row: u32) -> Vec<Range<usize>> {
+        self.map.row_segments(buffer_row)
+    }
+
+    /// display 行 → (buffer 行, 行内 range)。
+    pub fn display_row_info(&self, display_row: u32) -> Option<(u32, Range<usize>)> {
+        self.map.display_row_info(display_row)
     }
 }
 

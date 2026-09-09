@@ -125,8 +125,17 @@ pub struct Editor {
     pub(super) last_layout: Option<ShapedLine>,
     /// 单行模式的文本区域。
     pub(super) last_bounds: Option<Bounds<Pixels>>,
-    /// 多行模式:可见行的布局(行 0 = buffer 行 0;全量渲染,见 element.rs)。
+    /// 软换行(buffer 行超出视口宽时折成多个视觉行);单行模式恒为 false。
+    ///
+    /// 对齐 zed 的 SoftWrap(默认按编辑器宽度折行)。关闭后长行不折,
+    /// 只能靠水平滚动(尚未实现)。
+    pub(super) soft_wrap: bool,
+    /// 软换行映射:buffer 行 → 视觉行分段。渲染层在 prepaint 里更新。
+    pub(super) display_map: DisplayMap,
+    /// 多行模式:每个**视觉行**的排版结果(软换行后一行可能占多条)。
     pub(super) last_lines: Vec<ShapedLine>,
+    /// 与 `last_lines` 对齐:每个视觉行覆盖的 buffer 字节区间。
+    pub(super) last_line_ranges: Vec<Range<usize>>,
     /// 多行模式:整个内容区的 bounds(全高,滚动前的内容坐标)。
     pub(super) last_content_bounds: Option<Bounds<Pixels>>,
     /// 最近一帧的行高(命中测试用)。
@@ -175,7 +184,10 @@ impl Editor {
             submit_on_enter: false,
             last_layout: None,
             last_bounds: None,
+            soft_wrap: true,
+            display_map: DisplayMap::default(),
             last_lines: Vec::new(),
+            last_line_ranges: Vec::new(),
             last_content_bounds: None,
             last_line_height: px(0.),
             scroll_position: px(0.),
@@ -204,6 +216,12 @@ impl Editor {
 
     pub fn disabled(mut self, disabled: bool) -> Self {
         self.disabled = disabled;
+        self
+    }
+
+    /// 软换行:buffer 行超出视口宽时折成多个视觉行(多行默认开)。
+    pub fn soft_wrap(mut self, soft_wrap: bool) -> Self {
+        self.soft_wrap = soft_wrap;
         self
     }
 
@@ -518,15 +536,36 @@ impl Editor {
         } else {
             px(20.)
         };
-        let max_row = self.rope.summary().lines.row as f32;
+        // 以**视觉行**为单位:软换行会让一个 buffer 行占多条视觉行
+        let rows = self.display_rows() as f32;
         let rows = match self.scroll_beyond_last_line {
-            ScrollBeyondLastLine::OnePage => max_row,
+            ScrollBeyondLastLine::OnePage => (rows - 1.).max(0.),
             ScrollBeyondLastLine::Off => {
                 let viewport_lines = self.viewport_height / line_h;
-                (max_row - viewport_lines + 1.).max(0.)
+                (rows - viewport_lines).max(0.)
             }
         };
         px(rows * line_h.as_f32()).max(px(0.))
+    }
+
+    /// 视觉行总数:软换行开启且映射就绪时用 display_map,否则退化为
+    /// buffer 行数(首帧/未换行时)。
+    pub(crate) fn display_rows(&self) -> u32 {
+        let mapped = self.display_map.display_rows();
+        if mapped > 0 {
+            mapped
+        } else {
+            self.rope.summary().lines.row + 1
+        }
+    }
+
+    /// 文本字节下标 → 视觉行号(软换行下与 buffer 行号不同)。
+    pub(crate) fn display_row_for_offset(&self, offset: usize) -> u32 {
+        if self.display_map.display_rows() == 0 {
+            return self.rope.offset_to_point(offset).row;
+        }
+        let point = self.rope.offset_to_point(offset);
+        self.display_map.buffer_point_to_display_point(point).row
     }
 
     /// 鼠标位置 → 文本字节下标(单行/多行统一)。
@@ -549,9 +588,10 @@ impl Editor {
             return line.closest_index_for_x(position.x - bounds.left());
         }
 
-        // 多行:根据 y 找 buffer 行,行内用该行的 ShapedLine 命中。
+        // 多行:先按 y 定位**视觉行**,再用该视觉行的 ShapedLine 命中行内位置。
         // 自绘滚动:element 绘制时 content_origin.y = bounds.top - scroll_position,
-        // 所以内容 y = 鼠标 y - bounds.top + scroll_position(与绘制严格互逆)。
+        // 所以内容 y = 鼠标 y - bounds.top + scroll_position(与绘制严格互逆);
+        // 软换行下视觉行 ≠ buffer 行,区间由 last_line_ranges 给出。
         let Some(bounds) = self.last_content_bounds else {
             return 0;
         };
@@ -559,13 +599,17 @@ impl Editor {
             return 0;
         }
         let rel_y = position.y - bounds.top() + self.scroll_position;
-        let row = (rel_y / self.last_line_height).max(0.) as u32;
-        let row = row.min(self.rope.summary().lines.row);
-        let row_start = self.rope.point_to_offset(super::engine::Point::new(row, 0));
-        let Some(line) = self.last_lines.get(row as usize) else {
-            return row_start;
+        let display_row = (rel_y / self.last_line_height).max(0.) as usize;
+        let Some(line) = self.last_lines.get(display_row) else {
+            return self.rope.len();
         };
-        row_start + line.closest_index_for_x(position.x - bounds.left())
+        let Some(range) = self.last_line_ranges.get(display_row) else {
+            return self.rope.len();
+        };
+        let index = line
+            .closest_index_for_x(position.x - bounds.left())
+            .min(range.len());
+        range.start + index
     }
 
     /// 请求下一帧把光标滚入视口(编辑/移动选区后调用)。
@@ -1182,6 +1226,60 @@ mod autoscroll_tests {
             after_typing > 0.,
             "打字后应把光标重新滚入视口, got scroll={after_typing}"
         );
+    }
+
+    /// 软换行:超宽的长行应被折成多条视觉行——display 行数 > buffer 行数,
+    /// 且视觉行布局数量与 display 行数一致(全量渲染)。
+    #[gpui::test]
+    fn test_soft_wrap_splits_long_line(cx: &mut gpui::TestAppContext) {
+        let long_text = "word ".repeat(80);
+        let mut editor_slot = None;
+        let window = cx.add_window(|window, cx| {
+            let editor = Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx)
+                .default_value(&long_text);
+            let handle = editor.focus_handle.clone();
+            window.focus(&handle, cx);
+            editor_slot = Some(cx.entity());
+            editor
+        });
+        let editor = editor_slot.expect("editor captured");
+        let mut cx = VisualTestContext::from_window(window.into(), &cx);
+
+        cx.update(|window, cx| {
+            window.refresh();
+            let _ = window.draw(cx);
+        });
+
+        let (display_rows, buffer_rows, layout_lines) = cx.update(|_, cx| {
+            let editor = editor.read(cx);
+            (
+                editor.display_rows(),
+                editor.rope.summary().lines.row + 1,
+                editor.last_lines.len(),
+            )
+        });
+        assert!(
+            display_rows > buffer_rows,
+            "超宽长行应被软换行拆成多条视觉行: display_rows={display_rows}, buffer_rows={buffer_rows}"
+        );
+        assert_eq!(
+            layout_lines, display_rows as usize,
+            "视觉行布局数量应与 display 行数一致"
+        );
+
+        // 关闭软换行后不再折行
+        cx.update(|_, cx| {
+            editor.update(cx, |editor, cx| {
+                editor.soft_wrap = false;
+                cx.notify();
+            })
+        });
+        cx.update(|window, cx| {
+            window.refresh();
+            let _ = window.draw(cx);
+        });
+        let rows_after = cx.update(|_, cx| editor.read(cx).last_lines.len());
+        assert_eq!(rows_after, buffer_rows as usize, "关闭软换行后回到 buffer 行数");
     }
 
     /// Off 模式:内容不足一屏时上限为 0(普通滚动行为)。
