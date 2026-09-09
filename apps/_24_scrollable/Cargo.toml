@@ -4,8 +4,24 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
+description = "官方线 _24：可滚动内容（移植自 gpui examples/scrollable.rs）"
 
+# 与 `_16_text_layout` 同一套依赖写法：只依赖 gpui + 平台入口。
+# gpui_platform 的 default-features 为空，必须显式开窗口后端
+# （Linux 桌面开 font-kit + wayland + x11），否则 open_window 不报错但无窗口。
 [dependencies]
+gpui = { workspace = true }
+
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }
+
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_family = "wasm")))'.dependencies]
+gpui_platform = { workspace = true }
+
+# wasm 入口用到 #[wasm_bindgen(start)] 与 gpui_platform::web_init()。
+[target.'cfg(target_family = "wasm")'.dependencies]
+gpui_platform = { workspace = true }
+wasm-bindgen = "0.2.120"
 
 [lints]
 workspace = true
