@@ -24,13 +24,17 @@ members = [
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
-# cargo 实际去构建哪些成员。这里只默认构建 apps/*（二进制例子），
-# 不碰 crates/*（库）。原因：
-#   - 库本身没有 main，单独 `cargo run` 无意义；
-#   - 新人clone后直接 `cargo run` 不会误触发所有内部库的编译，体验更轻。
-# 想全量构建时，用 `cargo build --workspace`。
+# cargo 实际去构建哪些成员。这里只放 `packages/gpui-cli`（开发工具）：
+#   - `apps/` 现在有 48 个示例包，全量默认构建一次要很久；
+#   - gpui-cli 不依赖 gpui 运行时（仅 clap/serde/toml），裸 `cargo build` 秒完；
+#   - 它是 CLI 入口，裸 `cargo run` 有明确语义（需带子命令，如
+#     `cargo run -- android init`）。
+#
+# 注意：`default-members` 同时决定裸 `cargo test` 的范围——收窄后
+# `cargo test` 只测 gpui-cli。ui-gpui 的测试请用 `just test`，
+# 全量用 `cargo test --workspace`；全量构建用 `cargo build --workspace`。
 default-members = [
-    "apps/*",
+    "packages/gpui-cli",
 ]
 
 # [workspace.package] 里写的字段会被子包用 `version.workspace = true` 继承。

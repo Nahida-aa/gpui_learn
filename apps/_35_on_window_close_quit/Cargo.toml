@@ -1,0 +1,11 @@
+[package]
+name = "_35_on_window_close_quit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

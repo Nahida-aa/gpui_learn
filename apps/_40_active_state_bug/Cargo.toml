@@ -1,0 +1,11 @@
+[package]
+name = "_40_active_state_bug"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

@@ -21,15 +21,23 @@ build-all:
 check:
     cargo check --workspace
 
-# ---- 09_slider：自研 ui-gpui Slider 演示 ----
+# 运行 ui-gpui 库测试（含 engine/editor 单测，需 test-support 特性）
+test:
+    cargo test -p ui-gpui -F test-support
+
+# 运行整个工作区的测试（含各示例包）
+test-all:
+    cargo test --workspace
+
+# ---- 自研 ui-gpui 组件演示 ----
 
 # 运行 Slider 演示（GUI 窗口）
 run_slider:
-    cargo run -p slider_09
+    cargo run -p ug_03_slider
 
 # 构建 Slider 演示
 build_slider:
-    cargo build -p ui-gpui -p slider_09
+    cargo build -p ui-gpui -p ug_03_slider
 
 # 运行 ui-gpui 库测试（含 SliderState 交互单测，需 test-support 特性）
 test_slider:
@@ -37,7 +45,7 @@ test_slider:
 
 # 对 ui-gpui 库跑 clippy
 lint_slider:
-    cargo clippy -p ui-gpui -p slider_09
+    cargo clippy -p ui-gpui -p ug_03_slider
 
 stats:
     scc . --exclude-dir node_modules,dist,build,target,venv,.venv,__pycache__,.git,vendor,out,cmake-build-debug,CMakeFiles --exclude-ext lock,json,md,yaml,yml,toml,ini,conf

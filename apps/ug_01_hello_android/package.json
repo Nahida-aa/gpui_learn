@@ -1,0 +1,17 @@
+{
+  "name": "ug_01_hello_android",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ug_01_hello_android —— 用自有 gpui-android 后端在 Android 原生跑 GPUI（命令入口，IDE 会显示运行按钮）",
+  "scripts": {
+    "init": "cargo run -p gpui-cli -- android init",
+    "rust:check": "cargo ndk -t arm64-v8a -P 26 check -p ug_01_hello_android",
+    "apk": "cd gen/android && ./gradlew assembleDebug",
+    "apk:release": "cd gen/android && ./gradlew assembleRelease -Prelease",
+    "install": "adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk",
+    "launch": "adb shell am start -n aa.hello_android/dev.gpui.mobile.GpuiActivity",
+    "run": "bun run init && bun run apk && bun run install && bun run launch",
+    "logs": "adb logcat -s hello_android:V gpui-android:V",
+    "uninstall": "adb uninstall aa.hello_android"
+  }
+}

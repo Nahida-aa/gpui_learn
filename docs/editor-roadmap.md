@@ -39,7 +39,7 @@ input/
 | `apps/04_input` | 778 行单文件 | 手写 `EntityInputHandler` 教学版（对应 zed `examples/input.rs`） |
 | `apps/06_text_area` | editor.rs 1051 行 + text_area.rs 257 行 | 自建轻量 `Editor` 引擎 + `TextArea` 外壳（`Source::Editor`/`Source::Value` 双来源） |
 | `packages/ui-gpui/src/base/input` | input_state.rs 584 + element.rs 211 | **工程化单行 Input**：`Entity<InputState>` + `Render`、`InputEvent::{Change, Submit}`、IME `marked_range`、`key_context` 限定绑定 |
-| `apps/10_input_button` | — | 单行 Input 完整手动验证清单（含中文 IME 组字），已通过 |
+| `apps/ug_04_input_button` | — | 单行 Input 完整手动验证清单（含中文 IME 组字），已通过 |
 
 现有 Input 的存储是 `SharedString` + 单行 `ShapedLine` 布局缓存 +
 `selected_range`/`marked_range`，`unicode-segmentation` 做字素簇移动。
@@ -85,7 +85,7 @@ input/
 - 把现有 `InputState` 的 `SharedString` 存量逻辑迁到 Rope 之上；编辑操作
   产出 `InputEdit` 式增量记录（参照 gpui-component `base/rope_ext.rs`，
   供 undo/display map 复用）
-- 验收：单行 Input 行为与 `10_input_button` 清单完全一致（回归）；
+- 验收：单行 Input 行为与 `ug_04_input_button` 清单完全一致（回归）；
   补一个 Rope 单元/property 测试（随机编辑序列 vs `String` 参照实现）
 
 ### 阶段 1｜布局引擎多行化
@@ -123,8 +123,8 @@ input/
 - [x] 阶段 0:sum_tree 接入 + 自研 Rope(e28158a)
 - [x] 阶段 A:核心引擎 selection/undo/Editor 骨架(de54a39)
 - [x] 阶段 B:display_map 软换行映射 + movement 原语(a9130cb)
-- [x] 阶段 C:EditorElement 渲染 + Textarea facade + apps/11_editor(5cbdc52)
-- [x] 阶段 D:Input facade 收口(旧 input_state 删除,10_input_button 零改动)
+- [x] 阶段 C:EditorElement 渲染 + Textarea facade + apps/ug_05_editor(5cbdc52)
+- [x] 阶段 D:Input facade 收口(旧 input_state 删除,ug_04_input_button 零改动)
 - 待办:渲染接入真实软换行度量(map 已就绪)、movement 切 display 空间、
   光标自动滚动(cursor_pixel_position 已备)、多光标/高亮/搜索
 

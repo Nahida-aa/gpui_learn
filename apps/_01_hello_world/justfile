@@ -1,0 +1,19 @@
+run:
+    cargo run -p _01_hello_world
+
+build-wasm:
+    cargo +nightly build -Zbuild-std=std,panic_abort --target wasm32-unknown-unknown -p _01_hello_world
+
+build-assets:
+    bun scripts/build_assets.ts
+
+build:
+    just build-wasm
+    just build-assets
+
+serve:
+    cd dist && bun run ../web-serve.ts 8001
+
+dev-web:
+    just build
+    just serve

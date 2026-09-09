@@ -1,0 +1,17 @@
+{
+  "name": "ug_02_android_input",
+  "version": "0.1.2",
+  "private": true,
+  "description": "ug_02_android_input —— 用 gpui-android 后端在手机跑文本输入（命令入口，IDE 会显示运行按钮）",
+  "scripts": {
+    "init": "cargo run -p gpui-cli -- android init",
+    "rust:check": "cargo ndk -t arm64-v8a -P 26 check -p ug_02_android_input",
+    "apk": "cd gen/android && ./gradlew assembleDebug",
+    "apk:release": "cd gen/android && ./gradlew assembleRelease -Prelease",
+    "install": "adb install -r gen/android/app/build/outputs/apk/debug/app-debug.apk",
+    "launch": "adb shell am start -n demo.ug_02_android_input/dev.gpui.mobile.GpuiActivity",
+    "run": "bun run init && bun run apk && bun run install && bun run launch",
+    "logs": "adb logcat -s ug_02_android_input:V gpui-android:V",
+    "uninstall": "adb uninstall demo.ug_02_android_input"
+  }
+}

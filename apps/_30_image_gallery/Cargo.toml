@@ -1,0 +1,11 @@
+[package]
+name = "_30_image_gallery"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+
+[lints]
+workspace = true

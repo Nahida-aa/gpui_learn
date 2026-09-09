@@ -13,17 +13,15 @@
 gpui_learn/
 ├── Cargo.toml              # 工作区根：members / default-members / 统一依赖
 ├── apps/                   # 二进制 crate（每个可 `cargo run`，是学习例子）
-│   ├── 01_hello_world/     # 第一个例子：纯 GPUI 最小窗口（无封装，桌面）
-│   ├── 02_hello_web/       # 第二个例子：GPUI 编译成 WASM 在浏览器跑（trunk）
-│   ├── 03_hello_android/   # 第三个例子：自有 gpui-android 后端原生跑在 Android
-│   ├── 04_input/           # 第四个例子：文本输入（IME / 选区 / 剪贴板 / 键盘布局），移植自官方 input.rs
-│   ├── 05_android_input/   # 第五个例子：用 gpui-android 后端在手机跑文本输入（复用 04 逻辑 + 软键盘）
-│   ├── 05_grid_layout/     # 第六个例子：CSS Grid 圣杯布局 + container_query 响应式（桌面）
-│   ├── 06_text_area/       # 文本框 / 多行文本编辑（桌面 + Android）
-│   ├── 07_uniform_list/    # 虚拟化列表（UniformList）
-│   ├── 08_testing/         # GPUI 测试框架（#[gpui::test] / TestAppContext）
-│   ├── _09_a11y/           # 无障碍（AccessKit）演示（桌面 / WASM / Android 同构）
-│   └── 09_slider/          # Slider 组件
+│   │                       # 两条线，用前缀区分（详见 apps/README.md）
+│   ├── _01…_45/            # 官方线：一一对应 zed `crates/gpui/examples/`
+│   │                       #   编号即官方索引；_03 / _05 空缺（对应的是自研
+│   │                       #   Android 移植，已归入 ug_ 线）
+│   ├── ug_01_hello_android/# 自研线（ug_ = ui-gpui）：Android 平台的 hello world
+│   ├── ug_02_android_input/# 自研线：Android 软键盘输入
+│   ├── ug_03_slider/       # 自研线：ui-gpui Slider 组件
+│   ├── ug_04_input_button/ # 自研线：ui-gpui Input（单行）+ Button
+│   └── ug_05_editor/       # 自研线：ui-gpui Editor（多行编辑器）
 ├── packages/               # 库 crate（被 apps 共享的内部包）
 │   ├── assets/             # 内嵌资源（字体/图标），供各 app 引用
 │   ├── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
@@ -51,14 +49,28 @@ gpui_learn/
 ## 常用命令
 
 ```bash
-cargo run -p hello_world_01      # 运行第一个例子（包名，目录名是 01_hello_world）
-cargo build --workspace          # 构建全部（含库）
-cargo build                      # 只构建默认成员（apps/*）
-just run hello_world_01          # justfile 提供的等价快捷命令
+cargo run -p _01_hello_world     # 运行某个例子（包名 == 目录名）
+cargo run -- android init        # 裸 cargo run 走 gpui-cli（需带子命令）
+cargo build                      # 只构建默认成员（packages/gpui-cli，秒完）
+cargo build --workspace          # 构建全部（48 个示例 + 库）
+just test                        # 跑 ui-gpui 库测试（engine / editor 单测）
+just run _01_hello_world         # justfile 提供的等价快捷命令
 ```
 
-> 包名 vs 目录名：Cargo 包名不能以数字开头，所以目录用 `01_hello_world`
-> 体现学习顺序，包名则为 `hello_world_01`。运行/构建时一律用包名。
+> **包名 == 目录名**：`_01_hello_world` / `ug_05_editor` 既是目录名也是 Cargo 包名
+> （Cargo 允许下划线开头的包名），所以 `-p` 后面直接写目录名即可，无需记忆两套名字。
+>
+> **默认成员只有 `gpui-cli`**：`apps/` 现有 48 个示例包，全量默认构建很慢，而
+> `gpui-cli` 不依赖 GPUI 运行时。裸 `cargo build`/`cargo run` 因此很快；
+> 注意裸 `cargo test` 也只测 gpui-cli，库测试请用 `just test`、
+> 全量用 `cargo test --workspace`。
+
+## apps 编号规则
+
+- `_01`–`_45`：官方线，编号即 zed `crates/gpui/examples/` 的索引（`_03`/`_05`
+  空缺，那两个是自研 Android 移植，已归入 `ug_` 线）；
+- `ug_01`–：自研线（`ug_` = ui-gpui），编号独立增长；
+- 号位一经分配即保留，未实现的留空，不挪作他用。
 
 ## 学习路线（例子索引）
 

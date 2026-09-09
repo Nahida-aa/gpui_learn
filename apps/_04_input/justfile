@@ -1,0 +1,11 @@
+dev:
+    cargo watch -x run -p input_04
+
+run:
+    cargo run -p input_04
+
+build:
+    cargo build -p input_04
+
+check:
+    cargo check -p input_04
