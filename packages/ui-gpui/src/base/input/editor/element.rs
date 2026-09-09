@@ -91,13 +91,13 @@ impl Element for EditorElement {
         window: &mut Window,
         cx: &mut App,
     ) -> Self::PrepaintState {
-        let (content, placeholder, is_multi_line, scroll_top, marked_range, selection, disabled) = {
+        let (content, placeholder, is_multi_line, _needs_autoscroll, marked_range, selection, disabled) = {
             let editor = self.editor.read(cx);
             (
                 editor.rope.to_string(),
                 editor.placeholder.to_string(),
                 editor.mode.is_multi_line(),
-                editor.scroll_top,
+                editor.needs_autoscroll,
                 editor.marked_range.clone(),
                 editor.selection,
                 editor.disabled,
@@ -125,13 +125,6 @@ impl Element for EditorElement {
             content.split('\n').map(str::to_string).collect()
         };
 
-        // 滚动偏移裁剪出可见行(多行)
-        let first_visible = if is_multi_line {
-            (scroll_top.as_f32() / line_height.as_f32()).floor().max(0.) as u32
-        } else {
-            0
-        };
-
         let base_run = TextRun {
             len: 0,
             font: style.font(),
@@ -141,16 +134,13 @@ impl Element for EditorElement {
             strikethrough: None,
         };
 
-        // 逐行排版(row_start 为该行在 buffer 中的字节起点)
+        // 逐行排版(row_start 为该行在 buffer 中的字节起点)。
+        // 多行模式下 y 是**内容坐标**(滚动平移由 overflow_scroll 容器负责);
+        // 当前实现全量渲染所有行,可见行裁剪交给 ContentMask,大文档优化留待后续。
         let mut lines: Vec<(ShapedLine, Pixels, Range<usize>)> = Vec::new();
         let mut row_start = 0usize;
         let mut row_ix = 0u32;
         for row_text in &display_rows {
-            if is_multi_line && row_ix < first_visible {
-                row_start += row_text.len() + 1;
-                row_ix += 1;
-                continue;
-            }
             let row_len = row_text.len();
             let mut runs: Vec<TextRun> = Vec::new();
             if !show_placeholder {
@@ -191,12 +181,7 @@ impl Element for EditorElement {
                 &runs,
                 None,
             );
-            let y = bounds.top() + ((row_ix - first_visible) as f32) * line_height
-                - if is_multi_line {
-                    scroll_top - px(first_visible as f32 * line_height.as_f32())
-                } else {
-                    px(0.)
-                };
+            let y = bounds.top() + (row_ix as f32) * line_height;
             lines.push((line, y, row_start..row_start + row_len));
             row_start += row_text.len() + 1; // +1 为 '\n'
             row_ix += 1;
@@ -318,11 +303,6 @@ impl Element for EditorElement {
         self.editor.update(cx, |editor, _| {
             editor.last_line_height = line_height;
             editor.last_content_bounds = Some(bounds);
-            editor.first_visible_row = if is_multi_line {
-                (editor.scroll_top.as_f32() / line_height.as_f32()).floor().max(0.) as u32
-            } else {
-                0
-            };
             if is_multi_line {
                 editor.last_lines = lines.iter().map(|(line, _)| line.clone()).collect();
             } else if let Some((line, _)) = lines.first() {
@@ -330,6 +310,41 @@ impl Element for EditorElement {
                 editor.last_bounds = Some(bounds);
             }
         });
+
+        // ---- 自动滚动:把光标滚入视口 ----
+        // 滚动容器(overflow_scroll)把内容绘制平移 `scroll_handle.offset()`(y ≤ 0),
+        // 视口的可见内容区间(相对内容顶) = [-offset.y, -offset.y + 容器高]。
+        // 光标行不在区间内时调整 offset。只在 `needs_autoscroll` 置位时执行,
+        // 避免用户手动滚走后被拉回。
+        let needs_autoscroll = self.editor.read(cx).needs_autoscroll;
+        if is_multi_line && needs_autoscroll {
+            let scroll_handle = self.editor.read(cx).scroll_handle.clone();
+            let cursor_y_rel = self
+                .editor
+                .read(cx)
+                .cursor_content_position()
+                .map(|p| p.y - bounds.top());
+            let viewport_bounds = scroll_handle.bounds();
+            // bounds 尚未量出(首帧)时跳过
+            if let (Some(cursor_y_rel), true) =
+                (cursor_y_rel, viewport_bounds.size.height > px(0.))
+            {
+                let offset_y = scroll_handle.offset().y;
+                let viewport_h = viewport_bounds.size.height;
+                let mut new_offset_y = offset_y;
+                if cursor_y_rel < -offset_y {
+                    // 光标在视口上方:该行贴住视口顶
+                    new_offset_y = -cursor_y_rel;
+                } else if cursor_y_rel + line_height > -offset_y + viewport_h {
+                    // 光标在视口下方:该行贴住视口底
+                    new_offset_y = -(cursor_y_rel + line_height - viewport_h);
+                }
+                if new_offset_y != offset_y {
+                    scroll_handle.set_offset(gpui::point(px(0.), new_offset_y));
+                }
+                self.editor.update(cx, |editor, _| editor.needs_autoscroll = false);
+            }
+        }
     }
 }
 
