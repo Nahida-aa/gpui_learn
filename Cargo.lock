@@ -123,10 +123,20 @@ version = "0.1.0"
 [[package]]
 name = "_16_text_layout"
 version = "0.1.0"
+dependencies = [
+ "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
+ "gpui_platform",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "_17_text_wrapper"
 version = "0.1.0"
+dependencies = [
+ "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
+ "gpui_platform",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "_18_anchor"
@@ -155,6 +165,11 @@ version = "0.1.0"
 [[package]]
 name = "_24_scrollable"
 version = "0.1.0"
+dependencies = [
+ "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
+ "gpui_platform",
+ "wasm-bindgen",
+]
 
 [[package]]
 name = "_25_animation"
@@ -6842,6 +6857,7 @@ version = "0.1.0"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
  "gpui_platform",
+ "tracing-subscriber",
  "ui-gpui",
  "wasm-bindgen",
 ]
@@ -6856,6 +6872,7 @@ dependencies = [
  "gpui_macros 0.1.0 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
  "rand 0.9.5",
  "sum_tree 0.1.0 (git+https://github.com/zed-industries/zed?rev=801c087af22dd189dc1aa49e2f370b4f04190b19)",
+ "tracing",
  "unicode-segmentation",
 ]
 

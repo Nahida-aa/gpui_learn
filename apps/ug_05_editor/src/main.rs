@@ -12,6 +12,7 @@
 
 #![cfg_attr(target_family = "wasm", no_main)]
 
+use tracing_subscriber;
 use gpui::{
     div, prelude::*, px, rgb, App, Context, IntoElement, ParentElement, Render, Window,
     WindowBounds, WindowOptions, actions, size,
@@ -81,6 +82,14 @@ impl Render for EditorDemo {
 }
 
 fn run_demo() {
+    // 调试日志: RUST_LOG=debug cargo run -p ug_05_editor 2> log.txt
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("debug")),
+        )
+        .without_time()
+        .init();
     application().run(|cx: &mut App| {
         bind_input_keys(cx);
         bind_editor_keys(cx);

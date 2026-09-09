@@ -148,6 +148,12 @@ impl Element for EditorElement {
                 let editor = self.editor.read(cx);
                 editor.rope.offset_to_point(editor.selection.head()).row
             };
+            tracing::debug!(
+                head_row,
+                scroll_before = scroll_position.as_f32(),
+                viewport_h = bounds.size.height.as_f32(),
+                "autoscroll in prepaint"
+            );
             // 光标行顶在内容坐标里的位置(内容坐标以内容顶为 0)
             let cursor_y = head_row as f32 * line_height.as_f32();
             let viewport_h = bounds.size.height.as_f32();
@@ -162,6 +168,7 @@ impl Element for EditorElement {
                 next = cursor_y + line_height.as_f32() - viewport_h;
             }
             let next = next.clamp(0., (content_h - viewport_h).max(0.));
+            tracing::debug!(cursor_y = head_row as f32 * line_height.as_f32(), next, "autoscroll computed");
             if next != scroll_position.as_f32() {
                 scroll_position = px(next);
                 self.editor.update(cx, |editor, cx| {

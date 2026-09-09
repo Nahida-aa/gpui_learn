@@ -8,6 +8,7 @@ description = "ug_05_editor —— ui-gpui 的多行编辑器演示"
 [dependencies]
 gpui = { workspace = true }
 ui-gpui = { path = "../../packages/ui-gpui" }
+tracing-subscriber.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
 gpui_platform = { workspace = true, features = ["font-kit", "wayland", "x11"] }

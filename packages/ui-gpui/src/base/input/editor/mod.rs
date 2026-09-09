@@ -422,6 +422,7 @@ impl Editor {
         .max(0.);
         let next = (self.scroll_position - delta_y).clamp(px(0.), px(max_scroll));
         if next != self.scroll_position {
+            tracing::debug!(from_y = delta_y.as_f32(), next = next.as_f32(), "wheel scroll");
             self.scroll_position = next;
             cx.emit(EditorEvent::ScrollPositionChanged);
             cx.notify();
@@ -533,6 +534,10 @@ impl Editor {
     /// 请求下一帧把光标滚入视口(编辑/移动选区后调用)。
     pub(crate) fn request_autoscroll(&mut self) {
         if self.mode.is_multi_line() {
+            tracing::debug!(
+                head = self.selection.head(),
+                "autoscroll requested (needs_autoscroll=true)"
+            );
             self.needs_autoscroll = true;
         }
     }
@@ -960,5 +965,60 @@ impl EntityInputHandler for Editor {
         let last_layout = self.last_layout.as_ref()?;
         let utf8_index = last_layout.closest_index_for_x(point.x - line_point.x);
         Some(self.offset_to_utf16(utf8_index))
+    }
+}
+
+#[cfg(test)]
+mod autoscroll_tests {
+    use super::*;
+    use crate::base::input::editor::actions::Down;
+    use gpui::{AppContext as _, VisualTestContext};
+
+    /// 真实绘制管线下的自动滚动回归:光标从行 0 下移到视口(4 行)之外,
+    /// scroll_position 应随之增大。prepaint 里的 autoscroll 只有真实 draw
+    /// 才会执行,这是单元测试覆盖不到、只能用 VisualTestContext 验证的路径。
+    #[gpui::test]
+    fn test_autoscroll_follows_cursor_via_move_down(cx: &mut gpui::TestAppContext) {
+        let text: String = (0..20).map(|i| format!("line{i}\n")).collect();
+        let text = text.trim_end_matches('\n').to_string();
+
+        // editor 在 add_window 闭包内创建(窗口根即 editor),通过 slot 捕获到外部
+        let mut editor_slot = None;
+        let window = cx.add_window(|window, cx| {
+            let editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value(&text);
+            let handle = editor.focus_handle.clone();
+            window.focus(&handle, cx);
+            editor_slot = Some(cx.entity());
+            editor
+        });
+        let editor = editor_slot.expect("editor captured");
+        let mut cx = VisualTestContext::from_window(window.into(), &cx);
+
+        // zed editor 测试同款:window.draw(cx) 绘制整窗(含 view stack)
+        let draw_frame = |cx: &mut VisualTestContext| {
+            cx.update(|window, cx| {
+                window.refresh();
+                let _ = window.draw(cx);
+            });
+        };
+
+        // 初始一帧:光标在行 0,不应滚动
+        draw_frame(&mut cx);
+        let initial =
+            cx.update(|_, cx| editor.read(cx).scroll_position);
+        assert_eq!(initial, px(0.), "初始帧不应滚动");
+
+        // 连续下移 19 次:光标从行 0 到行 19,远超 4 行视口
+        for _ in 0..19 {
+            cx.dispatch_action(Down);
+            draw_frame(&mut cx);
+        }
+
+        let final_scroll = cx.update(|_, cx| editor.read(cx).scroll_position).as_f32();
+        assert!(
+            final_scroll > 0.,
+            "光标下移到行 19(视口 4 行)后应自动滚动, got scroll={final_scroll}"
+        );
     }
 }

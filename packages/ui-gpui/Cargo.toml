@@ -13,6 +13,7 @@ gpui_macros.workspace = true
 # 自研 Rope 的底座：zed 的并发友好 B-tree。git 源与 rev 统一在根
 # Cargo.toml 的 [workspace.dependencies] 声明，与 gpui 的 patch rev 对齐。
 sum_tree.workspace = true
+tracing.workspace = true
 # 复用工作区共享的 assets crate（packages/assets）：图标等资源内嵌在仓库根
 # assets/ 下，由该 crate 的 RustEmbed 统一加载。ui-gpui 不再自带资源。
 # 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。

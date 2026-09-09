@@ -76,6 +76,10 @@ anyhow = "1.0"
 # 去重成一次 clone，且 gpui 内部的 sum_tree 与我们引用的是同一个包实例。
 sum_tree = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19" }
 
+# 调试/结构化日志(仓库约定见 AGENTS.md)
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
 rust-embed = { version = "8.11", features = ["include-exclude"] }
 
 # 工作区共享的资源 crate（packages/assets）：内嵌仓库根 assets/ 下的字体/图标等。
