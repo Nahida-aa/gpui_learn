@@ -559,6 +559,16 @@ impl Editor {
         }
     }
 
+    /// 文本字节下标 → display(视觉)坐标。
+    pub(crate) fn display_point_for_offset(&self, offset: usize) -> DisplayPoint {
+        let point = self.rope.offset_to_point(offset);
+        if self.display_map.display_rows() == 0 {
+            DisplayPoint::new(point.row, point.column)
+        } else {
+            self.display_map.buffer_point_to_display_point(point)
+        }
+    }
+
     /// 文本字节下标 → 视觉行号(软换行下与 buffer 行号不同)。
     pub(crate) fn display_row_for_offset(&self, offset: usize) -> u32 {
         if self.display_map.display_rows() == 0 {
@@ -1225,6 +1235,56 @@ mod autoscroll_tests {
         assert!(
             after_typing > 0.,
             "打字后应把光标重新滚入视口, got scroll={after_typing}"
+        );
+    }
+
+    /// 软换行下的垂直移动:行 0 被折成多条视觉行时,按 ↓ 应停在**同一
+    /// buffer 行**的下一个视觉行,而不是跳到行 1。
+    #[gpui::test]
+    fn test_move_down_stays_within_wrapped_line(cx: &mut gpui::TestAppContext) {
+        let long_line = "word ".repeat(80);
+        let text = format!("{long_line}\nsecond");
+        let first_line_len = long_line.trim_end().len();
+
+        let mut editor_slot = None;
+        let window = cx.add_window(|window, cx| {
+            let editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 6 }, cx).default_value(&text);
+            let handle = editor.focus_handle.clone();
+            window.focus(&handle, cx);
+            editor_slot = Some(cx.entity());
+            editor
+        });
+        let editor = editor_slot.expect("editor captured");
+        let mut cx = VisualTestContext::from_window(window.into(), &cx);
+
+        let draw_frame = |cx: &mut VisualTestContext| {
+            cx.update(|window, cx| {
+                window.refresh();
+                let _ = window.draw(cx);
+            });
+        };
+        draw_frame(&mut cx);
+
+        // 折行确实发生(否则这个测试没有意义)
+        let display_rows = cx.update(|_, cx| editor.read(cx).display_rows());
+        assert!(display_rows > 2, "行 0 应被折成多条视觉行, display_rows={display_rows}");
+
+        // 显式把光标放到文档开头(default_value 不动 selection, 但测试要可控)
+        cx.update(|_, cx| {
+            editor.update(cx, |editor, cx| {
+                editor.selection = Selection::new(0, 0);
+                editor.change_selections(cx);
+            })
+        });
+        draw_frame(&mut cx);
+        // 光标在文档开头,按 ↓ 一次:应落在行 0 的第二个视觉行内
+        cx.dispatch_action(Down);
+        draw_frame(&mut cx);
+        let head = cx.update(|_, cx| editor.read(cx).selection.head());
+        assert!(
+            head > 0 && head < first_line_len,
+            "软换行下 ↓ 应停在同一 buffer 行的下一视觉行, got head={head}, first_line_len={first_line_len}"
         );
     }
 

@@ -16,7 +16,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use super::selection::{Selection, SelectionGoal};
 use super::undo::EditIntent;
-use super::Editor;
+use super::{Editor, movement};
 use crate::base::input::engine::Point as BufferPoint;
 
 actions!(
@@ -115,8 +115,32 @@ impl Editor {
         self.move_vertical_core(1, cx);
     }
 
-    /// 上下移动:阶段 A 用字节列 clamp;阶段 B 换 display 空间 + goal 像素列。
+    /// 上下移动:在 **display(视觉)空间**进行(软换行下一条 buffer 行可能
+    /// 占多条视觉行),带 goal 列保持——对齐 zed movement::up/down。
+    ///
+    /// display_map 尚未同步(首帧)时退化为按 buffer 行移动。
     pub(crate) fn move_vertical_core(&mut self, direction: i32, cx: &mut Context<Self>) {
+        if self.display_map.display_rows() > 0 {
+            let head = self.selection.head();
+            let point = self.display_point_for_offset(head);
+            let (new_point, goal) = if direction < 0 {
+                movement::up(&self.display_map, &self.rope, point, self.selection.goal)
+            } else {
+                movement::down(&self.display_map, &self.rope, point, self.selection.goal)
+            };
+            let buffer_point = self
+                .display_map
+                .display_point_to_buffer_point(new_point);
+            let target = self.rope.point_to_offset(buffer_point);
+            self.selection.collapse_to(target, goal);
+            self.change_selections(cx);
+            return;
+        }
+        self.move_vertical_buffer(direction, cx);
+    }
+
+    /// 按 buffer 行移动(display_map 未就绪时的退化路径)。
+    fn move_vertical_buffer(&mut self, direction: i32, cx: &mut Context<Self>) {
         let head = self.selection.head();
         let (row, column) = self.rope.offset_to_point(head).into_parts();
         let target_row = row as i64 + direction as i64;
@@ -189,8 +213,25 @@ impl Editor {
         self.select_vertical_core(1, cx);
     }
 
+    /// 与 [`Self::move_vertical_core`] 同逻辑,但作用于 head(set_head 保持 tail)。
     fn select_vertical_core(&mut self, direction: i32, cx: &mut Context<Self>) {
-        // 与 move_vertical_core 同逻辑,但作用于 head(set_head 保持 tail)
+        if self.display_map.display_rows() > 0 {
+            let head = self.selection.head();
+            let point = self.display_point_for_offset(head);
+            let (new_point, goal) = if direction < 0 {
+                movement::up(&self.display_map, &self.rope, point, self.selection.goal)
+            } else {
+                movement::down(&self.display_map, &self.rope, point, self.selection.goal)
+            };
+            let buffer_point = self
+                .display_map
+                .display_point_to_buffer_point(new_point);
+            let target = self.rope.point_to_offset(buffer_point);
+            self.selection.set_head(target, goal);
+            self.change_selections(cx);
+            return;
+        }
+
         let head = self.selection.head();
         let (row, column) = self.rope.offset_to_point(head).into_parts();
         let target_row = (row as i64 + direction as i64).max(0) as u32;
