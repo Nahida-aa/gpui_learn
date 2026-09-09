@@ -300,6 +300,7 @@ impl Editor {
         cx: &mut Context<Self>,
     ) {
         edit(self, cx);
+        self.request_autoscroll();
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
         self.emit_input_change(cx);
@@ -865,6 +866,8 @@ impl EntityInputHandler for Editor {
 
     fn unmark_text(&mut self, _window: &mut gpui::Window, _cx: &mut Context<Self>) {
         self.marked_range = None;
+        // 组字结束:必须复位,否则后续所有输入都会沿用 Atomic intent(影响 undo 合并)
+        self.ime_composing = false;
     }
 
     fn replace_text_in_range(
@@ -877,6 +880,8 @@ impl EntityInputHandler for Editor {
         if self.disabled {
             return;
         }
+        // 上屏(含普通键入):组字阶段结束
+        self.ime_composing = false;
         // 指定区间(IME 上屏)→ 用之;否则替换当前选区
         if let Some(range_utf16) = range_utf16 {
             let range = self.range_from_utf16(&range_utf16);
@@ -966,6 +971,8 @@ impl EntityInputHandler for Editor {
             self.selection,
         );
         self.undo_manager.record_transaction(change, EditIntent::Atomic);
+        // 组字区也要可见:中文输入法组字时若光标在视口外,同样需要滚回
+        self.request_autoscroll();
         cx.notify();
     }
 
@@ -1102,6 +1109,78 @@ mod autoscroll_tests {
         assert!(
             scrolled > 0.,
             "滚轮向下后应产生滚动, got scroll={scrolled}, max={max_scroll}"
+        );
+    }
+
+    /// 打字(走 IME/InputHandler 的 replace_text_in_range)也要把光标拉回视口:
+    /// 先把光标放到行 19 并滚到可见,再手动滚回顶部(模拟用户滚走),
+    /// 然后 simulate_input 打字 —— 视口应重新跟到光标行。
+    #[gpui::test]
+    fn test_autoscroll_follows_cursor_on_typing(cx: &mut gpui::TestAppContext) {
+        let text: String = (0..20).map(|i| format!("line{i}\n")).collect();
+        let text = text.trim_end_matches('\n').to_string();
+        let mut editor_slot = None;
+        let window = cx.add_window(|window, cx| {
+            let editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value(&text);
+            let handle = editor.focus_handle.clone();
+            window.focus(&handle, cx);
+            editor_slot = Some(cx.entity());
+            editor
+        });
+        let editor = editor_slot.expect("editor captured");
+        let mut cx = VisualTestContext::from_window(window.into(), &cx);
+
+        let draw_frame = |cx: &mut VisualTestContext| {
+            cx.update(|window, cx| {
+                window.refresh();
+                let _ = window.draw(cx);
+            });
+        };
+
+        draw_frame(&mut cx);
+
+        // 光标移到行 19 末尾 → 自动滚到该行可见
+        cx.update(|_, cx| {
+            editor.update(cx, |editor, cx| {
+                let head = editor.rope.len();
+                editor.selection = Selection::new(head, head);
+                editor.change_selections(cx);
+            })
+        });
+        draw_frame(&mut cx);
+        let scrolled_to_cursor =
+            cx.update(|_, cx| editor.read(cx).scroll_position).as_f32();
+        assert!(scrolled_to_cursor > 0., "光标移到行 19 后应滚动");
+
+        // 手动滚回顶部(模拟用户滚走)
+        cx.update(|_, cx| {
+            editor.update(cx, |editor, cx| {
+                editor.scroll_position = px(0.);
+                cx.notify();
+            })
+        });
+        draw_frame(&mut cx);
+        assert_eq!(
+            cx.update(|_, cx| editor.read(cx).scroll_position),
+            px(0.),
+            "手动滚回顶部后应保持 0"
+        );
+
+        // 打字:视口应重新跟随光标(行 19)。
+        // 直接调 handler,避免 simulate_input 内部自动 draw 干扰时序。
+        cx.update(|window, cx| {
+            editor.update(cx, |editor, cx| {
+                editor.replace_text_in_range(None, "x", window, cx)
+            })
+        });
+        // 注意: update 返回时 effects flush 会触发一次自动 draw,
+        // prepaint 消费 needs_autoscroll 并写入 scroll_position(标志被清属正常)
+        draw_frame(&mut cx);
+        let after_typing = cx.update(|_, cx| editor.read(cx).scroll_position).as_f32();
+        assert!(
+            after_typing > 0.,
+            "打字后应把光标重新滚入视口, got scroll={after_typing}"
         );
     }
 
