@@ -26,6 +26,7 @@ use std::ops::Range;
 
 use gpui::{
     div, prelude::*, px, App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter,
+    ScrollWheelEvent,
     FocusHandle, Hsla, KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
     Pixels, Render, Rgba, ShapedLine, SharedString, UTF16Selection, Window, rgb,
 };
@@ -115,9 +116,15 @@ pub struct Editor {
     pub(super) last_content_bounds: Option<Bounds<Pixels>>,
     /// 最近一帧的行高(命中测试用)。
     pub(super) last_line_height: Pixels,
-    /// 多行模式:官方滚动句柄——`overflow_scroll + track_scroll` 的状态端,
-    /// 滚轮/拖拽由 gpui 接管,我们只读 `offset()` 与写 `set_offset()`(自动滚动)。
-    pub(super) scroll_handle: gpui::ScrollHandle,
+    /// 多行模式:垂直滚动位置(内容坐标,向下滚增大)。
+    ///
+    /// 对齐 zed 的自绘滚动:editor 不用 div 的 overflow_scroll,而是
+    /// prepaint 里算 `content_origin = frame.top - scroll_position` 自行平移,
+    /// 滚轮事件在 `on_scroll_wheel` 里累加(见 zed editor.rs 的 ScrollManager,
+    /// 这里是其单行精简版)。坐标完全自控,命中测试无歧义。
+    pub(super) scroll_position: Pixels,
+    /// 多行模式:视口高度(视口 = 滚动裁剪区域,prepaint 写入)。
+    pub(super) viewport_height: Pixels,
     /// 下一帧 prepaint 时把光标滚入视口(编辑/移动选区后置位)。
     pub(super) needs_autoscroll: bool,
     /// 鼠标拖拽选区进行中。
@@ -154,7 +161,8 @@ impl Editor {
             last_lines: Vec::new(),
             last_content_bounds: None,
             last_line_height: px(0.),
-            scroll_handle: gpui::ScrollHandle::new(),
+            scroll_position: px(0.),
+            viewport_height: px(0.),
             needs_autoscroll: false,
             is_selecting: false,
             bg_color: rgb(0x1e1e2e),
@@ -388,6 +396,43 @@ impl Editor {
             self.change_selections(cx);
         }
     }
+
+    /// 滚轮滚动(zed 式自绘):直接累加 `scroll_position`,element 下一帧
+    /// 用它平移 content_origin。clamp 到 [0, 内容高-视口高]。
+    fn on_scroll_wheel(
+        &mut self,
+        event: &ScrollWheelEvent,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if !self.mode.is_multi_line() {
+            return;
+        }
+        let line = if self.last_line_height > px(0.) {
+            self.last_line_height
+        } else {
+            px(20.)
+        };
+        let delta_y = event.delta.pixel_delta(line).y;
+        let content_rows = self.rope.summary().lines.row + 1;
+        let max_scroll = (content_rows as f32 * line_height_px(self)
+            - self.viewport_height.as_f32())
+        .max(0.);
+        let next = (self.scroll_position - delta_y).clamp(px(0.), px(max_scroll));
+        if next != self.scroll_position {
+            self.scroll_position = next;
+            cx.emit(EditorEvent::ScrollPositionChanged);
+            cx.notify();
+        }
+    }
+}
+
+fn line_height_px(editor: &Editor) -> f32 {
+    if editor.last_line_height > px(0.) {
+        editor.last_line_height.as_f32()
+    } else {
+        20.
+    }
 }
 
 /// 把编辑动作绑到 [`EDITOR_KEY_CONTEXT`] 上。
@@ -465,16 +510,15 @@ impl Editor {
         }
 
         // 多行:根据 y 找 buffer 行,行内用该行的 ShapedLine 命中。
-        // 鼠标事件坐标是窗口坐标;滚动容器(overflow_scroll)会把内容整体平移
-        // `scroll_handle.offset()`(y ≤ 0),所以内容坐标 = 窗口坐标 - 偏移。
+        // 自绘滚动:element 绘制时 content_origin.y = bounds.top - scroll_position,
+        // 所以内容 y = 鼠标 y - bounds.top + scroll_position(与绘制严格互逆)。
         let Some(bounds) = self.last_content_bounds else {
             return 0;
         };
         if self.last_lines.is_empty() || self.last_line_height <= px(0.) {
             return 0;
         }
-        let scroll_y = self.scroll_handle.offset().y; // Pixels,滚动时 ≤ 0
-        let rel_y = position.y - bounds.top() - scroll_y;
+        let rel_y = position.y - bounds.top() + self.scroll_position;
         let row = (rel_y / self.last_line_height).max(0.) as u32;
         let row = row.min(self.rope.summary().lines.row);
         let row_start = self.rope.point_to_offset(super::engine::Point::new(row, 0));
@@ -482,26 +526,6 @@ impl Editor {
             return row_start;
         };
         row_start + line.closest_index_for_x(position.x - bounds.left())
-    }
-
-    /// 光标在**内容坐标**里的位置(滚动前的坐标),渲染层的自动滚动用:
-    /// 与 `scroll_handle.offset()` 相减即得窗口坐标。
-    #[allow(dead_code)]
-    pub(crate) fn cursor_content_position(&self) -> Option<gpui::Point<Pixels>> {
-        let bounds = self.last_content_bounds.as_ref()?;
-        let head = self.selection.head();
-        if self.mode.is_single_line() {
-            let line = self.last_layout.as_ref()?;
-            let x = line.x_for_index(head);
-            return Some(gpui::point(bounds.left() + x, bounds.top()));
-        }
-        let point = self.rope.offset_to_point(head);
-        let row = point.row;
-        let line = self.last_lines.get(row as usize)?;
-        let row_start = self.rope.point_to_offset(super::engine::Point::new(row, 0));
-        let x = line.x_for_index(head - row_start);
-        let y = bounds.top().as_f32() + (row as f32) * self.last_line_height.as_f32();
-        Some(gpui::point(bounds.left() + x, px(y)))
     }
 
     /// 请求下一帧把光标滚入视口(编辑/移动选区后调用)。
@@ -548,27 +572,11 @@ impl Render for Editor {
             }
         };
 
-        // 多行/可滚模式:外层是官方滚动容器(overflow_scroll + track_scroll),
-        // gpui 接管滚轮/拖拽;内容 div 撑出全高滚动面,行绘制坐标即内容坐标。
-        let editor_element = if scrollable {
-            let content_height = px(line_height.as_f32() * total_rows as f32);
-            div()
-                // stateful id:overflow_scroll 的硬性前提;拼上实体 id,
-                // 同一窗口多个多行编辑器时 id 不冲突
-                .id(("editor-scroll", cx.entity().entity_id().as_u64()))
-                .overflow_scroll()
-                .track_scroll(&self.scroll_handle)
-                .size_full()
-                .child(
-                    div()
-                        .w_full()
-                        .h(content_height)
-                        .child(EditorElement { editor: cx.entity() }),
-                )
-                .into_any_element()
-        } else {
-            EditorElement { editor: cx.entity() }.into_any_element()
-        };
+        // zed 式自绘滚动:滚动状态在本体(scroll_position),element 绘制时
+        // 自行平移 content_origin 并用 ContentMask 裁剪,不依赖 div 的
+        // overflow_scroll——坐标自控,命中测试与绘制严格互逆。
+        let _ = scrollable;
+        let editor_element = EditorElement { editor: cx.entity() };
 
         div()
             .id("editor-root")
@@ -599,6 +607,7 @@ impl Render for Editor {
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_move(cx.listener(Self::on_mouse_move))
+            .on_scroll_wheel(cx.listener(Self::on_scroll_wheel))
             .px_2()
             .py_1()
             .border_1()
