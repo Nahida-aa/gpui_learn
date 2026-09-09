@@ -91,7 +91,7 @@ impl Element for EditorElement {
         window: &mut Window,
         cx: &mut App,
     ) -> Self::PrepaintState {
-        let (content, placeholder, is_multi_line, scroll_position, _needs_autoscroll, marked_range, selection, disabled) = {
+        let (content, placeholder, is_multi_line, mut scroll_position, needs_autoscroll, marked_range, selection, disabled) = {
             let editor = self.editor.read(cx);
             (
                 editor.rope.to_string(),
@@ -141,6 +141,37 @@ impl Element for EditorElement {
         // 绘制原点 = frame.top - scroll_position,向下滚动时行整体上移;
         // 视口外的行由下方 paint 阶段的 ContentMask 裁剪掉。
         // 当前实现全量渲染所有行,大文档的可见行裁剪优化留待后续。
+        // ---- 自动滚动(对齐 zed:在 prepaint 阶段调整, 本帧绘制即生效)----
+        // 仅在 needs_autoscroll 置位(编辑/移动选区)时执行, 避免用户手动滚走后被拉回。
+        if is_multi_line && needs_autoscroll {
+            let head_row = {
+                let editor = self.editor.read(cx);
+                editor.rope.offset_to_point(editor.selection.head()).row
+            };
+            // 光标行顶在内容坐标里的位置(内容坐标以内容顶为 0)
+            let cursor_y = head_row as f32 * line_height.as_f32();
+            let viewport_h = bounds.size.height.as_f32();
+            let total_rows_f = display_rows.len() as f32;
+            let content_h = total_rows_f * line_height.as_f32();
+            let mut next = scroll_position.as_f32();
+            if cursor_y < next {
+                // 光标在视口上方: 该行贴住视口顶
+                next = cursor_y;
+            } else if cursor_y + line_height.as_f32() > next + viewport_h {
+                // 光标在视口下方: 该行贴住视口底
+                next = cursor_y + line_height.as_f32() - viewport_h;
+            }
+            let next = next.clamp(0., (content_h - viewport_h).max(0.));
+            if next != scroll_position.as_f32() {
+                scroll_position = px(next);
+                self.editor.update(cx, |editor, cx| {
+                    editor.scroll_position = px(next);
+                    cx.notify();
+                });
+            }
+            self.editor.update(cx, |editor, _| editor.needs_autoscroll = false);
+        }
+
         let content_origin_y = bounds.top() - scroll_position;
         let mut lines: Vec<(ShapedLine, Pixels, Range<usize>)> = Vec::new();
         let mut row_start = 0usize;
@@ -319,41 +350,6 @@ impl Element for EditorElement {
             }
         });
 
-        // ---- 自动滚动:把光标滚入视口 ----
-        // 滚动容器(overflow_scroll)把内容绘制平移 `scroll_handle.offset()`(y ≤ 0),
-        // 视口的可见内容区间(相对内容顶) = [-offset.y, -offset.y + 容器高]。
-        // 光标行不在区间内时调整 offset。只在 `needs_autoscroll` 置位时执行,
-        // 避免用户手动滚走后被拉回。
-        let needs_autoscroll = self.editor.read(cx).needs_autoscroll;
-        if is_multi_line && needs_autoscroll {
-            let head_row = {
-                let editor = self.editor.read(cx);
-                editor.rope.offset_to_point(editor.selection.head()).row
-            };
-            // 光标行顶在内容坐标里的位置(内容坐标以内容顶为 0)
-            let cursor_y = head_row as f32 * line_height.as_f32();
-            let viewport_h = bounds.size.height.as_f32();
-            let content_h = (self.editor.read(cx).rope.summary().lines.row + 1) as f32
-                * line_height.as_f32();
-            let mut next = self.editor.read(cx).scroll_position.as_f32();
-            if cursor_y < next {
-                // 光标在视口上方:该行贴住视口顶
-                next = cursor_y;
-            } else if cursor_y + line_height.as_f32() > next + viewport_h {
-                // 光标在视口下方:该行贴住视口底
-                next = cursor_y + line_height.as_f32() - viewport_h;
-            }
-            let max_scroll = (content_h - viewport_h).max(0.);
-            let next = next.clamp(0., max_scroll);
-            self.editor.update(cx, |editor, cx| {
-                if editor.scroll_position.as_f32() != next {
-                    editor.scroll_position = px(next);
-                    cx.emit(super::EditorEvent::ScrollPositionChanged);
-                }
-                editor.needs_autoscroll = false;
-                cx.notify();
-            });
-        }
     }
 }
 

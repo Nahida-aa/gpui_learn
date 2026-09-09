@@ -344,6 +344,7 @@ impl Editor {
         if let Some(first) = changes.first() {
             self.selection = first.selection_before;
         }
+        self.request_autoscroll();
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
         cx.notify();
@@ -363,6 +364,7 @@ impl Editor {
         if let Some(last) = changes.last() {
             self.selection = last.selection_after;
         }
+        self.request_autoscroll();
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
         self.emit_input_change(cx);
