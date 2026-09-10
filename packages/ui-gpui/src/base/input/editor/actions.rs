@@ -15,6 +15,7 @@ use gpui::{actions, ClipboardItem, Context, Window};
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::selection::{Selection, SelectionGoal};
+use std::ops::Range;
 use super::undo::EditIntent;
 use super::{Editor, movement};
 use crate::base::input::engine::Point as BufferPoint;
@@ -44,6 +45,10 @@ actions!(
         Undo,
         Redo,
         ShowCharacterPalette,
+        WordLeft,
+        WordRight,
+        DeleteToPreviousWordStart,
+        DeleteToNextWordEnd,
     ]
 );
 
@@ -341,6 +346,104 @@ impl Editor {
             cx.write_to_clipboard(ClipboardItem::new_string(selected));
             self.replace_selections("", EditIntent::Atomic, cx);
         }
+    }
+
+    // ---- 词级移动 / 词删除(对齐 zed 的 word movement)----
+
+    /// 上一个词首(buffer 字节坐标)。
+    ///
+    /// 词边界用 unicode-segmentation 的词段划分(中文整段一词、英文按词、
+    /// URL 保持整体),空白段不计为词。直接作用在 buffer 上,不依赖 display_map。
+    pub(crate) fn previous_word_start_offset(&self, offset: usize) -> usize {
+        let text = self.rope.to_string();
+        let mut best = 0;
+        for (idx, word) in text.split_word_bound_indices() {
+            if idx >= offset {
+                break;
+            }
+            if !word.trim().is_empty() {
+                best = idx;
+            }
+        }
+        best
+    }
+
+    /// 下一个词尾。
+    pub(crate) fn next_word_end_offset(&self, offset: usize) -> usize {
+        let text = self.rope.to_string();
+        for (idx, word) in text.split_word_bound_indices() {
+            let end = idx + word.len();
+            if end > offset && !word.trim().is_empty() {
+                return end;
+            }
+        }
+        text.len()
+    }
+
+    pub fn move_to_previous_word_start(
+        &mut self,
+        _: &WordLeft,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let head = self.selection.head();
+        self.selection
+            .collapse_to(self.previous_word_start_offset(head), SelectionGoal::None);
+        self.change_selections(cx);
+    }
+
+    pub fn move_to_next_word_end(
+        &mut self,
+        _: &WordRight,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let head = self.selection.head();
+        self.selection
+            .collapse_to(self.next_word_end_offset(head), SelectionGoal::None);
+        self.change_selections(cx);
+    }
+
+    pub fn delete_to_previous_word_start(
+        &mut self,
+        _: &DeleteToPreviousWordStart,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let head = self.selection.head();
+        let target = self.previous_word_start_offset(head);
+        if target == head {
+            return;
+        }
+        self.selection.set_head(target, SelectionGoal::None);
+        self.replace_selections("", EditIntent::Atomic, cx);
+    }
+
+    pub fn delete_to_next_word_end(
+        &mut self,
+        _: &DeleteToNextWordEnd,
+        _: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        let head = self.selection.head();
+        let target = self.next_word_end_offset(head);
+        if target == head {
+            return;
+        }
+        self.selection = Selection::new(target, head);
+        self.replace_selections("", EditIntent::Atomic, cx);
+    }
+
+    /// 双击选词:返回光标所在的词区间。
+    pub(crate) fn word_range_at(&self, offset: usize) -> Range<usize> {
+        let text = self.rope.to_string();
+        for (idx, word) in text.split_word_bound_indices() {
+            let end = idx + word.len();
+            if idx <= offset && offset <= end && !word.trim().is_empty() {
+                return idx..end;
+            }
+        }
+        offset..offset
     }
 
     pub fn show_character_palette(

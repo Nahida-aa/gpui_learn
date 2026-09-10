@@ -443,6 +443,13 @@ impl Editor {
         }
         self.is_selecting = true;
         let offset = self.index_for_mouse_position(event.position);
+        if event.click_count == 2 {
+            // 双击选词
+            let range = self.word_range_at(offset);
+            self.selection = Selection::new(range.end, range.start);
+            self.change_selections(cx);
+            return;
+        }
         if event.modifiers.shift {
             self.selection.set_head(offset, SelectionGoal::None);
         } else {
@@ -513,6 +520,18 @@ pub fn bind_editor_keys(cx: &mut App) {
         KeyBinding::new("secondary-x", Cut, Some(EDITOR_KEY_CONTEXT)),
         KeyBinding::new("secondary-z", Undo, Some(EDITOR_KEY_CONTEXT)),
         KeyBinding::new("secondary-shift-z", Redo, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-left", WordLeft, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new("secondary-right", WordRight, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new(
+            "secondary-backspace",
+            DeleteToPreviousWordStart,
+            Some(EDITOR_KEY_CONTEXT),
+        ),
+        KeyBinding::new(
+            "secondary-delete",
+            DeleteToNextWordEnd,
+            Some(EDITOR_KEY_CONTEXT),
+        ),
         KeyBinding::new("home", Home, Some(EDITOR_KEY_CONTEXT)),
         KeyBinding::new("end", End, Some(EDITOR_KEY_CONTEXT)),
         KeyBinding::new("ctrl-cmd-space", ShowCharacterPalette, Some(EDITOR_KEY_CONTEXT)),
@@ -724,6 +743,10 @@ impl Render for Editor {
             .on_action(cx.listener(Self::undo))
             .on_action(cx.listener(Self::redo))
             .on_action(cx.listener(Self::show_character_palette))
+            .on_action(cx.listener(Self::move_to_previous_word_start))
+            .on_action(cx.listener(Self::move_to_next_word_end))
+            .on_action(cx.listener(Self::delete_to_previous_word_start))
+            .on_action(cx.listener(Self::delete_to_next_word_end))
             .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
@@ -1379,5 +1402,48 @@ mod autoscroll_tests {
         });
         let max_scroll = editor.read_with(cx, |e, _| e.max_scroll_offset());
         assert_eq!(max_scroll, px(0.), "Off 模式下内容不足一屏不可滚");
+    }
+}
+
+#[cfg(test)]
+mod word_movement_tests {
+    use super::*;
+    use gpui::AppContext as _;
+
+    #[gpui::test]
+    fn test_word_movement_and_delete(cx: &mut gpui::TestAppContext) {
+        let editor = cx.new(|cx| {
+            Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx)
+                .default_value("hello world foo")
+        });
+
+        // 词移动:末尾 → "foo" 首 → "world" 首 → "hello" 首
+        editor.update(cx, |editor, cx| {
+            let end = editor.rope.len();
+            editor.selection = Selection::new(end, end);
+            assert_eq!(editor.previous_word_start_offset(end), 12);
+            assert_eq!(editor.previous_word_start_offset(12), 6);
+            assert_eq!(editor.previous_word_start_offset(6), 0);
+            assert_eq!(editor.next_word_end_offset(0), 5);
+            assert_eq!(editor.next_word_end_offset(5), 11);
+        });
+
+        // 词删除:光标在末尾,删除 "foo"(动作包装的等价 core 操作)
+        editor.update(cx, |editor, cx| {
+            let head = editor.rope.len();
+            let target = editor.previous_word_start_offset(head);
+            editor.selection.set_head(target, SelectionGoal::None);
+            editor.replace_selections("", EditIntent::Atomic, cx);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.value().to_string()),
+            "hello world "
+        );
+
+        // 双击选词:点击 "world" 中间应选中整个词
+        editor.update(cx, |editor, cx| {
+            let range = editor.word_range_at(8); // "world" 内
+            assert_eq!(range, 6..11, "双击应选中整个词");
+        });
     }
 }
