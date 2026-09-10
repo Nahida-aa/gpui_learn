@@ -120,13 +120,36 @@ input/
 
 ## 5. 进度(2026-09)
 
+内核阶段已完成(editor 目标定位见下),测试 66/66:
+
 - [x] 阶段 0:sum_tree 接入 + 自研 Rope(e28158a)
 - [x] 阶段 A:核心引擎 selection/undo/Editor 骨架(de54a39)
 - [x] 阶段 B:display_map 软换行映射 + movement 原语(a9130cb)
 - [x] 阶段 C:EditorElement 渲染 + Textarea facade + apps/ug_05_editor(5cbdc52)
-- [x] 阶段 D:Input facade 收口(旧 input_state 删除,ug_04_input_button 零改动)
-- 待办:渲染接入真实软换行度量(map 已就绪)、movement 切 display 空间、
-  光标自动滚动(cursor_pixel_position 已备)、多光标/高亮/搜索
+- [x] 阶段 D:Input facade 收口(旧 input_state 删除,外部 API 零改动,1239283)
+- [x] 真软换行渲染:LineWrapper 断行点接入 display_map(25b179a)
+- [x] 垂直移动切 display 空间(83c30ec)
+- [x] 滚动闭环:自绘 scroll_position + autoscroll + scroll beyond last line
+- [x] 主题系统:base/theme 对齐 zed crates/theme 精简版(eaac38b)
+- [x] 可见行渲染优化:wrap 按 revision 缓存、shape 只看得见的行(5f3df6b)
+- [x] 词级移动/词删除/双击选词(119c528)
+
+### 目标定位(重要)
+
+**目标不是「做一个与 zed 一模一样的 editor」,而是「架构与关键行为对齐 zed 的自研编辑器内核」。**
+zed `crates/editor` 有 14.4 万行、106 个直接依赖(强依赖 project/LSP、language/tree-sitter、
+workspace、theme、collab),拖进来等于半个 zed 仓库,与「组件库 + 教学」定位冲突。
+
+范围共识(用户 2026-09 拍板):**编辑器内核(B)**——补可见行渲染、多光标、词移动等,
+做到「能舒服写代码的编辑器」,但**不接 LSP / 语法高亮**。若要全功能 IDE 编辑器,
+正确做法是直接用或 fork zed,而不是在组件库里重写。
+
+### 待办(内核之后的增量)
+
+- `_32_painting` 移植(自定义绘制:缩进参考线、诊断波浪线的基础)
+- 水平滚动(`soft_wrap(false)` 时長行)
+- 多光标 / 列选区
+- `SelectUp`/`SelectDown` 在软换行下走 display 空间(当前是退化路径)
 
 ## 5. 不做的事
 
