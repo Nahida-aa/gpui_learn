@@ -133,10 +133,18 @@ pub struct Editor {
     pub(super) soft_wrap: bool,
     /// 软换行映射:buffer 行 → 视觉行分段。渲染层在 prepaint 里更新。
     pub(super) display_map: DisplayMap,
-    /// 多行模式:每个**视觉行**的排版结果(软换行后一行可能占多条)。
+    /// 多行模式:每个**可见**视觉行的排版结果(软换行后一行可能占多条)。
     pub(super) last_lines: Vec<ShapedLine>,
-    /// 与 `last_lines` 对齐:每个视觉行覆盖的 buffer 字节区间。
+    /// 与 `last_lines` 对齐:每个可见视觉行覆盖的 buffer 字节区间。
     pub(super) last_line_ranges: Vec<Range<usize>>,
+    /// `last_lines[0]` 对应的全局视觉行号(命中测试换算用)。
+    pub(super) first_visible_display_row: u32,
+    /// 文本版本号:每次编辑 +1,渲染层据此判断是否需要重新 wrap。
+    pub(super) text_revision: u64,
+    /// 渲染层缓存:已 wrap 的文本版本号(与 `text_revision` 不等即需重算)。
+    pub(super) wrapped_revision: u64,
+    /// 渲染层缓存:已 wrap 时使用的视口宽度。
+    pub(super) wrapped_width: Pixels,
     /// 多行模式:整个内容区的 bounds(全高,滚动前的内容坐标)。
     pub(super) last_content_bounds: Option<Bounds<Pixels>>,
     /// 最近一帧的行高(命中测试用)。
@@ -189,6 +197,10 @@ impl Editor {
             display_map: DisplayMap::default(),
             last_lines: Vec::new(),
             last_line_ranges: Vec::new(),
+            first_visible_display_row: 0,
+            text_revision: 0,
+            wrapped_revision: u64::MAX,
+            wrapped_width: Pixels::MAX,
             last_content_bounds: None,
             last_line_height: px(0.),
             scroll_position: px(0.),
@@ -303,6 +315,7 @@ impl Editor {
         let end = self.rope.len();
         self.selection = Selection::new(end, end);
         self.marked_range = None;
+        self.text_revision += 1;
         self.undo_manager.clear();
         cx.notify();
     }
@@ -320,6 +333,7 @@ impl Editor {
         cx: &mut Context<Self>,
     ) {
         edit(self, cx);
+        self.text_revision += 1;
         self.request_autoscroll();
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
@@ -390,6 +404,8 @@ impl Editor {
         if let Some(first) = changes.first() {
             self.selection = first.selection_before;
         }
+        self.text_revision += 1;
+        self.text_revision += 1;
         self.request_autoscroll();
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
@@ -410,6 +426,8 @@ impl Editor {
         if let Some(last) = changes.last() {
             self.selection = last.selection_after;
         }
+        self.text_revision += 1;
+        self.text_revision += 1;
         self.request_autoscroll();
         cx.emit(EditorEvent::Edited);
         cx.emit(EditorEvent::SelectionsChanged);
@@ -600,10 +618,11 @@ impl Editor {
             return line.closest_index_for_x(position.x - bounds.left());
         }
 
-        // 多行:先按 y 定位**视觉行**,再用该视觉行的 ShapedLine 命中行内位置。
-        // 自绘滚动:element 绘制时 content_origin.y = bounds.top - scroll_position,
-        // 所以内容 y = 鼠标 y - bounds.top + scroll_position(与绘制严格互逆);
-        // 软换行下视觉行 ≠ buffer 行,区间由 last_line_ranges 给出。
+        // 多行:先按 y 定位**可见窗口内的视觉行**,再用该行的 ShapedLine
+        // 命中行内位置。last_lines 只存可见行(可见行优化),所以
+        // 全局视觉行号 = first_visible_display_row + 行内下标;
+        // 内容 y = 鼠标 y - bounds.top + scroll_position(与绘制严格互逆);
+        // 软换行下视觉行 ≠ buffer 行,字节区间由 last_line_ranges 给出。
         let Some(bounds) = self.last_content_bounds else {
             return 0;
         };
@@ -611,11 +630,13 @@ impl Editor {
             return 0;
         }
         let rel_y = position.y - bounds.top() + self.scroll_position;
-        let display_row = (rel_y / self.last_line_height).max(0.) as usize;
-        let Some(line) = self.last_lines.get(display_row) else {
+        let display_row =
+            self.first_visible_display_row + (rel_y / self.last_line_height).max(0.) as u32;
+        let index_in_window = (display_row - self.first_visible_display_row) as usize;
+        let Some(line) = self.last_lines.get(index_in_window) else {
             return self.rope.len();
         };
-        let Some(range) = self.last_line_ranges.get(display_row) else {
+        let Some(range) = self.last_line_ranges.get(index_in_window) else {
             return self.rope.len();
         };
         let index = line
