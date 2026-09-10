@@ -28,7 +28,7 @@ use gpui::{
     div, prelude::*, px, App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter,
     ScrollWheelEvent,
     FocusHandle, Hsla, KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
-    Pixels, Render, Rgba, ShapedLine, SharedString, UTF16Selection, Window, rgb,
+    Pixels, Render, ShapedLine, SharedString, UTF16Selection, Window,
 };
 
 pub use actions::*;
@@ -39,6 +39,7 @@ pub(super) use undo::{Change, EditIntent};
 
 use super::engine::{OffsetUtf16, Rope};
 use super::input::InputEvent;
+use crate::base::theme::ActiveTheme;
 pub use selection::SelectionGoal;
 pub use undo::UndoManager;
 
@@ -156,8 +157,8 @@ pub struct Editor {
     /// 鼠标拖拽选区进行中。
     pub(super) is_selecting: bool,
     // ---- 视觉样式 ----
-    pub(super) bg_color: Rgba,
-    pub(super) border_color: Rgba,
+    pub(super) bg_color: Hsla,
+    pub(super) border_color: Hsla,
     pub(super) placeholder_color: Hsla,
     // ---- IME 组字的 undo 括号 ----
     ime_composing: bool,
@@ -195,9 +196,10 @@ impl Editor {
             scroll_beyond_last_line: ScrollBeyondLastLine::OnePage,
             needs_autoscroll: false,
             is_selecting: false,
-            bg_color: rgb(0x1e1e2e),
-            border_color: rgb(0x45475a),
-            placeholder_color: gpui::hsla(0., 0., 0.55, 1.),
+            // 默认色取当前主题(对齐 zed:组件色一律来自 cx.theme())
+            bg_color: cx.theme().colors().editor_background,
+            border_color: cx.theme().colors().border,
+            placeholder_color: cx.theme().colors().text_placeholder,
             ime_composing: false,
         }
     }
@@ -239,12 +241,12 @@ impl Editor {
         self
     }
 
-    pub fn bg(mut self, color: impl Into<Rgba>) -> Self {
+    pub fn bg(mut self, color: impl Into<Hsla>) -> Self {
         self.bg_color = color.into();
         self
     }
 
-    pub fn border_color(mut self, color: impl Into<Rgba>) -> Self {
+    pub fn border_color(mut self, color: impl Into<Hsla>) -> Self {
         self.border_color = color.into();
         self
     }

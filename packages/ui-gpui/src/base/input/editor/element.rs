@@ -17,6 +17,7 @@ use gpui::{
 use std::ops::Range;
 
 use super::{DisplayMap, Editor, EditorMode};
+use crate::base::theme::ActiveTheme;
 
 /// 一次性渲染元素:持有 `Entity<Editor>`。
 pub struct EditorElement {
@@ -93,7 +94,7 @@ impl Element for EditorElement {
         window: &mut Window,
         cx: &mut App,
     ) -> Self::PrepaintState {
-        let (content, placeholder, is_multi_line, mut scroll_position, needs_autoscroll, marked_range, selection, disabled) = {
+        let (content, placeholder, is_multi_line, mut scroll_position, needs_autoscroll, marked_range, selection, disabled, selection_color, cursor_color) = {
             let editor = self.editor.read(cx);
             (
                 editor.rope.to_string(),
@@ -104,6 +105,8 @@ impl Element for EditorElement {
                 editor.marked_range.clone(),
                 editor.selection,
                 editor.disabled,
+                cx.theme().colors().selection_background,
+                cx.theme().colors().editor_cursor,
             )
         };
         let is_focused = self.editor.read(cx).focus_handle.is_focused(window) && !disabled;
@@ -325,7 +328,7 @@ impl Element for EditorElement {
                             gpui::point(bounds.left() + x0, *y),
                             gpui::size(x1 - x0, line_height),
                         ),
-                        gpui::rgba(0x3311ff30),
+                        selection_color,
                     ));
                 }
                 if selection.is_empty() && selection.head() >= row_range.start && selection.head() <= row_range.end {
@@ -335,7 +338,7 @@ impl Element for EditorElement {
                             gpui::point(bounds.left() + x, *y),
                             gpui::size(px(2.), line_height),
                         ),
-                        gpui::blue(),
+                        cursor_color,
                     ));
                 }
             }

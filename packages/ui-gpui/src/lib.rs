@@ -24,6 +24,7 @@ pub use base::geometry::{quantize, Scale};
 pub use base::icon::{Icon, IconName};
 pub use base::input::input::{InputEvent, InputState};
 pub use base::input::{bind_input_keys};
+pub use base::theme;
 pub use base::input::editor::{Editor, EditorElement, EditorEvent, EditorMode};
 pub use base::slider::element::{DragSlider, Slider, SliderEvent};
 pub use base::slider::slider_state::{SliderState, ThumbMode};

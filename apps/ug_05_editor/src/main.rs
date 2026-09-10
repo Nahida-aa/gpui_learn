@@ -20,6 +20,7 @@ use gpui::{
 use gpui_platform::application;
 use ui_gpui::base::input::editor::{bind_editor_keys, Editor, EditorMode, EDITOR_KEY_CONTEXT};
 use ui_gpui::base::input::input::{bind_input_keys, InputState};
+use ui_gpui::base::theme::init_theme;
 
 actions!(
     editor_demo,
@@ -91,6 +92,7 @@ fn run_demo() {
         .without_time()
         .init();
     application().run(|cx: &mut App| {
+        init_theme(cx);
         bind_input_keys(cx);
         bind_editor_keys(cx);
         cx.bind_keys([gpui::KeyBinding::new("cmd-q", Quit, None)]);
