@@ -81,7 +81,10 @@ impl WrapItem {
         // column 落在最后一个分段内/行尾
         let last = self.segments.len() - 1;
         let segment = &self.segments[last];
-        (last as u32, (column.min(segment.end) - segment.start) as u32)
+        (
+            last as u32,
+            (column.min(segment.end) - segment.start) as u32,
+        )
     }
 }
 
@@ -150,7 +153,9 @@ impl DisplayMap {
             wraps: SumTree::default(),
             buffer_rows,
         };
-        let items = (0..buffer_rows).map(|_| WrapItem { segments: Vec::new() });
+        let items = (0..buffer_rows).map(|_| WrapItem {
+            segments: Vec::new(),
+        });
         map.wraps.extend(items, ());
         map
     }
@@ -177,7 +182,12 @@ impl DisplayMap {
         let mut row = 0u32;
         while let Some(item) = cursor.item() {
             if row == buffer_row {
-                new_tree.push(WrapItem { segments: segments.clone() }, ());
+                new_tree.push(
+                    WrapItem {
+                        segments: segments.clone(),
+                    },
+                    (),
+                );
             } else {
                 new_tree.push(item.clone(), ());
             }
@@ -189,18 +199,18 @@ impl DisplayMap {
 
     /// buffer 行 → 该行第一个 display 行号。
     pub fn display_row_for_buffer_row(&self, buffer_row: u32) -> DisplayRow {
-        let (start, _, _) = self
-            .wraps
-            .find::<BufferRows, _>((), &BufferRowCount(buffer_row), Bias::Right);
-        DisplayRow(start.1 .0)
+        let (start, _, _) =
+            self.wraps
+                .find::<BufferRows, _>((), &BufferRowCount(buffer_row), Bias::Right);
+        DisplayRow(start.1.0)
     }
 
     /// buffer Point(行, 字节列)→ DisplayPoint。
     pub fn buffer_point_to_display_point(&self, point: BufferPoint) -> DisplayPoint {
-        let (start, _, item) = self
-            .wraps
-            .find::<BufferRows, _>((), &BufferRowCount(point.row), Bias::Right);
-        let display_row = start.1 .0;
+        let (start, _, item) =
+            self.wraps
+                .find::<BufferRows, _>((), &BufferRowCount(point.row), Bias::Right);
+        let display_row = start.1.0;
         match item {
             Some(wrap) => {
                 let (sub_ix, column) = wrap.locate(point.column as usize);
@@ -215,8 +225,8 @@ impl DisplayMap {
         let mut cursor = self.wraps.cursor::<DisplayRows>(());
         cursor.seek(&DisplayRowCount(point.row), Bias::Right);
         // DisplayRows = Dimensions<DisplayRowCount, BufferRowCount>:0 是 display、1 是 buffer
-        let display_start = cursor.start().0 .0;
-        let buffer_row = cursor.start().1 .0;
+        let display_start = cursor.start().0.0;
+        let buffer_row = cursor.start().1.0;
         let Some(wrap) = cursor.item() else {
             return BufferPoint::new(buffer_row, point.column);
         };
@@ -237,7 +247,7 @@ impl DisplayMap {
     pub fn display_row_len(&self, row: u32) -> Option<u32> {
         let mut cursor = self.wraps.cursor::<DisplayRows>(());
         cursor.seek(&DisplayRowCount(row), Bias::Right);
-        let display_start = cursor.start().0 .0;
+        let display_start = cursor.start().0.0;
         let wrap = cursor.item()?;
         if wrap.segments.is_empty() {
             return None;
@@ -266,8 +276,8 @@ impl DisplayMap {
         let mut cursor = self.wraps.cursor::<DisplayRows>(());
         cursor.seek(&DisplayRowCount(display_row), Bias::Right);
         let wrap = cursor.item()?;
-        let buffer_row = cursor.start().1 .0;
-        let display_start = cursor.start().0 .0;
+        let buffer_row = cursor.start().1.0;
+        let display_start = cursor.start().0.0;
         let sub_ix = (display_row - display_start) as usize;
         if wrap.segments.is_empty() {
             // 未换行行:整行一个 display 行,range 需调用方结合 rope 行首确定

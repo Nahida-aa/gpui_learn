@@ -8,8 +8,8 @@
 use gpui::{App, KeyBinding, SharedString};
 
 use super::editor::{
-    Backspace, Copy, Cut, Delete, Down, Editor, End, Home, Left, Newline, Paste, Right,
-    SelectAll, SelectDown, SelectLeft, SelectRight, SelectUp, ShowCharacterPalette, Up,
+    Backspace, Copy, Cut, Delete, Down, Editor, End, Home, Left, Newline, Paste, Right, SelectAll,
+    SelectDown, SelectLeft, SelectRight, SelectUp, ShowCharacterPalette, Up,
 };
 
 /// 单行输入框 = 多行编辑器的 SingleLine 模式。

@@ -13,15 +13,17 @@ use std::time::Duration;
 use gpui::{
     App, Bounds, ClipboardItem, Context, Element, ElementInputHandler, Entity, EntityInputHandler,
     FocusHandle, Focusable, IntoElement, LayoutId, PaintQuad, Pixels, Point, ShapedLine,
-    SharedString, Subscription, Task, TextRun, UTF16Selection, Window, actions, fill, hsla,
-    point, prelude::*, px, relative, size,
+    SharedString, Subscription, Task, TextRun, UTF16Selection, Window, actions, fill, hsla, point,
+    prelude::*, px, relative, size,
 };
 use unicode_segmentation::*;
 
 // ── actions（与 zed view_example_main.rs 一致）──────────────────────────────
 actions!(
     view_example,
-    [Backspace, Delete, Left, Right, Home, End, Enter, Quit, Copy, Cut, Paste, SelectAll]
+    [
+        Backspace, Delete, Left, Right, Home, End, Enter, Quit, Copy, Cut, Paste, SelectAll
+    ]
 );
 
 pub struct Editor {
@@ -278,7 +280,11 @@ impl Editor {
         while end > 0 && !content.is_char_boundary(end) {
             end -= 1;
         }
-        let (start, end) = if start < end { (start, end) } else { (offset, offset) };
+        let (start, end) = if start < end {
+            (start, end)
+        } else {
+            (offset, offset)
+        };
         log::info!(
             "[editor] select_word_at id={:?} offset={} word=[{}..{}] {:?}",
             cx.entity().entity_id(),
@@ -331,7 +337,10 @@ impl Editor {
     /// 多行：先按 y 落在第几行，再在该行的 `ShapedLine` 上按 x 找最近字符边界。
     pub fn index_for_point(&self, position: Point<Pixels>) -> usize {
         let (Some(bounds), lines) = (self.last_bounds.as_ref(), &self.last_lines) else {
-            log::info!("[editor] index_for_point: NO geometry cached, pos={:?}", position);
+            log::info!(
+                "[editor] index_for_point: NO geometry cached, pos={:?}",
+                position
+            );
             return 0;
         };
         if lines.is_empty() {
@@ -356,7 +365,15 @@ impl Editor {
         let result = line_start + idx_in_line;
         log::info!(
             "[editor] index_for_point: pos={:?} bounds.top={} bounds.left={} line_h={} line_idx={} x={} idx_in_line={} line_start={} -> {}",
-            position, bounds.top(), bounds.left(), line_height, line_idx, x, idx_in_line, line_start, result
+            position,
+            bounds.top(),
+            bounds.left(),
+            line_height,
+            line_idx,
+            x,
+            idx_in_line,
+            line_start,
+            result
         );
         result
     }
@@ -838,9 +855,11 @@ impl Element for EditorText {
                 underline: None,
                 strikethrough: None,
             };
-            vec![window
-                .text_system()
-                .shape_line(placeholder, font_size, &[run], None)]
+            vec![
+                window
+                    .text_system()
+                    .shape_line(placeholder, font_size, &[run], None),
+            ]
         } else {
             content
                 .split('\n')

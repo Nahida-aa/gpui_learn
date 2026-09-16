@@ -126,11 +126,19 @@ impl RenderOnce for Slider {
         // disabled 时一律置灰。
         let track_bg: Background = self
             .track_color
-            .unwrap_or(if disabled { rgb(0x3a_3a_3a) } else { rgb(0x55_55_55) })
+            .unwrap_or(if disabled {
+                rgb(0x3a_3a_3a)
+            } else {
+                rgb(0x55_55_55)
+            })
             .into();
         let fill_bg: Background = self
             .fill_color
-            .unwrap_or(if disabled { rgb(0x55_55_55) } else { rgb(0x4c_8b_f5) })
+            .unwrap_or(if disabled {
+                rgb(0x55_55_55)
+            } else {
+                rgb(0x4c_8b_f5)
+            })
             .into();
         // thumb 普通态颜色；hover/拖动时向白提亮 50%，disabled 置灰。
         let thumb_normal = self.thumb_color.unwrap_or(rgb(0xff_ff_ff));
@@ -223,12 +231,22 @@ impl RenderOnce for Slider {
             // drag 光标取启动元素的 mouse_cursor，缺了拖动中会退默认。
             .cursor(gpui::CursorStyle::PointingHand)
             .when(horizontal, |t| t.h_full().w_full().flex().items_center())
-            .when(!horizontal, |t| t.w_full().h_full().flex().flex_col().justify_center())
+            .when(!horizontal, |t| {
+                t.w_full().h_full().flex().flex_col().justify_center()
+            })
             .child(
                 div()
                     .relative()
-                    .when(horizontal, |b| b.w_full().h(track_thickness).flex().items_center())
-                    .when(!horizontal, |b| b.h_full().w(track_thickness).flex().flex_col().justify_center())
+                    .when(horizontal, |b| {
+                        b.w_full().h(track_thickness).flex().items_center()
+                    })
+                    .when(!horizontal, |b| {
+                        b.h_full()
+                            .w(track_thickness)
+                            .flex()
+                            .flex_col()
+                            .justify_center()
+                    })
                     .bg(track_bg)
                     .rounded_full()
                     // fill（已填充部分）
@@ -236,11 +254,15 @@ impl RenderOnce for Slider {
                         div()
                             .absolute()
                             .when(horizontal, |f| {
-                                f.top(px(0.0)).bottom(px(0.0)).left(relative(bar_start))
+                                f.top(px(0.0))
+                                    .bottom(px(0.0))
+                                    .left(relative(bar_start))
                                     .right(relative(bar_end))
                             })
                             .when(!horizontal, |f| {
-                                f.left(px(0.0)).right(px(0.0)).bottom(relative(bar_start))
+                                f.left(px(0.0))
+                                    .right(px(0.0))
+                                    .bottom(relative(bar_start))
                                     .top(relative(bar_end))
                             })
                             .bg(fill_bg)
@@ -254,10 +276,9 @@ impl RenderOnce for Slider {
             // 单值滑块：点轨道任意处按住即可拖动跟手（不只 thumb）。
             // on_drag_move 只在 active_drag 类型匹配时才派发（div.rs:344），
             // 所以 DragSlider（外层）与 DragThumb（thumb）互不干扰。
-            track = track.on_drag(
-                DragSlider(entity_id),
-                |drag, _, _, cx| cx.new(|_| drag.clone()),
-            );
+            track = track.on_drag(DragSlider(entity_id), |drag, _, _, cx| {
+                cx.new(|_| drag.clone())
+            });
         }
 
         // 外层容器：track 作为第一个直接子元素，便于 on_children_prepainted 取 bounds。
@@ -312,8 +333,7 @@ impl RenderOnce for Slider {
                         let fh = st.read(cx).focus_handle(cx);
                         window.focus(&fh, cx);
                         st.update(cx, |s, cx| {
-                            let is_start = s.value().is_range()
-                                && pick_is_start(s, e.position);
+                            let is_start = s.value().is_range() && pick_is_start(s, e.position);
                             s.begin_drag(e.position, is_start, cx);
                         });
                     }
@@ -351,12 +371,15 @@ impl RenderOnce for Slider {
                 move |e: &gpui::KeyDownEvent, _window, cx| {
                     let step = st.read(cx).step_value();
                     // 分级：Shift ×10，Ctrl/Alt ÷10（gpui-component 没有，我们加上）。
-                    let mult = if e.keystroke.modifiers.shift { 10.0 } else { 1.0 }
-                        / if e.keystroke.modifiers.control || e.keystroke.modifiers.alt {
-                            10.0
-                        } else {
-                            1.0
-                        };
+                    let mult = if e.keystroke.modifiers.shift {
+                        10.0
+                    } else {
+                        1.0
+                    } / if e.keystroke.modifiers.control || e.keystroke.modifiers.alt {
+                        10.0
+                    } else {
+                        1.0
+                    };
                     let delta = step * mult;
                     match e.keystroke.key.as_str() {
                         "left" | "down" => st.update(cx, |s, cx| s.nudge(-delta, false, cx)),
@@ -400,10 +423,14 @@ fn render_thumb(
         .absolute()
         .id(format!("thumb-{entity_id}-{is_start}"))
         .when(horizontal, |t| {
-            t.top(px(cross_offset)).left(relative(pct)).ml(px(align_offset))
+            t.top(px(cross_offset))
+                .left(relative(pct))
+                .ml(px(align_offset))
         })
         .when(!horizontal, |t| {
-            t.bottom(relative(pct)).left(px(cross_offset)).mb(px(align_offset))
+            t.bottom(relative(pct))
+                .left(px(cross_offset))
+                .mb(px(align_offset))
         })
         .size(thumb_size)
         .rounded_full()
@@ -428,10 +455,9 @@ fn render_thumb(
                 press_st.update(cx, |s, cx| s.begin_thumb_press(is_start, cx));
                 cx.stop_propagation();
             })
-            .on_drag(
-                DragThumb(entity_id, is_start),
-                |drag, _, _, cx| cx.new(|_| drag.clone()),
-            )
+            .on_drag(DragThumb(entity_id, is_start), |drag, _, _, cx| {
+                cx.new(|_| drag.clone())
+            })
             .on_drag_move(move |e: &DragMoveEvent<DragThumb>, _window, cx| {
                 // 该 handler 仅在 active_drag 类型为 DragThumb 时才被派发（div.rs:344）。
                 // 先拷出 (id, is_start) 再 update，避免 cx 借用冲突。
@@ -473,9 +499,7 @@ fn pick_is_start(state: &SliderState, position: gpui::Point<Pixels>) -> bool {
 #[cfg(all(test, feature = "test-support"))]
 mod tests {
     use super::*;
-    use gpui::{
-        Context, Modifiers, Render, TestAppContext, VisualTestContext, point, px, size,
-    };
+    use gpui::{Context, Modifiers, Render, TestAppContext, VisualTestContext, point, px, size};
 
     /// 水平轨道 bounds：x 从 100 到 300（宽 200），y 0..10。默认 Range(20,80)。
     fn range_state(cx: &mut TestAppContext) -> Entity<SliderState> {
@@ -486,7 +510,10 @@ mod tests {
                 .default_value((20.0, 80.0))
         });
         s.update(cx, |s, _| {
-            s.set_bounds(Bounds::new(point(px(100.0), px(0.0)), size(px(200.0), px(10.0))))
+            s.set_bounds(Bounds::new(
+                point(px(100.0), px(0.0)),
+                size(px(200.0), px(10.0)),
+            ))
         });
         s
     }
@@ -519,11 +546,9 @@ mod tests {
                 slider,
                 events: Vec::new(),
             };
-            cx.subscribe(&this.slider, |this, _slider, event, _cx| {
-                match event {
-                    SliderEvent::Change(v) | SliderEvent::Release(v) => {
-                        this.events.push(*v);
-                    }
+            cx.subscribe(&this.slider, |this, _slider, event, _cx| match event {
+                SliderEvent::Change(v) | SliderEvent::Release(v) => {
+                    this.events.push(*v);
                 }
             })
             .detach();
@@ -533,7 +558,10 @@ mod tests {
 
     impl Render for SliderHarness {
         fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
-            div().w(px(200.0)).h(px(32.0)).child(Slider::new(&self.slider))
+            div()
+                .w(px(200.0))
+                .h(px(32.0))
+                .child(Slider::new(&self.slider))
         }
     }
 
@@ -541,9 +569,7 @@ mod tests {
     /// 应触发 Change（移动中）+ Release（松开）。
     #[gpui::test]
     fn drag_via_mouse_moves_value_and_emits_change_release(cx: &mut TestAppContext) {
-        let window = cx.open_window(size(px(200.0), px(32.0)), |_, cx| {
-            SliderHarness::new(cx)
-        });
+        let window = cx.open_window(size(px(200.0), px(32.0)), |_, cx| SliderHarness::new(cx));
         let mut cx = VisualTestContext::from_window(window.into(), cx);
         let harness = window.root(&mut cx).unwrap();
 
@@ -566,13 +592,14 @@ mod tests {
         );
 
         // 值应 >0（拖动了）。
-        let value = harness.read_with(&cx, |h, _| {
-            h.slider.read_with(&cx, |s, _| s.value().end())
-        });
+        let value = harness.read_with(&cx, |h, _| h.slider.read_with(&cx, |s, _| s.value().end()));
         assert!(value > 0.0, "拖动后值应增大，实际 {value}");
         // 应至少发出 Change + Release。
         let event_count = harness.read_with(&cx, |h, _| h.events.len());
-        assert!(event_count >= 2, "拖动应发出 Change+Release，实际 {event_count}");
+        assert!(
+            event_count >= 2,
+            "拖动应发出 Change+Release，实际 {event_count}"
+        );
         // 最后一个事件应是 Release（值 = 松开位置）。
         let last = harness.read_with(&cx, |h, _| h.events.last().copied());
         assert!(last.is_some(), "应有 Release 事件");
@@ -582,18 +609,14 @@ mod tests {
     /// （无持续 Change 流，只有一次跳值 + Release）。
     #[gpui::test]
     fn click_jumps_value_without_drag(cx: &mut TestAppContext) {
-        let window = cx.open_window(size(px(200.0), px(32.0)), |_, cx| {
-            SliderHarness::new(cx)
-        });
+        let window = cx.open_window(size(px(200.0), px(32.0)), |_, cx| SliderHarness::new(cx));
         let mut cx = VisualTestContext::from_window(window.into(), cx);
         let harness = window.root(&mut cx).unwrap();
 
         // 点击轨道中部 (x=100)，立即松开。
         cx.simulate_click(point(px(100.0), px(16.0)), Modifiers::default());
 
-        let value = harness.read_with(&cx, |h, _| {
-            h.slider.read_with(&cx, |s, _| s.value().end())
-        });
+        let value = harness.read_with(&cx, |h, _| h.slider.read_with(&cx, |s, _| s.value().end()));
         // 点击 100/200 = 50%。
         assert!((value - 50.0).abs() < 2.0, "点击应跳到约 50，实际 {value}");
     }

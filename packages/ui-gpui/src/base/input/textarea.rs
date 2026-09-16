@@ -17,11 +17,7 @@ impl Textarea {
     }
 
     /// 高度随内容自适应(限行数)。
-    pub fn auto_height(
-        min_rows: usize,
-        max_rows: usize,
-        cx: &mut gpui::Context<Self>,
-    ) -> Self {
+    pub fn auto_height(min_rows: usize, max_rows: usize, cx: &mut gpui::Context<Self>) -> Self {
         Self::with_mode(EditorMode::AutoHeight { min_rows, max_rows }, cx)
     }
 }

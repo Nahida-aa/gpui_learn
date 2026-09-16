@@ -34,12 +34,12 @@
 //!   - 一个待办列表（角色 List），含三个 ListItem：
 //!     - "1. Write code" / "2. Run tests" / "3. Ship it"
 
+#[cfg(not(target_os = "android"))]
+use gpui::KeyBinding;
 use gpui::{
     AccessibleAction, App, Bounds, Context, FocusHandle, Role, SharedString, Toggled, Window,
     WindowBounds, WindowOptions, actions, div, prelude::*, px, rgb, size, text,
 };
-#[cfg(not(target_os = "android"))]
-use gpui::KeyBinding;
 
 // 声明两个聚焦遍历动作（Tab 前进 / Shift+Tab 后退）。
 actions!(a11y_example, [Tab, TabPrev]);

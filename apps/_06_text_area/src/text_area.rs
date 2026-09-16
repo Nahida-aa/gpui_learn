@@ -6,11 +6,11 @@
 //! 本模块平台无关：`on_mouse_down` 里「点击弹软键盘」只在 Android 上调用
 //! （见 `focus_and_show_keyboard` 的 cfg 分支），桌面端点击只聚焦，不弹键盘。
 
+use gpui::prelude::*;
 use gpui::{
     App, Context, CursorStyle, Entity, EntityId, Hsla, IntoElement, MouseButton, MouseDownEvent,
     MouseMoveEvent, MouseUpEvent, View, Window, div, hsla, px, white,
 };
-use gpui::prelude::*;
 
 use crate::editor::{Copy, Cut, Editor, Enter, Paste, SelectAll, standard_actions};
 
@@ -101,7 +101,12 @@ impl View for TextArea {
                 let editor_id = editor.entity_id();
                 let editor = editor.clone();
                 move |event: &MouseDownEvent, window, cx| {
-                    log::info!("[textarea] on_mouse_down focus editor id={:?} pos={:?} click_count={}", editor_id, event.position, event.click_count);
+                    log::info!(
+                        "[textarea] on_mouse_down focus editor id={:?} pos={:?} click_count={}",
+                        editor_id,
+                        event.position,
+                        event.click_count
+                    );
                     focus_and_show_keyboard(&focus_handle, window, cx);
                     let offset = editor.read(cx).index_for_point(event.position);
                     editor.update(cx, |e, cx| {
@@ -250,8 +255,16 @@ fn selection_toolbar(
         .border_color(hsla(0.0, 0.0, 1.0, 0.25))
         .text_color(white())
         .text_size(px(14.))
-        .child(toolbar_button("复制", editor.clone(), |e, window, cx| e.copy(&Copy, window, cx)))
-        .child(toolbar_button("剪切", editor.clone(), |e, window, cx| e.cut(&Cut, window, cx)))
-        .child(toolbar_button("全选", editor.clone(), |e, window, cx| e.select_all(&SelectAll, window, cx)))
-        .child(toolbar_button("粘贴", editor.clone(), |e, window, cx| e.paste(&Paste, window, cx)))
+        .child(toolbar_button("复制", editor.clone(), |e, window, cx| {
+            e.copy(&Copy, window, cx)
+        }))
+        .child(toolbar_button("剪切", editor.clone(), |e, window, cx| {
+            e.cut(&Cut, window, cx)
+        }))
+        .child(toolbar_button("全选", editor.clone(), |e, window, cx| {
+            e.select_all(&SelectAll, window, cx)
+        }))
+        .child(toolbar_button("粘贴", editor.clone(), |e, window, cx| {
+            e.paste(&Paste, window, cx)
+        }))
 }

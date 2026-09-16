@@ -20,15 +20,15 @@ pub mod base;
 /// ui-gpui 复用它，不自带资源目录。
 pub use assets::Assets;
 pub use base::button::{Button, ButtonVariant};
-pub use base::geometry::{quantize, Scale};
+pub use base::geometry::{Scale, quantize};
 pub use base::icon::{Icon, IconName};
-pub use base::input::input::{InputEvent, InputState};
-pub use base::input::{bind_input_keys};
-pub use base::theme;
+pub use base::input::bind_input_keys;
 pub use base::input::editor::{Editor, EditorElement, EditorEvent, EditorMode};
+pub use base::input::input::{InputEvent, InputState};
 pub use base::slider::element::{DragSlider, Slider, SliderEvent};
 pub use base::slider::slider_state::{SliderState, ThumbMode};
 pub use base::slider::slider_value::SliderValue;
+pub use base::theme;
 
 /// 复用 gpui 的轴方向类型，方便调用方设置 `SliderState::axis`。
 pub use gpui::Axis;

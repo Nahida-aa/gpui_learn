@@ -9,7 +9,7 @@
 
 use unicode_segmentation::UnicodeSegmentation;
 
-use super::display_map::{DisplayPoint, DisplayMap};
+use super::display_map::{DisplayMap, DisplayPoint};
 use super::selection::SelectionGoal;
 use crate::base::input::engine::{Point as BufferPoint, Rope};
 
@@ -26,11 +26,7 @@ pub fn left(map: &DisplayMap, rope: &Rope, point: DisplayPoint) -> DisplayPoint 
 /// 实现:display 点 → buffer 字节偏移回退一个字符 → 转回 display。
 /// 视觉行尾与下一视觉行首共享同一 buffer 位置,回退自动跨视觉行,
 /// 无需特判行首。
-pub fn saturating_left(
-    map: &DisplayMap,
-    rope: &Rope,
-    point: DisplayPoint,
-) -> Option<DisplayPoint> {
+pub fn saturating_left(map: &DisplayMap, rope: &Rope, point: DisplayPoint) -> Option<DisplayPoint> {
     let buffer = map.display_point_to_buffer_point(point);
     let offset = rope.point_to_offset(buffer);
     if offset == 0 {
@@ -75,7 +71,10 @@ pub fn up(
     let goal = resolve_goal(point, goal);
     let target_row = point.row - 1;
     let column = clamp_to_row(map, rope, target_row, goal);
-    (DisplayPoint::new(target_row, column), SelectionGoal::HorizontalPosition(goal))
+    (
+        DisplayPoint::new(target_row, column),
+        SelectionGoal::HorizontalPosition(goal),
+    )
 }
 
 /// 下移一行,保持 goal 列。已在末行则跳到末行行尾(zed 语义:不能下移时
@@ -93,7 +92,10 @@ pub fn down(
     let goal = resolve_goal(point, goal);
     let target_row = point.row + 1;
     let column = clamp_to_row(map, rope, target_row, goal);
-    (DisplayPoint::new(target_row, column), SelectionGoal::HorizontalPosition(goal))
+    (
+        DisplayPoint::new(target_row, column),
+        SelectionGoal::HorizontalPosition(goal),
+    )
 }
 
 fn resolve_goal(point: DisplayPoint, goal: SelectionGoal) -> f64 {
@@ -144,11 +146,7 @@ pub fn line_end(map: &DisplayMap, rope: &Rope, point: DisplayPoint) -> DisplayPo
 
 /// 上一个词首。词边界在视觉行内计算(词不跨视觉行);
 /// 空白段不计为词(对齐 zed 的 word-char 分类行为)。
-pub fn previous_word_start(
-    map: &DisplayMap,
-    rope: &Rope,
-    point: DisplayPoint,
-) -> DisplayPoint {
+pub fn previous_word_start(map: &DisplayMap, rope: &Rope, point: DisplayPoint) -> DisplayPoint {
     let (row_text, column) = row_text_and_column(map, rope, point);
     let mut target = point;
     for (idx, word) in row_text.split_word_bound_indices() {
@@ -183,20 +181,21 @@ fn display_row_width(map: &DisplayMap, rope: &Rope, row: u32) -> u32 {
         return len;
     }
     // 未换行行:buffer 行长(不含换行符)
-    let buffer_row = map.display_point_to_buffer_point(DisplayPoint::new(row, 0)).row;
+    let buffer_row = map
+        .display_point_to_buffer_point(DisplayPoint::new(row, 0))
+        .row;
     rope.line_len(buffer_row) as u32
 }
 
 /// 取视觉行文本与光标列(供词边界计算)。
-fn row_text_and_column(
-    map: &DisplayMap,
-    rope: &Rope,
-    point: DisplayPoint,
-) -> (String, usize) {
+fn row_text_and_column(map: &DisplayMap, rope: &Rope, point: DisplayPoint) -> (String, usize) {
     let width = display_row_width(map, rope, point.row) as usize;
     let start = map.display_point_to_buffer_point(DisplayPoint::new(point.row, 0));
     let start = rope.point_to_offset(start);
-    (rope.text_in_range(start..start + width), point.column as usize)
+    (
+        rope.text_in_range(start..start + width),
+        point.column as usize,
+    )
 }
 
 fn prev_char_boundary(rope: &Rope, point: BufferPoint) -> BufferPoint {

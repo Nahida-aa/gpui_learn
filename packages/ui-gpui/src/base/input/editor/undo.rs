@@ -221,8 +221,8 @@ fn is_adjacent(intent: EditIntent, previous: &Change, current: &Change) -> bool 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::selection::SelectionGoal;
+    use super::*;
 
     fn typing_change(offset: usize, text: &str) -> Change {
         let end = offset + text.len();

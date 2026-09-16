@@ -13,7 +13,7 @@
 
 use std::path::{Path, PathBuf};
 
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
 use serde::Deserialize;
 
@@ -146,11 +146,13 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     // 直接报错——不硬编码假名，避免默认包名语义失真。
     let repo_name = repo_name_from(&project_dir)
         .context("无法确定仓库名来推导默认 identifier：当前目录不在 git 仓库内（找不到 .git），请在 git 仓库中运行，或在 gpui.conf.json 显式写 identifier")?;
-    let app_name = conf
-        .app_name
-        .unwrap_or_else(|| cargo_package.clone());
+    let app_name = conf.app_name.unwrap_or_else(|| cargo_package.clone());
     let identifier = conf.identifier.unwrap_or_else(|| {
-        format!("{}.{}", pkg_segment(&repo_name), pkg_segment(&cargo_package))
+        format!(
+            "{}.{}",
+            pkg_segment(&repo_name),
+            pkg_segment(&cargo_package)
+        )
     });
     // 统一校验最终 identifier（无论来自 conf 还是自动推导）：段必须以字母开头、
     // 仅含字母/数字/下划线；用户显式写的非法值直接报错，避免静默写坏包名。
@@ -370,7 +372,12 @@ fn pkg_segment(s: &str) -> String {
             }
         })
         .collect();
-    while seg.chars().next().map(|c| !c.is_ascii_alphabetic()).unwrap_or(false) {
+    while seg
+        .chars()
+        .next()
+        .map(|c| !c.is_ascii_alphabetic())
+        .unwrap_or(false)
+    {
         seg.remove(0);
     }
     if seg.is_empty() {
@@ -383,13 +390,14 @@ fn pkg_segment(s: &str) -> String {
 /// 用户显式写在 `gpui.conf.json` 的 identifier 走这里——非法时**报错**而非静默改写，
 /// 避免悄悄改变用户预期的包名。
 fn validate_identifier(id: &str) -> Result<()> {
-    let ok = id
-        .split('.')
-        .all(|seg| {
-            let mut chars = seg.chars();
-            let first_ok = chars.next().map(|c| c.is_ascii_alphabetic()).unwrap_or(false);
-            first_ok && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
-        });
+    let ok = id.split('.').all(|seg| {
+        let mut chars = seg.chars();
+        let first_ok = chars
+            .next()
+            .map(|c| c.is_ascii_alphabetic())
+            .unwrap_or(false);
+        first_ok && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+    });
     if !ok {
         bail!(
             "identifier `{id}` 不是合法 Android applicationId：每段必须以字母开头、\
@@ -449,7 +457,8 @@ fn write_file(path: &Path, content: &str) -> Result<()> {
 
 fn write_bytes(path: &Path, content: &[u8]) -> Result<()> {
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).with_context(|| format!("创建目录 {}", parent.display()))?;
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("创建目录 {}", parent.display()))?;
     }
     std::fs::write(path, content).with_context(|| format!("写文件 {}", path.display()))?;
     Ok(())

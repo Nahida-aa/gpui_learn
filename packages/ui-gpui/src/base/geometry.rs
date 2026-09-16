@@ -53,11 +53,7 @@ impl Scale {
 /// 从「起点」往「终点」增长。结果 clamp 到 [0,1]。
 ///
 /// `bounds` 来自 `on_prepaint` 回写的布局结果——没有它就没法从像素算值。
-pub fn position_to_percentage(
-    axis: Axis,
-    position: Point<Pixels>,
-    bounds: &Bounds<Pixels>,
-) -> f32 {
+pub fn position_to_percentage(axis: Axis, position: Point<Pixels>, bounds: &Bounds<Pixels>) -> f32 {
     let size = match axis {
         Axis::Horizontal => bounds.size.width,
         Axis::Vertical => bounds.size.height,
@@ -164,18 +160,10 @@ mod tests {
             gpui::size(px(200.0), px(10.0)),
         );
         // 中点 x=200 → 0.5
-        let p = position_to_percentage(
-            Axis::Horizontal,
-            gpui::point(px(200.0), px(5.0)),
-            &bounds,
-        );
+        let p = position_to_percentage(Axis::Horizontal, gpui::point(px(200.0), px(5.0)), &bounds);
         assert!((p - 0.5).abs() < 1e-6);
         // 超出左边界 → 0
-        let p = position_to_percentage(
-            Axis::Horizontal,
-            gpui::point(px(0.0), px(5.0)),
-            &bounds,
-        );
+        let p = position_to_percentage(Axis::Horizontal, gpui::point(px(0.0), px(5.0)), &bounds);
         assert_eq!(p, 0.0);
     }
 
@@ -186,11 +174,7 @@ mod tests {
             gpui::size(px(10.0), px(200.0)),
         );
         // 垂直：y=bottom(200) 对应 1.0，y=top(0) 对应 0.0。取中点 y=100 → 0.5
-        let p = position_to_percentage(
-            Axis::Vertical,
-            gpui::point(px(5.0), px(100.0)),
-            &bounds,
-        );
+        let p = position_to_percentage(Axis::Vertical, gpui::point(px(5.0), px(100.0)), &bounds);
         assert!((p - 0.5).abs() < 1e-6);
     }
 }

@@ -49,10 +49,10 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::ptr::NonNull;
-use std::time::Instant;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, OnceLock};
+use std::time::Instant;
 
 use super::{AndroidKeyEvent, Bounds, DevicePixels, Pixels, Point, Size, TouchPoint};
 use crate::momentum::{MomentumScroller, VelocityTracker};
@@ -233,9 +233,18 @@ struct AndroidActiveTouch {
 #[derive(Clone, Copy, Debug, PartialEq)]
 enum AndroidTouchGesture {
     Idle,
-    Pending { start_x: f32, start_y: f32, down_time: Instant },
-    Scrolling { prev_x: f32, prev_y: f32 },
-    Pinching { last_distance: f32 },
+    Pending {
+        start_x: f32,
+        start_y: f32,
+        down_time: Instant,
+    },
+    Scrolling {
+        prev_x: f32,
+        prev_y: f32,
+    },
+    Pinching {
+        last_distance: f32,
+    },
 }
 
 impl Default for AndroidTouchGesture {
@@ -1519,7 +1528,8 @@ impl PlatformWindow for AndroidPlatformWindow {
                         let pos = gpui::point(gpui::px(start_x), gpui::px(start_y));
                         log::debug!(
                             "long-press detected at ({:.0},{:.0}) — emitting select-word MouseDown",
-                            start_x, start_y
+                            start_x,
+                            start_y
                         );
                         if let Some(mut guard) = input_cb.try_lock() {
                             let _ = guard(gpui::PlatformInput::MouseDown(gpui::MouseDownEvent {
@@ -1768,7 +1778,11 @@ impl PlatformWindow for AndroidPlatformWindow {
                         let mut guard = cb.lock();
 
                         match state.gesture {
-                            AndroidTouchGesture::Pending { start_x, start_y, down_time: _ } => {
+                            AndroidTouchGesture::Pending {
+                                start_x,
+                                start_y,
+                                down_time: _,
+                            } => {
                                 let dx = logical_x - start_x;
                                 let dy = logical_y - start_y;
                                 let distance = (dx * dx + dy * dy).sqrt();
@@ -1781,10 +1795,12 @@ impl PlatformWindow for AndroidPlatformWindow {
                                     // 触摸拖动开始：先补发一个 MouseDown（在拖动起点），
                                     // 这样依赖 on_mouse_down 启动的「拖拽选区」在 Android
                                     // 上也能工作——否则只收到 MouseMove+MouseUp，选区起不来。
-                                    let down_pos = gpui::point(gpui::px(start_x), gpui::px(start_y));
+                                    let down_pos =
+                                        gpui::point(gpui::px(start_x), gpui::px(start_y));
                                     log::debug!(
                                         "emitting synthetic MouseDown at drag start ({:.0},{:.0})",
-                                        start_x, start_y
+                                        start_x,
+                                        start_y
                                     );
                                     let _ = guard(gpui::PlatformInput::MouseDown(
                                         gpui::MouseDownEvent {
@@ -1857,7 +1873,11 @@ impl PlatformWindow for AndroidPlatformWindow {
                         state.remove(touch.id);
 
                         match state.gesture {
-                            AndroidTouchGesture::Pending { start_x, start_y, down_time: _ } => {
+                            AndroidTouchGesture::Pending {
+                                start_x,
+                                start_y,
+                                down_time: _,
+                            } => {
                                 {
                                     let mut ms = momentum.lock();
                                     ms.velocity_tracker.reset();

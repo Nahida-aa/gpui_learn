@@ -97,13 +97,16 @@ impl Render for InputDemo {
                             }),
                     )
                     .child(
-                        Button::new("clear")
-                            .label("清空")
-                            .on_click(cx.listener(|this, _, window, cx| {
-                                this.clear_input(window, cx)
-                            })),
+                        Button::new("clear").label("清空").on_click(
+                            cx.listener(|this, _, window, cx| this.clear_input(window, cx)),
+                        ),
                     )
-                    .child(Button::new("disabled").label("禁用示例").danger().disabled(true)),
+                    .child(
+                        Button::new("disabled")
+                            .label("禁用示例")
+                            .danger()
+                            .disabled(true),
+                    ),
             )
             .child(div().child(format!("当前值：{value}")))
             .child(div().child(format!("最后一次 Change：{}", self.last_change)))

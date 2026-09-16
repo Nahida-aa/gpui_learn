@@ -40,7 +40,10 @@
 // WASM 目标下禁用 Rust 默认 main（启动交给 wasm-bindgen）。
 #![cfg_attr(target_family = "wasm", no_main)]
 
-use gpui::{App, Bounds, Context, TextOverflow, Window, WindowBounds, WindowOptions, div, prelude::*, px, size};
+use gpui::{
+    App, Bounds, Context, TextOverflow, Window, WindowBounds, WindowOptions, div, prelude::*, px,
+    size,
+};
 // application() 是 GPUI 的平台入口；web_init() 用于 WASM 初始化。
 use gpui_platform::application;
 

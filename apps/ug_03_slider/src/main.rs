@@ -61,12 +61,7 @@ fn slider_row_styled(
         .h(px(48.0))
         .w_full()
         .child(div().w(px(96.0)).text_size(px(14.0)).child(label.clone()))
-        .child(
-            div()
-                .flex_1()
-                .h(px(32.0))
-                .child(style(Slider::new(slider))),
-        )
+        .child(div().flex_1().h(px(32.0)).child(style(Slider::new(slider))))
         .child(
             div()
                 .w(px(170.0))
@@ -107,7 +102,13 @@ impl SliderDemo {
     fn new(cx: &mut Context<Self>) -> Self {
         let basic = cx.new(|_| SliderState::new());
         let progress = cx.new(|_| SliderState::new().disabled(true));
-        let volume = cx.new(|_| SliderState::new().min(0.1).max(1.0).step(0.01).scale(Scale::Log));
+        let volume = cx.new(|_| {
+            SliderState::new()
+                .min(0.1)
+                .max(1.0)
+                .step(0.01)
+                .scale(Scale::Log)
+        });
         let vertical = cx.new(|_| SliderState::new().axis(Axis::Vertical));
         let stepped = cx.new(|_| SliderState::new().min(0.0).max(100.0).step(10.0));
         let range = cx.new(|_| {
@@ -169,7 +170,12 @@ impl SliderDemo {
     }
 
     /// 演示「只读进度条由外部驱动」：每次 +10，走到 100 回到 0。
-    fn on_advance_progress(&mut self, _: &MouseUpEvent, _window: &mut Window, cx: &mut Context<Self>) {
+    fn on_advance_progress(
+        &mut self,
+        _: &MouseUpEvent,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
         let cur = self.progress.read(cx).value().end();
         let next = (cur + 10.0) % 101.0;
         self.progress.update(cx, |s, cx| s.set_value(next, cx));
@@ -221,7 +227,11 @@ impl Render for SliderDemo {
                             .border_color(rgb(0x666666))
                             .px_2()
                             .py_1()
-                            .child(if self.shared { "共享进度" } else { "独立进度" })
+                            .child(if self.shared {
+                                "共享进度"
+                            } else {
+                                "独立进度"
+                            })
                             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_toggle_shared)),
                     ),
             )
@@ -235,13 +245,21 @@ impl Render for SliderDemo {
                 })
             })
             .child({
-                let s = if self.shared { &self.style_a } else { &self.style_b };
+                let s = if self.shared {
+                    &self.style_a
+                } else {
+                    &self.style_b
+                };
                 slider_row_styled("绿色系".into(), s, cx, |s| {
                     s.fill_color(rgb(0x4a_c0_5a)).thumb_color(rgb(0x2f_a0_3f))
                 })
             })
             .child({
-                let s = if self.shared { &self.style_a } else { &self.style_c };
+                let s = if self.shared {
+                    &self.style_a
+                } else {
+                    &self.style_c
+                };
                 slider_row_styled("紫色系".into(), s, cx, |s| {
                     s.fill_color(rgb(0xa0_6f_d0))
                         .thumb_color(rgb(0x8a_4f_c0))
@@ -249,7 +267,11 @@ impl Render for SliderDemo {
                 })
             })
             .child({
-                let s = if self.shared { &self.style_a } else { &self.style_d };
+                let s = if self.shared {
+                    &self.style_a
+                } else {
+                    &self.style_d
+                };
                 slider_row_styled("红+细轨".into(), s, cx, |s| {
                     s.fill_color(rgb(0xe0_5a_5a))
                         .thumb_color(rgb(0xc0_3a_3a))
@@ -266,13 +288,13 @@ impl Render for SliderDemo {
                     .gap_2()
                     .h(px(48.0))
                     .w_full()
+                    .child(div().w(px(96.0)).text_size(px(14.0)).child("只读进度"))
                     .child(
                         div()
-                            .w(px(96.0))
-                            .text_size(px(14.0))
-                            .child("只读进度")
+                            .flex_1()
+                            .h(px(32.0))
+                            .child(Slider::new(&self.progress)),
                     )
-                    .child(div().flex_1().h(px(32.0)).child(Slider::new(&self.progress)))
                     .child(
                         div()
                             .border_1()
@@ -283,12 +305,18 @@ impl Render for SliderDemo {
                             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_advance_progress)),
                     ),
             )
-            .child(div().text_size(px(12.0)).text_color(rgb(0x88aa88)).child("事件日志："))
-            .children(
-                self.log
-                    .iter()
-                    .map(|l| div().text_size(px(12.0)).text_color(rgb(0x88aa88)).child(l.clone())),
+            .child(
+                div()
+                    .text_size(px(12.0))
+                    .text_color(rgb(0x88aa88))
+                    .child("事件日志："),
             )
+            .children(self.log.iter().map(|l| {
+                div()
+                    .text_size(px(12.0))
+                    .text_color(rgb(0x88aa88))
+                    .child(l.clone())
+            }))
     }
 }
 

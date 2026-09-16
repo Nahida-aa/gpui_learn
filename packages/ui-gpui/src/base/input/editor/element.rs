@@ -10,9 +10,9 @@
 //! `set_row_segments` 即可启用)。多行支持垂直滚动。
 
 use gpui::{
-    fill, px, relative, App, Bounds, ContentMask, CursorStyle, Element, ElementId, Entity,
-    GlobalElementId, IntoElement, LayoutId, PaintQuad, Pixels, ShapedLine, Style, TextRun,
-    UnderlineStyle, Window,
+    App, Bounds, ContentMask, CursorStyle, Element, ElementId, Entity, GlobalElementId,
+    IntoElement, LayoutId, PaintQuad, Pixels, ShapedLine, Style, TextRun, UnderlineStyle, Window,
+    fill, px, relative,
 };
 use std::ops::Range;
 
@@ -97,7 +97,18 @@ impl Element for EditorElement {
         cx: &mut App,
     ) -> Self::PrepaintState {
         // ---- 状态快照(只读一次;行文本按需从 rope 取,不做全量物化)----
-        let (is_multi_line, mut scroll_position, needs_autoscroll, soft_wrap, marked_range, selection, disabled, text_revision, wrapped_revision, wrapped_width) = {
+        let (
+            is_multi_line,
+            mut scroll_position,
+            needs_autoscroll,
+            soft_wrap,
+            marked_range,
+            selection,
+            disabled,
+            text_revision,
+            wrapped_revision,
+            wrapped_width,
+        ) = {
             let editor = self.editor.read(cx);
             (
                 editor.mode.is_multi_line(),
@@ -181,7 +192,8 @@ impl Element for EditorElement {
                     cx.notify();
                 });
             }
-            self.editor.update(cx, |editor, _| editor.needs_autoscroll = false);
+            self.editor
+                .update(cx, |editor, _| editor.needs_autoscroll = false);
         }
 
         let content_origin_y = bounds.top() - scroll_position;
@@ -197,17 +209,14 @@ impl Element for EditorElement {
             let (rows, all_segments) = {
                 let editor = self.editor.read(cx);
                 let rows = editor.rope.summary().lines.row + 1;
-                let mut wrapper =
-                    window.text_system().line_wrapper(style.font(), font_size);
+                let mut wrapper = window.text_system().line_wrapper(style.font(), font_size);
                 let mut all_segments: Vec<Vec<Range<usize>>> = Vec::with_capacity(rows as usize);
                 for row in 0..rows {
                     let row_start = editor
                         .rope
                         .point_to_offset(crate::base::input::engine::Point::new(row, 0));
                     let line_len = editor.rope.line_len(row);
-                    let line_text = editor
-                        .rope
-                        .text_in_range(row_start..row_start + line_len);
+                    let line_text = editor.rope.text_in_range(row_start..row_start + line_len);
                     if line_text.is_empty() {
                         all_segments.push(Vec::new());
                         continue;
@@ -257,12 +266,13 @@ impl Element for EditorElement {
             self.editor.read(cx).rope.summary().lines.row + 1
         };
         let first_visible = if is_multi_line {
-            (scroll_position.as_f32() / line_height.as_f32()).floor().max(0.) as u32
+            (scroll_position.as_f32() / line_height.as_f32())
+                .floor()
+                .max(0.) as u32
         } else {
             0
         };
-        let visible_count =
-            (bounds.size.height.as_f32() / line_height.as_f32()).ceil() as u32 + 1;
+        let visible_count = (bounds.size.height.as_f32() / line_height.as_f32()).ceil() as u32 + 1;
         let last_visible = (first_visible + visible_count).min(display_total);
 
         let show_placeholder = self.editor.read(cx).rope.is_empty();
@@ -336,9 +346,10 @@ impl Element for EditorElement {
                 runs.into_iter().filter(|run| run.len > 0).collect()
             };
 
-            let line = window
-                .text_system()
-                .shape_line(seg_text.as_str().into(), font_size, &runs, None);
+            let line =
+                window
+                    .text_system()
+                    .shape_line(seg_text.as_str().into(), font_size, &runs, None);
             let y = content_origin_y + ((display_row - first_visible) as f32) * line_height;
             lines.push((line, y, seg_start..seg_start + seg_len));
         }
@@ -349,11 +360,15 @@ impl Element for EditorElement {
 
         if is_focused {
             for (line, y, row_range) in &lines {
-                let sel_start = selection.range().start.clamp(row_range.start, row_range.end);
+                let sel_start = selection
+                    .range()
+                    .start
+                    .clamp(row_range.start, row_range.end);
                 let sel_end = selection.range().end.clamp(row_range.start, row_range.end);
                 let full_row = selection.range().start <= row_range.start
                     && selection.range().end >= row_range.end;
-                if sel_start < sel_end || (full_row && sel_start == sel_end && !selection.is_empty())
+                if sel_start < sel_end
+                    || (full_row && sel_start == sel_end && !selection.is_empty())
                 {
                     let x0 = line.x_for_index(sel_start - row_range.start);
                     let x1 = if sel_end == sel_start {
@@ -369,7 +384,10 @@ impl Element for EditorElement {
                         selection_color,
                     ));
                 }
-                if selection.is_empty() && selection.head() >= row_range.start && selection.head() <= row_range.end {
+                if selection.is_empty()
+                    && selection.head() >= row_range.start
+                    && selection.head() <= row_range.end
+                {
                     let x = line.x_for_index(selection.head() - row_range.start);
                     cursor_quad = Some(fill(
                         Bounds::new(
@@ -389,10 +407,7 @@ impl Element for EditorElement {
             .map(|(_, _, range)| range.clone())
             .collect::<Vec<_>>();
         PrepaintState {
-            lines: lines
-                .into_iter()
-                .map(|(line, y, _)| (line, y))
-                .collect(),
+            lines: lines.into_iter().map(|(line, y, _)| (line, y)).collect(),
             ranges,
             first_visible,
             selection_quads,
@@ -482,7 +497,6 @@ impl Element for EditorElement {
                 editor.last_bounds = Some(bounds);
             }
         });
-
     }
 }
 

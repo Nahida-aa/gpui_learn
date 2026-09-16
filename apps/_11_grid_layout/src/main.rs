@@ -18,8 +18,8 @@
 //! 观察 < 400px 时布局塌缩成单列。
 
 use gpui::{
-    container_query, div, prelude::*, px, rgb, size, App, Bounds, Context, Hsla, Window,
-    WindowBounds, WindowOptions,
+    App, Bounds, Context, Hsla, Window, WindowBounds, WindowOptions, container_query, div,
+    prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
 

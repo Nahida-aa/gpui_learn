@@ -18,11 +18,7 @@
 //! 无 starts_with/ends_with；`clip_point` 暂为字节边界版（字素簇版
 //! 在光标移动阶段按需加入，InputState 现在自己用 unicode-segmentation）。
 
-use std::{
-    cmp,
-    fmt,
-    ops::Range,
-};
+use std::{cmp, fmt, ops::Range};
 
 use sum_tree::{Bias, Dimensions, SumTree};
 
@@ -96,10 +92,7 @@ impl Rope {
     /// 拼接另一棵 Rope。右 rope 首块若过小则先并入末块，避免碎片化。
     pub fn append(&mut self, rope: Rope) {
         if let Some(chunk) = rope.chunks.first()
-            && (self
-                .chunks
-                .last()
-                .is_some_and(|c| c.text.len() < MIN_BASE)
+            && (self.chunks.last().is_some_and(|c| c.text.len() < MIN_BASE)
                 || chunk.text.len() < MIN_BASE)
         {
             self.push_chunk(chunk.as_slice());
@@ -137,7 +130,8 @@ impl Rope {
                 let split_ix = if last_chunk.text.len() + text.len() <= MAX_BASE {
                     text.len()
                 } else {
-                    let mut split_ix = cmp::min(MIN_BASE.saturating_sub(last_chunk.text.len()), text.len());
+                    let mut split_ix =
+                        cmp::min(MIN_BASE.saturating_sub(last_chunk.text.len()), text.len());
                     while !text.is_char_boundary(split_ix) {
                         split_ix += 1;
                     }
@@ -196,7 +190,8 @@ impl Rope {
                 let split_ix = if last_chunk.text.len() + chunk.len() <= MAX_BASE {
                     chunk.len()
                 } else {
-                    let mut split_ix = cmp::min(MIN_BASE.saturating_sub(last_chunk.text.len()), chunk.len());
+                    let mut split_ix =
+                        cmp::min(MIN_BASE.saturating_sub(last_chunk.text.len()), chunk.len());
                     while !chunk.is_char_boundary(split_ix) {
                         split_ix += 1;
                     }
@@ -252,8 +247,7 @@ impl Rope {
     }
 
     pub fn chars_at(&self, start: usize) -> impl Iterator<Item = char> + '_ {
-        self.chunks_in_range(start..self.len())
-            .flat_map(str::chars)
+        self.chunks_in_range(start..self.len()).flat_map(str::chars)
     }
 
     pub fn chunks(&self) -> Chunks<'_> {
@@ -282,9 +276,9 @@ impl Rope {
         if offset >= self.summary().len {
             return self.summary().len_utf16;
         }
-        let (start, _, item) = self
-            .chunks
-            .find::<Dimensions<usize, OffsetUtf16>, _>((), &offset, Bias::Left);
+        let (start, _, item) =
+            self.chunks
+                .find::<Dimensions<usize, OffsetUtf16>, _>((), &offset, Bias::Left);
         let overshoot = offset - start.0;
         start.1
             + item.map_or(Default::default(), |chunk| {
@@ -301,9 +295,9 @@ impl Rope {
         if offset >= self.summary().len_utf16 {
             return self.summary().len;
         }
-        let (start, _, item) = self
-            .chunks
-            .find::<Dimensions<OffsetUtf16, usize>, _>((), &offset, Bias::Left);
+        let (start, _, item) =
+            self.chunks
+                .find::<Dimensions<OffsetUtf16, usize>, _>((), &offset, Bias::Left);
         let overshoot = offset - start.0;
         let result = start.1
             + item.map_or(Default::default(), |chunk| {
@@ -316,9 +310,9 @@ impl Rope {
         if offset >= self.summary().len {
             return self.summary().lines;
         }
-        let (start, _, item) = self
-            .chunks
-            .find::<Dimensions<usize, Point>, _>((), &offset, Bias::Left);
+        let (start, _, item) =
+            self.chunks
+                .find::<Dimensions<usize, Point>, _>((), &offset, Bias::Left);
         let overshoot = offset - start.0;
         start.1
             + item.map_or(Point::zero(), |chunk| {
@@ -330,9 +324,9 @@ impl Rope {
         if offset >= self.summary().len {
             return self.summary().lines_utf16();
         }
-        let (start, _, item) = self
-            .chunks
-            .find::<Dimensions<usize, PointUtf16>, _>((), &offset, Bias::Left);
+        let (start, _, item) =
+            self.chunks
+                .find::<Dimensions<usize, PointUtf16>, _>((), &offset, Bias::Left);
         let overshoot = offset - start.0;
         start.1
             + item.map_or(PointUtf16::zero(), |chunk| {
@@ -344,21 +338,20 @@ impl Rope {
         if point >= self.summary().lines {
             return self.summary().len;
         }
-        let (start, _, item) = self
-            .chunks
-            .find::<Dimensions<Point, usize>, _>((), &point, Bias::Left);
+        let (start, _, item) =
+            self.chunks
+                .find::<Dimensions<Point, usize>, _>((), &point, Bias::Left);
         let overshoot = point - start.0;
-        start.1
-            + item.map_or(0, |chunk| chunk.as_slice().point_to_offset(overshoot))
+        start.1 + item.map_or(0, |chunk| chunk.as_slice().point_to_offset(overshoot))
     }
 
     pub fn point_utf16_to_offset(&self, point: PointUtf16) -> usize {
         if point >= self.summary().lines_utf16() {
             return self.summary().len;
         }
-        let (start, _, item) = self
-            .chunks
-            .find::<Dimensions<PointUtf16, usize>, _>((), &point, Bias::Left);
+        let (start, _, item) =
+            self.chunks
+                .find::<Dimensions<PointUtf16, usize>, _>((), &point, Bias::Left);
         let overshoot = point - start.0;
         start.1
             + item.map_or(0, |chunk| {
@@ -370,9 +363,9 @@ impl Rope {
         if point >= self.summary().lines {
             return self.summary().lines_utf16();
         }
-        let (start, _, item) = self
-            .chunks
-            .find::<Dimensions<Point, PointUtf16>, _>((), &point, Bias::Left);
+        let (start, _, item) =
+            self.chunks
+                .find::<Dimensions<Point, PointUtf16>, _>((), &point, Bias::Left);
         let overshoot = point - start.0;
         start.1
             + item.map_or(PointUtf16::zero(), |chunk| {
@@ -645,10 +638,7 @@ mod tests {
                     }
                     _ => {
                         // 坐标互转抽查
-                        let offset = rope.clip_offset(
-                            rng.random_range(0..=rope.len()),
-                            Bias::Left,
-                        );
+                        let offset = rope.clip_offset(rng.random_range(0..=rope.len()), Bias::Left);
                         assert_eq!(
                             rope.offset_to_offset_utf16(offset).0,
                             str_offset_to_utf16(&reference, offset),
@@ -672,7 +662,10 @@ mod tests {
                 }
 
                 assert_eq!(rope.len(), reference.len(), "seed {seed} step {step}");
-                assert!(rope == reference.as_str(), "seed {seed} step {step}: text mismatch");
+                assert!(
+                    rope == reference.as_str(),
+                    "seed {seed} step {step}: text mismatch"
+                );
             }
         }
     }
@@ -783,7 +776,17 @@ mod tests {
     fn random_text(rng: &mut impl rand::Rng, len: usize) -> String {
         // 混入 ASCII / 中文 / emoji / 换行，覆盖 1-4 字节字符
         let alphabet = [
-            'a', 'b', 'c', '\n', '中', '文', '\u{1F600}', '\u{1F601}', 'x', ' ', '\t',
+            'a',
+            'b',
+            'c',
+            '\n',
+            '中',
+            '文',
+            '\u{1F600}',
+            '\u{1F601}',
+            'x',
+            ' ',
+            '\t',
         ];
         let mut s = String::new();
         while s.len() < len {

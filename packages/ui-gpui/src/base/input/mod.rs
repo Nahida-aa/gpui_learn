@@ -14,8 +14,6 @@ pub mod engine;
 pub mod input;
 pub mod textarea;
 
-pub use editor::{
-    Editor, EditorElement, EditorEvent, EditorMode, bind_editor_keys,
-};
-pub use input::{InputEvent, InputState, INPUT_KEY_CONTEXT, bind_input_keys};
+pub use editor::{Editor, EditorElement, EditorEvent, EditorMode, bind_editor_keys};
+pub use input::{INPUT_KEY_CONTEXT, InputEvent, InputState, bind_input_keys};
 pub use textarea::{Textarea, TextareaState};

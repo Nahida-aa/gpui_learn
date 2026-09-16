@@ -7,11 +7,11 @@
 //! 支持单值（`SliderValue::Single`，进度条/音量）与区间（`SliderValue::Range`，
 //! 双 thumb，如时间轴选段）。
 
-use crate::base::geometry::{position_to_value, quantize, value_to_percentage, Scale};
+use crate::base::geometry::{Scale, position_to_value, quantize, value_to_percentage};
 use crate::base::slider::element::SliderEvent;
 use crate::base::slider::slider_value::SliderValue;
 use gpui::{
-    Axis, Bounds, Context, EventEmitter, Focusable, FocusHandle, Pixels, Point, Render, Window,
+    Axis, Bounds, Context, EventEmitter, FocusHandle, Focusable, Pixels, Point, Render, Window,
     div, prelude::*,
 };
 use std::ops::Range;
@@ -314,8 +314,10 @@ impl SliderState {
             } else {
                 self.value.end()
             };
-            self.value
-                .with_thumb(is_start, quantize(cur + delta, self.min, self.max, self.step))
+            self.value.with_thumb(
+                is_start,
+                quantize(cur + delta, self.min, self.max, self.step),
+            )
         } else {
             SliderValue::Single(quantize(
                 self.value.end() + delta,
@@ -362,12 +364,7 @@ impl SliderState {
         if self.disabled {
             return;
         }
-        let new = quantize(
-            self.value.end() + self.step,
-            self.min,
-            self.max,
-            self.step,
-        );
+        let new = quantize(self.value.end() + self.step, self.min, self.max, self.step);
         self.set_value(new, cx);
         cx.emit(SliderEvent::Change(self.value));
         cx.emit(SliderEvent::Release(self.value));
@@ -378,12 +375,7 @@ impl SliderState {
         if self.disabled {
             return;
         }
-        let new = quantize(
-            self.value.end() - self.step,
-            self.min,
-            self.max,
-            self.step,
-        );
+        let new = quantize(self.value.end() - self.step, self.min, self.max, self.step);
         self.set_value(new, cx);
         cx.emit(SliderEvent::Change(self.value));
         cx.emit(SliderEvent::Release(self.value));
@@ -467,7 +459,10 @@ mod tests {
     fn update_value_by_position_maps_pixels_to_value(cx: &mut TestAppContext) {
         let slider = new_slider(cx);
         slider.update(cx, |s, _| s.set_bounds(h_bounds()));
-        assert_eq!(slider.read_with(cx, |s, _| s.value()), SliderValue::Single(0.0));
+        assert_eq!(
+            slider.read_with(cx, |s, _| s.value()),
+            SliderValue::Single(0.0)
+        );
 
         slider.update(cx, |s, cx| {
             s.update_value_by_position(point(px(200.0), px(5.0)), false, cx);
@@ -504,7 +499,9 @@ mod tests {
         });
         assert!(slider.read_with(cx, |s, _| s.is_dragging()));
 
-        slider.update(cx, |s, cx| s.begin_drag(point(px(150.0), px(5.0)), false, cx));
+        slider.update(cx, |s, cx| {
+            s.begin_drag(point(px(150.0), px(5.0)), false, cx)
+        });
         assert!(slider.read_with(cx, |s, _| s.is_dragging()));
         slider.update(cx, |s, cx| s.end_drag(cx));
         assert!(!slider.read_with(cx, |s, _| s.is_dragging()));
@@ -547,7 +544,10 @@ mod tests {
     fn nudge_respects_step_and_clamps(cx: &mut TestAppContext) {
         let slider = cx.new(|_| SliderState::new().min(0.0).max(100.0).step(10.0));
         slider.update(cx, |s, cx| s.nudge(4.0, false, cx));
-        assert_eq!(slider.read_with(cx, |s, _| s.value()), SliderValue::Single(0.0));
+        assert_eq!(
+            slider.read_with(cx, |s, _| s.value()),
+            SliderValue::Single(0.0)
+        );
         slider.update(cx, |s, cx| s.nudge(16.0, false, cx));
         assert_eq!(
             slider.read_with(cx, |s, _| s.value()),
@@ -565,7 +565,9 @@ mod tests {
         let slider = new_slider(cx);
         slider.update(cx, |s, _| s.set_bounds(h_bounds()));
         slider.update(cx, |s, cx| s.set_value(20.0, cx));
-        slider.update(cx, |s, cx| s.begin_drag(point(px(200.0), px(5.0)), false, cx));
+        slider.update(cx, |s, cx| {
+            s.begin_drag(point(px(200.0), px(5.0)), false, cx)
+        });
         assert_eq!(
             slider.read_with(cx, |s, _| s.value()),
             SliderValue::Single(50.0)
@@ -587,7 +589,10 @@ mod tests {
             SliderValue::Single(95.0)
         );
         slider.update(cx, |s, cx| s.set_value(-5.0, cx));
-        assert_eq!(slider.read_with(cx, |s, _| s.value()), SliderValue::Single(0.0));
+        assert_eq!(
+            slider.read_with(cx, |s, _| s.value()),
+            SliderValue::Single(0.0)
+        );
         slider.update(cx, |s, cx| s.set_value(37.0, cx));
         assert_eq!(
             slider.read_with(cx, |s, _| s.value()),
@@ -603,7 +608,10 @@ mod tests {
             let changed = s.update_value_by_position(point(px(200.0), px(5.0)), false, cx);
             assert!(!changed);
         });
-        assert_eq!(slider.read_with(cx, |s, _| s.value()), SliderValue::Single(0.0));
+        assert_eq!(
+            slider.read_with(cx, |s, _| s.value()),
+            SliderValue::Single(0.0)
+        );
         assert!(!slider.read_with(cx, |s, _| s.is_dragging()));
     }
 
@@ -625,9 +633,15 @@ mod tests {
     fn increment_decrement_clamp_to_bounds(cx: &mut TestAppContext) {
         let slider = cx.new(|_| SliderState::new().min(0.0).max(10.0).step(1.0));
         slider.update(cx, |s, cx| s.decrement(cx)); // 0 - 1 → clamp 0
-        assert_eq!(slider.read_with(cx, |s, _| s.value()), SliderValue::Single(0.0));
+        assert_eq!(
+            slider.read_with(cx, |s, _| s.value()),
+            SliderValue::Single(0.0)
+        );
         slider.update(cx, |s, cx| s.increment(cx)); // 0 + 1 → 1
-        assert_eq!(slider.read_with(cx, |s, _| s.value()), SliderValue::Single(1.0));
+        assert_eq!(
+            slider.read_with(cx, |s, _| s.value()),
+            SliderValue::Single(1.0)
+        );
         slider.update(cx, |s, cx| s.increment(cx));
         slider.update(cx, |s, cx| s.increment(cx));
         slider.update(cx, |s, cx| s.increment(cx));
@@ -686,7 +700,9 @@ mod tests {
         let slider = new_slider(cx);
         slider.update(cx, |s, _| s.set_bounds(h_bounds()));
         // 拖动中：is_dragging 为 true，且该 thumb 保持高亮（即使没悬停）。
-        slider.update(cx, |s, cx| s.begin_drag(point(px(200.0), px(5.0)), false, cx));
+        slider.update(cx, |s, cx| {
+            s.begin_drag(point(px(200.0), px(5.0)), false, cx)
+        });
         assert!(slider.read_with(cx, |s, _| s.is_dragging()));
         assert!(slider.read_with(cx, |s, _| s.thumb_highlighted(false)));
         // 松开后：不再高亮（未悬停）。
@@ -716,7 +732,10 @@ mod tests {
     fn thumb_mode_and_whole_hover_state(cx: &mut TestAppContext) {
         // 默认 Always 模式，未 hover。
         let slider = cx.new(|_| SliderState::new());
-        assert_eq!(slider.read_with(cx, |s, _| s.get_thumb_mode()), ThumbMode::Always);
+        assert_eq!(
+            slider.read_with(cx, |s, _| s.get_thumb_mode()),
+            ThumbMode::Always
+        );
         assert!(!slider.read_with(cx, |s, _| s.is_hovered()));
 
         // 换一个 OnHover 模式的 slider，hover 整个 slider。

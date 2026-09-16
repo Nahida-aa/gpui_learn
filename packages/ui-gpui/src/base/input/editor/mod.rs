@@ -25,10 +25,9 @@ mod undo;
 use std::ops::Range;
 
 use gpui::{
-    div, prelude::*, px, App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter,
-    ScrollWheelEvent,
-    FocusHandle, Hsla, KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
-    Pixels, Render, ShapedLine, SharedString, UTF16Selection, Window,
+    App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter, FocusHandle, Hsla,
+    KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Render,
+    ScrollWheelEvent, ShapedLine, SharedString, UTF16Selection, Window, div, prelude::*, px,
 };
 
 pub use actions::*;
@@ -398,7 +397,8 @@ impl Editor {
         };
         // 逆序回放:后发生的先撤销
         for change in &changes {
-            self.rope.replace(change.new_range.clone(), &change.old_text);
+            self.rope
+                .replace(change.new_range.clone(), &change.old_text);
         }
         // 恢复事务开始前的选区(逆序第一项的 selection_before)
         if let Some(first) = changes.first() {
@@ -421,7 +421,8 @@ impl Editor {
             return;
         };
         for change in &changes {
-            self.rope.replace(change.old_range.clone(), &change.new_text);
+            self.rope
+                .replace(change.old_range.clone(), &change.new_text);
         }
         if let Some(last) = changes.last() {
             self.selection = last.selection_after;
@@ -490,7 +491,11 @@ impl Editor {
         let max_scroll = self.max_scroll_offset();
         let next = (self.scroll_position - delta_y).clamp(px(0.), max_scroll);
         if next != self.scroll_position {
-            tracing::debug!(from_y = delta_y.as_f32(), next = next.as_f32(), "wheel scroll");
+            tracing::debug!(
+                from_y = delta_y.as_f32(),
+                next = next.as_f32(),
+                "wheel scroll"
+            );
             self.scroll_position = next;
             cx.emit(EditorEvent::ScrollPositionChanged);
             cx.notify();
@@ -534,7 +539,11 @@ pub fn bind_editor_keys(cx: &mut App) {
         ),
         KeyBinding::new("home", Home, Some(EDITOR_KEY_CONTEXT)),
         KeyBinding::new("end", End, Some(EDITOR_KEY_CONTEXT)),
-        KeyBinding::new("ctrl-cmd-space", ShowCharacterPalette, Some(EDITOR_KEY_CONTEXT)),
+        KeyBinding::new(
+            "ctrl-cmd-space",
+            ShowCharacterPalette,
+            Some(EDITOR_KEY_CONTEXT),
+        ),
         KeyBinding::new("enter", Newline, Some(EDITOR_KEY_CONTEXT)),
     ]);
 }
@@ -623,8 +632,7 @@ impl Editor {
             if self.rope.is_empty() {
                 return 0;
             }
-            let (Some(bounds), Some(line)) =
-                (self.last_bounds.as_ref(), self.last_layout.as_ref())
+            let (Some(bounds), Some(line)) = (self.last_bounds.as_ref(), self.last_layout.as_ref())
             else {
                 return 0;
             };
@@ -704,19 +712,20 @@ impl Render for Editor {
             EditorMode::SingleLine => (window.line_height(), false),
             EditorMode::AutoHeight { min_rows, max_rows } => {
                 // 内容行数 clamp 到 [min, max];超出 max 的部分走滚动
-                let rows = (total_rows as usize).clamp(min_rows.max(1), max_rows.max(min_rows.max(1)));
+                let rows =
+                    (total_rows as usize).clamp(min_rows.max(1), max_rows.max(min_rows.max(1)));
                 (px(line_height.as_f32() * rows as f32), true)
             }
-            EditorMode::MultiLine { rows } => {
-                (px(line_height.as_f32() * rows.max(1) as f32), true)
-            }
+            EditorMode::MultiLine { rows } => (px(line_height.as_f32() * rows.max(1) as f32), true),
         };
 
         // zed 式自绘滚动:滚动状态在本体(scroll_position),element 绘制时
         // 自行平移 content_origin 并用 ContentMask 裁剪,不依赖 div 的
         // overflow_scroll——坐标自控,命中测试与绘制严格互逆。
         let _ = scrollable;
-        let editor_element = EditorElement { editor: cx.entity() };
+        let editor_element = EditorElement {
+            editor: cx.entity(),
+        };
 
         div()
             .id("editor-root")
@@ -884,7 +893,8 @@ mod tests {
     #[gpui::test]
     fn test_multiline_vertical_movement(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| {
-            Editor::with_mode(EditorMode::MultiLine { rows: 3 }, cx).default_value("abcd\nef\nghijk")
+            Editor::with_mode(EditorMode::MultiLine { rows: 3 }, cx)
+                .default_value("abcd\nef\nghijk")
         });
         editor.update(cx, |editor, cx| {
             // 光标到第一行行尾(offset 4)
@@ -1070,7 +1080,8 @@ impl EntityInputHandler for Editor {
             selection_before,
             self.selection,
         );
-        self.undo_manager.record_transaction(change, EditIntent::Atomic);
+        self.undo_manager
+            .record_transaction(change, EditIntent::Atomic);
         // 组字区也要可见:中文输入法组字时若光标在视口外,同样需要滚回
         self.request_autoscroll();
         cx.notify();
@@ -1148,8 +1159,7 @@ mod autoscroll_tests {
 
         // 初始一帧:光标在行 0,不应滚动
         draw_frame(&mut cx);
-        let initial =
-            cx.update(|_, cx| editor.read(cx).scroll_position);
+        let initial = cx.update(|_, cx| editor.read(cx).scroll_position);
         assert_eq!(initial, px(0.), "初始帧不应滚动");
 
         // 连续下移 19 次:光标从行 0 到行 19,远超 4 行视口
@@ -1168,9 +1178,7 @@ mod autoscroll_tests {
     /// 内容不足一屏时也能继续滚(对齐 zed 的 ScrollBeyondLastLine::OnePage):
     /// 两行内容、8 行视口,滚轮向下后 scroll_position 应 > 0。
     #[gpui::test]
-    fn test_scroll_beyond_last_line_when_content_is_short(
-        cx: &mut gpui::TestAppContext,
-    ) {
+    fn test_scroll_beyond_last_line_when_content_is_short(cx: &mut gpui::TestAppContext) {
         let mut editor_slot = None;
         let window = cx.add_window(|window, cx| {
             let editor = Editor::with_mode(EditorMode::MultiLine { rows: 8 }, cx)
@@ -1190,8 +1198,9 @@ mod autoscroll_tests {
         });
 
         // 内容只有 2 行,视口 8 行:OnePage 下上限仍应 > 0
-        let max_scroll =
-            cx.update(|_, cx| editor.read(cx).max_scroll_offset()).as_f32();
+        let max_scroll = cx
+            .update(|_, cx| editor.read(cx).max_scroll_offset())
+            .as_f32();
         assert!(
             max_scroll > 0.,
             "内容不足一屏时也应能滚(scroll beyond last line), got max={max_scroll}"
@@ -1249,8 +1258,7 @@ mod autoscroll_tests {
             })
         });
         draw_frame(&mut cx);
-        let scrolled_to_cursor =
-            cx.update(|_, cx| editor.read(cx).scroll_position).as_f32();
+        let scrolled_to_cursor = cx.update(|_, cx| editor.read(cx).scroll_position).as_f32();
         assert!(scrolled_to_cursor > 0., "光标移到行 19 后应滚动");
 
         // 手动滚回顶部(模拟用户滚走)
@@ -1314,7 +1322,10 @@ mod autoscroll_tests {
 
         // 折行确实发生(否则这个测试没有意义)
         let display_rows = cx.update(|_, cx| editor.read(cx).display_rows());
-        assert!(display_rows > 2, "行 0 应被折成多条视觉行, display_rows={display_rows}");
+        assert!(
+            display_rows > 2,
+            "行 0 应被折成多条视觉行, display_rows={display_rows}"
+        );
 
         // 显式把光标放到文档开头(default_value 不动 selection, 但测试要可控)
         cx.update(|_, cx| {
@@ -1341,8 +1352,8 @@ mod autoscroll_tests {
         let long_text = "word ".repeat(80);
         let mut editor_slot = None;
         let window = cx.add_window(|window, cx| {
-            let editor = Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx)
-                .default_value(&long_text);
+            let editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value(&long_text);
             let handle = editor.focus_handle.clone();
             window.focus(&handle, cx);
             editor_slot = Some(cx.entity());
@@ -1385,7 +1396,10 @@ mod autoscroll_tests {
             let _ = window.draw(cx);
         });
         let rows_after = cx.update(|_, cx| editor.read(cx).last_lines.len());
-        assert_eq!(rows_after, buffer_rows as usize, "关闭软换行后回到 buffer 行数");
+        assert_eq!(
+            rows_after, buffer_rows as usize,
+            "关闭软换行后回到 buffer 行数"
+        );
     }
 
     /// Off 模式:内容不足一屏时上限为 0(普通滚动行为)。

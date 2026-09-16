@@ -12,10 +12,10 @@
 //! 精简点：去掉 `tabs` 位图（indent 场景再加）；`text` 用 `String`
 //! 而非 `heapless::ArrayString`（学习版优先可读性，容量由模块自身保证）。
 
+use super::point::{OffsetUtf16, Point, PointUtf16};
+use super::summary::TextSummary;
 use std::{cmp, ops::Range};
 use sum_tree::Bias;
-use super::summary::TextSummary;
-use super::point::{OffsetUtf16, Point, PointUtf16};
 
 pub(crate) type Bitmap = u128;
 
@@ -157,8 +157,7 @@ impl Chunk {
 
     #[inline(always)]
     pub fn is_char_boundary(&self, offset: usize) -> bool {
-        (1 as Bitmap).unbounded_shl(offset as u32) & self.chars != 0
-            || offset == self.text.len()
+        (1 as Bitmap).unbounded_shl(offset as u32) & self.chars != 0 || offset == self.text.len()
     }
 }
 
@@ -183,8 +182,7 @@ impl<'a> ChunkSlice<'a> {
 
     #[inline(always)]
     pub fn is_char_boundary(&self, offset: usize) -> bool {
-        (1 as Bitmap).unbounded_shl(offset as u32) & self.chars != 0
-            || offset == self.text.len()
+        (1 as Bitmap).unbounded_shl(offset as u32) & self.chars != 0 || offset == self.text.len()
     }
 
     #[inline(always)]
@@ -317,9 +315,7 @@ impl<'a> ChunkSlice<'a> {
     /// 字节偏移 → 行列（chunk 内部，offset 必须是字符边界）。
     #[inline(always)]
     pub fn offset_to_point(&self, offset: usize) -> Point {
-        let mask = (1 as Bitmap)
-            .unbounded_shl(offset as u32)
-            .wrapping_sub(1);
+        let mask = (1 as Bitmap).unbounded_shl(offset as u32).wrapping_sub(1);
         let row = (self.newlines & mask).count_ones();
         let newline_ix = Bitmap::BITS - (self.newlines & mask).leading_zeros();
         let column = (offset - newline_ix as usize) as u32;
@@ -343,9 +339,7 @@ impl<'a> ChunkSlice<'a> {
 
     #[inline(always)]
     pub fn offset_to_offset_utf16(&self, offset: usize) -> OffsetUtf16 {
-        let mask = (1 as Bitmap)
-            .unbounded_shl(offset as u32)
-            .wrapping_sub(1);
+        let mask = (1 as Bitmap).unbounded_shl(offset as u32).wrapping_sub(1);
         OffsetUtf16((self.chars_utf16 & mask).count_ones() as usize)
     }
 
@@ -412,7 +406,11 @@ impl<'a> ChunkSlice<'a> {
                 while !self.text.is_char_boundary(offset) {
                     offset -= 1;
                 }
-                debug_assert!(clip, "point {:?} is within character in chunk {:?}", point, self.text);
+                debug_assert!(
+                    clip,
+                    "point {:?} is within character in chunk {:?}",
+                    point, self.text
+                );
             }
         }
         offset

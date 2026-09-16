@@ -37,39 +37,211 @@ fn status(hex: u32) -> StatusColor {
 
 fn syntax_mocha() -> SyntaxTheme {
     SyntaxTheme::new([
-        ("comment".into(), HighlightStyle { color: Some(h(0x6c7086)), font_style: Some(FontStyle::Italic), ..Default::default() }),
-        ("keyword".into(), HighlightStyle { color: Some(h(0xcba6f7)), ..Default::default() }),
-        ("string".into(), HighlightStyle { color: Some(h(0xa6e3a1)), ..Default::default() }),
-        ("number".into(), HighlightStyle { color: Some(h(0xf9e2af)), ..Default::default() }),
-        ("function".into(), HighlightStyle { color: Some(h(0x89b4fa)), ..Default::default() }),
-        ("type".into(), HighlightStyle { color: Some(h(0x89dceb)), ..Default::default() }),
-        ("constant".into(), HighlightStyle { color: Some(h(0xfab387)), ..Default::default() }),
-        ("variable".into(), HighlightStyle { color: Some(h(0xcdd6f4)), ..Default::default() }),
-        ("operator".into(), HighlightStyle { color: Some(h(0x94e2d5)), ..Default::default() }),
-        ("punctuation".into(), HighlightStyle { color: Some(h(0x9399b2)), ..Default::default() }),
-        ("tag".into(), HighlightStyle { color: Some(h(0xf38ba8)), ..Default::default() }),
-        ("attribute".into(), HighlightStyle { color: Some(h(0xfab387)), ..Default::default() }),
-        ("title".into(), HighlightStyle { color: Some(h(0x89b4fa)), font_weight: Some(FontWeight::MEDIUM), ..Default::default() }),
-        ("link".into(), HighlightStyle { color: Some(h(0x89b4fa)), ..Default::default() }),
+        (
+            "comment".into(),
+            HighlightStyle {
+                color: Some(h(0x6c7086)),
+                font_style: Some(FontStyle::Italic),
+                ..Default::default()
+            },
+        ),
+        (
+            "keyword".into(),
+            HighlightStyle {
+                color: Some(h(0xcba6f7)),
+                ..Default::default()
+            },
+        ),
+        (
+            "string".into(),
+            HighlightStyle {
+                color: Some(h(0xa6e3a1)),
+                ..Default::default()
+            },
+        ),
+        (
+            "number".into(),
+            HighlightStyle {
+                color: Some(h(0xf9e2af)),
+                ..Default::default()
+            },
+        ),
+        (
+            "function".into(),
+            HighlightStyle {
+                color: Some(h(0x89b4fa)),
+                ..Default::default()
+            },
+        ),
+        (
+            "type".into(),
+            HighlightStyle {
+                color: Some(h(0x89dceb)),
+                ..Default::default()
+            },
+        ),
+        (
+            "constant".into(),
+            HighlightStyle {
+                color: Some(h(0xfab387)),
+                ..Default::default()
+            },
+        ),
+        (
+            "variable".into(),
+            HighlightStyle {
+                color: Some(h(0xcdd6f4)),
+                ..Default::default()
+            },
+        ),
+        (
+            "operator".into(),
+            HighlightStyle {
+                color: Some(h(0x94e2d5)),
+                ..Default::default()
+            },
+        ),
+        (
+            "punctuation".into(),
+            HighlightStyle {
+                color: Some(h(0x9399b2)),
+                ..Default::default()
+            },
+        ),
+        (
+            "tag".into(),
+            HighlightStyle {
+                color: Some(h(0xf38ba8)),
+                ..Default::default()
+            },
+        ),
+        (
+            "attribute".into(),
+            HighlightStyle {
+                color: Some(h(0xfab387)),
+                ..Default::default()
+            },
+        ),
+        (
+            "title".into(),
+            HighlightStyle {
+                color: Some(h(0x89b4fa)),
+                font_weight: Some(FontWeight::MEDIUM),
+                ..Default::default()
+            },
+        ),
+        (
+            "link".into(),
+            HighlightStyle {
+                color: Some(h(0x89b4fa)),
+                ..Default::default()
+            },
+        ),
     ])
 }
 
 fn syntax_latte() -> SyntaxTheme {
     SyntaxTheme::new([
-        ("comment".into(), HighlightStyle { color: Some(h(0x9ca0b0)), font_style: Some(FontStyle::Italic), ..Default::default() }),
-        ("keyword".into(), HighlightStyle { color: Some(h(0x8839ef)), ..Default::default() }),
-        ("string".into(), HighlightStyle { color: Some(h(0x40a02b)), ..Default::default() }),
-        ("number".into(), HighlightStyle { color: Some(h(0xfe640b)), ..Default::default() }),
-        ("function".into(), HighlightStyle { color: Some(h(0x1e66f5)), ..Default::default() }),
-        ("type".into(), HighlightStyle { color: Some(h(0x179299)), ..Default::default() }),
-        ("constant".into(), HighlightStyle { color: Some(h(0xfe640b)), ..Default::default() }),
-        ("variable".into(), HighlightStyle { color: Some(h(0x4c4f69)), ..Default::default() }),
-        ("operator".into(), HighlightStyle { color: Some(h(0x04a5e5)), ..Default::default() }),
-        ("punctuation".into(), HighlightStyle { color: Some(h(0x6c6f85)), ..Default::default() }),
-        ("tag".into(), HighlightStyle { color: Some(h(0xd20f39)), ..Default::default() }),
-        ("attribute".into(), HighlightStyle { color: Some(h(0xfe640b)), ..Default::default() }),
-        ("title".into(), HighlightStyle { color: Some(h(0x1e66f5)), font_weight: Some(FontWeight::MEDIUM), ..Default::default() }),
-        ("link".into(), HighlightStyle { color: Some(h(0x1e66f5)), ..Default::default() }),
+        (
+            "comment".into(),
+            HighlightStyle {
+                color: Some(h(0x9ca0b0)),
+                font_style: Some(FontStyle::Italic),
+                ..Default::default()
+            },
+        ),
+        (
+            "keyword".into(),
+            HighlightStyle {
+                color: Some(h(0x8839ef)),
+                ..Default::default()
+            },
+        ),
+        (
+            "string".into(),
+            HighlightStyle {
+                color: Some(h(0x40a02b)),
+                ..Default::default()
+            },
+        ),
+        (
+            "number".into(),
+            HighlightStyle {
+                color: Some(h(0xfe640b)),
+                ..Default::default()
+            },
+        ),
+        (
+            "function".into(),
+            HighlightStyle {
+                color: Some(h(0x1e66f5)),
+                ..Default::default()
+            },
+        ),
+        (
+            "type".into(),
+            HighlightStyle {
+                color: Some(h(0x179299)),
+                ..Default::default()
+            },
+        ),
+        (
+            "constant".into(),
+            HighlightStyle {
+                color: Some(h(0xfe640b)),
+                ..Default::default()
+            },
+        ),
+        (
+            "variable".into(),
+            HighlightStyle {
+                color: Some(h(0x4c4f69)),
+                ..Default::default()
+            },
+        ),
+        (
+            "operator".into(),
+            HighlightStyle {
+                color: Some(h(0x04a5e5)),
+                ..Default::default()
+            },
+        ),
+        (
+            "punctuation".into(),
+            HighlightStyle {
+                color: Some(h(0x6c6f85)),
+                ..Default::default()
+            },
+        ),
+        (
+            "tag".into(),
+            HighlightStyle {
+                color: Some(h(0xd20f39)),
+                ..Default::default()
+            },
+        ),
+        (
+            "attribute".into(),
+            HighlightStyle {
+                color: Some(h(0xfe640b)),
+                ..Default::default()
+            },
+        ),
+        (
+            "title".into(),
+            HighlightStyle {
+                color: Some(h(0x1e66f5)),
+                font_weight: Some(FontWeight::MEDIUM),
+                ..Default::default()
+            },
+        ),
+        (
+            "link".into(),
+            HighlightStyle {
+                color: Some(h(0x1e66f5)),
+                ..Default::default()
+            },
+        ),
     ])
 }
 

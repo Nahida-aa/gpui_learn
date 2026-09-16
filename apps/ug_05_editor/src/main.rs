@@ -12,20 +12,17 @@
 
 #![cfg_attr(target_family = "wasm", no_main)]
 
-use tracing_subscriber;
 use gpui::{
-    div, prelude::*, px, rgb, App, Context, IntoElement, ParentElement, Render, Window,
-    WindowBounds, WindowOptions, actions, size,
+    App, Context, IntoElement, ParentElement, Render, Window, WindowBounds, WindowOptions, actions,
+    div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use ui_gpui::base::input::editor::{bind_editor_keys, Editor, EditorMode, EDITOR_KEY_CONTEXT};
-use ui_gpui::base::input::input::{bind_input_keys, InputState};
+use tracing_subscriber;
+use ui_gpui::base::input::editor::{EDITOR_KEY_CONTEXT, Editor, EditorMode, bind_editor_keys};
+use ui_gpui::base::input::input::{InputState, bind_input_keys};
 use ui_gpui::base::theme::init_theme;
 
-actions!(
-    editor_demo,
-    [Quit]
-);
+actions!(editor_demo, [Quit]);
 
 struct EditorDemo {
     multi: gpui::Entity<Editor>,
@@ -35,17 +32,12 @@ struct EditorDemo {
 impl EditorDemo {
     fn new(cx: &mut App) -> Self {
         let multi = cx.new(|cx| {
-            Editor::with_mode(
-                EditorMode::MultiLine { rows: 8 },
-                cx,
-            )
-            .placeholder("多行编辑器:输入代码或文本,Ctrl+Z 撤销…")
-            .default_value("fn main() {\n    println!(\"hello editor\");\n}")
+            Editor::with_mode(EditorMode::MultiLine { rows: 8 }, cx)
+                .placeholder("多行编辑器:输入代码或文本,Ctrl+Z 撤销…")
+                .default_value("fn main() {\n    println!(\"hello editor\");\n}")
         });
 
-        let single = cx.new(|cx| {
-            InputState::new(cx).placeholder("单行对照:Enter 提交")
-        });
+        let single = cx.new(|cx| InputState::new(cx).placeholder("单行对照:Enter 提交"));
         Self { multi, single }
     }
 }
@@ -62,11 +54,7 @@ impl Render for EditorDemo {
             .bg(rgb(0x11111b))
             .text_color(rgb(0xcdd6f4))
             .p_4()
-            .child(
-                div()
-                    .text_lg()
-                    .child("ug_05_editor —— ui-gpui 多行编辑器"),
-            )
+            .child(div().text_lg().child("ug_05_editor —— ui-gpui 多行编辑器"))
             .child(
                 div()
                     .text_sm()

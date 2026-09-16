@@ -11,14 +11,14 @@
 //! 阶段 A 移动在 buffer 字节空间;display_map 落地后(阶段 B)切到
 //! display 空间并启用 goal 列保持——core 方法签名不变。
 
-use gpui::{actions, ClipboardItem, Context, Window};
+use gpui::{ClipboardItem, Context, Window, actions};
 use unicode_segmentation::UnicodeSegmentation;
 
 use super::selection::{Selection, SelectionGoal};
-use std::ops::Range;
 use super::undo::EditIntent;
 use super::{Editor, movement};
 use crate::base::input::engine::Point as BufferPoint;
+use std::ops::Range;
 
 actions!(
     editor,
@@ -133,9 +133,7 @@ impl Editor {
             } else {
                 movement::down(&self.display_map, &self.rope, point, self.selection.goal)
             };
-            let buffer_point = self
-                .display_map
-                .display_point_to_buffer_point(new_point);
+            let buffer_point = self.display_map.display_point_to_buffer_point(new_point);
             let target = self.rope.point_to_offset(buffer_point);
             self.selection.collapse_to(target, goal);
             self.change_selections(cx);
@@ -165,7 +163,9 @@ impl Editor {
         let target_end = if target_row == max_row {
             self.rope.len()
         } else {
-            self.rope.point_to_offset(BufferPoint::new(target_row + 1, 0)) - 1
+            self.rope
+                .point_to_offset(BufferPoint::new(target_row + 1, 0))
+                - 1
         };
         let target = (target_start + column as usize).min(target_end);
         self.selection.collapse_to(target, SelectionGoal::None);
@@ -228,9 +228,7 @@ impl Editor {
             } else {
                 movement::down(&self.display_map, &self.rope, point, self.selection.goal)
             };
-            let buffer_point = self
-                .display_map
-                .display_point_to_buffer_point(new_point);
+            let buffer_point = self.display_map.display_point_to_buffer_point(new_point);
             let target = self.rope.point_to_offset(buffer_point);
             self.selection.set_head(target, goal);
             self.change_selections(cx);
@@ -247,7 +245,9 @@ impl Editor {
         let target_end = if target_row >= max_row {
             self.rope.len()
         } else {
-            self.rope.point_to_offset(BufferPoint::new(target_row + 1, 0)) - 1
+            self.rope
+                .point_to_offset(BufferPoint::new(target_row + 1, 0))
+                - 1
         };
         let target = (target_start + column as usize).min(target_end);
         self.selection.set_head(target, SelectionGoal::None);
@@ -315,7 +315,10 @@ impl Editor {
             .rope
             .point_to_offset(BufferPoint::new(self.rope.offset_to_point(head).row, 0));
         let line_head = self.rope.text_in_range(row_start..head);
-        let indent: String = line_head.chars().take_while(|c| c.is_whitespace()).collect();
+        let indent: String = line_head
+            .chars()
+            .take_while(|c| c.is_whitespace())
+            .collect();
         let text = format!("\n{indent}");
         self.replace_selections(&text, EditIntent::Atomic, cx);
     }
@@ -392,12 +395,7 @@ impl Editor {
         self.change_selections(cx);
     }
 
-    pub fn move_to_next_word_end(
-        &mut self,
-        _: &WordRight,
-        _: &mut Window,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn move_to_next_word_end(&mut self, _: &WordRight, _: &mut Window, cx: &mut Context<Self>) {
         let head = self.selection.head();
         self.selection
             .collapse_to(self.next_word_end_offset(head), SelectionGoal::None);

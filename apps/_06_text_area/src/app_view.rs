@@ -2,8 +2,11 @@
 //!
 //! 平台无关：Android 入口会在获得焦点时弹软键盘，桌面入口用标准窗口即可。
 
-use gpui::{App, Context, Entity, FocusHandle, Focusable, IntoElement, Render, Window, div, hsla, px, rgb, white};
 use gpui::prelude::*;
+use gpui::{
+    App, Context, Entity, FocusHandle, Focusable, IntoElement, Render, Window, div, hsla, px, rgb,
+    white,
+};
 
 use crate::editor::Editor;
 use crate::text_area::TextArea;
@@ -70,9 +73,16 @@ impl Render for MultilineExample {
         div()
             .bg(rgb(0xf0f0f0))
             .track_focus(&self.focus_handle(cx))
-            .on_mouse_down(gpui::MouseButton::Left, |event: &gpui::MouseDownEvent, _window, _cx| {
-                log::info!("[appview] on_mouse_down pos={:?} click={}", event.position, event.click_count);
-            })
+            .on_mouse_down(
+                gpui::MouseButton::Left,
+                |event: &gpui::MouseDownEvent, _window, _cx| {
+                    log::info!(
+                        "[appview] on_mouse_down pos={:?} click={}",
+                        event.position,
+                        event.click_count
+                    );
+                },
+            )
             .flex()
             .flex_col()
             .size_full()
