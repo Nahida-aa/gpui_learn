@@ -74,7 +74,7 @@ anyhow = "1.0"
 # zed 未把它发布到 crates.io（publish = false），因此这里直接写 git 源；
 # rev 与下方 [patch.crates-io] 的 gpui 保持一致，cargo 会把同一 rev 的仓库
 # 去重成一次 clone，且 gpui 内部的 sum_tree 与我们引用的是同一个包实例。
-sum_tree = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19" }
+sum_tree = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f" }
 
 # 调试/结构化日志(仓库约定见 AGENTS.md)
 tracing = "0.1"
@@ -94,11 +94,11 @@ assets = { path = "packages/assets" }
 [patch.crates-io]
 # version = "=0.2.2" 精确指定：zed 仓库在该 rev 的 git 源里同时存在 0.0.0（开发版）
 # 和历史上的 0.2.2 tag，cargo 要求显式锁定到我们要替换的那一个。
-gpui = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.2.2" }
-gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
-gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
-gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
-gpui_util = { git = "https://github.com/zed-industries/zed", rev = "801c087af22dd189dc1aa49e2f370b4f04190b19", version = "=0.1.0" }
+gpui = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f", version = "=0.2.2" }
+gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f", version = "=0.1.0" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f", version = "=0.1.0" }
+gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f", version = "=0.1.0" }
+gpui_util = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f", version = "=0.1.0" }
 
 # [workspace.lints]：统一的 lint 配置，供子包用 `lints.workspace = true` 继承
 # （如 packages/assets）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
