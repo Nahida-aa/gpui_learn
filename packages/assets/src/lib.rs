@@ -4,6 +4,10 @@ use anyhow::Context as _;
 use gpui::{App, AssetSource, Result, SharedString};
 use rust_embed::RustEmbed;
 
+// Auto-generated IconName enum from assets/icons/*.svg (build.rs).
+// One-shot: drop SVG, rebuild done. No manual enum maintenance.
+include!(concat!(env!("OUT_DIR"), "/icon_name.rs"));
+
 #[derive(RustEmbed)]
 #[folder = "../../assets"]
 #[include = "fonts/**/*"]
