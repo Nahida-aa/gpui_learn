@@ -38,13 +38,21 @@
 
 pub mod builtin;
 pub mod content;
+pub mod icon_theme;
 pub mod loaders;
 pub mod schema;
+pub mod settings_provider;
 pub mod styles;
+pub mod ui_density;
 
 mod state;
 
 pub use schema::{AppearanceContent, try_parse_color};
+pub use settings_provider::{
+    DefaultThemeSettingsProvider, ThemeSettingsProvider, buffer_font, buffer_font_size,
+    scaled_spacing, set_theme_settings_provider, theme_settings, ui_density, ui_font, ui_font_size,
+};
+pub use ui_density::UiDensity;
 
 pub use state::{
     ActiveTheme, Appearance, GlobalTheme, GlobalThemeRegistry, Theme, ThemeFamily, ThemeStyles,
