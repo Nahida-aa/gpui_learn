@@ -40,6 +40,7 @@ pub use component::button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
 pub use component::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
 };
+pub use component::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use component::divider::{Divider, DividerColor, DividerDirection};
 pub use component::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use traits::{

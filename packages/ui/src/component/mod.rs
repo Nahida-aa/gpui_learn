@@ -10,13 +10,17 @@
 //! - [`button`]：`ButtonStyle` + `IconButton`（对齐 zed 的 `IconButton`）。
 //! - [`context_menu`]：上下文菜单（right-click / popup 菜单的通用实现）。
 //! - [`tooltip`]：悬浮提示（[`Tooltip`] + [`TooltipHost`]，对齐 zed `Tooltip`）。
+//! - [`popover_menu`]：点击触发的锚定浮层菜单（[`PopoverMenu`] +
+//!   [`PopoverMenuHandle`]，对齐 zed `PopoverMenu`）。
 
 pub mod button;
 pub mod context_menu;
 pub mod divider;
+pub mod popover_menu;
 pub mod tooltip;
 
 pub use button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu};
 pub use divider::{Divider, DividerColor, DividerDirection};
+pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use tooltip::{Tooltip, TooltipHost, tooltip_host};
