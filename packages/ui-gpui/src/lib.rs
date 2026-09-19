@@ -16,6 +16,7 @@
 
 pub mod base;
 pub mod component;
+pub mod traits;
 
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
 /// ui-gpui 复用它，不自带资源目录。
@@ -36,6 +37,7 @@ pub use component::context_menu::{
 };
 pub use component::divider::{Divider, DividerColor, DividerDirection};
 pub use component::tooltip::{Tooltip, TooltipHost, tooltip_host};
+pub use traits::StyledExt;
 
 /// 复用 gpui 的轴方向类型，方便调用方设置 `SliderState::axis`。
 pub use gpui::Axis;
