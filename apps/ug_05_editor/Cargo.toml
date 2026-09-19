@@ -8,8 +8,9 @@ description = "ug_05_editor —— ui-gpui 的多行编辑器演示"
 [dependencies]
 gpui = { workspace = true }
 ui-gpui = { path = "../../packages/ui-gpui" }
-# 主题系统已独立成包：demo 直接用它初始化（不再经 ui_gpui::base::theme）
-aa-gpui-kit-theme.workspace = true
+# 主题系统已独立成包：demo 直接用 theme-settings 初始化
+# （它负责装 JSON 主题；aa-gpui-kit-theme 只管运行时结构）。
+theme-settings.workspace = true
 tracing-subscriber.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]

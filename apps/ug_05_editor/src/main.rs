@@ -14,12 +14,12 @@
 
 #![cfg_attr(target_family = "wasm", no_main)]
 
-use aa_gpui_kit_theme::init_theme;
 use gpui::{
     App, Context, IntoElement, ParentElement, Render, Window, WindowBounds, WindowOptions, actions,
     div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
+use theme_settings::init_theme;
 use tracing_subscriber;
 use ui_gpui::base::input::editor::{EDITOR_KEY_CONTEXT, Editor, EditorMode, bind_editor_keys};
 use ui_gpui::base::input::input::{InputState, bind_input_keys};

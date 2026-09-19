@@ -1,26 +1,30 @@
-//! theme/loaders：把 zed 主题扩展 JSON（[`content`]）转成本仓库的 [`Theme`]。
+//! loaders：把 zed 主题扩展 JSON（[`crate::content`]）转成 [`Theme`]。
 //!
 //! 分两步：
 //!
 //! 1. [`parse_theme_family`]：`serde_json` 解析文件 → 中间 [`ThemeFamilyContent`]；
-//! 2. [`theme_from_content`]：把扁平 dotted-key 经[`apply_color`]的映射表搬进
+//! 2. `theme_from_content`：把扁平 dotted-key 经 `apply_color` 的映射表搬进
 //!    [`ThemeColors`] / [`StatusColors`]，`syntax` 铺进 [`SyntaxTheme`]，
 //!    `accents` 数组给 [`AccentColors`]，缺失字段回退到内置 Mocha/Latte 基色。
 //!
-//! 与 zed 的关系：本文件 ≈ zed `ThemeColorsRefinement` + `syntax_overrides`
-//! 的极简版映射；不同的是 zed 的 JSON 用结构化 `style.colors.*` 子对象，
-//! 而 catppuccin/zed 这种 v0.2.0 扩展用**扁平 dotted-key**，所以我们直接把
-//! `"组.字段"` 当作查表 key。
+//! 与 zed 的关系：本文件 ≈ zed `theme_settings.rs` 的 `refine_theme_family` /
+//! `refine_theme` / `merge_accent_colors` 的极简版。差异在于 zed 的 JSON 用
+//! 结构化 `style.colors.*` 子对象，而 catppuccin/zed 这类 v0.2.0 扩展用
+//! **扁平 dotted-key**，所以我们直接把 `"组.字段"` 当作查表 key。
+//!
+//! 本文件在 theme-settings 包内（不在 theme 包）——`theme` 只描述运行时结构，
+//! 不知道 JSON 长什么样。这样依赖方向单向：theme-settings → theme。
 
 use std::sync::Arc;
 
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, WindowBackgroundAppearance};
 
-use crate::content::{AppearanceContent, StyleContent, SyntaxContent, ThemeFamilyContent};
-use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
-use crate::styles::{
-    AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
+use aa_gpui_kit_theme::{
+    AccentColors, Appearance, PlayerColors, StatusColors, SyntaxTheme, SystemColors, Theme,
+    ThemeColors, ThemeFamily, ThemeStyles,
 };
+
+use crate::content::{AppearanceContent, StyleContent, SyntaxContent, ThemeFamilyContent};
 
 /// 解析一个主题家族文件（`themes/*.json`）。
 pub fn parse_theme_family(bytes: &[u8]) -> serde_json::Result<ThemeFamily> {
@@ -126,26 +130,26 @@ fn theme_from_style(
 
 fn base_colors(appearance: Appearance) -> ThemeColors {
     match appearance {
-        Appearance::Light => crate::builtin::theme_colors_latte(),
-        Appearance::Dark => crate::builtin::theme_colors_mocha(),
+        Appearance::Light => aa_gpui_kit_theme::builtin::theme_colors_latte(),
+        Appearance::Dark => aa_gpui_kit_theme::builtin::theme_colors_mocha(),
     }
 }
 
 fn base_status(appearance: Appearance) -> StatusColors {
     match appearance {
-        Appearance::Light => crate::builtin::status_colors_latte(),
-        Appearance::Dark => crate::builtin::status_colors_mocha(),
+        Appearance::Light => aa_gpui_kit_theme::builtin::status_colors_latte(),
+        Appearance::Dark => aa_gpui_kit_theme::builtin::status_colors_mocha(),
     }
 }
 
 /// `#rrggbb` / `#rrggbbaa` → `Hsla`，解析失败返回 `None`。
 ///
-/// 实际解析在 [`crate::schema::try_parse_color`]（对外的公开契约，
+/// 实际解析在 [`aa_gpui_kit_theme::try_parse_color`]（对外的公开契约，
 /// 与 zed 同名）；这里只做 `Result` → `Option` 的适配——加载器遇到
 /// 单个坏颜色值的选择是**跳过并继续**（整份主题不该因为一个字段报废），
 /// 而不是向上传播错误。
 fn parse_hex(hex: &str) -> Option<Hsla> {
-    crate::schema::try_parse_color(hex).ok()
+    aa_gpui_kit_theme::try_parse_color(hex).ok()
 }
 
 fn highlight_from_syntax(entry: &SyntaxContent) -> HighlightStyle {

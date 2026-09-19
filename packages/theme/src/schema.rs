@@ -1,8 +1,12 @@
 //! schema:主题 JSON 的公开 schema 与颜色解析,对齐 zed `crates/theme/src/schema.rs`。
 //!
 //! zed 这个文件只有两样东西:一个「序列化形态的明暗枚举」和一个颜色解析
-//! 函数——它们的共同点是**属于外部契约**(主题扩展 JSON 的作者要照着写),
-//! 与内部的 serde 结构([`content`](crate::content))分开摆放。
+//! 函数——它们的共同点是**属于外部契约**(主题扩展 JSON 的作者要照着写)。
+//!
+//! 注意本包**只管这一层契约**,不管 JSON 的具体结构与装载:那些在
+//! `theme-settings` 包(`content` / `loaders` / `init`),依赖方向是
+//! `theme-settings → theme`。zed 同样是 `theme_settings` 引用
+//! `theme::AppearanceContent` / `theme::try_parse_color`。
 //!
 //! 与 zed 的差异:zed 用 `schemars` 的 `JsonSchema` derive 生成 JSON Schema
 //! 供编辑器做主题文件补全;我们暂无这个需求,不引入 schemars,该 derive 从略。
@@ -14,7 +18,7 @@ use palette::FromColor as _;
 ///
 /// 与 [`Appearance`](crate::Appearance) 的区别:那个是**运行时**形态(主题
 /// 被装入后用的),这个是**序列化**形态(JSON 里 `"appearance": "dark"`)。
-/// 两者字段一一对应,由 [`loaders`](crate::loaders) 负责转换。
+/// 两者字段一一对应,由 `theme-settings` 包的 loaders 负责转换。
 #[derive(Debug, PartialEq, Clone, Copy, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum AppearanceContent {

@@ -39,12 +39,10 @@
 pub mod buffer_line_height;
 pub mod builtin;
 pub mod color_space;
-pub mod content;
 pub mod default_colors;
 pub mod fallback_themes;
 pub mod font_family_cache;
 pub mod icon_theme;
-pub mod loaders;
 pub mod scale;
 pub mod schema;
 pub mod settings_provider;
@@ -64,9 +62,11 @@ pub use settings_provider::{
 };
 pub use ui_density::UiDensity;
 
+// 「当前主题是什么」这份状态归本包管；**怎么把主题装进来**归 theme-settings 包管
+// （JSON 的 schema 与装载流程在那边，依赖方向 theme-settings → theme）。
 pub use state::{
     ActiveTheme, Appearance, GlobalTheme, GlobalThemeRegistry, Theme, ThemeFamily, ThemeStyles,
-    init_theme, load_asset_themes, set_theme, set_theme_by_name,
+    set_theme,
 };
 pub use styles::{
     AccentColors, DiagnosticColors, PlayerColor, PlayerColors, StatusColors,

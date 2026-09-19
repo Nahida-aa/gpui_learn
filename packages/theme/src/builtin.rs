@@ -245,7 +245,7 @@ fn syntax_latte() -> SyntaxTheme {
     ])
 }
 
-pub(crate) fn status_colors_mocha() -> StatusColors {
+pub fn status_colors_mocha() -> StatusColors {
     // 以前景为基底派生 background(15% 透明) / border(同前景),对齐 zed 的派生规则。
 
     let mut colors = StatusColors::dark();
@@ -296,7 +296,7 @@ pub(crate) fn status_colors_mocha() -> StatusColors {
     colors
 }
 
-pub(crate) fn status_colors_latte() -> StatusColors {
+pub fn status_colors_latte() -> StatusColors {
     // 同 `status_colors_mocha`。
 
     let mut colors = StatusColors::light();
@@ -347,7 +347,7 @@ pub(crate) fn status_colors_latte() -> StatusColors {
     colors
 }
 
-pub(crate) fn theme_colors_mocha() -> ThemeColors {
+pub fn theme_colors_mocha() -> ThemeColors {
     // 以 zed 默认值为基底（`default_colors.rs` 的灰阶配色）：下面只覆盖
     // Catppuccin 有明确取值的字段，其余（终端 ANSI、minimap、panel 等
     // 我们暂无消费方的 92 个色）继承默认，不必逐字段重复一遍。
@@ -418,7 +418,7 @@ pub(crate) fn theme_colors_mocha() -> ThemeColors {
     }
 }
 
-pub(crate) fn theme_colors_latte() -> ThemeColors {
+pub fn theme_colors_latte() -> ThemeColors {
     // 同 `theme_colors_mocha`：zed 默认值为基底 + Catppuccin Latte 覆盖。
     let mut colors = ThemeColors::light();
     {

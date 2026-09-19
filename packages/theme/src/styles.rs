@@ -8,17 +8,18 @@
 //!
 //! | 本模块 | zed `styles/` |
 //! |---|---|
-//! | [`colors`] | `colors.rs`(`ThemeColors`) |
-//! | [`status`] | `status.rs`(`StatusColors`) |
-//! | [`system`] | `system.rs`(`SystemColors`) |
-//! | [`accents`] | `accents.rs`(`AccentColors`) |
-//! | [`players`] | `players.rs`(`PlayerColors`,协作者配色) |
-//! | [`syntax`] | `syntax.rs`(`SyntaxTheme`,在 zed 是 `syntax_theme` 的重导出) |
+//! | `colors` | `colors.rs`([`ThemeColors`]) |
+//! | `status` | `status.rs`([`StatusColors`]) |
+//! | `system` | `system.rs`([`SystemColors`]) |
+//! | `accents` | `accents.rs`([`AccentColors`]) |
+//! | `players` | `players.rs`([`PlayerColor`] / [`PlayerColors`],协作者配色) |
+//! | `syntax` | `syntax.rs`([`SyntaxTheme`],在 zed 是 `syntax_theme` 的重导出) |
 //!
 //! 与本 crate 其他模块的关系:本模块只放**颜色结构体本身**;
-//! 装配(注册表、全局状态、切换)在 [`state`](crate::state),
-//! 内置配色值在 [`builtin`](crate::builtin),JSON 解析在
-//! [`content`](crate::content) / [`loaders`](crate::loaders)。
+//! 装配(注册表、全局状态、切换)在 [`Theme`](crate::Theme) 所在的 `state` 模块,
+//! 内置配色值在 [`builtin`](crate::builtin);
+//! JSON 解析不在这里 —— 那在独立的 `theme-settings` 包
+//! (`content` / `loaders` / `init`),依赖方向 `theme-settings → theme`。
 
 mod accents;
 mod colors;

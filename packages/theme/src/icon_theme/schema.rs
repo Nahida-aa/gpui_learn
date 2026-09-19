@@ -21,8 +21,8 @@
 //! }
 //! ```
 //!
-//! 与 [`content`](crate::content) 的分工:那个描述**配色**主题,这个描述
-//! **图标**主题。两者共用 [`AppearanceContent`](crate::AppearanceContent)。
+//! 与「配色主题」的 content 结构(`theme-settings` 包的 `content`)的分工:
+//! 那个描述**配色**主题,这个描述**图标**主题。两者共用 [`AppearanceContent`]。
 //!
 //! 与 zed 的差异:同 [`schema`](crate::schema),未引入 `schemars`
 //! (JSON Schema 生成),故 `JsonSchema` derive 从略。

@@ -97,6 +97,11 @@ aa-gpui-kit-assets = { path = "packages/assets" }
 # 因此 ui-gpui 也通过 `aa-gpui-kit-theme.workspace = true` 引用（不留 module 别名）。
 aa-gpui-kit-theme = { path = "packages/theme" }
 
+# 主题的 JSON 装载与装配（packages/theme-settings）：知道主题扩展 JSON 的
+# schema 并把它装进注册表。**单向依赖** aa-gpui-kit-theme——theme 包反过来
+# 完全不知道 JSON 存在（对齐 zed 的 crates/theme ← crates/theme_settings）。
+theme-settings = { path = "packages/theme-settings" }
+
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
 # 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），
 # cargo 就会用 git 源里的版本替掉 crates.io 的版本，并写进 Cargo.lock。

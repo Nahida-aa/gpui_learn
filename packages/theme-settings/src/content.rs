@@ -27,13 +27,15 @@
 //! `style` 是**扁平 dotted-key**（`组.字段`）加个别嵌套对象（`syntax`）。
 //! 我们只关心 `syntax` 与已知的 UI 语义色 key，其余（`vim.*` / `terminal.*` /
 //! `players` / `background.appearance`…）一律进 [`StyleContent::colors`]
-//! 的散集，由 [`loaders`] 里的映射表挑拣，未识别的直接忽略。
+//! 的散集，由 [`crate::loaders`] 里的映射表挑拣，未识别的直接忽略。
 
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
 
-pub use crate::schema::AppearanceContent;
+// 明暗形态的「序列化形态」定义在 theme 包（zed 也在 `theme/src/schema.rs`），
+// 这里转出以便本包的调用方从一处取到全部 JSON 结构。
+pub use aa_gpui_kit_theme::AppearanceContent;
 
 /// 一个主题家族文件（= 一个主题扩展的 `themes/*.json`）。
 #[derive(Debug, Deserialize)]
