@@ -130,7 +130,7 @@ input/
 - [x] 真软换行渲染:LineWrapper 断行点接入 display_map(25b179a)
 - [x] 垂直移动切 display 空间(83c30ec)
 - [x] 滚动闭环:自绘 scroll_position + autoscroll + scroll beyond last line
-- [x] 主题系统:base/theme 对齐 zed crates/theme 精简版(eaac38b)
+- [x] 主题系统:对齐 zed crates/theme 精简版(eaac38b;后拆为独立 workspace 包 `packages/theme`)
 - [x] 可见行渲染优化:wrap 按 revision 缓存、shape 只看得见的行(5f3df6b)
 - [x] 词级移动/词删除/双击选词(119c528)
 - [x] 多光标:`selections` 集合 + 一次事务多点编辑 + 加光标/Esc 收拢

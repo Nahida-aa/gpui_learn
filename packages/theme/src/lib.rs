@@ -1,14 +1,51 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! # aa-gpui-kit-theme —— GPUI 主题系统（对齐 zed `crates/theme` 的精简版）
+//!
+//! gpui 本身**不带**主题系统：它只有 8 个兜底色（`gpui::Colors`）与
+//! `WindowAppearance` 明暗信号。真正的主题（语义色分组、语法色、
+//! 主题家族、注册表）是 zed 在 `crates/theme` 里实现的——本 crate
+//! 按同一套结构做精简移植。
+//!
+//! ## 用法
+//!
+//! ```ignore
+//! // 启动时（一次）：装入内置主题 + 资产里的主题 JSON，并设为当前
+//! aa_gpui_kit_theme::init_theme(cx);
+//!
+//! // 运行时切换
+//! aa_gpui_kit_theme::set_theme_by_name(cx, "Catppuccin Mocha");
+//!
+//! // 任意组件取色（对齐 zed 的 cx.theme()）
+//! use aa_gpui_kit_theme::ActiveTheme as _;
+//! div().bg(cx.theme().colors().editor_background)
+//! ```
+//!
+//! ## 与 zed 的对应关系
+//!
+//! | 本 crate | zed |
+//! |---|---|
+//! | [`Theme`]`{id,name,appearance,styles}` | `crates/theme/theme.rs` 同名 |
+//! | [`ThemeColors`]（约 55 个语义色） | 同名（150 字段子集） |
+//! | [`SyntaxTheme`] | `crates/syntax_theme` 同名 |
+//! | [`ActiveTheme`] `for App` | `theme.rs:146` 同名 |
+//! | [`builtin::ThemeRegistry`] | `registry.rs` 精简版（含 JSON 加载） |
+//!
+//! ## 物理位置
+//!
+//! 本 crate 原为 `ui-gpui/src/base/theme`（模块路径 `ui_gpui::base::theme`），
+//! 2026-09 拆成 workspace 独立包。**不提供** `ui_gpui::base::theme` 别名——
+//! 调用方一律用 `aa_gpui_kit_theme::`，让「主题不隶属控件库」这件事在代码里可见。
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod builtin;
+pub mod colors;
+pub mod content;
+pub mod loaders;
+pub mod syntax;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+mod state;
+
+pub use colors::{AccentColors, StatusColor, StatusColors, SystemColors, ThemeColors};
+pub use state::{
+    ActiveTheme, Appearance, GlobalTheme, GlobalThemeRegistry, Theme, ThemeFamily, ThemeStyles,
+    init_theme, load_asset_themes, set_theme, set_theme_by_name,
+};
+pub use syntax::SyntaxTheme;

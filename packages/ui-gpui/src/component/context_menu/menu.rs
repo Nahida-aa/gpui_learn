@@ -18,7 +18,7 @@ use gpui::{
 };
 
 use crate::base::icon::{Icon, IconName};
-use crate::base::theme::ActiveTheme;
+use aa_gpui_kit_theme::ActiveTheme;
 
 use super::entry::ContextMenuItem;
 

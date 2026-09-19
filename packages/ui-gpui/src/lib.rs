@@ -13,6 +13,10 @@
 //! 目录结构：
 //! - [`base`]：通用基础控件层（`geometry` 数学换算 + `slider` 滑块）。
 //!   未来其他组件（button/input 等）可并排放在 `base/` 下。
+//!
+//! 相关 workspace 包（不在本 crate 内）：
+//! - `aa-gpui-kit-theme`（`packages/theme`）：主题系统，组件用它取色。
+//! - `aa-gpui-kit-assets`（`packages/assets`）：图标等资源内嵌。
 
 pub mod base;
 pub mod component;
@@ -30,7 +34,9 @@ pub use base::input::input::{InputEvent, InputState};
 pub use base::slider::element::{DragSlider, Slider, SliderEvent};
 pub use base::slider::slider_state::{SliderState, ThumbMode};
 pub use base::slider::slider_value::SliderValue;
-pub use base::theme;
+// 主题系统在独立包 `aa-gpui-kit-theme`（原 `base/theme`）：组件从那里取色，
+// 调用方也用 `aa_gpui_kit_theme::init_theme`。这里**不做**别名 re-export——
+// 「主题不隶属控件库」这件事在代码里应当可见。
 pub use component::button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
 pub use component::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,

@@ -19,6 +19,10 @@ tracing.workspace = true
 # 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。
 aa-gpui-kit-assets.workspace = true
 
+# 主题系统（packages/theme）：语义色/语法色/注册表。ui-gpui 只是它的调用方，
+# 组件通过 `aa_gpui_kit_theme::ActiveTheme` 取色，因此这里不加 module 别名。
+aa-gpui-kit-theme.workspace = true
+
 # 输入框按「字素簇」(grapheme) 移动光标，避免切断 emoji / 组合字符。
 unicode-segmentation = "1"
 

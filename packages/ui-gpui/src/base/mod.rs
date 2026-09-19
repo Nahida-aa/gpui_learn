@@ -6,10 +6,13 @@
 //! - [`icon`]：图标控件（`Icon` + 内置 [`icon::IconName`] 枚举），渲染内嵌 SVG。
 //! - [`input`]：单行文本输入框（`Entity<InputState>`，含 IME 组字与选区）。
 //! - [`button`]：按钮（一次性元素，无持久状态）。
+//!
+//! 主题系统**不在这里**：它已独立成 workspace 包 `aa-gpui-kit-theme`
+//! （原 `base/theme`，2026-09 拆出），组件通过 `aa_gpui_kit_theme::ActiveTheme`
+//! 取色——主题不隶属控件库，代码里也不再提供 `base::theme` 别名。
 
 pub mod button;
 pub mod geometry;
 pub mod icon;
 pub mod input;
 pub mod slider;
-pub mod theme;

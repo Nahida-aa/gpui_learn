@@ -86,6 +86,11 @@ rust-embed = { version = "8.11", features = ["include-exclude"] }
 # 子包用 `assets.workspace = true` 引用，位置统一在此声明，避免各包散写相对路径。
 aa-gpui-kit-assets = { path = "packages/assets" }
 
+# 主题系统（packages/theme）：对齐 zed crates/theme 的精简版，含语义色、
+# 语法色与主题注册表。独立成包是因为它不隶属控件库——ui-gpui 只是调用方，
+# 因此 ui-gpui 也通过 `aa-gpui-kit-theme.workspace = true` 引用（不留 module 别名）。
+aa-gpui-kit-theme = { path = "packages/theme" }
+
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
 # 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），
 # cargo 就会用 git 源里的版本替掉 crates.io 的版本，并写进 Cargo.lock。

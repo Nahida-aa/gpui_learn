@@ -11,9 +11,9 @@
 //! 本实现先提供实线版本（状态栏/工具栏图标按钮之间的竖线）。zed 的
 //! Dashed/渐变靠 `window.paint_path` 画 `StructuralPath`，暂无需求不引入。
 
-use crate::base::theme::ActiveTheme;
+use aa_gpui_kit_theme::ActiveTheme;
 
-use gpui::{App, Div, Hsla, IntoElement, ParentElement, Render, Styled, Window, div, prelude::*};
+use gpui::{App, Hsla, IntoElement, Styled, Window, div, prelude::*};
 
 /// zed `DividerColor`：`Border`（默认）/ `BorderVariant`，映射主题 `border` / `border_variant`。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -75,7 +75,7 @@ impl Divider {
     }
 
     /// 当前边框/分割线颜色（按主题 `colors` 解析）。
-    fn color_hsla(&self, colors: &crate::theme::ThemeColors) -> Hsla {
+    fn color_hsla(&self, colors: &aa_gpui_kit_theme::ThemeColors) -> Hsla {
         match self.color {
             DividerColor::Border => colors.border,
             DividerColor::BorderVariant => colors.border_variant,

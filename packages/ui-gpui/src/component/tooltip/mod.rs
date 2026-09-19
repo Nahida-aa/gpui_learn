@@ -32,7 +32,7 @@ use gpui::{
     div, prelude::*, px,
 };
 
-use crate::base::theme::ActiveTheme;
+use aa_gpui_kit_theme::ActiveTheme;
 
 /// 独立的工具提示视图（ManagedView）。由 [`TooltipHost`] 弹出。
 pub struct Tooltip {

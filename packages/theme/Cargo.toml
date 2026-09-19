@@ -5,7 +5,16 @@ edition.workspace = true
 license.workspace = true
 publish.workspace = true
 
-[dependencies]
-
 [lints]
 workspace = true
+
+[dependencies]
+# 主题本质是 gpui 的全局状态(`Global`)与颜色类型(`Hsla`/`GlobalColors`),
+# 因此这个包不是纯数据包,必须依赖 gpui。物理上独立成 crate 的价值在
+# 「主题系统与控件库解耦」:ui-gpui 只是它的一个调用方。
+gpui.workspace = true
+tracing.workspace = true
+
+# 主题加载器:解析 zed 主题扩展 JSON(v0.2.0 扁平格式)进 ThemeRegistry。
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

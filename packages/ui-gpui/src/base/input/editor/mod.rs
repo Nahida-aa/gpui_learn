@@ -38,7 +38,7 @@ pub(super) use undo::{Change, EditIntent};
 
 use super::engine::{OffsetUtf16, Rope};
 use super::input::InputEvent;
-use crate::base::theme::ActiveTheme;
+use aa_gpui_kit_theme::ActiveTheme;
 pub use selection::SelectionGoal;
 pub use undo::UndoManager;
 

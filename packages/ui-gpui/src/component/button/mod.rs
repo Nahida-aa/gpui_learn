@@ -22,7 +22,7 @@ use gpui::{
 
 use crate::base::button::ClickHandler;
 use crate::base::icon::{Icon, IconName};
-use crate::base::theme::{ActiveTheme, Theme};
+use aa_gpui_kit_theme::{ActiveTheme, Theme};
 use crate::component::tooltip::{Tooltip, TooltipHost};
 
 /// 按钮视觉语义（对齐 zed `ButtonStyle`，去掉需主题扩展的部分）。

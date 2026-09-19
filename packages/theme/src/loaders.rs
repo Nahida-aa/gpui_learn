@@ -265,7 +265,8 @@ mod tests {
 
     #[test]
     fn parses_catppuccin_family() {
-        let bytes = include_bytes!("../../../../../assets/themes/catppuccin/catppuccin-mauve.json");
+        let bytes =
+            include_bytes!("../../../assets/themes/catppuccin/catppuccin-mauve.json");
         let family = parse_theme_family(bytes).expect("parse catppuccin-mauve");
         assert_eq!(family.name, "Catppuccin");
         assert_eq!(family.themes.len(), 4);
@@ -312,9 +313,8 @@ mod tests {
 
     #[test]
     fn parses_no_italics_family() {
-        let bytes = include_bytes!(
-            "../../../../../assets/themes/catppuccin/catppuccin-no-italics-mauve.json"
-        );
+        let bytes =
+            include_bytes!("../../../assets/themes/catppuccin/catppuccin-no-italics-mauve.json");
         let family = parse_theme_family(bytes).expect("parse catppuccin-no-italics-mauve");
         assert_eq!(family.name, "Catppuccin");
         assert_eq!(family.themes.len(), 4);
