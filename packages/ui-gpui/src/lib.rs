@@ -42,7 +42,9 @@ pub use component::context_menu::{
 };
 pub use component::divider::{Divider, DividerColor, DividerDirection};
 pub use component::tooltip::{Tooltip, TooltipHost, tooltip_host};
-pub use traits::StyledExt;
+pub use traits::{
+    Clickable, CommonAnimationExt, Disableable, StyledExt, ToggleState, Toggleable, Transformable,
+};
 
 /// 复用 gpui 的轴方向类型，方便调用方设置 `SliderState::axis`。
 pub use gpui::Axis;

@@ -14,9 +14,11 @@
 //! `disabled(true)` 时不挂点击回调，视觉置灰且不响应 hover。
 
 use gpui::{
-    App, ClickEvent, Div, ElementId, IntoElement, Rgba, SharedString, Stateful, Window, div,
-    prelude::*, px, rgb,
+    App, ClickEvent, CursorStyle, Div, ElementId, IntoElement, Rgba, SharedString, Stateful,
+    Window, div, prelude::*, px, rgb,
 };
+
+use crate::traits::{Clickable, Disableable};
 
 /// 按钮视觉变体。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -51,6 +53,8 @@ pub struct Button {
     variant: ButtonVariant,
     disabled: bool,
     on_click: Option<ClickHandler>,
+    /// 悬停时的光标样式；`None` 时可点状态用 pointer（trait `Clickable` 设置）。
+    cursor_style: Option<CursorStyle>,
 }
 
 impl Button {
@@ -62,6 +66,7 @@ impl Button {
             variant: ButtonVariant::Default,
             disabled: false,
             on_click: None,
+            cursor_style: None,
         }
     }
 
@@ -137,9 +142,54 @@ impl IntoElement for Button {
             });
 
         if let Some(hover_bg) = hover_bg {
-            button = button.hover(|style| style.bg(hover_bg)).cursor_pointer();
+            button = button.hover(|style| style.bg(hover_bg));
+            // 光标样式：trait Clickable::cursor_style 可覆盖,默认 pointer。
+            button = match self.cursor_style {
+                Some(cursor) => button.cursor(cursor),
+                None => button.cursor_pointer(),
+            };
         }
 
         button
+    }
+}
+
+impl Clickable for Button {
+    fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
+        self.on_click = Some(Box::new(handler));
+        self
+    }
+
+    fn cursor_style(mut self, cursor_style: CursorStyle) -> Self {
+        self.cursor_style = Some(cursor_style);
+        self
+    }
+}
+
+impl Disableable for Button {
+    fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+}
+
+#[cfg(test)]
+mod trait_tests {
+    use super::*;
+
+    /// trait 体系冒烟:经 trait 方法设置的字段确实生效。
+    #[test]
+    fn button_impls_clickable_and_disableable() {
+        let button = Button::new("test")
+            .on_click(|_, _, _| {})
+            .cursor_style(CursorStyle::Crosshair)
+            .disabled(true);
+
+        assert!(button.on_click.is_some(), "Clickable::on_click 应生效");
+        assert!(
+            button.cursor_style.is_some(),
+            "Clickable::cursor_style 应生效"
+        );
+        assert!(button.disabled, "Disableable::disabled 应生效");
     }
 }

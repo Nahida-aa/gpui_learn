@@ -16,12 +16,13 @@
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, App, ClickEvent, ElementId, Entity, Hsla, IntoElement, Pixels, SharedString, Window,
-    div, hsla, prelude::*, px,
+    Anchor, App, ClickEvent, CursorStyle, ElementId, Entity, Hsla, IntoElement, Pixels, SharedString,
+    Window, div, hsla, prelude::*, px,
 };
 
 use crate::base::button::ClickHandler;
 use crate::base::icon::{Icon, IconName};
+use crate::traits::{Clickable, Disableable, Toggleable};
 use aa_gpui_kit_theme::{ActiveTheme, Theme};
 use crate::component::tooltip::{Tooltip, TooltipHost};
 
@@ -185,6 +186,8 @@ pub struct IconButton {
     tooltip_anchor: Option<Anchor>,
     /// 提示 attachment（默认 `Anchor::BottomLeft`，即提示在元素下方）。
     tooltip_attach: Option<Anchor>,
+    /// 悬停时的光标样式；`None` 时可点状态用 pointer（trait [`Clickable`] 设置）。
+    cursor_style: Option<CursorStyle>,
 }
 
 impl IconButton {
@@ -205,6 +208,7 @@ impl IconButton {
             tooltip: None,
             tooltip_anchor: None,
             tooltip_attach: None,
+            cursor_style: None,
         }
     }
 
@@ -337,8 +341,12 @@ impl RenderOnce for IconButton {
                 .border_1()
                 .border_color(style_colors.border)
                 .hover(move |style| style.bg(hover_bg))
-                .active(move |style| style.bg(active_bg))
-                .cursor_pointer();
+                .active(move |style| style.bg(active_bg));
+            // 光标样式：trait `Clickable::cursor_style` 可覆盖,默认 pointer。
+            button = match self.cursor_style {
+                Some(cursor) => button.cursor(cursor),
+                None => button.cursor_pointer(),
+            };
         }
 
         button = button.on_click(move |event, window, cx| {
@@ -373,5 +381,54 @@ impl RenderOnce for IconButton {
             }
             None => button,
         }
+    }
+}
+
+impl Clickable for IconButton {
+    fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
+        self.on_click = Some(Box::new(handler));
+        self
+    }
+
+    fn cursor_style(mut self, cursor_style: CursorStyle) -> Self {
+        self.cursor_style = Some(cursor_style);
+        self
+    }
+}
+
+impl Disableable for IconButton {
+    fn disabled(mut self, disabled: bool) -> Self {
+        self.disabled = disabled;
+        self
+    }
+}
+
+impl Toggleable for IconButton {
+    fn toggle_state(mut self, selected: bool) -> Self {
+        self.selected = selected;
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// trait 体系冒烟:builder 链经 trait 方法走一遍,字段确实被设置。
+    #[test]
+    fn icon_button_impls_interactive_traits() {
+        let button = IconButton::new("test", IconName::Close)
+            .on_click(|_, _, _| {})
+            .cursor_style(CursorStyle::Crosshair)
+            .toggle_state(true)
+            .disabled(false);
+
+        assert!(button.on_click.is_some(), "Clickable::on_click 应生效");
+        assert!(
+            button.cursor_style.is_some(),
+            "Clickable::cursor_style 应生效"
+        );
+        assert!(button.selected, "Toggleable::toggle_state 应生效");
+        assert!(!button.disabled, "Disableable::disabled(false) 应生效");
     }
 }
