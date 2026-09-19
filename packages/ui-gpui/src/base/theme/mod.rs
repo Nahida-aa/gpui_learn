@@ -26,13 +26,15 @@
 //! | `ThemeColors`(约 55 个语义色) | 同名(150 字段子集) |
 //! | `SyntaxTheme` | `crates/syntax_theme` 同名 |
 //! | `ActiveTheme for App` | `theme.rs:146` 同名 |
-//! | `ThemeRegistry` | `registry.rs` 精简版(无 JSON 加载) |
-//!
+//! | `ThemeRegistry` | `registry.rs` 精简版(有 JSON 加载) |
+
 //! `set_theme` 同时把语义色**同步进 gpui 的 `GlobalColors`**,让 gpui
 //! 自带的基础设施(如默认滚动条)也跟随主题。
 
 pub mod builtin;
 pub mod colors;
+pub mod content;
+pub mod loaders;
 pub mod syntax;
 
 use std::sync::Arc;
@@ -149,11 +151,54 @@ impl ActiveTheme for App {
 }
 
 /// 安装主题系统(应用启动时调用一次):
-/// 注册内置主题并把 `theme` 设为当前主题。
+/// 1. 从 `asset_source` 加载 `themes/**/*.json`([`load_asset_themes`]);
+/// 2. 合并内置主题,写入 [`GlobalThemeRegistry`];
+/// 3. 默认选用 JSON 里的 `Catppuccin Mocha`(与旧硬编码同配色,视觉不变),
+///    找不到再回退内置深色,最后`set_theme` 生效。
 pub fn init_theme(cx: &mut App) {
-    cx.set_global(GlobalThemeRegistry(builtin::ThemeRegistry::with_builtins()));
-    let theme: Arc<Theme> = cx.theme().clone();
-    set_theme(cx, theme);
+    let mut registry = builtin::ThemeRegistry::with_builtins();
+    load_asset_themes(cx, &mut registry);
+    cx.set_global(GlobalThemeRegistry(registry));
+    set_theme(cx, Arc::new(default_theme(cx)));
+}
+
+/// 默认主题:JSON 里的 `Catppuccin Mocha` 优先(与旧硬编码同配色,视觉不变),
+/// 找不到再回退内置深色。
+fn default_theme(cx: &App) -> Theme {
+    cx.try_global::<GlobalThemeRegistry>()
+        .and_then(|registry| {
+            registry
+                .0
+                .get("Catppuccin Mocha")
+                .or_else(|| registry.0.get("ui-gpui-default-dark"))
+                .cloned()
+        })
+        .expect("theme registry must have a default")
+}
+
+/// 从 `asset_source` 加载 `themes/` 下的所有主题 JSON 进注册表
+/// (assets crate 的 RustEmbed 内嵌 `themes/**/*.json`)。
+///
+/// 单个文件解析失败只告警不中断,保证其中一个损坏不影响其余主题。
+pub fn load_asset_themes(cx: &mut App, registry: &mut builtin::ThemeRegistry) {
+    let Ok(paths) = cx.asset_source().list("themes/") else {
+        return;
+    };
+    for path in paths {
+        if !path.ends_with(".json") {
+            continue;
+        }
+        let Ok(Some(bytes)) = cx.asset_source().load(&path) else {
+            continue;
+        };
+        match loaders::parse_theme_family(&bytes) {
+            Ok(family) => {
+                tracing::info!("theme family: {} (n={})", family.name, family.themes.len());
+                registry.load_theme_family(family);
+            }
+            Err(err) => tracing::warn!("failed to parse theme {path}: {err:#}"),
+        }
+    }
 }
 
 /// 按 id/名称切换主题(需已 `init_theme`)。找不到时保持不变并返回 false。

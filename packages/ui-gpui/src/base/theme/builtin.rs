@@ -245,7 +245,7 @@ fn syntax_latte() -> SyntaxTheme {
     ])
 }
 
-fn status_colors_mocha() -> StatusColors {
+pub(crate) fn status_colors_mocha() -> StatusColors {
     StatusColors {
         conflict: status(0xf38ba8),
         created: status(0xa6e3a1),
@@ -261,7 +261,7 @@ fn status_colors_mocha() -> StatusColors {
     }
 }
 
-fn status_colors_latte() -> StatusColors {
+pub(crate) fn status_colors_latte() -> StatusColors {
     StatusColors {
         conflict: status(0xd20f39),
         created: status(0x40a02b),
@@ -277,7 +277,7 @@ fn status_colors_latte() -> StatusColors {
     }
 }
 
-fn theme_colors_mocha() -> ThemeColors {
+pub(crate) fn theme_colors_mocha() -> ThemeColors {
     ThemeColors {
         // border
         border: h(0x45475a),
@@ -342,7 +342,7 @@ fn theme_colors_mocha() -> ThemeColors {
     }
 }
 
-fn theme_colors_latte() -> ThemeColors {
+pub(crate) fn theme_colors_latte() -> ThemeColors {
     ThemeColors {
         border: h(0xccd0da),
         border_variant: h(0xbcc0cc),
@@ -448,6 +448,18 @@ impl ThemeRegistry {
     /// 注册一个主题。
     pub fn insert(&mut self, theme: Theme) {
         self.themes.push(theme);
+    }
+
+    /// 注册整个主题家族（来自主题扩展 JSON）。
+    ///
+    /// id 已存在的主题跳过：同一家族多个文件（如 catppuccin 的
+    /// =mauve/-no-italics）重名时先注册的胜出。
+    pub fn load_theme_family(&mut self, family: ThemeFamily) {
+        for theme in family.themes {
+            if self.get(&theme.id).is_none() {
+                self.insert(theme);
+            }
+        }
     }
 
     /// 按 id 或名称查找。

@@ -256,6 +256,19 @@ name = "_45_tree"
 version = "0.1.0"
 
 [[package]]
+name = "aa-gpui-kit-assets"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
+ "rust-embed",
+]
+
+[[package]]
+name = "aa-gpui-kit-theme"
+version = "0.1.0"
+
+[[package]]
 name = "accesskit"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -593,15 +606,6 @@ dependencies = [
  "wayland-client",
  "wayland-protocols",
  "zbus",
-]
-
-[[package]]
-name = "assets"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
- "rust-embed",
 ]
 
 [[package]]
@@ -6906,11 +6910,13 @@ dependencies = [
 name = "ui-gpui"
 version = "0.1.0"
 dependencies = [
- "assets",
+ "aa-gpui-kit-assets",
  "futures",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "gpui_macros 0.1.0 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "rand 0.9.5",
+ "serde",
+ "serde_json",
  "sum_tree 0.1.0 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "tracing",
  "unicode-segmentation",

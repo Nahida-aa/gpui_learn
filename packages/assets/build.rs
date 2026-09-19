@@ -5,13 +5,7 @@
 //!
 //! Mirrors gpui-component/crates/assets/build.rs.
 
-use std::{
-    collections::BTreeMap,
-    env,
-    fmt::Write,
-    fs,
-    path::PathBuf,
-};
+use std::{collections::BTreeMap, env, fmt::Write, fs, path::PathBuf};
 
 fn main() {
     let manifest_dir =

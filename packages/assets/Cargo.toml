@@ -1,5 +1,5 @@
 [package]
-name = "assets"
+name = "aa-gpui-kit-assets"
 version = "0.1.0"
 edition.workspace = true
 publish.workspace = true

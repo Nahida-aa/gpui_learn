@@ -17,10 +17,14 @@ tracing.workspace = true
 # 复用工作区共享的 assets crate（packages/assets）：图标等资源内嵌在仓库根
 # assets/ 下，由该 crate 的 RustEmbed 统一加载。ui-gpui 不再自带资源。
 # 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。
-assets.workspace = true
+aa-gpui-kit-assets.workspace = true
 
 # 输入框按「字素簇」(grapheme) 移动光标，避免切断 emoji / 组合字符。
 unicode-segmentation = "1"
+
+# 主题加载器：解析 zed 主题扩展 JSON（v0.2.0 扁平格式）进 ThemeRegistry。
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
 # 交互/状态逻辑测试（SliderState 的 update_value_by_position 等）需要 gpui 的
 # test-support 特性与 #[gpui::test] 宏。feature 开关供 `cargo test -F test-support`。

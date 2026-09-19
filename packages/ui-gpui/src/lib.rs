@@ -15,10 +15,11 @@
 //!   未来其他组件（button/input 等）可并排放在 `base/` 下。
 
 pub mod base;
+pub mod component;
 
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
 /// ui-gpui 复用它，不自带资源目录。
-pub use assets::Assets;
+pub use aa_gpui_kit_assets::Assets;
 pub use base::button::{Button, ButtonVariant};
 pub use base::geometry::{Scale, quantize};
 pub use base::icon::{Icon, IconName};
@@ -29,6 +30,12 @@ pub use base::slider::element::{DragSlider, Slider, SliderEvent};
 pub use base::slider::slider_state::{SliderState, ThumbMode};
 pub use base::slider::slider_value::SliderValue;
 pub use base::theme;
+pub use component::button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
+pub use component::context_menu::{
+    ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
+};
+pub use component::divider::{Divider, DividerColor, DividerDirection};
+pub use component::tooltip::{Tooltip, TooltipHost, tooltip_host};
 
 /// 复用 gpui 的轴方向类型，方便调用方设置 `SliderState::axis`。
 pub use gpui::Axis;
