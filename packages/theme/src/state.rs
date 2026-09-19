@@ -1,15 +1,14 @@
 //! state:主题的状态与装配(数据结构、全局注册、注册表装配与切换)。
 //!
-//! 细节分层见 crate 根文档;这里只放「状态与装配」,颜色定义在
-//! [`colors`](crate::colors),内置配色在 [`builtin`](crate::builtin),
+//! 细节分层见 crate 根文档;这里只放「状态与装配」,样式集合(颜色结构体)
+//! 在 [`styles`](crate::styles),内置配色在 [`builtin`](crate::builtin),
 //! JSON 解析在 [`content`](crate::content) / [`loaders`](crate::loaders)。
 
 use std::sync::Arc;
 
 use gpui::{App, Global, WindowAppearance};
 
-pub use crate::colors::{AccentColors, StatusColors, SystemColors, ThemeColors};
-pub use crate::syntax::SyntaxTheme;
+use crate::styles::{AccentColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors};
 
 /// 主题适配的明暗形态(对齐 zed `theme.rs` 的 `Appearance`)。
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]

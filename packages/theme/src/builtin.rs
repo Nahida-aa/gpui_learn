@@ -10,9 +10,8 @@ use std::sync::Arc;
 
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, hsla};
 
-use super::colors::{AccentColors, StatusColor, StatusColors, SystemColors, ThemeColors};
-use super::syntax::SyntaxTheme;
-use super::{Appearance, Theme, ThemeFamily, ThemeStyles};
+use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
+use crate::styles::{AccentColors, StatusColor, StatusColors, SyntaxTheme, SystemColors, ThemeColors};
 
 /// `0xRRGGBB` → `Hsla`。
 fn h(hex: u32) -> Hsla {

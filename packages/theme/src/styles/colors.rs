@@ -1,10 +1,11 @@
-//! 主题颜色集,对齐 zed `crates/theme/src/styles/` 的精简子集。
+//! UI 语义色（`ThemeColors`），对齐 zed `styles/colors.rs` 的精简子集。
 //!
-//! 字段取舍原则:编辑器内核 + 通用组件够用即可(约 55 个语义色),
-//! zed 的 150 个字段里面板/工作区相关的暂不收录,需要时按同名补齐。
-//! 所有颜色统一用 `Hsla`(与 gpui 的填充系统无缝衔接,`rgb(..).into()` 可转)。
-
-use std::sync::Arc;
+//! 字段取舍原则：编辑器内核 + 通用组件够用即可（约 55 个语义色），
+//! zed 的 150 个字段里面板/工作区相关的暂不收录，需要时按同名补齐。
+//! 所有颜色统一用 `Hsla`（与 gpui 的填充系统无缝衔接，`rgb(..).into()` 可转）。
+//!
+//! 同目录的其他样式集合见 [`system`](super::system) / [`status`](super::status)
+//! / [`accents`](super::accents) / [`syntax`](super::syntax)。
 
 use gpui::Hsla;
 
@@ -102,67 +103,4 @@ pub struct ThemeColors {
     pub scrollbar_track_border: Hsla,
     /// 链接色。
     pub link: Hsla,
-}
-
-/// 系统层颜色(对齐 zed `SystemColors` 的精简子集)。
-#[derive(Clone, Debug, PartialEq)]
-pub struct SystemColors {
-    pub transparent: Hsla,
-}
-
-impl Default for SystemColors {
-    fn default() -> Self {
-        SystemColors {
-            transparent: gpui::hsla(0., 0., 0., 0.),
-        }
-    }
-}
-
-/// 强调色组(对齐 zed `AccentColors`):用于缩进参考线等按行轮换的颜色。
-#[derive(Clone, Debug, PartialEq)]
-pub struct AccentColors(pub Arc<[Hsla]>);
-
-impl Default for AccentColors {
-    fn default() -> Self {
-        // gpui 0.2 的色板函数只有 blue/green/yellow/red;其余用 hsla 补齐
-        AccentColors(
-            [
-                gpui::blue(),
-                gpui::green(),
-                gpui::yellow(),
-                gpui::red(),
-                gpui::hsla(0.45, 0.6, 0.6, 1.),
-                gpui::hsla(0.55, 0.6, 0.6, 1.),
-                gpui::hsla(0.8, 0.6, 0.65, 1.),
-                gpui::hsla(0.1, 0.7, 0.6, 1.),
-            ]
-            .into_iter()
-            .map(Into::into)
-            .collect(),
-        )
-    }
-}
-
-/// 单个 Git/诊断状态的颜色组(base / background / border)。
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub struct StatusColor {
-    pub base: Hsla,
-    pub background: Hsla,
-    pub border: Hsla,
-}
-
-/// Git 与诊断状态色(对齐 zed `StatusColors`,每状态收敛为三色组)。
-#[derive(Clone, Debug, PartialEq)]
-pub struct StatusColors {
-    pub conflict: StatusColor,
-    pub created: StatusColor,
-    pub deleted: StatusColor,
-    pub error: StatusColor,
-    pub hidden: StatusColor,
-    pub ignored: StatusColor,
-    pub info: StatusColor,
-    pub modified: StatusColor,
-    pub renamed: StatusColor,
-    pub success: StatusColor,
-    pub warning: StatusColor,
 }

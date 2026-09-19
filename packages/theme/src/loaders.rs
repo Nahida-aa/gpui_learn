@@ -16,10 +16,9 @@ use std::sync::Arc;
 
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla};
 
-use super::colors::{AccentColors, StatusColors, ThemeColors};
-use super::content::{AppearanceContent, StyleContent, SyntaxContent, ThemeFamilyContent};
-use super::syntax::SyntaxTheme;
-use super::{Appearance, SystemColors, Theme, ThemeFamily, ThemeStyles};
+use crate::content::{AppearanceContent, StyleContent, SyntaxContent, ThemeFamilyContent};
+use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
+use crate::styles::{AccentColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors};
 
 /// 解析一个主题家族文件（`themes/*.json`）。
 pub fn parse_theme_family(bytes: &[u8]) -> serde_json::Result<ThemeFamily> {
@@ -32,7 +31,7 @@ pub fn parse_theme_family(bytes: &[u8]) -> serde_json::Result<ThemeFamily> {
     })
 }
 
-fn theme_from_content(content: super::content::ThemeContent) -> Theme {
+fn theme_from_content(content: crate::content::ThemeContent) -> Theme {
     let appearance = match content.appearance {
         AppearanceContent::Light => Appearance::Light,
         AppearanceContent::Dark => Appearance::Dark,
@@ -109,15 +108,15 @@ fn theme_from_style(
 
 fn base_colors(appearance: Appearance) -> ThemeColors {
     match appearance {
-        Appearance::Light => super::builtin::theme_colors_latte(),
-        Appearance::Dark => super::builtin::theme_colors_mocha(),
+        Appearance::Light => crate::builtin::theme_colors_latte(),
+        Appearance::Dark => crate::builtin::theme_colors_mocha(),
     }
 }
 
 fn base_status(appearance: Appearance) -> StatusColors {
     match appearance {
-        Appearance::Light => super::builtin::status_colors_latte(),
-        Appearance::Dark => super::builtin::status_colors_mocha(),
+        Appearance::Light => crate::builtin::status_colors_latte(),
+        Appearance::Dark => crate::builtin::status_colors_mocha(),
     }
 }
 

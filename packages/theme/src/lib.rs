@@ -24,7 +24,8 @@
 //! | 本 crate | zed |
 //! |---|---|
 //! | [`Theme`]`{id,name,appearance,styles}` | `crates/theme/theme.rs` 同名 |
-//! | [`ThemeColors`]（约 55 个语义色） | 同名（150 字段子集） |
+//! | [`ThemeStyles`] | `theme.rs` 同名 |
+//! | [`styles`]（[`ThemeColors`] 等样式集合） | `crates/theme/styles.rs` + `styles/` |
 //! | [`SyntaxTheme`] | `crates/syntax_theme` 同名 |
 //! | [`ActiveTheme`] `for App` | `theme.rs:146` 同名 |
 //! | [`builtin::ThemeRegistry`] | `registry.rs` 精简版（含 JSON 加载） |
@@ -36,16 +37,16 @@
 //! 调用方一律用 `aa_gpui_kit_theme::`，让「主题不隶属控件库」这件事在代码里可见。
 
 pub mod builtin;
-pub mod colors;
 pub mod content;
 pub mod loaders;
-pub mod syntax;
+pub mod styles;
 
 mod state;
 
-pub use colors::{AccentColors, StatusColor, StatusColors, SystemColors, ThemeColors};
 pub use state::{
     ActiveTheme, Appearance, GlobalTheme, GlobalThemeRegistry, Theme, ThemeFamily, ThemeStyles,
     init_theme, load_asset_themes, set_theme, set_theme_by_name,
 };
-pub use syntax::SyntaxTheme;
+pub use styles::{
+    AccentColors, StatusColor, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
+};
