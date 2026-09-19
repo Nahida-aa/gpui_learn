@@ -25,9 +25,9 @@ mod undo;
 use std::ops::Range;
 
 use gpui::{
-    App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter, FocusHandle, Hsla,
-    KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Render,
-    ScrollWheelEvent, ShapedLine, SharedString, UTF16Selection, Window, div, prelude::*, px,
+    div, prelude::*, px, App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter,
+    FocusHandle, Hsla, KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
+    Pixels, Render, ScrollWheelEvent, ShapedLine, SharedString, UTF16Selection, Window,
 };
 
 pub use actions::*;
@@ -110,7 +110,16 @@ pub enum EditorEvent {
 /// 阶段 C 的 `EditorElement`。
 pub struct Editor {
     pub(super) rope: Rope,
-    pub(super) selection: Selection<usize>,
+    /// 光标组(至少一个)。
+    ///
+    /// 规范序:按起点升序、互不重叠/相交——对齐 zed `SelectionsSet`
+    /// (crates/editor/src/selection.rs)的规则,相交的选区会被合并掉。
+    /// 与 zed 的差异:zed 用 Anchor + id 记住插入顺序(newest/oldest),
+    /// 这里用字节偏移,排序即身份,增删/随编辑平移由编辑主路径负责。
+    ///
+    /// 组内**最后一个**(视觉最下方)是「主光标」:[`Editor::selection`]、
+    /// IME 上屏位置、自动滚动跟随都以它为准;单光标时就是唯一元素。
+    pub(super) selections: Vec<Selection<usize>>,
     /// IME 组字区间(buffer 字节坐标)。
     pub(super) marked_range: Option<Range<usize>>,
     pub(super) undo_manager: UndoManager,
@@ -181,7 +190,7 @@ impl Editor {
     pub fn with_mode(mode: EditorMode, cx: &mut Context<Self>) -> Self {
         Self {
             rope: Rope::new(),
-            selection: Selection::default(),
+            selections: vec![Selection::default()],
             marked_range: None,
             undo_manager: UndoManager::new(),
             mode,
@@ -270,7 +279,7 @@ impl Editor {
     pub fn default_value(mut self, value: impl Into<SharedString>) -> Self {
         self.rope = Rope::from(value.into().as_str());
         let end = self.rope.len();
-        self.selection = Selection::new(end, end);
+        self.selections = vec![Selection::new(end, end)];
         self
     }
 
@@ -303,8 +312,121 @@ impl Editor {
         self.rope.text_in_range(range)
     }
 
+    /// 全部光标(规范序:按起点升序、互不重叠)。
+    pub fn selections(&self) -> &[Selection<usize>] {
+        &self.selections
+    }
+
+    /// 光标数量。
+    pub fn cursor_count(&self) -> usize {
+        self.selections.len()
+    }
+
+    /// 主光标:组内最后一个(视觉最下方),单光标时就是唯一元素。
+    ///
+    /// 保留旧 API 名以免上层/Demo 改动——多光标场景请以
+    /// [`Self::selections`] 为准。
     pub fn selection(&self) -> Selection<usize> {
-        self.selection
+        self.selections.last().copied().unwrap_or_default()
+    }
+
+    /// 折叠为单一光标。
+    pub(crate) fn set_selection(&mut self, selection: Selection<usize>) {
+        self.selections = vec![selection];
+    }
+
+    /// 主光标的可变借用(鼠标拖拽 / IME 只作用于主光标)。
+    pub(crate) fn selection_mut(&mut self) -> &mut Selection<usize> {
+        if self.selections.is_empty() {
+            self.selections.push(Selection::default());
+        }
+        let last = self.selections.len() - 1;
+        &mut self.selections[last]
+    }
+
+    /// 整组替换 + 规范化。空组回落到 0 处的单个光标。
+    pub(crate) fn set_selections(&mut self, selections: Vec<Selection<usize>>) {
+        self.selections = selections;
+        self.normalize_selections();
+    }
+
+    /// 加入一个光标(相交/重合由 `normalize_selections` 合并为一个)。
+    /// 键盘加光标(AddSelectionAbove/Below)走这里。
+    pub(crate) fn push_selection(&mut self, selection: Selection<usize>) {
+        self.selections.push(selection);
+        self.normalize_selections();
+    }
+
+    /// 加入一个光标;与已有光标相交/重合则把那个光标撤掉(toggle 语义,
+    /// 同 VS Code 的 alt+click),始终保持至少一个光标。
+    pub(crate) fn add_selection(&mut self, selection: Selection<usize>) {
+        let existing = self
+            .selections
+            .iter()
+            .position(|other| Self::intersects(other, &selection));
+        match existing {
+            // 相交且还有别的剩余光标 → 撤掉那个光标(toggle)
+            Some(index) if self.selections.len() > 1 => {
+                self.selections.remove(index);
+            }
+            Some(_) => {}
+            None => self.selections.push(selection),
+        }
+        self.normalize_selections();
+    }
+
+    /// 两个选区是否相交/重合(含端点相接,闭合区间语义)。
+    fn intersects(a: &Selection<usize>, b: &Selection<usize>) -> bool {
+        let (a_start, a_end) = (a.range().start, a.range().end);
+        let (b_start, b_end) = (b.range().start, b.range().end);
+        // 两个空光标在同一点也算重合(端点相接)
+        a_start.max(b_start) <= a_end.min(b_end)
+    }
+
+    /// 规范化:丢弃空(不可达)项 → 按起点排序 → 合并相交者 → 至少留一个。
+    pub(crate) fn normalize_selections(&mut self) {
+        self.selections
+            .sort_by_key(|selection| (selection.range().start, selection.range().end));
+        let mut merged: Vec<Selection<usize>> = Vec::with_capacity(self.selections.len());
+        for selection in self.selections.drain(..) {
+            match merged.last_mut() {
+                Some(previous) if Self::intersects(previous, &selection) => {
+                    // 相交 → 取并集,保留原先的方向与 goal
+                    let start = previous.range().start.min(selection.range().start);
+                    let end = previous.range().end.max(selection.range().end);
+                    previous.start = start;
+                    previous.end = end;
+                }
+                _ => merged.push(selection),
+            }
+        }
+        if merged.is_empty() {
+            merged.push(Selection::default());
+        }
+        self.selections = merged;
+    }
+
+    /// 对所有光标套同一个变换:`collapse_to(f(this, selection))`。
+    ///
+    /// 水平移动会清掉 goal([`SelectionGoal::None`]);上下移动的 goal 处理
+    /// 在 `move_vertical_core` 里单独做。
+    pub(crate) fn collapse_heads_to(&mut self, f: impl Fn(&Self, Selection<usize>) -> usize) {
+        for index in 0..self.selections.len() {
+            let selection = self.selections[index];
+            let target = f(self, selection);
+            self.selections[index].collapse_to(target, SelectionGoal::None);
+        }
+        self.normalize_selections();
+    }
+
+    /// 同上,但用 `set_head`(Shift 扩展选区语义,保留 tail / 方向)。
+    pub(crate) fn set_heads_to(&mut self, f: impl Fn(&Self, Selection<usize>) -> usize) {
+        for index in 0..self.selections.len() {
+            let selection = self.selections[index];
+            let target = f(self, selection);
+            self.selections[index].set_head(target, SelectionGoal::None);
+        }
+        self.normalize_selections();
     }
 
     /// 程序化设置内容:**不**触发 [`EditorEvent::Edited`](计划沿用旧约定,
@@ -312,7 +434,7 @@ impl Editor {
     pub fn set_value(&mut self, value: impl Into<SharedString>, cx: &mut Context<Self>) {
         self.rope = Rope::from(value.into().as_str());
         let end = self.rope.len();
-        self.selection = Selection::new(end, end);
+        self.selections = vec![Selection::new(end, end)];
         self.marked_range = None;
         self.text_revision += 1;
         self.undo_manager.clear();
@@ -340,39 +462,80 @@ impl Editor {
         cx.notify();
     }
 
-    /// 用 `text` 替换当前选区——所有插入/删除/粘贴的唯一入口。
+    /// 用 `text` 替换**每个光标**的选区——所有插入/删除/粘贴的唯一入口。
     ///
     /// 对齐 zed `Editor::replace_selections`(input.rs:1952):编辑 rope、
-    /// 折叠选区到插入尾端、记录 undo 事务。
+    /// 折叠各选区到插入尾端、记录 undo 事务。
+    ///
+    /// 多光标做法(对齐 zed 的一次 buffer transaction):
+    /// - 按起点**升序**依次应用,用 `shift` 累计前面几处的长度变化,
+    ///   这样每次替换的区间都是当前 rope 里的真实坐标(可顺序回放);
+    /// - 整组用一个显式 undo 事务装载(每处一个 [`Change`]),所以
+    ///   一次 undo 把多处编辑一起撤回,光标组也整体恢复。
     pub(super) fn replace_selections(
         &mut self,
         text: &str,
         intent: EditIntent,
         cx: &mut Context<Self>,
     ) {
+        let texts = vec![text.to_string(); self.selections.len()];
+        self.replace_all_selections(texts, intent, cx);
+    }
+
+    /// 各光标插入**不同**文本(长度须等于光标数):换行继承缩进、
+    /// 多光标粘贴按行分发走这里。
+    pub(super) fn replace_all_selections(
+        &mut self,
+        texts: Vec<String>,
+        intent: EditIntent,
+        cx: &mut Context<Self>,
+    ) {
         if self.disabled {
             return;
         }
+        debug_assert_eq!(texts.len(), self.selections.len());
         self.transact(
             |this, _cx| {
-                let range = Range::from(&this.selection);
-                let old_text = this.rope.text_in_range(range.clone());
-                let selection_before = this.selection;
+                let selections_before = this.selections.clone();
+                let multi_cursor = selections_before.len() > 1;
+                if multi_cursor {
+                    this.undo_manager
+                        .begin_transaction(selections_before.clone());
+                }
 
-                this.rope.replace(range.clone(), text);
-                let new_head = range.start + text.len();
-                this.selection.collapse_to(new_head, SelectionGoal::None);
+                // 规范序即升序;逐处替换并累计偏移
+                let mut shift = 0i64;
+                for (index, selection_before) in selections_before.iter().enumerate() {
+                    let text = texts.get(index).map(String::as_str).unwrap_or_default();
+                    let start = (selection_before.range().start as i64 + shift) as usize;
+                    let end = (selection_before.range().end as i64 + shift) as usize;
+                    let range = start..end;
+                    let old_text = this.rope.text_in_range(range.clone());
+                    let new_head = start + text.len();
+
+                    this.rope.replace(range.clone(), text);
+                    let selection_after = Selection::new(new_head, new_head);
+                    this.selections[index] = selection_after;
+
+                    let change = Change::new(
+                        range.clone(),
+                        &old_text,
+                        start..new_head,
+                        text,
+                        *selection_before,
+                        selection_after,
+                    );
+                    this.undo_manager.record_transaction(change, intent);
+
+                    shift += text.len() as i64 - old_text.len() as i64;
+                }
                 this.marked_range = None;
 
-                let change = Change::new(
-                    range.clone(),
-                    &old_text,
-                    range.start..new_head,
-                    text,
-                    selection_before,
-                    this.selection,
-                );
-                this.undo_manager.record_transaction(change, intent);
+                if multi_cursor {
+                    this.normalize_selections();
+                    this.undo_manager
+                        .commit_transaction(this.selections.clone());
+                }
             },
             cx,
         );
@@ -392,17 +555,18 @@ impl Editor {
     }
 
     pub(crate) fn undo_core(&mut self, cx: &mut Context<Self>) {
-        let Some(changes) = self.undo_manager.undo() else {
+        let Some(step) = self.undo_manager.undo() else {
             return;
         };
         // 逆序回放:后发生的先撤销
-        for change in &changes {
+        for change in &step.changes {
             self.rope
                 .replace(change.new_range.clone(), &change.old_text);
         }
-        // 恢复事务开始前的选区(逆序第一项的 selection_before)
-        if let Some(first) = changes.first() {
-            self.selection = first.selection_before;
+        // 恢复事务开始前的整组光标(多光标时一次恢复所有)
+        if !step.selections.is_empty() {
+            self.selections = step.selections;
+            self.normalize_selections();
         }
         self.text_revision += 1;
         self.text_revision += 1;
@@ -417,15 +581,16 @@ impl Editor {
     }
 
     pub(crate) fn redo_core(&mut self, cx: &mut Context<Self>) {
-        let Some(changes) = self.undo_manager.redo() else {
+        let Some(step) = self.undo_manager.redo() else {
             return;
         };
-        for change in &changes {
+        for change in &step.changes {
             self.rope
                 .replace(change.old_range.clone(), &change.new_text);
         }
-        if let Some(last) = changes.last() {
-            self.selection = last.selection_after;
+        if !step.selections.is_empty() {
+            self.selections = step.selections;
+            self.normalize_selections();
         }
         self.text_revision += 1;
         self.text_revision += 1;
@@ -443,18 +608,36 @@ impl Editor {
             return;
         }
         self.is_selecting = true;
+        // 拖拽只对主光标生效:拖动前先把光标组收拢(同 VS Code 的行为;
+        // zed 的 workshops 为补上模式,属于后续增量)
+        if !event.modifiers.alt {
+            self.selections.truncate(self.selections.len() - 1);
+            self.normalize_selections();
+        }
         let offset = self.index_for_mouse_position(event.position);
         if event.click_count == 2 {
             // 双击选词
             let range = self.word_range_at(offset);
-            self.selection = Selection::new(range.end, range.start);
+            let selection = Selection::new(range.end, range.start);
+            if event.modifiers.alt && self.selections.len() > 1 {
+                self.add_selection(selection);
+            } else {
+                self.set_selection(selection);
+            }
+            self.change_selections(cx);
+            return;
+        }
+        if event.modifiers.alt {
+            // alt+click:加/撤一个光标(与已有光标重合时撤掉)
+            self.add_selection(Selection::new(offset, offset));
             self.change_selections(cx);
             return;
         }
         if event.modifiers.shift {
-            self.selection.set_head(offset, SelectionGoal::None);
+            self.selection_mut().set_head(offset, SelectionGoal::None);
         } else {
-            self.selection.collapse_to(offset, SelectionGoal::None);
+            self.selection_mut()
+                .collapse_to(offset, SelectionGoal::None);
         }
         self.change_selections(cx);
     }
@@ -466,7 +649,7 @@ impl Editor {
     fn on_mouse_move(&mut self, event: &MouseMoveEvent, _: &mut Window, cx: &mut Context<Self>) {
         if self.is_selecting {
             let offset = self.index_for_mouse_position(event.position);
-            self.selection.set_head(offset, SelectionGoal::None);
+            self.selection_mut().set_head(offset, SelectionGoal::None);
             self.change_selections(cx);
         }
     }
@@ -545,6 +728,25 @@ pub fn bind_editor_keys(cx: &mut App) {
             Some(EDITOR_KEY_CONTEXT),
         ),
         KeyBinding::new("enter", Newline, Some(EDITOR_KEY_CONTEXT)),
+        // ---- 多光标(zed 默认键位:cmd-ctrl-p/n / cmd-alt-up/down)----
+        KeyBinding::new(
+            "secondary-alt-up",
+            AddSelectionAbove,
+            Some(EDITOR_KEY_CONTEXT),
+        ),
+        KeyBinding::new(
+            "secondary-alt-down",
+            AddSelectionBelow,
+            Some(EDITOR_KEY_CONTEXT),
+        ),
+        // VS Code 的 cmd-d(zed 里叫 editor::SelectNext)
+        KeyBinding::new(
+            "secondary-d",
+            SelectNextOccurrence,
+            Some(EDITOR_KEY_CONTEXT),
+        ),
+        // escape:收拢为单个主光标(zed editor::Cancel)
+        KeyBinding::new("escape", Cancel, Some(EDITOR_KEY_CONTEXT)),
     ]);
 }
 
@@ -673,10 +875,14 @@ impl Editor {
     }
 
     /// 请求下一帧把光标滚入视口(编辑/移动选区后调用)。
+    ///
+    /// 跟随的是主光标([`Editor::selection`])——多光标时 zed 滚的是
+    /// `newest_selection`,这里就是组内最后一个。
     pub(crate) fn request_autoscroll(&mut self) {
         if self.mode.is_multi_line() {
             tracing::debug!(
-                head = self.selection.head(),
+                head = self.selection().head(),
+                cursors = self.selections.len(),
                 "autoscroll requested (needs_autoscroll=true)"
             );
             self.needs_autoscroll = true;
@@ -756,6 +962,10 @@ impl Render for Editor {
             .on_action(cx.listener(Self::move_to_next_word_end))
             .on_action(cx.listener(Self::delete_to_previous_word_start))
             .on_action(cx.listener(Self::delete_to_next_word_end))
+            .on_action(cx.listener(Self::add_selection_above))
+            .on_action(cx.listener(Self::add_selection_below))
+            .on_action(cx.listener(Self::select_next_occurrence))
+            .on_action(cx.listener(Self::cancel))
             .on_mouse_down(MouseButton::Left, cx.listener(Self::on_mouse_down))
             .on_mouse_up(MouseButton::Left, cx.listener(Self::on_mouse_up))
             .on_mouse_up_out(MouseButton::Left, cx.listener(Self::on_mouse_up))
@@ -784,7 +994,7 @@ mod tests {
     fn test_insert_and_value(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| Editor::single_line(cx).default_value("hello"));
         editor.update(cx, |editor, cx| {
-            editor.selection = Selection::new(5, 5);
+            editor.set_selection(Selection::new(5, 5));
             editor.replace_selections(" world", EditIntent::Typing, cx);
         });
         assert_eq!(
@@ -792,7 +1002,7 @@ mod tests {
             "hello world"
         );
         assert_eq!(
-            editor.read_with(cx, |e, _| e.selection.head()),
+            editor.read_with(cx, |e, _| e.selection().head()),
             11,
             "光标应折叠到插入尾端"
         );
@@ -802,7 +1012,7 @@ mod tests {
     fn test_undo_redo_restores_selection(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| Editor::single_line(cx).default_value("hello"));
         editor.update(cx, |editor, cx| {
-            editor.selection = Selection::new(5, 5);
+            editor.set_selection(Selection::new(5, 5));
             editor.replace_selections(" world", EditIntent::Typing, cx);
         });
         assert_eq!(
@@ -813,7 +1023,7 @@ mod tests {
         editor.update(cx, |editor, cx| editor.undo_core(cx));
         assert_eq!(editor.read_with(cx, |e, _| e.value().to_string()), "hello");
         assert_eq!(
-            editor.read_with(cx, |e, _| e.selection.head()),
+            editor.read_with(cx, |e, _| e.selection().head()),
             5,
             "undo 应恢复事务前选区"
         );
@@ -823,7 +1033,7 @@ mod tests {
             editor.read_with(cx, |e, _| e.value().to_string()),
             "hello world"
         );
-        assert_eq!(editor.read_with(cx, |e, _| e.selection.head()), 11);
+        assert_eq!(editor.read_with(cx, |e, _| e.selection().head()), 11);
     }
 
     #[gpui::test]
@@ -848,7 +1058,7 @@ mod tests {
     fn test_paste_replaces_selection(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| Editor::single_line(cx).default_value("hello world"));
         editor.update(cx, |editor, cx| {
-            editor.selection = Selection::new(6, 11);
+            editor.set_selection(Selection::new(6, 11));
             editor.replace_selections("gpui", EditIntent::Atomic, cx);
         });
         assert_eq!(
@@ -870,7 +1080,7 @@ mod tests {
         });
         editor.update(cx, |editor, cx| {
             let end = editor.rope.len();
-            editor.selection = Selection::new(end, end);
+            editor.set_selection(Selection::new(end, end));
             editor.newline_core(cx);
         });
         let value = editor.read_with(cx, |e, _| e.value().to_string());
@@ -883,7 +1093,7 @@ mod tests {
         // 单行 Enter:走 Submitted 分支、不插入换行(事件在 UI 阶段验证)
         editor.update(cx, |editor, cx| {
             let end = editor.rope.len();
-            editor.selection = Selection::new(end, end);
+            editor.set_selection(Selection::new(end, end));
             editor.newline_core(cx);
             // core 直接插换行——单行必须经由动作包装分流,这里核对 core 行为
             assert_eq!(editor.rope.len(), 4);
@@ -898,17 +1108,17 @@ mod tests {
         });
         editor.update(cx, |editor, cx| {
             // 光标到第一行行尾(offset 4)
-            editor.selection = Selection::new(4, 4);
+            editor.set_selection(Selection::new(4, 4));
             editor.move_vertical_core(1, cx);
             // 第二行只有 "ef":列被 clamp 到行尾(offset 7)
-            assert_eq!(editor.selection.head(), 7, "下移应 clamp 到短行行尾");
+            assert_eq!(editor.selection().head(), 7, "下移应 clamp 到短行行尾");
 
             editor.move_vertical_core(1, cx);
             // 第三行 "ghijk":列 2 对应 offset 8+2=10
-            assert_eq!(editor.selection.head(), 10);
+            assert_eq!(editor.selection().head(), 10);
 
             editor.move_vertical_core(-1, cx);
-            assert_eq!(editor.selection.head(), 7, "上移应回到第二行");
+            assert_eq!(editor.selection().head(), 7, "上移应回到第二行");
         });
     }
 
@@ -919,18 +1129,18 @@ mod tests {
         });
         editor.update(cx, |editor, cx| {
             // 光标在第二行行首(offset 3),退格应删除换行合并两行
-            editor.selection = Selection::new(3, 3);
+            editor.set_selection(Selection::new(3, 3));
             assert!(!editor.backspace_core(cx));
         });
         assert_eq!(editor.read_with(cx, |e, _| e.value().to_string()), "abcd");
-        assert_eq!(editor.read_with(cx, |e, _| e.selection.head()), 2);
+        assert_eq!(editor.read_with(cx, |e, _| e.selection().head()), 2);
     }
 
     #[gpui::test]
     fn test_backspace_at_boundary_rings_bell(cx: &mut gpui::TestAppContext) {
         let editor = cx.new(|cx| Editor::single_line(cx).default_value("ab"));
         editor.update(cx, |editor, cx| {
-            editor.selection = Selection::new(0, 0);
+            editor.set_selection(Selection::new(0, 0));
             assert!(editor.backspace_core(cx), "起点退格应报告边界");
             assert_eq!(editor.rope.len(), 2);
         });
@@ -958,9 +1168,10 @@ impl EntityInputHandler for Editor {
         _window: &mut gpui::Window,
         _cx: &mut Context<Self>,
     ) -> Option<UTF16Selection> {
+        let selection = self.selection();
         Some(UTF16Selection {
-            range: self.range_to_utf16(&Range::from(&self.selection)),
-            reversed: self.selection.reversed,
+            range: self.range_to_utf16(&selection.range()),
+            reversed: selection.reversed,
         })
     }
 
@@ -996,12 +1207,13 @@ impl EntityInputHandler for Editor {
         if let Some(range_utf16) = range_utf16 {
             let range = self.range_from_utf16(&range_utf16);
             let old_text = self.rope.text_in_range(range.clone());
-            let selection_before = self.selection;
+            let selection_before = self.selection();
             self.transact(
                 |this, _| {
                     this.rope.replace(range.clone(), new_text);
                     let new_head = range.start + new_text.len();
-                    this.selection.collapse_to(new_head, SelectionGoal::None);
+                    this.selection_mut()
+                        .collapse_to(new_head, SelectionGoal::None);
                     this.marked_range = None;
                     let change = Change::new(
                         range.clone(),
@@ -1009,7 +1221,7 @@ impl EntityInputHandler for Editor {
                         range.start..new_head,
                         new_text,
                         selection_before,
-                        this.selection,
+                        *this.selection_mut(),
                     );
                     this.undo_manager
                         .record_transaction(change, EditIntent::Atomic);
@@ -1040,17 +1252,17 @@ impl EntityInputHandler for Editor {
         // 组字开始:打开 undo 显式事务(整段组字一次撤销)
         if !self.ime_composing {
             self.ime_composing = true;
-            self.undo_manager.begin_transaction();
+            self.undo_manager.begin_transaction(self.selections.clone());
         }
 
         let range = range_utf16
             .as_ref()
             .map(|range_utf16| self.range_from_utf16(range_utf16))
             .or(self.marked_range.clone())
-            .unwrap_or_else(|| Range::from(&self.selection));
+            .unwrap_or_else(|| self.selection().range());
 
         let old_text = self.rope.text_in_range(range.clone());
-        let selection_before = self.selection;
+        let selection_before = self.selection();
         self.rope.replace(range.clone(), new_text);
         if !new_text.is_empty() {
             self.marked_range = Some(range.start..range.start + new_text.len());
@@ -1070,7 +1282,7 @@ impl EntityInputHandler for Editor {
                 let head = range.start + marked_len;
                 head..head
             });
-        self.selection = Selection::new(new_selected.end, new_selected.start);
+        *self.selection_mut() = Selection::new(new_selected.end, new_selected.start);
         let new_range = range.start..range.start + new_text.len();
         let change = Change::new(
             range,
@@ -1078,7 +1290,7 @@ impl EntityInputHandler for Editor {
             new_range,
             new_text,
             selection_before,
-            self.selection,
+            self.selection(),
         );
         self.undo_manager
             .record_transaction(change, EditIntent::Atomic);
@@ -1253,7 +1465,7 @@ mod autoscroll_tests {
         cx.update(|_, cx| {
             editor.update(cx, |editor, cx| {
                 let head = editor.rope.len();
-                editor.selection = Selection::new(head, head);
+                editor.set_selection(Selection::new(head, head));
                 editor.change_selections(cx);
             })
         });
@@ -1330,7 +1542,7 @@ mod autoscroll_tests {
         // 显式把光标放到文档开头(default_value 不动 selection, 但测试要可控)
         cx.update(|_, cx| {
             editor.update(cx, |editor, cx| {
-                editor.selection = Selection::new(0, 0);
+                editor.set_selection(Selection::new(0, 0));
                 editor.change_selections(cx);
             })
         });
@@ -1338,7 +1550,7 @@ mod autoscroll_tests {
         // 光标在文档开头,按 ↓ 一次:应落在行 0 的第二个视觉行内
         cx.dispatch_action(Down);
         draw_frame(&mut cx);
-        let head = cx.update(|_, cx| editor.read(cx).selection.head());
+        let head = cx.update(|_, cx| editor.read(cx).selection().head());
         assert!(
             head > 0 && head < first_line_len,
             "软换行下 ↓ 应停在同一 buffer 行的下一视觉行, got head={head}, first_line_len={first_line_len}"
@@ -1402,6 +1614,49 @@ mod autoscroll_tests {
         );
     }
 
+    /// 真实输入路径(IME/键入走 EntityInputHandler)也要对多光标生效:
+    /// 两行开头各一个光标,`replace_text_in_range` 应给每行都插入。
+    #[gpui::test]
+    fn test_typing_through_input_handler_applies_to_all_cursors(cx: &mut gpui::TestAppContext) {
+        let mut editor_slot = None;
+        let window = cx.add_window(|window, cx| {
+            let mut editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value("aa\nbb");
+            editor.selections = vec![Selection::new(0, 0), Selection::new(3, 3)];
+            let handle = editor.focus_handle.clone();
+            window.focus(&handle, cx);
+            editor_slot = Some(cx.entity());
+            editor
+        });
+        let editor = editor_slot.expect("editor captured");
+        let mut cx = VisualTestContext::from_window(window.into(), &cx);
+
+        cx.update(|window, cx| {
+            window.refresh();
+            let _ = window.draw(cx);
+        });
+        cx.update(|window, cx| {
+            editor.update(cx, |editor, cx| {
+                editor.replace_text_in_range(None, "X", window, cx)
+            })
+        });
+
+        let (text, cursors) = cx.update(|_, cx| {
+            let editor = editor.read(cx);
+            (
+                editor.value().to_string(),
+                editor
+                    .selections()
+                    .iter()
+                    .map(|s| s.head())
+                    .collect::<Vec<_>>(),
+            )
+        });
+        assert_eq!(text, "Xaa\nXbb", "键入应在每个光标处插入");
+        // 第二行的光标原在 offset 3,前一处插入把它推后 1 → head = 5
+        assert_eq!(cursors, vec![1, 5]);
+    }
+
     /// Off 模式:内容不足一屏时上限为 0(普通滚动行为)。
     #[gpui::test]
     fn test_scroll_beyond_last_line_off(cx: &mut gpui::TestAppContext) {
@@ -1434,7 +1689,7 @@ mod word_movement_tests {
         // 词移动:末尾 → "foo" 首 → "world" 首 → "hello" 首
         editor.update(cx, |editor, cx| {
             let end = editor.rope.len();
-            editor.selection = Selection::new(end, end);
+            editor.set_selection(Selection::new(end, end));
             assert_eq!(editor.previous_word_start_offset(end), 12);
             assert_eq!(editor.previous_word_start_offset(12), 6);
             assert_eq!(editor.previous_word_start_offset(6), 0);
@@ -1446,7 +1701,7 @@ mod word_movement_tests {
         editor.update(cx, |editor, cx| {
             let head = editor.rope.len();
             let target = editor.previous_word_start_offset(head);
-            editor.selection.set_head(target, SelectionGoal::None);
+            editor.selection_mut().set_head(target, SelectionGoal::None);
             editor.replace_selections("", EditIntent::Atomic, cx);
         });
         assert_eq!(
@@ -1459,5 +1714,214 @@ mod word_movement_tests {
             let range = editor.word_range_at(8); // "world" 内
             assert_eq!(range, 6..11, "双击应选中整个词");
         });
+    }
+}
+
+#[cfg(test)]
+mod multi_cursor_tests {
+    use super::*;
+    use gpui::AppContext as _;
+
+    /// 三个光标:每行一个,位于行首。
+    fn cursors_at_line_starts(editor: &mut Editor, text: &str) {
+        let mut selections = Vec::new();
+        for (index, _) in text.split('\n').enumerate() {
+            let offset = editor
+                .rope
+                .point_to_offset(crate::base::input::engine::Point::new(index as u32, 0));
+            selections.push(Selection::new(offset, offset));
+        }
+        editor.set_selections(selections);
+    }
+
+    #[gpui::test]
+    fn test_insert_applies_to_every_cursor(cx: &mut gpui::TestAppContext) {
+        let text = "aa\nbb\ncc";
+        let editor = cx.new(|cx| {
+            let mut editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value(text);
+            cursors_at_line_starts(&mut editor, text);
+            editor
+        });
+
+        editor.update(cx, |editor, cx| {
+            assert_eq!(editor.cursor_count(), 3);
+            editor.replace_selections("X", EditIntent::Atomic, cx);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.value().to_string()),
+            "Xaa\nXbb\nXcc",
+            "每个光标都应插入一份"
+        );
+        // 插入后光标各自行首 + 1
+        assert_eq!(
+            editor.read_with(cx, |e, _| e
+                .selections()
+                .iter()
+                .map(|s| s.head())
+                .collect::<Vec<_>>()),
+            vec![1, 5, 9]
+        );
+    }
+
+    #[gpui::test]
+    fn test_multi_cursor_edit_is_one_undo_step(cx: &mut gpui::TestAppContext) {
+        let text = "aa\nbb\ncc";
+        let editor = cx.new(|cx| {
+            let mut editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value(text);
+            cursors_at_line_starts(&mut editor, text);
+            editor
+        });
+
+        editor.update(cx, |editor, cx| {
+            editor.replace_selections("XYZ", EditIntent::Atomic, cx);
+        });
+        editor.update(cx, |editor, cx| editor.undo_core(cx));
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.value().to_string()),
+            text,
+            "一次 undo 撤掉所有光标处的编辑"
+        );
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.cursor_count()),
+            3,
+            "光标组随 undo 一起恢复"
+        );
+        assert_eq!(
+            editor.read_with(cx, |e, _| e
+                .selections()
+                .iter()
+                .map(|s| s.head())
+                .collect::<Vec<_>>()),
+            vec![0, 3, 6]
+        );
+
+        editor.update(cx, |editor, cx| editor.redo_core(cx));
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.value().to_string()),
+            "XYZaa\nXYZbb\nXYZcc"
+        );
+    }
+
+    #[gpui::test]
+    fn test_backspace_deletes_at_every_cursor(cx: &mut gpui::TestAppContext) {
+        let text = "aa\nbb\ncc";
+        let editor = cx.new(|cx| {
+            let mut editor =
+                Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value(text);
+            // 每行第 2 个字符后:offset 2 / 5 / 8
+            editor.set_selections(vec![
+                Selection::new(2, 2),
+                Selection::new(5, 5),
+                Selection::new(8, 8),
+            ]);
+            editor
+        });
+        editor.update(cx, |editor, cx| {
+            editor.backspace_core(cx);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.value().to_string()),
+            "a\nb\nc",
+            "每个光标处各删一个字符"
+        );
+    }
+
+    #[gpui::test]
+    fn test_add_selection_below_and_cancel(cx: &mut gpui::TestAppContext) {
+        let editor = cx.new(|cx| {
+            Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx)
+                .default_value("aaaa\nbbbb\ncccc")
+        });
+        editor.update(cx, |editor, cx| {
+            editor.set_selection(Selection::new(2, 2));
+            editor.add_selection_vertical(false, cx);
+        });
+        // 行 0 列 2 → 行 1 列 2(offset 7);同列而不是同行尾
+        assert_eq!(
+            editor.read_with(cx, |e, _| e
+                .selections()
+                .iter()
+                .map(|s| s.head())
+                .collect::<Vec<_>>()),
+            vec![2, 7]
+        );
+
+        editor.update(cx, |editor, cx| {
+            editor.add_selection_vertical(false, cx);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.cursor_count()),
+            3,
+            "每个现有光标都往下加一个"
+        );
+
+        // 再按一次:末行没有下一行了,且下落点重合的被 merge —— 数量不再增长
+        editor.update(cx, |editor, cx| {
+            editor.add_selection_vertical(false, cx);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.cursor_count()),
+            3,
+            "末行无法继续往下加,重合者被合并"
+        );
+
+        // escape:收拢成单个主光标
+        editor.update(cx, |editor, cx| {
+            editor.cancel_core(cx);
+        });
+        assert_eq!(editor.read_with(cx, |e, _| e.cursor_count()), 1);
+    }
+
+    #[gpui::test]
+    fn test_select_next_occurrence_and_edit(cx: &mut gpui::TestAppContext) {
+        let editor = cx.new(|cx| {
+            Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value("foo bar foo")
+        });
+        editor.update(cx, |editor, cx| {
+            editor.set_selection(Selection::new(0, 0));
+            editor.select_next_occurrence_core(cx);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e
+                .selections()
+                .iter()
+                .map(|s| s.range())
+                .collect::<Vec<_>>()),
+            vec![0..3, 8..11],
+            "空光标:先选词,再把下一处加成第二个光标"
+        );
+
+        editor.update(cx, |editor, cx| {
+            editor.replace_selections("X", EditIntent::Atomic, cx);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e.value().to_string()),
+            "X bar X"
+        );
+    }
+
+    #[gpui::test]
+    fn test_overlapping_cursors_are_merged(cx: &mut gpui::TestAppContext) {
+        let editor = cx.new(|cx| {
+            Editor::with_mode(EditorMode::MultiLine { rows: 4 }, cx).default_value("abcdef")
+        });
+        editor.update(cx, |editor, _| {
+            editor.set_selections(vec![
+                Selection::new(1, 1),
+                Selection::new(3, 3),
+                Selection::new(1, 1),
+            ]);
+        });
+        assert_eq!(
+            editor.read_with(cx, |e, _| e
+                .selections()
+                .iter()
+                .map(|s| s.head())
+                .collect::<Vec<_>>()),
+            vec![1, 3],
+            "重合的光标合并为一个"
+        );
     }
 }

@@ -9,6 +9,8 @@
 //! - 中文 IME 组字(下划线)与上屏;
 //! - 行数超出视口时滚轮滚动、光标自动跟随;
 //! - 单行对比:窗口上半部分是 SingleLine 输入框,Enter 触发 Submitted。
+//! - 多光标:Ctrl/Cmd+Alt+↑/↓ 上下加光标,Ctrl/Cmd+D 选下一处相同文本,
+//!   Alt+点击加/撤光标,Esc 收拢为单个光标;打字/退格对全部光标生效。
 
 #![cfg_attr(target_family = "wasm", no_main)]
 
@@ -59,7 +61,8 @@ impl Render for EditorDemo {
                 div()
                     .text_sm()
                     .text_color(rgb(0x6c7086))
-                    .child("Tab 聚焦编辑器;Enter 换行;Ctrl/Cmd+Z 撤销;滚轮滚动"),
+                    .child("Tab 聚焦编辑器;Enter 换行;Ctrl/Cmd+Z 撤销;滚轮滚动")
+                    .child(div().child("多光标:Ctrl/Cmd+Alt+↑↓ 加光标、Ctrl/Cmd+D 选下一处、Alt+点击加/撤、Esc 收拢")),
             )
             .child(div().w_full().child(self.single.clone()))
             .child(div().w_full().child(self.multi.clone()))

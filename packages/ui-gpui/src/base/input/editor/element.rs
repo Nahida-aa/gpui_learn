@@ -40,8 +40,10 @@ pub struct PrepaintState {
     ranges: Vec<Range<usize>>,
     /// `lines[0]` 对应的全局视觉行号。
     first_visible: u32,
+    /// 每个光标的选区方块(行数 × 光标数)。
     selection_quads: Vec<PaintQuad>,
-    cursor_quad: Option<PaintQuad>,
+    /// 每个光标的竖线(折叠光标才有,多光标时一人一条)。
+    cursor_quads: Vec<PaintQuad>,
 }
 
 impl Element for EditorElement {
@@ -103,7 +105,7 @@ impl Element for EditorElement {
             needs_autoscroll,
             soft_wrap,
             marked_range,
-            selection,
+            selections,
             disabled,
             text_revision,
             wrapped_revision,
@@ -116,7 +118,7 @@ impl Element for EditorElement {
                 editor.needs_autoscroll,
                 editor.soft_wrap,
                 editor.marked_range.clone(),
-                editor.selection,
+                editor.selections.clone(),
                 editor.disabled,
                 editor.text_revision,
                 editor.wrapped_revision,
@@ -159,7 +161,7 @@ impl Element for EditorElement {
             // 视觉行号(软换行下 ≠ buffer 行号)
             let head_row = {
                 let editor = self.editor.read(cx);
-                editor.display_row_for_offset(editor.selection.head())
+                editor.display_row_for_offset(editor.selection().head())
             };
             tracing::debug!(
                 head_row,
@@ -354,48 +356,45 @@ impl Element for EditorElement {
             lines.push((line, y, seg_start..seg_start + seg_len));
         }
 
-        // ---- 选区与光标 ----
+        // ---- 选区与光标(每个光标一套:多光标时一人一个方块/一条竖线)----
         let mut selection_quads: Vec<PaintQuad> = Vec::new();
-        let mut cursor_quad = None;
+        let mut cursor_quads: Vec<PaintQuad> = Vec::new();
 
         if is_focused {
-            for (line, y, row_range) in &lines {
-                let sel_start = selection
-                    .range()
-                    .start
-                    .clamp(row_range.start, row_range.end);
-                let sel_end = selection.range().end.clamp(row_range.start, row_range.end);
-                let full_row = selection.range().start <= row_range.start
-                    && selection.range().end >= row_range.end;
-                if sel_start < sel_end
-                    || (full_row && sel_start == sel_end && !selection.is_empty())
-                {
-                    let x0 = line.x_for_index(sel_start - row_range.start);
-                    let x1 = if sel_end == sel_start {
-                        line.width
-                    } else {
-                        line.x_for_index(sel_end - row_range.start)
-                    };
-                    selection_quads.push(fill(
-                        Bounds::new(
-                            gpui::point(bounds.left() + x0, *y),
-                            gpui::size(x1 - x0, line_height),
-                        ),
-                        selection_color,
-                    ));
-                }
-                if selection.is_empty()
-                    && selection.head() >= row_range.start
-                    && selection.head() <= row_range.end
-                {
-                    let x = line.x_for_index(selection.head() - row_range.start);
-                    cursor_quad = Some(fill(
-                        Bounds::new(
-                            gpui::point(bounds.left() + x, *y),
-                            gpui::size(px(2.), line_height),
-                        ),
-                        cursor_color,
-                    ));
+            for selection in &selections {
+                let range = selection.range();
+                for (line, y, row_range) in &lines {
+                    let sel_start = range.start.clamp(row_range.start, row_range.end);
+                    let sel_end = range.end.clamp(row_range.start, row_range.end);
+                    let full_row = range.start <= row_range.start && range.end >= row_range.end;
+                    if sel_start < sel_end
+                        || (full_row && sel_start == sel_end && !selection.is_empty())
+                    {
+                        let x0 = line.x_for_index(sel_start - row_range.start);
+                        let x1 = if sel_end == sel_start {
+                            line.width
+                        } else {
+                            line.x_for_index(sel_end - row_range.start)
+                        };
+                        selection_quads.push(fill(
+                            Bounds::new(
+                                gpui::point(bounds.left() + x0, *y),
+                                gpui::size(x1 - x0, line_height),
+                            ),
+                            selection_color,
+                        ));
+                    }
+                    let head = selection.head();
+                    if selection.is_empty() && head >= row_range.start && head <= row_range.end {
+                        let x = line.x_for_index(head - row_range.start);
+                        cursor_quads.push(fill(
+                            Bounds::new(
+                                gpui::point(bounds.left() + x, *y),
+                                gpui::size(px(2.), line_height),
+                            ),
+                            cursor_color,
+                        ));
+                    }
                 }
             }
         }
@@ -411,7 +410,7 @@ impl Element for EditorElement {
             ranges,
             first_visible,
             selection_quads,
-            cursor_quad,
+            cursor_quads,
         }
     }
 
@@ -447,7 +446,7 @@ impl Element for EditorElement {
             ranges,
             first_visible,
             selection_quads,
-            cursor_quad,
+            cursor_quads,
         } = &mut *prepaint;
 
         let line_height = window.line_height();
@@ -467,8 +466,8 @@ impl Element for EditorElement {
                 .unwrap();
             }
             if focus_handle.is_focused(window) && !disabled {
-                if let Some(cursor) = cursor_quad.take() {
-                    window.paint_quad(cursor);
+                for cursor in cursor_quads.iter() {
+                    window.paint_quad(cursor.clone());
                 }
             }
         };

@@ -133,6 +133,8 @@ input/
 - [x] 主题系统:base/theme 对齐 zed crates/theme 精简版(eaac38b)
 - [x] 可见行渲染优化:wrap 按 revision 缓存、shape 只看得见的行(5f3df6b)
 - [x] 词级移动/词删除/双击选词(119c528)
+- [x] 多光标:`selections` 集合 + 一次事务多点编辑 + 加光标/Esc 收拢
+- [x] `SelectUp`/`SelectDown` 走 display 空间(统一到 `vertical_target`)
 
 ### 目标定位(重要)
 
@@ -148,8 +150,12 @@ workspace、theme、collab),拖进来等于半个 zed 仓库,与「组件库 + �
 
 - `_32_painting` 移植(自定义绘制:缩进参考线、诊断波浪线的基础)
 - 水平滚动(`soft_wrap(false)` 时長行)
-- 多光标 / 列选区
-- `SelectUp`/`SelectDown` 在软换行下走 display 空间(当前是退化路径)
+- 列选区 / 多光标及以上学历差异补齐:
+  - zed 的 `AddSelectionAbove/Below` 用**像素** x 找同列(`x_for_display_point`),
+    当前用 display **列**(motion 的 goal 列)近似 —— 等有了每行度量缓存再换
+  - 多光标下的 `selected_text_range` 只上报主光标(IME 接口只有一个)
+  - 列(矩形)选区:alt+shift 拖拽
+- 多光标粘贴:目前只在剪贴板行数 == 光标数时按行分发(同 zed 的简化行为)
 
 ## 5. 不做的事
 
