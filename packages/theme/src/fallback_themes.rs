@@ -27,8 +27,8 @@ use gpui::Hsla;
 
 use crate::{PlayerColors, StatusColorsRefinement, ThemeColorsRefinement};
 
-/// 兜底主题的展示名。
-pub const DEFAULT_DARK_THEME_NAME: &str = "Catppuccin Mocha";
+/// 兜底主题的展示名(对齐 zed `DEFAULT_DARK_THEME` 的角色:找不到就退到它)。
+pub const DEFAULT_DARK_THEME: &str = "Catppuccin Mocha";
 
 /// Catppuccin Mocha 兜底主题。
 ///

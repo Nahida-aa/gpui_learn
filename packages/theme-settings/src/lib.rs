@@ -35,5 +35,5 @@ pub mod loaders;
 pub use content::{
     AppearanceContent, StyleContent, SyntaxContent, ThemeContent, ThemeFamilyContent,
 };
-pub use init::{init_theme, list_theme_names, load_asset_themes, set_theme_by_name};
+pub use init::{GlobalAssets, init_theme, list_theme_names, load_asset_themes, set_theme_by_name};
 pub use loaders::parse_theme_family;

@@ -38,3 +38,7 @@ refineable.workspace = true
 thiserror = "2"
 # 图标主题的 id 生成(注册表装载图标主题时给每个主题一个唯一 id)。
 uuid = { version = "1", features = ["v4"] }
+
+# state.rs 的 SystemAppearance 等全局测试用 #[gpui::test]。
+[features]
+test-support = ["gpui/test-support"]

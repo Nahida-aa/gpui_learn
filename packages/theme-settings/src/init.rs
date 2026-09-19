@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use aa_gpui_kit_theme::default_colors::{catppuccin_latte, catppuccin_mocha};
 use aa_gpui_kit_theme::registry::ThemeRegistry;
-use aa_gpui_kit_theme::{Theme, set_theme};
+use aa_gpui_kit_theme::{FontFamilyCache, LoadThemes, SystemAppearance, Theme, set_theme};
 use gpui::{App, AssetSource, Result, SharedString};
 
 /// 把 gpui 全局里的 `Arc<dyn AssetSource>` 适配成注册表要的
@@ -21,9 +21,8 @@ use gpui::{App, AssetSource, Result, SharedString};
 ///
 /// gpui 只给 `()` 提供了 `AssetSource` 实现，而 `App::asset_source()`
 /// 返回的是 `&Arc<dyn AssetSource>` —— 两者不能直接对接，故这里包一层。
-/// zed 的做法是 init 时由调用方把资产传进来（`LoadThemes::All(assets)`），
-/// 我们保持「资产在 gpui 全局」的现有约定，用适配器桥接。
-struct GlobalAssets(Arc<dyn AssetSource>);
+/// 对外导出：调用方也可以用 [`LoadThemes::All`] 直接传自己的资产源。
+pub struct GlobalAssets(pub Arc<dyn AssetSource>);
 
 impl AssetSource for GlobalAssets {
     fn load(&self, path: &str) -> Result<Option<Cow<'static, [u8]>>> {
@@ -37,8 +36,7 @@ impl AssetSource for GlobalAssets {
 
 /// 装入内置主题（Catppuccin Mocha / Latte）。
 ///
-/// 新版注册表是注入式（构造时给 `AssetSource`），内置主题在
-/// [`ThemeRegistry::new`] 里已装入兜底家族；这里再补上成对的 Mocha / Latte。
+/// 注册表构造时已装入兜底家族；这里再补上成对的 Mocha / Latte。
 fn builtin_family() -> aa_gpui_kit_theme::ThemeFamily {
     aa_gpui_kit_theme::ThemeFamily {
         id: "ui-gpui-default".into(),
@@ -48,18 +46,31 @@ fn builtin_family() -> aa_gpui_kit_theme::ThemeFamily {
     }
 }
 
-/// 安装主题系统（应用启动时调用一次）：
-/// 1. 以 gpui 的 `asset_source` 构造注册表并写入全局；
-/// 2. 装入内置主题家族（Catppuccin Mocha / Latte 成对）；
-/// 3. 从资产加载 `themes/**/*.json`（[`load_asset_themes`]）；
-/// 4. 默认选用 `Catppuccin Mocha`，找不到再回退内置深色，最后 `set_theme` 生效。
-pub fn init_theme(cx: &mut App) {
-    // 注册表持有 asset_source（供后续加载主题 / 图标资产）。
-    let assets: Box<dyn AssetSource> = Box::new(GlobalAssets(cx.asset_source().clone()));
+/// 安装主题系统（应用启动时调用一次）。
+///
+/// 形状对齐 zed 的 `theme::init(themes_to_load, cx)`：初始化系统明暗、
+/// 字体缓存与注册表，再选默认主题。
+///
+/// 1. 初始化 [`SystemAppearance`]（从 gpui 窗口外观读系统明暗）与
+///    字体家族缓存；
+/// 2. 按 `themes_to_load` 构造注册表并写入全局；
+/// 3. 装入内置主题家族（Catppuccin Mocha / Latte 成对）；
+/// 4. [`LoadThemes::All`] 时再从资产加载 `themes/**/*.json`；
+/// 5. 默认选用 `Catppuccin Mocha`，找不到再回退内置深色，最后 `set_theme` 生效。
+pub fn init_theme(themes_to_load: LoadThemes, cx: &mut App) {
+    SystemAppearance::init(cx);
+    FontFamilyCache::init_global(cx);
+
+    let assets: Box<dyn AssetSource> = match themes_to_load {
+        LoadThemes::JustBase => Box::new(()),
+        LoadThemes::All(assets) => assets,
+    };
     ThemeRegistry::set_global(assets, cx);
     let registry = ThemeRegistry::global(cx);
 
     registry.insert_theme_families([builtin_family()]);
+    // JustBase 的空资产源 list 返回空，循环零次 —— 与 zed 同一行为，
+    // 不需要按分支特判。
     load_asset_themes(&registry);
 
     set_theme(cx, Arc::new(default_theme(cx)));

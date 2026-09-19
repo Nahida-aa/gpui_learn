@@ -19,8 +19,9 @@ use gpui::{
     div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use theme_settings::init_theme;
+use theme_settings::{GlobalAssets, init_theme};
 use tracing_subscriber;
+use aa_gpui_kit_theme::LoadThemes;
 use ui_gpui::base::input::editor::{EDITOR_KEY_CONTEXT, Editor, EditorMode, bind_editor_keys};
 use ui_gpui::base::input::input::{InputState, bind_input_keys};
 
@@ -83,7 +84,11 @@ fn run_demo() {
         .without_time()
         .init();
     application().run(|cx: &mut App| {
-        init_theme(cx);
+        // 资产仍在 gpui 全局里,用适配器桥给主题注册表
+        init_theme(
+            LoadThemes::All(Box::new(GlobalAssets(cx.asset_source().clone()))),
+            cx,
+        );
         bind_input_keys(cx);
         bind_editor_keys(cx);
         cx.bind_keys([gpui::KeyBinding::new("cmd-q", Quit, None)]);

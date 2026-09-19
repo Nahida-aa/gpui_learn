@@ -66,6 +66,8 @@ pub use icon_theme::schema::{
 };
 pub use registry::{ThemeMeta, ThemeNotFoundError, ThemeRegistry};
 pub use scale::{ColorScale, ColorScaleSet, ColorScaleStep, ColorScales};
+pub use default_colors::default_color_scales;
+pub use fallback_themes::DEFAULT_DARK_THEME;
 pub use settings_provider::{
     DefaultThemeSettingsProvider, ThemeSettingsProvider, buffer_font, buffer_font_size,
     scaled_spacing, set_theme_settings_provider, theme_settings, ui_density, ui_font, ui_font_size,
@@ -75,7 +77,8 @@ pub use ui_density::UiDensity;
 // 「当前主题是什么」这份状态归本包管；**怎么把主题装进来**归 theme-settings 包管
 // （JSON 的 schema 与装载流程在那边，依赖方向 theme-settings → theme）。
 pub use state::{
-    ActiveTheme, Appearance, GlobalTheme, Theme, ThemeFamily, ThemeStyles, set_theme,
+    ActiveTheme, Appearance, GlobalTheme, LoadThemes, SystemAppearance, Theme, ThemeFamily,
+    ThemeStyles, set_theme,
 };
 pub use styles::{
     AccentColors, DiagnosticColors, PlayerColor, PlayerColors, StatusColors,

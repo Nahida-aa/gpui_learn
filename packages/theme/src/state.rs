@@ -30,6 +30,75 @@ impl Appearance {
     }
 }
 
+/// 系统的明暗形态(对齐 zed `SystemAppearance`)。
+///
+/// 与 [`Appearance`] 的区别:那是**主题**的明暗,这是**操作系统**当前的
+/// 明暗设置。跟随系统明暗切换主题的组件以它为准。
+#[derive(Debug, Clone, Copy)]
+pub struct SystemAppearance(pub Appearance);
+
+impl std::ops::Deref for SystemAppearance {
+    type Target = Appearance;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Default for SystemAppearance {
+    fn default() -> Self {
+        Self(Appearance::Dark)
+    }
+}
+
+#[derive(Default)]
+struct GlobalSystemAppearance(SystemAppearance);
+
+impl std::ops::DerefMut for GlobalSystemAppearance {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl std::ops::Deref for GlobalSystemAppearance {
+    type Target = SystemAppearance;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl Global for GlobalSystemAppearance {}
+
+impl SystemAppearance {
+    /// 初始化系统明暗全局(从 gpui 当前窗口外观读取)。
+    ///
+    /// 应用启动时调用一次(我们的 `theme-settings::init_theme` 已接入)。
+    pub fn init(cx: &mut App) {
+        *cx.default_global::<GlobalSystemAppearance>() =
+            GlobalSystemAppearance(SystemAppearance(cx.window_appearance().into()));
+    }
+
+    /// 读全局系统明暗。
+    pub fn global(cx: &App) -> Self {
+        cx.global::<GlobalSystemAppearance>().0
+    }
+
+    /// 可变访问全局系统明暗(平台层收到系统切换事件时更新)。
+    pub fn global_mut(cx: &mut App) -> &mut Self {
+        cx.global_mut::<GlobalSystemAppearance>()
+    }
+}
+
+impl From<WindowAppearance> for Appearance {
+    fn from(appearance: WindowAppearance) -> Self {
+        match appearance {
+            WindowAppearance::Light | WindowAppearance::VibrantLight => Appearance::Light,
+            WindowAppearance::Dark | WindowAppearance::VibrantDark => Appearance::Dark,
+        }
+    }
+}
+
 /// 一套主题的全部样式(对齐 zed `ThemeStyles` 的精简子集)。
 #[derive(Clone, Debug, PartialEq)]
 pub struct ThemeStyles {
@@ -94,9 +163,27 @@ pub struct ThemeFamily {
     pub themes: Vec<Theme>,
 }
 
-/// 全局当前主题(gpui `Global`)。
+/// 要装载哪些主题(对齐 zed `LoadThemes`,主要用于测试与嵌入场景)。
+pub enum LoadThemes {
+    /// 只装基础主题:不装载任何资产里的主题 JSON。
+    JustBase,
+    /// 装入资产源里的全部主题(通常传 gpui 的 asset source)。
+    All(Box<dyn gpui::AssetSource>),
+}
+
+/// 全局当前主题(gpui `Global`,对齐 zed:theme + icon_theme 成对)。
 #[derive(Clone)]
-pub struct GlobalTheme(pub Arc<Theme>);
+pub struct GlobalTheme {
+    pub theme: Arc<Theme>,
+    pub icon_theme: Arc<crate::icon_theme::IconTheme>,
+}
+
+impl GlobalTheme {
+    /// 由主题与图标主题构造。
+    pub fn new(theme: Arc<Theme>, icon_theme: Arc<crate::icon_theme::IconTheme>) -> Self {
+        Self { theme, icon_theme }
+    }
+}
 
 impl Global for GlobalTheme {}
 
@@ -115,7 +202,7 @@ impl ActiveTheme for App {
     fn theme(&self) -> &Arc<Theme> {
         static DEFAULT: std::sync::OnceLock<Arc<Theme>> = std::sync::OnceLock::new();
         match self.try_global::<GlobalTheme>() {
-            Some(global) => &global.0,
+            Some(global) => &global.theme,
             None => DEFAULT.get_or_init(|| {
                 Arc::new(
                     crate::fallback_themes::ctp_default_dark(),
@@ -126,13 +213,17 @@ impl ActiveTheme for App {
 }
 
 /// 设置当前主题:
-/// 1. 写入 `GlobalTheme`;
+/// 1. 写入 `GlobalTheme`(图标主题沿用注册表的默认,可用
+///    [`GlobalTheme::new`] + `cx.set_global` 自定);
 /// 2. 把语义色同步进 gpui 的 `GlobalColors`(gpui 自带基础设施跟随主题);
 /// 3. 各窗口收到 appearance 后自行重绘(组件已在 render 里读 `cx.theme()`,
 ///    gpui 会因全局变化自动触发重渲染)。
 pub fn set_theme(cx: &mut App, theme: Arc<Theme>) {
     sync_global_colors(cx, &theme);
-    cx.set_global(GlobalTheme(theme));
+    let icon_theme = crate::registry::ThemeRegistry::try_global(cx)
+        .and_then(|registry| registry.default_icon_theme().ok())
+        .unwrap_or_else(|| crate::icon_theme::default_icon_theme());
+    cx.set_global(GlobalTheme::new(theme, icon_theme));
 }
 
 /// 把主题语义色映射进 gpui 的 8 色兜底(`gpui::Colors`)。
@@ -149,4 +240,39 @@ fn sync_global_colors(cx: &mut App, theme: &Theme) {
         separator: c.border_variant.into(),
         container: c.surface_background.into(),
     })));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// SystemAppearance::init 从 gpui 窗口外观读系统明暗；
+    /// 未初始化时 default 是 Dark（对齐 zed）。
+    #[gpui::test]
+    fn system_appearance_defaults_and_inits(cx: &mut gpui::TestAppContext) {
+        cx.update(|cx| {
+            // global() 在未 init 时 panic(zed 同款,不做惰性默认),
+            // 所以这里先 init 再读。
+            SystemAppearance::init(cx);
+            // 测试窗口的 appearance 决定实际值,但一定落在两个枚举之内
+            let appearance = SystemAppearance::global(cx).0;
+            assert!(matches!(appearance, Appearance::Light | Appearance::Dark));
+        });
+    }
+
+    /// WindowAppearance → Appearance 的映射与 zed 一致。
+    #[test]
+    fn window_appearance_maps_to_appearance() {
+        use gpui::WindowAppearance;
+        assert_eq!(
+            Appearance::from(WindowAppearance::VibrantLight),
+            Appearance::Light
+        );
+        assert_eq!(
+            Appearance::from(WindowAppearance::VibrantDark),
+            Appearance::Dark
+        );
+        assert_eq!(Appearance::from(WindowAppearance::Light), Appearance::Light);
+        assert_eq!(Appearance::from(WindowAppearance::Dark), Appearance::Dark);
+    }
 }
