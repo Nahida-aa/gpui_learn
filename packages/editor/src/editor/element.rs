@@ -1,5 +1,5 @@
 //! 编辑器渲染元素,对齐 zed `EditorElement` 的「状态/渲染分离」模式:
-//! [`Editor`](super::Editor) 只持状态,本元素每帧从状态只读排版,
+//! [`Editor`] 只持状态,本元素每帧从状态只读排版,
 //! 并在 paint 尾部把布局快照写回状态供命中测试与 IME 使用。
 //!
 //! paint 顺序对齐 zed element.rs 的精简:handle_input(IME 接入)→
@@ -216,7 +216,7 @@ impl Element for EditorElement {
                 for row in 0..rows {
                     let row_start = editor
                         .rope
-                        .point_to_offset(crate::base::input::engine::Point::new(row, 0));
+                        .point_to_offset(crate::engine::Point::new(row, 0));
                     let line_len = editor.rope.line_len(row);
                     let line_text = editor.rope.text_in_range(row_start..row_start + line_len);
                     if line_text.is_empty() {
@@ -297,7 +297,7 @@ impl Element for EditorElement {
                 .editor
                 .read(cx)
                 .rope
-                .point_to_offset(crate::base::input::engine::Point::new(buffer_row, 0));
+                .point_to_offset(crate::engine::Point::new(buffer_row, 0));
             // 该视觉行显示的文本(placeholder 或 buffer 段)
             let seg_text: String = if show_placeholder {
                 placeholder.clone()

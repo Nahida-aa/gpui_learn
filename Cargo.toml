@@ -102,6 +102,10 @@ aa-gpui-kit-theme = { path = "packages/theme" }
 # 完全不知道 JSON 存在（对齐 zed 的 crates/theme ← crates/theme_settings）。
 theme-settings = { path = "packages/theme-settings" }
 
+# 编辑器内核（packages/editor）：自研 Rope 引擎 + 多行编辑器，从 ui-gpui
+# 拆出（2026-09）。ui-gpui 的 InputState/Textarea 是它的薄 facade。
+editor = { path = "packages/editor" }
+
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
 # 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），
 # cargo 就会用 git 源里的版本替掉 crates.io 的版本，并写进 Cargo.lock。

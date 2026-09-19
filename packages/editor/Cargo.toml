@@ -1,0 +1,28 @@
+[package]
+name = "editor"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "自研 GPUI 编辑器内核（架构对齐 zed crates/editor 的精简版）"
+
+[lints]
+workspace = true
+
+[dependencies]
+gpui.workspace = true
+# 自研 Rope 的底座：zed 的并发友好 B-tree。git 源与 rev 统一在根
+# Cargo.toml 的 [workspace.dependencies] 声明，与 gpui 的 patch rev 对齐。
+sum_tree.workspace = true
+tracing.workspace = true
+# 输入按「字素簇」(grapheme) 移动光标，避免切断 emoji / 组合字符。
+unicode-segmentation = "1"
+
+# 取当前主题色（选区背景、光标色）。编辑器内核不隶属控件库，
+# 主题是独立包（依赖方向 editor → theme）。
+aa-gpui-kit-theme.workspace = true
+
+# 交互/状态逻辑测试（选区、undo、多光标等）需要 gpui 的 test-support
+# 特性与 #[gpui::test] 宏。feature 开关供 `cargo test -F test-support`。
+[features]
+test-support = ["gpui/test-support"]

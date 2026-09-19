@@ -239,7 +239,7 @@ impl<'a> sum_tree::Dimension<'a, super::summary::ChunkSummary> for usize {
     }
 }
 
-/// 整段摘要本身也可作为维度（Cursor::summary::<TextSummary> 用）。
+/// 整段摘要本身也可作为维度（Cursor::summary 用）。
 impl<'a> sum_tree::Dimension<'a, super::summary::ChunkSummary> for super::summary::TextSummary {
     fn zero(_: ()) -> Self {
         super::summary::TextSummary::default()

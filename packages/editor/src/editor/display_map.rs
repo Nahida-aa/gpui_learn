@@ -19,7 +19,7 @@ use std::ops::Range;
 
 use sum_tree::{Bias, Dimensions, SumTree};
 
-use crate::base::input::engine::Point as BufferPoint;
+use crate::engine::Point as BufferPoint;
 
 /// display(视觉)空间坐标:row 是软换行后的视觉行,column 是该视觉行
 /// 内的字节偏移。
@@ -341,7 +341,7 @@ impl DisplaySnapshot {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::base::input::engine::Point;
+    use crate::engine::Point;
 
     /// 每行按 width 字节断行(伪度量;真实度量由渲染层提供)。
     fn segments_for(line_len: usize, width: usize) -> Vec<Range<usize>> {

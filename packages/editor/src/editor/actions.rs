@@ -17,7 +17,7 @@ use unicode_segmentation::UnicodeSegmentation;
 use super::selection::{Selection, SelectionGoal};
 use super::undo::EditIntent;
 use super::{DisplayPoint, Editor, movement};
-use crate::base::input::engine::Point as BufferPoint;
+use crate::engine::Point as BufferPoint;
 use std::ops::Range;
 
 actions!(

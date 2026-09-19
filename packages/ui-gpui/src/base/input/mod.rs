@@ -1,19 +1,19 @@
-//! 输入组件模块:editor 引擎 + Input(单行)/ Textarea(多行)facade。
+//! 输入控件 facade:单行 `Input` / 多行 `Textarea` 的门面薄壳。
 //!
-//! 分层(参照 gpui-component,概念对齐 zed):
-//! - [`engine`]——自研 Rope 文本引擎(sum_tree 底座,阶段 0)
-//! - [`editor`]——多行编辑引擎:选区、undo、display_map、movement、渲染
-//! - [`input`]——单行输入 facade(= Editor 的 SingleLine 模式,兼容旧 API)
-//! - [`textarea`]——多行文本域 facade(= Editor 的 MultiLine/AutoHeight 模式)
+//! 编辑器内核(Rope 引擎 + 多行编辑器)已独立成 `packages/editor` 包
+//! (2026-09 拆出,原 `base::input::{engine,editor}`),依赖方向
+//! `ui-gpui → editor`。这里只剩两个门面控件:
+//!
+//! - [`input`]——单行输入 facade(`InputState` = Editor 的 SingleLine 模式,
+//!   兼容旧 API)
+//! - [`textarea`]——多行文本域 facade(`Textarea` = Editor 的多行模式)
 //!
 //! 外部 API:单行用 [`InputState`] / [`InputEvent`] / [`bind_input_keys`];
-//! 多行用 [`Editor`](或 [`Textarea`]) / [`EditorEvent`] / [`bind_editor_keys`]。
+//! 多行用 [`Textarea`]。直接用内核(`Editor` / `EditorEvent` /
+//! `bind_editor_keys` 等)请依赖 `editor` 包。
 
-pub mod editor;
-pub mod engine;
 pub mod input;
 pub mod textarea;
 
-pub use editor::{Editor, EditorElement, EditorEvent, EditorMode, bind_editor_keys};
 pub use input::{INPUT_KEY_CONTEXT, InputEvent, InputState, bind_input_keys};
 pub use textarea::{Textarea, TextareaState};

@@ -88,7 +88,7 @@ pub struct UndoStep {
 /// 协调 undo/redo 的事务管理器。
 ///
 /// 每次编辑产生一个事务;兼容的相邻事务合并,直到显式边界
-/// ([`UndoManager::break_transaction_coalescing`],如光标移动/换行/IME 提交)。
+/// (显式边界,如光标移动/换行/IME 提交;见 `break_transaction_coalescing`)。
 #[derive(Debug, Default)]
 pub struct UndoManager {
     undo_transactions: Vec<UndoTransaction>,

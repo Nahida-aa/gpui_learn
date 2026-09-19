@@ -1,36 +1,22 @@
 //! 单行输入框 facade:`InputState` = [`Editor`] 的 SingleLine 模式。
 //!
-//! 外部 API 与旧版完全兼容(`InputState::new` builder、`InputEvent::
-//! Change/Submit`、[`bind_input_keys`]),实现全部下沉到 editor 引擎:
-//! 单行模式下的差异由引擎内部分流——Enter 不换行(发 [`InputEvent::
-//! Submit`])、粘贴去 `\n`、纵向移动不生效。
+//! 外部 API 与拆包前完全兼容(`InputState::new` builder、`InputEvent::
+//! Change/Submit`、[`bind_input_keys`]),实现全部在 `editor` 包的内核里:
+//! 单行模式下的差异由引擎内部分流——Enter 不换行、粘贴去 `\n`、纵向移动不生效。
+//!
+//! 内核已独立成包(`packages/editor`),本文件只是控件库的门面薄壳:
+//! 类型从这里转出,`INPUT_KEY_CONTEXT` / `InputEvent` 的**定义**在内核。
 
-use gpui::{App, KeyBinding, SharedString};
+use gpui::{App, KeyBinding};
 
-use super::editor::{
-    Backspace, Copy, Cut, Delete, Down, Editor, End, Home, Left, Newline, Paste, Right, SelectAll,
+use editor::editor::{
+    Backspace, Copy, Cut, Delete, Down, End, Home, Left, Newline, Paste, Right, SelectAll,
     SelectDown, SelectLeft, SelectRight, SelectUp, ShowCharacterPalette, Up,
 };
+pub use editor::{Editor, InputEvent, INPUT_KEY_CONTEXT};
 
 /// 单行输入框 = 多行编辑器的 SingleLine 模式。
 pub type InputState = Editor;
-
-/// 单行输入框对外事件(旧 API 兼容)。
-///
-/// 引擎在 SingleLine 模式下自动发出;多行请订阅
-/// [`EditorEvent`](crate::base::input::editor::EditorEvent)。
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum InputEvent {
-    /// 内容发生变化(程序化 `set_value` 不触发)。
-    Change(SharedString),
-    /// Enter 提交。
-    Submit(SharedString),
-}
-
-impl gpui::EventEmitter<InputEvent> for Editor {}
-
-/// 单行输入框的 key_context 名。
-pub const INPUT_KEY_CONTEXT: &str = "ui-gpui-input";
 
 /// 把单行输入需要的按键绑到 [`INPUT_KEY_CONTEXT`] 上。
 ///

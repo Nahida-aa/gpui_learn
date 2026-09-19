@@ -1,7 +1,7 @@
 //! Editor:多行编辑引擎,概念模型对齐 zed editor。
 //!
 //! 分层(参照 zed + gpui-component 双重调研,见 docs/editor-roadmap.md):
-//! - 文本存储:[`engine::Rope`](super::engine)(sum_tree 底座)
+//! - 文本存储:[`engine::Rope`](crate::engine)(sum_tree 底座)
 //! - 选区:[`Selection`](selection.rs)(含 goal 列保持),对齐 zed `crates/text`
 //! - 撤销:[`UndoManager`](undo.rs)(事务 + intent 合并,选区随事务走)
 //! - 编辑主路径:`transact → edit → change_selections`(对齐 zed input.rs 的
@@ -36,8 +36,7 @@ pub use element::EditorElement;
 pub(super) use selection::Selection;
 pub(super) use undo::{Change, EditIntent};
 
-use super::engine::{OffsetUtf16, Rope};
-use super::input::InputEvent;
+use crate::engine::{OffsetUtf16, Rope};
 use aa_gpui_kit_theme::ActiveTheme;
 pub use selection::SelectionGoal;
 pub use undo::UndoManager;
@@ -106,7 +105,23 @@ pub enum EditorEvent {
     Blurred,
 }
 
-/// 编辑器状态实体。渲染见 [`super::editor::actions`] 注册的动作与
+/// 单行输入框对外事件(旧 API 兼容,随引擎走:由引擎在 SingleLine 模式下
+/// 自动发出;定义原先在 ui-gpui 的 facade,内核独立成包后随之搬入)。
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum InputEvent {
+    /// 内容发生变化(程序化 `set_value` 不触发)。
+    Change(SharedString),
+    /// Enter 提交。
+    Submit(SharedString),
+}
+
+impl gpui::EventEmitter<InputEvent> for Editor {}
+
+/// 单行输入框的 key_context 名(引擎 Render 在 SingleLine 模式下使用;
+/// ui-gpui 的 `bind_input_keys` 按 it 绑定单行键位)。
+pub const INPUT_KEY_CONTEXT: &str = "ui-gpui-input";
+
+/// 编辑器状态实体。渲染见 `actions` 模块注册的动作与
 /// 阶段 C 的 `EditorElement`。
 pub struct Editor {
     pub(super) rope: Rope,
@@ -427,6 +442,19 @@ impl Editor {
             self.selections[index].set_head(target, SelectionGoal::None);
         }
         self.normalize_selections();
+    }
+
+    /// 固定行数的多行文本域(内容超出时滚动)。
+    ///
+    /// 原是 ui-gpui 里 \`Textarea\` facade 的便捷构造;内核独立成包后随类型
+    /// 住在这里(外部 crate 不能给类型别名写 inherent impl)。
+    pub fn textarea(rows: usize, cx: &mut Context<Self>) -> Self {
+        Self::with_mode(EditorMode::MultiLine { rows }, cx)
+    }
+
+    /// 高度随内容自适应(限行数)。
+    pub fn auto_height(min_rows: usize, max_rows: usize, cx: &mut Context<Self>) -> Self {
+        Self::with_mode(EditorMode::AutoHeight { min_rows, max_rows }, cx)
     }
 
     /// 程序化设置内容:**不**触发 [`EditorEvent::Edited`](计划沿用旧约定,
@@ -900,7 +928,7 @@ impl Render for Editor {
     fn render(&mut self, window: &mut gpui::Window, cx: &mut Context<Self>) -> impl IntoElement {
         let key_context = if self.mode.is_single_line() {
             // 单行兼容:bind_input_keys 绑定的旧 context 名
-            super::input::INPUT_KEY_CONTEXT
+            INPUT_KEY_CONTEXT
         } else {
             EDITOR_KEY_CONTEXT
         };
@@ -1337,7 +1365,7 @@ impl EntityInputHandler for Editor {
 #[cfg(test)]
 mod autoscroll_tests {
     use super::*;
-    use crate::base::input::editor::actions::Down;
+    use crate::editor::actions::Down;
     use gpui::{AppContext as _, VisualTestContext};
 
     /// 真实绘制管线下的自动滚动回归:光标从行 0 下移到视口(4 行)之外,
@@ -1728,7 +1756,7 @@ mod multi_cursor_tests {
         for (index, _) in text.split('\n').enumerate() {
             let offset = editor
                 .rope
-                .point_to_offset(crate::base::input::engine::Point::new(index as u32, 0));
+                .point_to_offset(crate::engine::Point::new(index as u32, 0));
             selections.push(Selection::new(offset, offset));
         }
         editor.set_selections(selections);

@@ -50,7 +50,7 @@ impl Scale {
 ///
 /// 与 gpui-component `slider.rs:370-392` 同构：水平取 `x - left`，垂直要
 /// 翻转 Y 轴（`bottom - y`），因为屏幕坐标 y 向下增长而我们的轨道百分比
-/// 从「起点」往「终点」增长。结果 clamp 到 [0,1]。
+/// 从「起点」往「终点」增长。结果 clamp 到 `0..=1`。
 ///
 /// `bounds` 来自 `on_prepaint` 回写的布局结果——没有它就没法从像素算值。
 pub fn position_to_percentage(axis: Axis, position: Point<Pixels>, bounds: &Bounds<Pixels>) -> f32 {

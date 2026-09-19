@@ -1,8 +1,9 @@
 # ui-gpui 文本输入/编辑器开发路线
 
-> 目标：在 `packages/ui-gpui/src/base/input` 建设自己的文本编辑引擎及衍生组件
-> （单行 Input → 多行 Textarea → Editor），最终能力对标
-> `/home/aa/repos/ide_ls/gpui-component/crates/base/src/input` 的分层。
+> 目标：建设自己的文本编辑引擎及衍生组件。诞生于 `packages/ui-gpui/src/base/input`，
+> 2026-09 内核（engine + editor）独立为 `packages/editor` 包（单行 Input /
+> 多行 Textarea 的薄 facade 留守 ui-gpui，依赖方向 `ui-gpui → editor`）。
+> 最终能力对标 `/home/aa/repos/ide_ls/gpui-component/crates/base/src/input` 的分层。
 >
 > 本文档回答的问题：zed 的 gpui examples 还没走完，是继续走完还是现在开工？
 > ——**现在开工**。examples 里与 editor 直接相关的没走项只剩少数几个，
@@ -135,6 +136,7 @@ input/
 - [x] 词级移动/词删除/双击选词(119c528)
 - [x] 多光标:`selections` 集合 + 一次事务多点编辑 + 加光标/Esc 收拢
 - [x] `SelectUp`/`SelectDown` 走 display 空间(统一到 `vertical_target`)
+- [x] 内核独立成包:engine + editor → `packages/editor`(facade 留守 ui-gpui)
 
 ### 目标定位(重要)
 

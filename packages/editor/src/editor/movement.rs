@@ -11,7 +11,7 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use super::display_map::{DisplayMap, DisplayPoint};
 use super::selection::SelectionGoal;
-use crate::base::input::engine::{Point as BufferPoint, Rope};
+use crate::engine::{Point as BufferPoint, Rope};
 
 // ---- 水平移动 ----
 
@@ -213,7 +213,7 @@ fn next_char_boundary(rope: &Rope, point: BufferPoint) -> BufferPoint {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::base::input::engine::Point;
+    use crate::engine::Point;
 
     fn setup(text: &str, width: usize) -> (DisplayMap, Rope) {
         let rope = Rope::from(text);

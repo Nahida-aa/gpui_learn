@@ -22,7 +22,7 @@ use gpui_platform::application;
 use theme_settings::{GlobalAssets, init};
 use tracing_subscriber;
 use aa_gpui_kit_theme::LoadThemes;
-use ui_gpui::base::input::editor::{EDITOR_KEY_CONTEXT, Editor, EditorMode, bind_editor_keys};
+use editor::{EDITOR_KEY_CONTEXT, Editor, EditorMode, bind_editor_keys};
 use ui_gpui::base::input::input::{InputState, bind_input_keys};
 
 actions!(editor_demo, [Quit]);
