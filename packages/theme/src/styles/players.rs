@@ -7,19 +7,25 @@
 //! 选区），因此这里只提供类型与配色表，等 `_32_painting` 那步到位后再接
 //! 渲染。这与 [`AccentColors`](super::AccentColors) 一样属于"先备着"。
 //!
-//! 与 zed 的差异：zed 用 `palette` 的色板函数（`blue().dark().step_9()`）
-//! 生成阶梯色；gpui 0.2 只导出 blue/green/yellow/red 四个色板函数，
-//! 其余用 `hsla` 显式给出——做法与 [`AccentColors`](super::AccentColors)
-//! 的默认值一致。
+//! 三色同样取自 [`default_colors`](crate::default_colors) 的色阶（对齐 zed）：
+//!
+//! | 主题 | 光标 | 选区背景 | 选区边框 |
+//! |---|---|---|---|
+//! | 深色 | `step_9`（饱和） | `step_5`（压暗） | `step_3`（更暗） |
+//! | 浅色 | `step_9` | `step_4`（提亮） | `step_3` |
+//!
+//! 深浅两套在同色相的色阶上取不同步，所以浅色主题下的选区不会在浅底上糊掉。
 
 use gpui::Hsla;
+
+use crate::default_colors::{amber, blue, jade, lime, orange, pink, purple, red};
 
 /// 单个协作者的三色（对齐 zed `PlayerColor`）。
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct PlayerColor {
     /// 光标竖线色。
     pub cursor: Hsla,
-    /// 选区背景色（应低透明度，避免盖住文字）。
+    /// 选区背景色。
     pub background: Hsla,
     /// 选区边框色。
     pub selection: Hsla,
@@ -27,7 +33,7 @@ pub struct PlayerColor {
 
 /// 协作者配色表（对齐 zed `PlayerColors`）。
 ///
-/// 约定（同 zed）：**第一个永远是本地玩家**（通常蓝色）；其余在色环上
+/// 约定（同 zed）：**第一个永远是本地玩家**（蓝色）；其余在色环上
 /// 来回跳跃排列，让相邻参与者的颜色尽量不相近。
 #[derive(Clone, Debug, PartialEq)]
 pub struct PlayerColors(pub Vec<PlayerColor>);
@@ -42,67 +48,48 @@ impl PlayerColors {
     /// 深色主题下的 8 色。
     pub fn dark() -> Self {
         Self(vec![
-            player(gpui::blue()),
-            player(gpui::hsla(0.07, 0.75, 0.62, 1.)),
-            player(gpui::hsla(0.9, 0.65, 0.68, 1.)),
-            player(gpui::green()),
-            player(gpui::hsla(0.75, 0.6, 0.66, 1.)),
-            player(gpui::yellow()),
-            player(gpui::hsla(0.45, 0.55, 0.58, 1.)),
-            player(gpui::red()),
+            dark_player(blue()),
+            dark_player(orange()),
+            dark_player(pink()),
+            dark_player(lime()),
+            dark_player(purple()),
+            dark_player(amber()),
+            dark_player(jade()),
+            dark_player(red()),
         ])
     }
 
     /// 浅色主题下的 8 色（背景步进更浅，便于压在浅底上）。
     pub fn light() -> Self {
         Self(vec![
-            player_light(gpui::blue()),
-            player_light(gpui::hsla(0.07, 0.7, 0.55, 1.)),
-            player_light(gpui::hsla(0.9, 0.6, 0.6, 1.)),
-            player_light(gpui::green()),
-            player_light(gpui::hsla(0.75, 0.55, 0.58, 1.)),
-            player_light(gpui::yellow()),
-            player_light(gpui::hsla(0.45, 0.5, 0.5, 1.)),
-            player_light(gpui::red()),
+            light_player(blue()),
+            light_player(orange()),
+            light_player(pink()),
+            light_player(lime()),
+            light_player(purple()),
+            light_player(amber()),
+            light_player(jade()),
+            light_player(red()),
         ])
     }
 }
 
-/// 深色主题下由基色派生三色：光标用原色，背景/边框压暗并给透明度。
-fn player(base: Hsla) -> PlayerColor {
+/// 深色主题下由色相取三色：光标饱和、背景压暗。
+fn dark_player(scale: crate::ColorScaleSet) -> PlayerColor {
     PlayerColor {
-        cursor: base,
-        background: with_alpha(darken(base, 0.55), 0.35),
-        selection: with_alpha(darken(base, 0.4), 0.55),
+        cursor: scale.dark().step_9(),
+        background: scale.dark().step_5(),
+        selection: scale.dark().step_3(),
     }
 }
 
-/// 浅色主题下由基色派生三色：光标用原色，背景/边框提亮并给透明度。
-fn player_light(base: Hsla) -> PlayerColor {
+/// 浅色主题下由色相取三色：光标饱和、背景提亮。
+fn light_player(scale: crate::ColorScaleSet) -> PlayerColor {
     PlayerColor {
-        cursor: base,
-        background: with_alpha(lighten(base, 0.35), 0.30),
-        selection: with_alpha(lighten(base, 0.2), 0.50),
+        cursor: scale.light().step_9(),
+        background: scale.light().step_4(),
+        selection: scale.light().step_3(),
     }
-}
-
-fn darken(color: Hsla, amount: f32) -> Hsla {
-    Hsla {
-        l: (color.l - amount).max(0.),
-        ..color
-    }
-}
-
-fn lighten(color: Hsla, amount: f32) -> Hsla {
-    Hsla {
-        l: (color.l + amount).min(1.),
-        ..color
-    }
-}
-
-fn with_alpha(mut color: Hsla, alpha: f32) -> Hsla {
-    color.a = alpha;
-    color
 }
 
 impl PlayerColors {
@@ -121,15 +108,12 @@ impl PlayerColors {
     }
 
     /// 只读场景的本地色（把本地色去饱和化成灰）。
-    ///
-    /// 对齐 zed `read_only()`：zed 用 `Hsla::grayscale()`，我们手写
-    /// （gpui 0.2 的 `Hsla` 没有该方法）——饱和度归零即灰。
     pub fn read_only(&self) -> PlayerColor {
         let local = self.local();
         PlayerColor {
-            cursor: grayscale(local.cursor),
-            background: grayscale(local.background),
-            selection: grayscale(local.selection),
+            cursor: local.cursor.grayscale(),
+            background: local.background.grayscale(),
+            selection: local.selection.grayscale(),
         }
     }
 
@@ -145,13 +129,6 @@ impl PlayerColors {
     }
 }
 
-/// 去饱和成灰（保留原有明度与透明度）。
-fn grayscale(color: Hsla) -> Hsla {
-    Hsla {
-        s: 0.,
-        ..color
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -186,12 +163,30 @@ mod tests {
     }
 
     #[test]
-    fn backgrounds_are_translucent() {
-        // 选区背景必须带透明度,否则会盖住文字
+    fn three_colors_use_different_steps() {
+        // 三色取自同一色相的不同步：光标最饱和(9)、选区背景更暗(5)、
+        // 选区边框最暗(3)。所以明度应当依次递减 —— 这是"同一玩家
+        // 一眼可辨"的视觉基础。
         for player in PlayerColors::dark().0 {
-            assert!(player.background.a < 1.0, "背景应半透明: {player:?}");
-            assert!(player.selection.a < 1.0, "选区应半透明: {player:?}");
+            assert!(
+                player.cursor.l > player.background.l,
+                "光标应比选区背景亮: {player:?}"
+            );
+            assert!(
+                player.background.l > player.selection.l,
+                "选区背景应比选区边框亮: {player:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn colors_are_opaque() {
+        // 色阶本身不透明；zed 的 players 也不额外加透明度
+        // （对比度靠 step 之间的明度差，而不是 alpha）。
+        for player in PlayerColors::dark().0 {
             assert_eq!(player.cursor.a, 1.0, "光标应不透明: {player:?}");
+            assert_eq!(player.background.a, 1.0, "背景应不透明: {player:?}");
+            assert_eq!(player.selection.a, 1.0, "选区应不透明: {player:?}");
         }
     }
 }

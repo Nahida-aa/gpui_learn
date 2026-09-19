@@ -490,7 +490,7 @@ fn catppuccin_mocha() -> Theme {
         styles: ThemeStyles {
             window_background_appearance: WindowBackgroundAppearance::Opaque,
             system: SystemColors::default(),
-            accents: AccentColors::default(),
+            accents: AccentColors::dark(),
             players: PlayerColors::dark(),
             syntax: Arc::new(syntax_mocha()),
             colors: theme_colors_mocha(),
@@ -508,7 +508,7 @@ fn catppuccin_latte() -> Theme {
         styles: ThemeStyles {
             window_background_appearance: WindowBackgroundAppearance::Opaque,
             system: SystemColors::default(),
-            accents: AccentColors::default(),
+            accents: AccentColors::light(),
             players: PlayerColors::light(),
             syntax: Arc::new(syntax_latte()),
             colors: theme_colors_latte(),

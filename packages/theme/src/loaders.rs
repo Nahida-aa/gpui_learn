@@ -88,6 +88,12 @@ fn theme_from_style(
     colors.selection_background = colors.element_selected;
     colors.editor_cursor = colors.editor_foreground;
 
+    // JSON 没给 accents 时，按主题明暗回退到内置色阶（深色 step 在暗底上
+    // 更协调，浅色同理）——与 colors / status 的缺失回退同一策略。
+    let fallback_accents = match appearance {
+        Appearance::Light => AccentColors::light(),
+        Appearance::Dark => AccentColors::dark(),
+    };
     let accents = match style
         .colors
         .get("accents")
@@ -99,12 +105,12 @@ fn theme_from_style(
                 .filter_map(|v| v.as_str().and_then(parse_hex))
                 .collect::<Vec<_>>();
             if hsla.is_empty() {
-                AccentColors::default()
+                fallback_accents
             } else {
                 AccentColors(hsla.into())
             }
         }
-        None => AccentColors::default(),
+        None => fallback_accents,
     };
 
     let syntax = SyntaxTheme::new(
