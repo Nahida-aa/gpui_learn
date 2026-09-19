@@ -33,6 +33,8 @@ use std::collections::BTreeMap;
 
 use serde::Deserialize;
 
+pub use crate::schema::AppearanceContent;
+
 /// 一个主题家族文件（= 一个主题扩展的 `themes/*.json`）。
 #[derive(Debug, Deserialize)]
 pub struct ThemeFamilyContent {
@@ -49,14 +51,6 @@ pub struct ThemeContent {
     pub name: String,
     pub appearance: AppearanceContent,
     pub style: StyleContent,
-}
-
-/// 明暗形态（对齐 zed `theme::AppearanceContent`）。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
-#[serde(rename_all = "snake_case")]
-pub enum AppearanceContent {
-    Light,
-    Dark,
 }
 
 /// 扁平 `style` 映射。`syntax` 是唯一要单独抽出来的嵌套对象，

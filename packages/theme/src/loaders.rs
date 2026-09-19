@@ -18,7 +18,9 @@ use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla};
 
 use crate::content::{AppearanceContent, StyleContent, SyntaxContent, ThemeFamilyContent};
 use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
-use crate::styles::{AccentColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors};
+use crate::styles::{
+    AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
+};
 
 /// 解析一个主题家族文件（`themes/*.json`）。
 pub fn parse_theme_family(bytes: &[u8]) -> serde_json::Result<ThemeFamily> {
@@ -47,6 +49,12 @@ fn theme_from_content(content: crate::content::ThemeContent) -> Theme {
             status,
             accents,
             system: SystemColors::default(),
+            // 主题 JSON 不描述协作者配色(v0.2.0 扩展里没有这组 key),
+            // 按明暗回退到内置色板——与 colors/status 的缺失回退同一策略。
+            players: match appearance {
+                Appearance::Light => PlayerColors::light(),
+                Appearance::Dark => PlayerColors::dark(),
+            },
             syntax: Arc::new(syntax),
         },
     }
@@ -120,9 +128,14 @@ fn base_status(appearance: Appearance) -> StatusColors {
     }
 }
 
-/// `#rrggbb` / `#rrggbbaa` → `Hsla`。
+/// `#rrggbb` / `#rrggbbaa` → `Hsla`，解析失败返回 `None`。
+///
+/// 实际解析在 [`crate::schema::try_parse_color`]（对外的公开契约，
+/// 与 zed 同名）；这里只做 `Result` → `Option` 的适配——加载器遇到
+/// 单个坏颜色值的选择是**跳过并继续**（整份主题不该因为一个字段报废），
+/// 而不是向上传播错误。
 fn parse_hex(hex: &str) -> Option<Hsla> {
-    gpui::Rgba::try_from(hex).ok().map(Into::into)
+    crate::schema::try_parse_color(hex).ok()
 }
 
 fn highlight_from_syntax(entry: &SyntaxContent) -> HighlightStyle {
@@ -262,6 +275,18 @@ mod tests {
     use super::*;
     use gpui::Rgba;
 
+    /// 容差比较两个颜色：palette 与 gpui 的 sRGB→HSL 实现有末位差异。
+    fn assert_color_close(actual: Hsla, expected: Hsla) {
+        let close = |a: f32, b: f32| (a - b).abs() < 1e-6;
+        assert!(
+            close(actual.h, expected.h)
+                && close(actual.s, expected.s)
+                && close(actual.l, expected.l)
+                && close(actual.a, expected.a),
+            "颜色应一致(容差 1e-6):\n  actual   = {actual:?}\n  expected = {expected:?}"
+        );
+    }
+
     #[test]
     fn parses_catppuccin_family() {
         let bytes =
@@ -276,17 +301,19 @@ mod tests {
             .find(|t| t.name == "Catppuccin Macchiato")
             .expect("macchiato present");
         assert_eq!(macchiato.appearance, Appearance::Dark);
-        assert_eq!(
+        // 颜色用容差比较：解析走 schema::try_parse_color（palette 的
+        // sRGB→HSL），与 gpui 自带转换在浮点末位差 1e-7 量级。
+        assert_color_close(
             macchiato.colors().editor_background,
-            Hsla::from(Rgba::try_from("#24273a").unwrap())
+            Hsla::from(Rgba::try_from("#24273a").unwrap()),
         );
-        assert_eq!(
+        assert_color_close(
             macchiato.colors().background,
-            Hsla::from(Rgba::try_from("#2c2f46").unwrap())
+            Hsla::from(Rgba::try_from("#2c2f46").unwrap()),
         );
-        assert_eq!(
+        assert_color_close(
             macchiato.colors().text,
-            Hsla::from(Rgba::try_from("#cad3f5").unwrap())
+            Hsla::from(Rgba::try_from("#cad3f5").unwrap()),
         );
         // v0.2.0 没有 selection/editor_cursor 字段 → 回退派生
         assert_eq!(
@@ -298,12 +325,18 @@ mod tests {
             macchiato.colors().editor_foreground
         );
         // 状态组（扁平 key `error` / `error.background` / `error.border`）
-        assert_eq!(
+        assert_color_close(
             macchiato.status().error.base,
-            Hsla::from(Rgba::try_from("#ed8796").unwrap())
+            Hsla::from(Rgba::try_from("#ed8796").unwrap()),
         );
         // accents 数组 [7]
         assert_eq!(macchiato.accents().0.len(), 7);
+        // players 不从 JSON 来(扩展里没有这组 key) → 按明暗回退到内置色板
+        assert_eq!(
+            macchiato.players(),
+            &PlayerColors::dark(),
+            "深色主题应回退到深色协作者配色"
+        );
         // syntax capture 名原样保留（dotted），可精确命中
         let syntax = macchiato.syntax();
         assert!(syntax.get("keyword").is_some());

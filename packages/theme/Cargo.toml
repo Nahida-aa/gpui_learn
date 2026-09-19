@@ -18,3 +18,10 @@ tracing.workspace = true
 # 主题加载器:解析 zed 主题扩展 JSON(v0.2.0 扁平格式)进 ThemeRegistry。
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# 颜色解析(schema::try_parse_color):sRGB → HSL 转换。
+# 版本与 zed crates/theme 对齐(0.7.5),default-features = false + std 避免
+# 拖进它默认开启的色板/序列化等用不到的特性。
+palette = { version = "0.7.5", default-features = false, features = ["std"] }
+# try_parse_color 用 anyhow 返回带上下文的错误(与 zed 同款)。
+anyhow.workspace = true

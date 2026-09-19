@@ -11,7 +11,9 @@ use std::sync::Arc;
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, hsla};
 
 use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
-use crate::styles::{AccentColors, StatusColor, StatusColors, SyntaxTheme, SystemColors, ThemeColors};
+use crate::styles::{
+    AccentColors, PlayerColors, StatusColor, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
+};
 
 /// `0xRRGGBB` → `Hsla`。
 fn h(hex: u32) -> Hsla {
@@ -409,6 +411,7 @@ fn catppuccin_mocha() -> Theme {
         styles: ThemeStyles {
             system: SystemColors::default(),
             accents: AccentColors::default(),
+            players: PlayerColors::dark(),
             syntax: Arc::new(syntax_mocha()),
             colors: theme_colors_mocha(),
             status: status_colors_mocha(),
@@ -425,6 +428,7 @@ fn catppuccin_latte() -> Theme {
         styles: ThemeStyles {
             system: SystemColors::default(),
             accents: AccentColors::default(),
+            players: PlayerColors::light(),
             syntax: Arc::new(syntax_latte()),
             colors: theme_colors_latte(),
             status: status_colors_latte(),

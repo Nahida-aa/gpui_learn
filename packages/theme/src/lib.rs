@@ -39,9 +39,12 @@
 pub mod builtin;
 pub mod content;
 pub mod loaders;
+pub mod schema;
 pub mod styles;
 
 mod state;
+
+pub use schema::{AppearanceContent, try_parse_color};
 
 pub use state::{
     ActiveTheme, Appearance, GlobalTheme, GlobalThemeRegistry, Theme, ThemeFamily, ThemeStyles,

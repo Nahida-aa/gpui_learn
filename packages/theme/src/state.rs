@@ -8,7 +8,9 @@ use std::sync::Arc;
 
 use gpui::{App, Global, WindowAppearance};
 
-use crate::styles::{AccentColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors};
+use crate::styles::{
+    AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
+};
 
 /// 主题适配的明暗形态(对齐 zed `theme.rs` 的 `Appearance`)。
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -35,6 +37,9 @@ pub struct ThemeStyles {
     pub status: StatusColors,
     pub accents: AccentColors,
     pub system: SystemColors,
+    /// 协作者配色。数据层先备着——渲染层还没有 decoration 机制,
+    /// 等 `_32_painting` 那步再用它画远端光标与选区。
+    pub players: PlayerColors,
     pub syntax: Arc<SyntaxTheme>,
 }
 
@@ -62,6 +67,11 @@ impl Theme {
 
     pub fn accents(&self) -> &AccentColors {
         &self.styles.accents
+    }
+
+    /// 协作者配色表。
+    pub fn players(&self) -> &PlayerColors {
+        &self.styles.players
     }
 
     pub fn syntax(&self) -> &Arc<SyntaxTheme> {

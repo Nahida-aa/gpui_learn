@@ -12,6 +12,7 @@
 //! | [`status`] | `status.rs`(`StatusColors`) |
 //! | [`system`] | `system.rs`(`SystemColors`) |
 //! | [`accents`] | `accents.rs`(`AccentColors`) |
+//! | [`players`] | `players.rs`(`PlayerColors`,协作者配色) |
 //! | [`syntax`] | `syntax.rs`(`SyntaxTheme`,在 zed 是 `syntax_theme` 的重导出) |
 //!
 //! 与本 crate 其他模块的关系:本模块只放**颜色结构体本身**;
@@ -21,12 +22,14 @@
 
 mod accents;
 mod colors;
+mod players;
 mod status;
 mod syntax;
 mod system;
 
 pub use accents::AccentColors;
 pub use colors::ThemeColors;
+pub use players::{PlayerColor, PlayerColors};
 pub use status::{StatusColor, StatusColors};
 pub use syntax::SyntaxTheme;
 pub use system::SystemColors;
