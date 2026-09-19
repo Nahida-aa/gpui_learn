@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use gpui::{App, Global, WindowAppearance, WindowBackgroundAppearance};
+use gpui::{App, Global, SharedString, WindowAppearance, WindowBackgroundAppearance};
 
 use crate::styles::{
     AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
@@ -119,8 +119,9 @@ pub struct ThemeStyles {
 pub struct Theme {
     /// 唯一标识(如 `"ui-gpui-default-dark"`)。
     pub id: String,
-    /// 展示名(如 `"ui-gpui Dark"`)。
-    pub name: String,
+    /// 展示名(如 `"ui-gpui Dark"`)。对齐 zed 用 `SharedString`——主题名
+    /// 会被注册表反复复制(键 / `ThemeMeta.name`)，引用计数避免每次拷贝。
+    pub name: SharedString,
     /// 明暗形态。
     pub appearance: Appearance,
     /// 样式集合。

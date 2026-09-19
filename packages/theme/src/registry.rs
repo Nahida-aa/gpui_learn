@@ -163,7 +163,7 @@ impl ThemeRegistry {
     pub fn insert_themes(&self, themes: impl IntoIterator<Item = Theme>) {
         let mut state = self.state.write();
         for theme in themes.into_iter() {
-            state.themes.insert(theme.name.clone().into(), Arc::new(theme));
+            state.themes.insert(theme.name.clone(), Arc::new(theme));
         }
     }
 
@@ -194,7 +194,7 @@ impl ThemeRegistry {
             .themes
             .values()
             .map(|theme| ThemeMeta {
-                name: theme.name.clone().into(),
+                name: theme.name.clone(),
                 appearance: theme.appearance,
             })
             .collect()

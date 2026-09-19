@@ -49,7 +49,7 @@ fn theme_from_content(content: crate::content::ThemeContent) -> Theme {
     Theme {
         // 家族内主题名唯一（Catppuccin Latte/Frappé/Macchiato/Mocha），直接作 id。
         id: content.name.clone(),
-        name: content.name,
+        name: content.name.into(),
         appearance,
         styles: ThemeStyles {
             window_background_appearance: WindowBackgroundAppearance::Opaque,
