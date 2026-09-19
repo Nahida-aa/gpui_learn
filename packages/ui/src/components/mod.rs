@@ -17,10 +17,12 @@ pub mod button;
 pub mod context_menu;
 pub mod divider;
 pub mod popover_menu;
+pub mod stack;
 pub mod tooltip;
 
 pub use button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu};
 pub use divider::{Divider, DividerColor, DividerDirection};
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
+pub use stack::{h_flex, v_flex};
 pub use tooltip::{Tooltip, TooltipHost, tooltip_host};

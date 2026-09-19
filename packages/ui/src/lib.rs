@@ -20,6 +20,7 @@
 
 pub mod base;
 pub mod components;
+pub mod prelude;
 mod styles;
 pub mod traits;
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
