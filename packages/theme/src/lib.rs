@@ -41,6 +41,7 @@ pub mod builtin;
 pub mod color_space;
 pub mod content;
 pub mod default_colors;
+pub mod fallback_themes;
 pub mod font_family_cache;
 pub mod icon_theme;
 pub mod loaders;
@@ -68,6 +69,6 @@ pub use state::{
     init_theme, load_asset_themes, set_theme, set_theme_by_name,
 };
 pub use styles::{
-    AccentColors, DiagnosticColors, PlayerColor, PlayerColors, StatusColors, SyntaxTheme,
-    SystemColors, ThemeColors,
+    AccentColors, DiagnosticColors, PlayerColor, PlayerColors, StatusColors,
+    StatusColorsRefinement, SyntaxTheme, SystemColors, ThemeColors, ThemeColorsRefinement,
 };

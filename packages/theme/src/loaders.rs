@@ -14,7 +14,7 @@
 
 use std::sync::Arc;
 
-use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla};
+use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, WindowBackgroundAppearance};
 
 use crate::content::{AppearanceContent, StyleContent, SyntaxContent, ThemeFamilyContent};
 use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
@@ -26,9 +26,12 @@ use crate::styles::{
 pub fn parse_theme_family(bytes: &[u8]) -> serde_json::Result<ThemeFamily> {
     let content: ThemeFamilyContent = serde_json::from_slice(bytes)?;
     let family_name = content.name.clone();
+    let author = content.author.clone();
     let themes = content.themes.into_iter().map(theme_from_content).collect();
     Ok(ThemeFamily {
+        id: family_name.clone(),
         name: family_name,
+        author,
         themes,
     })
 }
@@ -45,6 +48,7 @@ fn theme_from_content(content: crate::content::ThemeContent) -> Theme {
         name: content.name,
         appearance,
         styles: ThemeStyles {
+            window_background_appearance: WindowBackgroundAppearance::Opaque,
             colors,
             status,
             accents,

@@ -8,7 +8,7 @@
 
 use std::sync::Arc;
 
-use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, hsla};
+use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, WindowBackgroundAppearance, hsla};
 
 use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
 use crate::styles::{
@@ -488,6 +488,7 @@ fn catppuccin_mocha() -> Theme {
         name: "ui-gpui Dark".into(),
         appearance: Appearance::Dark,
         styles: ThemeStyles {
+            window_background_appearance: WindowBackgroundAppearance::Opaque,
             system: SystemColors::default(),
             accents: AccentColors::default(),
             players: PlayerColors::dark(),
@@ -505,6 +506,7 @@ fn catppuccin_latte() -> Theme {
         name: "ui-gpui Light".into(),
         appearance: Appearance::Light,
         styles: ThemeStyles {
+            window_background_appearance: WindowBackgroundAppearance::Opaque,
             system: SystemColors::default(),
             accents: AccentColors::default(),
             players: PlayerColors::light(),
@@ -568,7 +570,9 @@ impl ThemeRegistry {
 /// 内置主题家族:"ui-gpui Default"(Catppuccin Mocha / Latte 成对)。
 pub fn default_theme_family() -> ThemeFamily {
     ThemeFamily {
+        id: "ui-gpui-default".into(),
         name: "ui-gpui Default".into(),
+        author: String::new(),
         themes: vec![catppuccin_mocha(), catppuccin_latte()],
     }
 }

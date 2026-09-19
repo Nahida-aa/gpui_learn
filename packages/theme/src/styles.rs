@@ -28,8 +28,8 @@ mod syntax;
 mod system;
 
 pub use accents::AccentColors;
-pub use colors::ThemeColors;
+pub use colors::{ThemeColors, ThemeColorsRefinement};
 pub use players::{PlayerColor, PlayerColors};
-pub use status::{DiagnosticColors, StatusColors};
+pub use status::{DiagnosticColors, StatusColors, StatusColorsRefinement};
 pub use syntax::SyntaxTheme;
 pub use system::SystemColors;

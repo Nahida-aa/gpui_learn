@@ -1,49 +1,88 @@
-use std::sync::Arc;
+//! 回退主题与「缺失字段补齐」规则，对齐 zed `crates/theme/src/fallback_themes.rs`。
+//!
+//! ## 用途
+//!
+//! 主题 JSON 可能载入失败、或目标主题不存在，此时需要一个**兜底主题**
+//! 保证界面不空。本模块提供 [`ctp_default_dark`]——它是主题体系的最低
+//! 保证，任何情况下都能取到。
+//!
+//! ## 与 zed 的差异
+//!
+//! zed 这里是 `zed_default_themes()`：zed 自己的默认灰阶配色，约 300 行
+//! 手写色值。我们改用 **Catppuccin Mocha**（`ctp` = Catppuccin）：它已经
+//! 是本仓库的内置主题（见 [`builtin`](crate::builtin)），色值不必重复
+//! 定义一遍，视觉也与其余内置主题一致。
+//!
+//! 另外 zed 的 `ThemeFamily` 带 `scales`（色板集合）字段，我们的色板是
+//! 全局函数（[`default_colors`](crate::default_colors)）不随家族走，
+//! 故没有这个字段。
+//!
+//! ## 两个补齐规则
+//!
+//! [`apply_status_color_defaults`] 与 [`apply_theme_color_defaults`]
+//! 作用于 `Refineable` 生成的 refinement 类型：主题 JSON 只写部分字段时，
+//! 未写的那些按语义**派生**（而不是硬编码一个值）。
 
-use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, WindowBackgroundAppearance, hsla};
+use gpui::Hsla;
 
-use crate::{
-    AccentColors, Appearance, DEFAULT_DARK_THEME, PlayerColors, StatusColors,
-    StatusColorsRefinement, SyntaxTheme, SystemColors, Theme, ThemeColors, ThemeColorsRefinement,
-    ThemeFamily, ThemeStyles, default_color_scales,
-};
+use crate::{PlayerColors, StatusColorsRefinement, ThemeColorsRefinement};
 
-/// The default theme family for Zed.
+/// 兜底主题的展示名。
+pub const DEFAULT_DARK_THEME_NAME: &str = "Catppuccin Mocha";
+
+/// Catppuccin Mocha 兜底主题。
 ///
-/// This is used to construct the default theme fallback values, as well as to
-/// have a theme available at compile time for tests.
-pub fn zed_default_themes() -> ThemeFamily {
-    ThemeFamily {
-        id: "zed-default".to_string(),
-        name: "Zed Default".into(),
-        author: "".into(),
-        themes: vec![zed_default_dark()],
-        scales: default_color_scales(),
+/// 复用 [`builtin`](crate::builtin) 的内置配色，不重复定义色值。
+pub fn ctp_default_dark() -> crate::Theme {
+    crate::builtin::ThemeRegistry::with_builtins()
+        .get("ui-gpui-default-dark")
+        .cloned()
+        .expect("内置注册表必须含默认深色主题")
+}
+
+/// 兜底主题家族（Catppuccin Mocha 单主题）。
+pub fn default_theme_family() -> crate::ThemeFamily {
+    crate::ThemeFamily {
+        id: "ui-gpui-fallback".into(),
+        name: "ui-gpui Fallback".into(),
+        author: String::new(),
+        themes: vec![ctp_default_dark()],
     }
 }
 
-// If a theme customizes a foreground version of a status color, but does not
-// customize the background color, then use a partly-transparent version of the
-// foreground color for the background color.
-/// Applies default status color backgrounds from their foreground counterparts.
+/// 若某状态只给了前景色、没给背景色，则用前景的 25% 透明度版本补上。
+///
+/// 规则来自 zed：主题作者通常只写 `"error": "#ff0000"`，
+/// 背景该由主题系统派生，而不是要求作者再写一遍。
 pub fn apply_status_color_defaults(status: &mut StatusColorsRefinement) {
-    for (fg_color, bg_color) in [
-        (&status.deleted, &mut status.deleted_background),
-        (&status.created, &mut status.created_background),
-        (&status.modified, &mut status.modified_background),
+    for (foreground, background) in [
         (&status.conflict, &mut status.conflict_background),
+        (&status.created, &mut status.created_background),
+        (&status.deleted, &mut status.deleted_background),
         (&status.error, &mut status.error_background),
         (&status.hidden, &mut status.hidden_background),
+        (&status.hint, &mut status.hint_background),
+        (&status.ignored, &mut status.ignored_background),
+        (&status.info, &mut status.info_background),
+        (&status.modified, &mut status.modified_background),
+        (&status.predictive, &mut status.predictive_background),
+        (&status.renamed, &mut status.renamed_background),
+        (&status.success, &mut status.success_background),
+        (&status.unreachable, &mut status.unreachable_background),
+        (&status.warning, &mut status.warning_background),
     ] {
-        if bg_color.is_none()
-            && let Some(fg_color) = fg_color
+        if background.is_none()
+            && let Some(foreground) = foreground
         {
-            *bg_color = Some(fg_color.opacity(0.25));
+            *background = Some(foreground.opacity(0.25));
         }
     }
 }
 
-/// Applies default theme color values derived from player colors.
+/// 用协作者配色补齐 `element_selection_background`。
+///
+/// 选区背景应当“看得出是谁在选”，所以默认取本地玩家的选区色；
+/// 若它不透明则压到 25%，避免盖住文字。
 pub fn apply_theme_color_defaults(
     theme_colors: &mut ThemeColorsRefinement,
     player_colors: &PlayerColors,
@@ -57,337 +96,107 @@ pub fn apply_theme_color_defaults(
     }
 }
 
-pub(crate) fn zed_default_dark() -> Theme {
-    let bg = hsla(215. / 360., 12. / 100., 15. / 100., 1.);
-    let editor = hsla(220. / 360., 12. / 100., 18. / 100., 1.);
-    let elevated_surface = hsla(225. / 360., 12. / 100., 17. / 100., 1.);
-    let hover = hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 1.0);
+/// 一次性套用两条补齐规则（主题装载的「派生补齐」阶段）。
+pub fn apply_defaults(
+    colors: &mut ThemeColorsRefinement,
+    status: &mut StatusColorsRefinement,
+    players: &PlayerColors,
+) {
+    apply_status_color_defaults(status);
+    apply_theme_color_defaults(colors, players);
+}
 
-    let blue = hsla(207.8 / 360., 81. / 100., 66. / 100., 1.0);
-    let gray = hsla(218.8 / 360., 10. / 100., 40. / 100., 1.0);
-    let green = hsla(95. / 360., 38. / 100., 62. / 100., 1.0);
-    let orange = hsla(29. / 360., 54. / 100., 61. / 100., 1.0);
-    let purple = hsla(286. / 360., 51. / 100., 64. / 100., 1.0);
-    let red = hsla(355. / 360., 65. / 100., 65. / 100., 1.0);
-    let teal = hsla(187. / 360., 47. / 100., 55. / 100., 1.0);
-    let yellow = hsla(39. / 360., 67. / 100., 69. / 100., 1.0);
+/// 便捷：非 refinement 版本的状态色补齐——直接改 `StatusColors` 里
+/// 仍是全透明的 `*_background` 字段（值为 `Hsla::default()` 时视为未设置）。
+pub fn fill_status_backgrounds(status: &mut crate::StatusColors) {
+    let transparent = Hsla::default();
+    let pairs = [
+        (status.conflict, &mut status.conflict_background),
+        (status.created, &mut status.created_background),
+        (status.deleted, &mut status.deleted_background),
+        (status.error, &mut status.error_background),
+        (status.hidden, &mut status.hidden_background),
+        (status.hint, &mut status.hint_background),
+        (status.ignored, &mut status.ignored_background),
+        (status.info, &mut status.info_background),
+        (status.modified, &mut status.modified_background),
+        (status.predictive, &mut status.predictive_background),
+        (status.renamed, &mut status.renamed_background),
+        (status.success, &mut status.success_background),
+        (status.unreachable, &mut status.unreachable_background),
+        (status.warning, &mut status.warning_background),
+    ];
+    for (foreground, background) in pairs {
+        if *background == transparent {
+            *background = foreground.opacity(0.25);
+        }
+    }
+}
 
-    const ADDED_COLOR: Hsla = Hsla {
-        h: 134. / 360.,
-        s: 0.55,
-        l: 0.40,
-        a: 1.0,
-    };
-    const WORD_ADDED_COLOR: Hsla = Hsla {
-        h: 134. / 360.,
-        s: 0.55,
-        l: 0.40,
-        a: 0.35,
-    };
-    const MODIFIED_COLOR: Hsla = Hsla {
-        h: 48. / 360.,
-        s: 0.76,
-        l: 0.47,
-        a: 1.0,
-    };
-    const REMOVED_COLOR: Hsla = Hsla {
-        h: 350. / 360.,
-        s: 0.88,
-        l: 0.25,
-        a: 1.0,
-    };
-    const WORD_DELETED_COLOR: Hsla = Hsla {
-        h: 350. / 360.,
-        s: 0.88,
-        l: 0.25,
-        a: 0.80,
-    };
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui::hsla;
 
-    let player = PlayerColors::dark();
-    Theme {
-        id: "one_dark".to_string(),
-        name: DEFAULT_DARK_THEME.into(),
-        appearance: Appearance::Dark,
-        styles: ThemeStyles {
-            window_background_appearance: WindowBackgroundAppearance::Opaque,
-            system: SystemColors::default(),
-            accents: AccentColors(Arc::from(vec![
-                blue, orange, purple, teal, red, green, yellow,
-            ])),
-            colors: ThemeColors {
-                border: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                border_variant: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                border_focused: hsla(223. / 360., 78. / 100., 65. / 100., 1.),
-                border_selected: hsla(222.6 / 360., 77.5 / 100., 65.1 / 100., 1.0),
-                border_transparent: SystemColors::default().transparent,
-                border_disabled: hsla(222.0 / 360., 11.6 / 100., 33.7 / 100., 1.0),
-                elevated_surface_background: elevated_surface,
-                surface_background: bg,
-                background: bg,
-                element_background: hsla(223.0 / 360., 13. / 100., 21. / 100., 1.0),
-                element_hover: hover,
-                element_active: hsla(220.0 / 360., 11.8 / 100., 20.0 / 100., 1.0),
-                element_selected: hsla(224.0 / 360., 11.3 / 100., 26.1 / 100., 1.0),
-                element_disabled: SystemColors::default().transparent,
-                element_selection_background: player.local().selection.alpha(0.25),
-                drop_target_background: hsla(220.0 / 360., 8.3 / 100., 21.4 / 100., 1.0),
-                drop_target_border: hsla(221. / 360., 11. / 100., 86. / 100., 1.0),
-                ghost_element_background: SystemColors::default().transparent,
-                ghost_element_hover: hover,
-                ghost_element_active: hsla(220.0 / 360., 11.8 / 100., 20.0 / 100., 1.0),
-                ghost_element_selected: hsla(224.0 / 360., 11.3 / 100., 26.1 / 100., 1.0),
-                ghost_element_disabled: SystemColors::default().transparent,
-                text: hsla(221. / 360., 11. / 100., 86. / 100., 1.0),
-                text_muted: hsla(218.0 / 360., 7. / 100., 46. / 100., 1.0),
-                text_placeholder: hsla(220.0 / 360., 6.6 / 100., 44.5 / 100., 1.0),
-                text_disabled: hsla(220.0 / 360., 6.6 / 100., 44.5 / 100., 1.0),
-                text_accent: hsla(222.6 / 360., 77.5 / 100., 65.1 / 100., 1.0),
-                icon: hsla(222.9 / 360., 9.9 / 100., 86.1 / 100., 1.0),
-                icon_muted: hsla(220.0 / 360., 12.1 / 100., 66.1 / 100., 1.0),
-                icon_disabled: hsla(220.0 / 360., 6.4 / 100., 45.7 / 100., 1.0),
-                icon_placeholder: hsla(220.0 / 360., 6.4 / 100., 45.7 / 100., 1.0),
-                icon_accent: blue,
-                debugger_accent: red,
-                status_bar_background: bg,
-                title_bar_background: bg,
-                title_bar_inactive_background: bg,
-                toolbar_background: editor,
-                tab_bar_background: bg,
-                tab_inactive_background: bg,
-                tab_active_background: editor,
-                search_match_background: bg,
-                search_active_match_background: bg,
+    #[test]
+    fn fallback_theme_is_the_builtin_catppuccin_dark() {
+        let theme = ctp_default_dark();
+        assert_eq!(theme.id, "ui-gpui-default-dark");
+        assert_eq!(theme.name, "ui-gpui Dark");
+    }
 
-                editor_background: editor,
-                editor_gutter_background: editor,
-                editor_subheader_background: bg,
-                editor_active_line_background: hsla(222.9 / 360., 13.5 / 100., 20.4 / 100., 1.0),
-                editor_highlighted_line_background: hsla(207.8 / 360., 81. / 100., 66. / 100., 0.1),
-                editor_debugger_active_line_background: hsla(
-                    207.8 / 360.,
-                    81. / 100.,
-                    66. / 100.,
-                    0.2,
-                ),
-                editor_line_number: hsla(222.0 / 360., 11.5 / 100., 34.1 / 100., 1.0),
-                editor_active_line_number: hsla(216.0 / 360., 5.9 / 100., 49.6 / 100., 1.0),
-                editor_hover_line_number: hsla(216.0 / 360., 5.9 / 100., 56.7 / 100., 1.0),
-                editor_invisible: hsla(222.0 / 360., 11.5 / 100., 34.1 / 100., 1.0),
-                editor_wrap_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_active_wrap_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_indent_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_indent_guide_active: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                editor_document_highlight_read_background: hsla(
-                    207.8 / 360.,
-                    81. / 100.,
-                    66. / 100.,
-                    0.2,
-                ),
-                editor_document_highlight_write_background: gpui::red(),
-                editor_document_highlight_bracket_background: gpui::green(),
-                editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.12),
-                editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.06),
-                editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.36),
-                editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.12),
-                editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.06),
-                editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.36),
+    #[test]
+    fn fallback_family_contains_exactly_the_fallback_theme() {
+        let family = default_theme_family();
+        assert_eq!(family.themes.len(), 1);
+        assert_eq!(family.themes[0].id, ctp_default_dark().id);
+    }
 
-                terminal_background: bg,
-                // todo("Use one colors for terminal")
-                terminal_ansi_background: crate::black().dark().step_12(),
-                terminal_foreground: crate::white().dark().step_12(),
-                terminal_bright_foreground: crate::white().dark().step_11(),
-                terminal_dim_foreground: crate::white().dark().step_10(),
-                terminal_ansi_black: crate::black().dark().step_12(),
-                terminal_ansi_red: crate::red().dark().step_11(),
-                terminal_ansi_green: crate::green().dark().step_11(),
-                terminal_ansi_yellow: crate::yellow().dark().step_11(),
-                terminal_ansi_blue: crate::blue().dark().step_11(),
-                terminal_ansi_magenta: crate::violet().dark().step_11(),
-                terminal_ansi_cyan: crate::cyan().dark().step_11(),
-                terminal_ansi_white: crate::neutral().dark().step_12(),
-                terminal_ansi_bright_black: crate::black().dark().step_11(),
-                terminal_ansi_bright_red: crate::red().dark().step_10(),
-                terminal_ansi_bright_green: crate::green().dark().step_10(),
-                terminal_ansi_bright_yellow: crate::yellow().dark().step_10(),
-                terminal_ansi_bright_blue: crate::blue().dark().step_10(),
-                terminal_ansi_bright_magenta: crate::violet().dark().step_10(),
-                terminal_ansi_bright_cyan: crate::cyan().dark().step_10(),
-                terminal_ansi_bright_white: crate::neutral().dark().step_11(),
-                terminal_ansi_dim_black: crate::black().dark().step_10(),
-                terminal_ansi_dim_red: crate::red().dark().step_9(),
-                terminal_ansi_dim_green: crate::green().dark().step_9(),
-                terminal_ansi_dim_yellow: crate::yellow().dark().step_9(),
-                terminal_ansi_dim_blue: crate::blue().dark().step_9(),
-                terminal_ansi_dim_magenta: crate::violet().dark().step_9(),
-                terminal_ansi_dim_cyan: crate::cyan().dark().step_9(),
-                terminal_ansi_dim_white: crate::neutral().dark().step_10(),
-                panel_background: bg,
-                panel_focused_border: blue,
-                panel_indent_guide: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                panel_indent_guide_hover: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                panel_indent_guide_active: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                panel_overlay_background: bg,
-                panel_overlay_hover: hover,
-                pane_focused_border: blue,
-                pane_group_border: hsla(225. / 360., 13. / 100., 12. / 100., 1.),
-                scrollbar_thumb_background: gpui::transparent_black(),
-                scrollbar_thumb_hover_background: hover,
-                scrollbar_thumb_active_background: hsla(
-                    225.0 / 360.,
-                    11.8 / 100.,
-                    26.7 / 100.,
-                    1.0,
-                ),
-                scrollbar_thumb_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                scrollbar_track_background: gpui::transparent_black(),
-                scrollbar_track_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                minimap_thumb_background: hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 0.7),
-                minimap_thumb_hover_background: hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 0.7),
-                minimap_thumb_active_background: hsla(225.0 / 360., 11.8 / 100., 26.7 / 100., 0.7),
-                minimap_thumb_border: hsla(228. / 360., 8. / 100., 25. / 100., 1.),
-                editor_foreground: hsla(218. / 360., 14. / 100., 71. / 100., 1.),
-                editor_code_lens_foreground: None,
-                link_text_hover: blue,
-                version_control_added: ADDED_COLOR,
-                version_control_deleted: REMOVED_COLOR,
-                version_control_modified: MODIFIED_COLOR,
-                version_control_renamed: MODIFIED_COLOR,
-                version_control_conflict: crate::orange().light().step_12(),
-                version_control_ignored: crate::gray().light().step_12(),
-                version_control_word_added: WORD_ADDED_COLOR,
-                version_control_word_deleted: WORD_DELETED_COLOR,
-                version_control_conflict_marker_ours: crate::green().light().step_12().alpha(0.5),
-                version_control_conflict_marker_theirs: crate::blue().light().step_12().alpha(0.5),
+    #[test]
+    fn missing_background_is_derived_from_foreground() {
+        let mut status = StatusColorsRefinement::default();
+        status.error = Some(hsla(0.0, 1.0, 0.5, 1.0));
+        apply_status_color_defaults(&mut status);
+        let background = status.error_background.expect("应派生 background");
+        assert_eq!(background.a, 0.25, "派生背景应是 25% 透明");
+        assert_eq!(background.h, 0.0, "色相应继承前景");
+    }
 
-                vim_normal_background: SystemColors::default().transparent,
-                vim_insert_background: SystemColors::default().transparent,
-                vim_replace_background: SystemColors::default().transparent,
-                vim_visual_background: SystemColors::default().transparent,
-                vim_visual_line_background: SystemColors::default().transparent,
-                vim_visual_block_background: SystemColors::default().transparent,
-                vim_yank_background: hsla(207.8 / 360., 81. / 100., 66. / 100., 0.2),
-                vim_helix_jump_label_foreground: red,
-                vim_helix_normal_background: SystemColors::default().transparent,
-                vim_helix_select_background: SystemColors::default().transparent,
-                vim_normal_foreground: SystemColors::default().transparent,
-                vim_insert_foreground: SystemColors::default().transparent,
-                vim_replace_foreground: SystemColors::default().transparent,
-                vim_visual_foreground: SystemColors::default().transparent,
-                vim_visual_line_foreground: SystemColors::default().transparent,
-                vim_visual_block_foreground: SystemColors::default().transparent,
-                vim_helix_normal_foreground: SystemColors::default().transparent,
-                vim_helix_select_foreground: SystemColors::default().transparent,
-            },
-            status: StatusColors {
-                conflict: yellow,
-                conflict_background: yellow,
-                conflict_border: yellow,
-                created: green,
-                created_background: green,
-                created_border: green,
-                deleted: red,
-                deleted_background: red,
-                deleted_border: red,
-                error: red,
-                error_background: red,
-                error_border: red,
-                hidden: gray,
-                hidden_background: gray,
-                hidden_border: gray,
-                hint: blue,
-                hint_background: blue,
-                hint_border: blue,
-                ignored: gray,
-                ignored_background: gray,
-                ignored_border: gray,
-                info: blue,
-                info_background: blue,
-                info_border: blue,
-                modified: yellow,
-                modified_background: yellow,
-                modified_border: yellow,
-                predictive: gray,
-                predictive_background: gray,
-                predictive_border: gray,
-                renamed: blue,
-                renamed_background: blue,
-                renamed_border: blue,
-                success: green,
-                success_background: green,
-                success_border: green,
-                unreachable: gray,
-                unreachable_background: gray,
-                unreachable_border: gray,
-                warning: yellow,
-                warning_background: yellow,
-                warning_border: yellow,
-            },
-            player,
-            syntax: Arc::new(SyntaxTheme::new(vec![
-                ("attribute".into(), purple.into()),
-                ("boolean".into(), orange.into()),
-                ("comment".into(), gray.into()),
-                ("comment.doc".into(), gray.into()),
-                ("constant".into(), yellow.into()),
-                ("constructor".into(), blue.into()),
-                ("embedded".into(), HighlightStyle::default()),
-                (
-                    "emphasis".into(),
-                    HighlightStyle {
-                        font_style: Some(FontStyle::Italic),
-                        ..HighlightStyle::default()
-                    },
-                ),
-                (
-                    "emphasis.strong".into(),
-                    HighlightStyle {
-                        font_weight: Some(FontWeight::BOLD),
-                        ..HighlightStyle::default()
-                    },
-                ),
-                ("enum".into(), teal.into()),
-                ("function".into(), blue.into()),
-                ("function.method".into(), blue.into()),
-                ("function.definition".into(), blue.into()),
-                ("hint".into(), blue.into()),
-                ("keyword".into(), purple.into()),
-                ("label".into(), HighlightStyle::default()),
-                ("link_text".into(), blue.into()),
-                (
-                    "link_uri".into(),
-                    HighlightStyle {
-                        color: Some(teal),
-                        font_style: Some(FontStyle::Italic),
-                        ..HighlightStyle::default()
-                    },
-                ),
-                ("number".into(), orange.into()),
-                ("operator".into(), HighlightStyle::default()),
-                ("predictive".into(), HighlightStyle::default()),
-                ("preproc".into(), purple.into()),
-                ("primary".into(), HighlightStyle::default()),
-                ("property".into(), red.into()),
-                ("punctuation".into(), HighlightStyle::default()),
-                ("punctuation.bracket".into(), HighlightStyle::default()),
-                ("punctuation.delimiter".into(), HighlightStyle::default()),
-                ("punctuation.list_marker".into(), HighlightStyle::default()),
-                ("punctuation.special".into(), HighlightStyle::default()),
-                ("string".into(), green.into()),
-                ("string.escape".into(), HighlightStyle::default()),
-                ("string.regex".into(), red.into()),
-                ("string.special".into(), HighlightStyle::default()),
-                ("string.special.symbol".into(), HighlightStyle::default()),
-                ("tag".into(), HighlightStyle::default()),
-                ("text.literal".into(), HighlightStyle::default()),
-                ("title".into(), HighlightStyle::default()),
-                ("type".into(), teal.into()),
-                ("variable".into(), HighlightStyle::default()),
-                ("variable.special".into(), red.into()),
-                ("variant".into(), HighlightStyle::default()),
-                ("diff.plus".into(), green.into()),
-                ("diff.minus".into(), red.into()),
-            ])),
-        },
+    #[test]
+    fn explicit_background_is_not_overwritten() {
+        let mut status = StatusColorsRefinement::default();
+        status.error = Some(hsla(0.0, 1.0, 0.5, 1.0));
+        status.error_background = Some(hsla(0.5, 1.0, 0.5, 1.0));
+        apply_status_color_defaults(&mut status);
+        assert_eq!(
+            status.error_background.unwrap().h,
+            0.5,
+            "作者明确给出的背景不应被覆盖"
+        );
+    }
+
+    #[test]
+    fn selection_background_falls_back_to_local_player() {
+        let players = PlayerColors::dark();
+        let mut colors = ThemeColorsRefinement::default();
+        apply_theme_color_defaults(&mut colors, &players);
+        let selection = colors.element_selection_background.expect("应派生选区背景");
+        assert!(
+            selection.a < 1.0,
+            "选区背景应半透明，避免盖住文字: {selection:?}"
+        );
+    }
+
+    #[test]
+    fn fill_status_backgrounds_handles_concrete_status_colors() {
+        let mut status = crate::StatusColors::dark();
+        // 人为清空一个背景，模拟“作者没给”
+        status.error_background = Hsla::default();
+        fill_status_backgrounds(&mut status);
+        assert!(
+            status.error_background.a > 0.0,
+            "应被前景色补齐: {:?}",
+            status.error_background
+        );
     }
 }

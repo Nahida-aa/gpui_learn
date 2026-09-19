@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use gpui::{App, Global, WindowAppearance};
+use gpui::{App, Global, WindowAppearance, WindowBackgroundAppearance};
 
 use crate::styles::{
     AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
@@ -33,6 +33,8 @@ impl Appearance {
 /// 一套主题的全部样式(对齐 zed `ThemeStyles` 的精简子集)。
 #[derive(Clone, Debug, PartialEq)]
 pub struct ThemeStyles {
+    /// 窗口背景外观(不透明 / 半透明 / 模糊),供平台层决定合成方式。
+    pub window_background_appearance: WindowBackgroundAppearance,
     pub colors: ThemeColors,
     pub status: StatusColors,
     pub accents: AccentColors,
@@ -82,7 +84,12 @@ impl Theme {
 /// 主题家族:同一套配色的明暗成对(对齐 zed `ThemeFamily`)。
 #[derive(Clone, Debug)]
 pub struct ThemeFamily {
+    /// 家族 id(如 `"catppuccin"`)。
+    pub id: String,
+    /// 家族名(如 `"Catppuccin"`)。
     pub name: String,
+    /// 作者(主题扩展 JSON 里有,内置家族留空)。
+    pub author: String,
     /// 家族内的主题(通常 light / dark 各一)。
     pub themes: Vec<Theme>,
 }
