@@ -20,7 +20,7 @@ unicode-segmentation = "1"
 
 # 取当前主题色（选区背景、光标色）。编辑器内核不隶属控件库，
 # 主题是独立包（依赖方向 editor → theme）。
-aa-gpui-kit-theme.workspace = true
+aa_gpui_kit_theme.workspace = true
 
 # 交互/状态逻辑测试（选区、undo、多光标等）需要 gpui 的 test-support
 # 特性与 #[gpui::test] 宏。feature 开关供 `cargo test -F test-support`。

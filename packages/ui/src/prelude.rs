@@ -41,4 +41,6 @@ pub use crate::components::stack::{h_flex, v_flex};
 pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use crate::{Button, ButtonVariant, Icon, IconName, Slider, SliderEvent, SliderState};
 
+pub use crate::styles::{DynamicSpacing, UiDensity};
+
 pub use aa_gpui_kit_theme::ActiveTheme;

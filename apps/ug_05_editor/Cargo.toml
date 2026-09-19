@@ -3,17 +3,17 @@ name = "ug_05_editor"
 version = "0.1.0"
 edition.workspace = true
 publish.workspace = true
-description = "ug_05_editor —— aa-gpui-kit-ui 的多行编辑器演示"
+description = "ug_05_editor —— aa_gpui_kit_ui 的多行编辑器演示"
 
 [dependencies]
 gpui = { workspace = true }
-aa-gpui-kit-ui.workspace = true
+aa_gpui_kit_ui.workspace = true
 # 主题系统已独立成包：demo 用 theme-settings 初始化（装 JSON 主题），
-# 用 aa-gpui-kit-theme 的类型（LoadThemes 等运行时 API）。
+# 用 aa_gpui_kit_theme 的类型（LoadThemes 等运行时 API）。
 theme-settings.workspace = true
 # 编辑器内核已独立成包(demo 直接用内核的多行 Editor)
 editor.workspace = true
-aa-gpui-kit-theme.workspace = true
+aa_gpui_kit_theme.workspace = true
 tracing-subscriber.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]

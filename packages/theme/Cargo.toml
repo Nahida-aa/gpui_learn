@@ -1,5 +1,5 @@
 [package]
-name = "aa-gpui-kit-theme"
+name = "aa_gpui_kit_theme"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

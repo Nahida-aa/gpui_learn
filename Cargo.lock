@@ -256,7 +256,7 @@ name = "_45_tree"
 version = "0.1.0"
 
 [[package]]
-name = "aa-gpui-kit-assets"
+name = "aa_gpui_kit_assets"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -265,7 +265,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa-gpui-kit-theme"
+name = "aa_gpui_kit_theme"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -281,11 +281,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa-gpui-kit-ui"
+name = "aa_gpui_kit_ui"
 version = "0.1.0"
 dependencies = [
- "aa-gpui-kit-assets",
- "aa-gpui-kit-theme",
+ "aa_gpui_kit_assets",
+ "aa_gpui_kit_theme",
+ "aa_gpui_kit_ui_macros",
  "editor",
  "futures",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
@@ -295,6 +296,15 @@ dependencies = [
  "serde_json",
  "tracing",
  "unicode-segmentation",
+]
+
+[[package]]
+name = "aa_gpui_kit_ui_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -2005,7 +2015,7 @@ checksum = "d0881ea181b1df73ff77ffaaf9c7544ecc11e82fba9b5f27b262a3c73a332555"
 name = "editor"
 version = "0.1.0"
 dependencies = [
- "aa-gpui-kit-theme",
+ "aa_gpui_kit_theme",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "sum_tree 0.1.0 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "tracing",
@@ -6617,7 +6627,7 @@ dependencies = [
 name = "theme-settings"
 version = "0.1.0"
 dependencies = [
- "aa-gpui-kit-theme",
+ "aa_gpui_kit_theme",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "serde",
  "serde_json",
@@ -6979,7 +6989,7 @@ dependencies = [
 name = "ug_03_slider"
 version = "0.1.0"
 dependencies = [
- "aa-gpui-kit-ui",
+ "aa_gpui_kit_ui",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "gpui_platform",
  "wasm-bindgen",
@@ -6989,7 +6999,7 @@ dependencies = [
 name = "ug_04_input_button"
 version = "0.1.0"
 dependencies = [
- "aa-gpui-kit-ui",
+ "aa_gpui_kit_ui",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "gpui_platform",
 ]
@@ -6998,8 +7008,8 @@ dependencies = [
 name = "ug_05_editor"
 version = "0.1.0"
 dependencies = [
- "aa-gpui-kit-theme",
- "aa-gpui-kit-ui",
+ "aa_gpui_kit_theme",
+ "aa_gpui_kit_ui",
  "editor",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "gpui_platform",

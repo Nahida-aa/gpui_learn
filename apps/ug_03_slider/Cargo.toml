@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2024"
 license = "Apache-2.0"
 publish = false
-description = "ug_03_slider —— 自研 aa-gpui-kit-ui 的 Slider 演示（进度条 / 音量 / 刻度 / 禁用 / 键盘）"
+description = "ug_03_slider —— 自研 aa_gpui_kit_ui 的 Slider 演示（进度条 / 音量 / 刻度 / 禁用 / 键盘）"
 
-# 桌面二进制例子，引入自研控件库 aa-gpui-kit-ui 与本仓库锁定的 gpui。
+# 桌面二进制例子，引入自研控件库 aa_gpui_kit_ui 与本仓库锁定的 gpui。
 [dependencies]
 gpui = { workspace = true }
-aa-gpui-kit-ui.workspace = true
+aa_gpui_kit_ui.workspace = true
 
 # 与 04 相同：桌面窗口后端需要显式开启，否则 open_window 不出窗口。
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]

@@ -17,16 +17,16 @@ gpui_learn/
 │   ├── _01…_45/            # 官方线：一一对应 zed `crates/gpui/examples/`
 │   │                       #   编号即官方索引；_03 / _05 空缺（对应的是自研
 │   │                       #   Android 移植，已归入 ug_ 线）
-│   ├── ug_01_hello_android/# 自研线（ug_ = aa-gpui-kit-ui）：Android 平台的 hello world
+│   ├── ug_01_hello_android/# 自研线（ug_ = aa_gpui_kit_ui）：Android 平台的 hello world
 │   ├── ug_02_android_input/# 自研线：Android 软键盘输入
-│   ├── ug_03_slider/       # 自研线：aa-gpui-kit-ui Slider 组件
-│   ├── ug_04_input_button/ # 自研线：aa-gpui-kit-ui Input（单行）+ Button
-│   └── ug_05_editor/       # 自研线：aa-gpui-kit-ui Editor（多行编辑器）
+│   ├── ug_03_slider/       # 自研线：aa_gpui_kit_ui Slider 组件
+│   ├── ug_04_input_button/ # 自研线：aa_gpui_kit_ui Input（单行）+ Button
+│   └── ug_05_editor/       # 自研线：aa_gpui_kit_ui Editor（多行编辑器）
 ├── packages/               # 库 crate（被 apps 共享的内部包）
 │   ├── assets/             # 内嵌资源（字体/图标），供各 app 引用
 │   ├── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
 │   ├── gpui-cli/           # 开发工具：android init 等，配置驱动生成 Android 工程
-│   └── ui/                 # 组件库（aa-gpui-kit-ui）（后续例子的「共享库」演示）
+│   └── ui/                 # 组件库（aa_gpui_kit_ui）（后续例子的「共享库」演示）
 ├── justfile                # 常用命令快捷方式
 └── README.md               # 本文件
 ```
@@ -53,7 +53,7 @@ cargo run -p _01_hello_world     # 运行某个例子（包名 == 目录名）
 cargo run -- android init        # 裸 cargo run 走 gpui-cli（需带子命令）
 cargo build                      # 只构建默认成员（packages/gpui-cli，秒完）
 cargo build --workspace          # 构建全部（48 个示例 + 库）
-just test                        # 跑 aa-gpui-kit-ui 库测试（engine / editor 单测）
+just test                        # 跑 aa_gpui_kit_ui 库测试（engine / editor 单测）
 just run _01_hello_world         # justfile 提供的等价快捷命令
 ```
 
@@ -69,7 +69,7 @@ just run _01_hello_world         # justfile 提供的等价快捷命令
 
 - `_01`–`_45`：官方线，编号即 zed `crates/gpui/examples/` 的索引（`_03`/`_05`
   空缺，那两个是自研 Android 移植，已归入 `ug_` 线）；
-- `ug_01`–：自研线（`ug_` = aa-gpui-kit-ui），编号独立增长；
+- `ug_01`–：自研线（`ug_` = aa_gpui_kit_ui），编号独立增长；
 - 号位一经分配即保留，未实现的留空，不挪作他用。
 
 ## 学习路线（例子索引）

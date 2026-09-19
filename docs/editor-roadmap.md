@@ -1,8 +1,8 @@
-# aa-gpui-kit-ui 编辑器（原 ui-gpui）文本输入/编辑器开发路线
+# aa_gpui_kit_ui 编辑器（原 ui-gpui）文本输入/编辑器开发路线
 
 > 目标：建设自己的文本编辑引擎及衍生组件。诞生于 `packages/ui/src/base/input`，
 > 2026-09 内核（engine + editor）独立为 `packages/editor` 包（单行 Input /
-> 多行 Textarea 的薄 facade 留守 aa-gpui-kit-ui，依赖方向 `ui → editor`）。
+> 多行 Textarea 的薄 facade 留守 aa_gpui_kit_ui，依赖方向 `ui → editor`）。
 > 最终能力对标 `/home/aa/repos/ide_ls/gpui-component/crates/base/src/input` 的分层。
 >
 > 本文档回答的问题：zed 的 gpui examples 还没走完，是继续走完还是现在开工？
@@ -110,7 +110,7 @@ input/
 
 ### 阶段 4｜浮层与装饰（Editor 前置）
 - 课前阅读：zed `popover`、`anchor`、`painting`、`focus_visible`、`tab_stop`
-- 产出：aa-gpui-kit-ui 通用浮层能力（deferred + anchored）+ 下划线/波浪线装饰绘制
+- 产出：aa_gpui_kit_ui 通用浮层能力（deferred + anchored）+ 下划线/波浪线装饰绘制
 - 验收：Input 内右键菜单或补全提示框可弹出、定位正确
 
 ### 阶段 5｜Editor：display_map、highlighting、search
@@ -136,7 +136,7 @@ input/
 - [x] 词级移动/词删除/双击选词(119c528)
 - [x] 多光标:`selections` 集合 + 一次事务多点编辑 + 加光标/Esc 收拢
 - [x] `SelectUp`/`SelectDown` 走 display 空间(统一到 `vertical_target`)
-- [x] 内核独立成包:engine + editor → `packages/editor`(facade 留守 aa-gpui-kit-ui)
+- [x] 内核独立成包:engine + editor → `packages/editor`(facade 留守 aa_gpui_kit_ui)
 
 ### 目标定位(重要)
 
