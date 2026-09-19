@@ -128,6 +128,12 @@ pub struct Theme {
 }
 
 impl Theme {
+    /// 明暗形态（对齐 zed `Theme::appearance`，供样式按主题明暗分支用）。
+    #[inline(always)]
+    pub fn appearance(&self) -> Appearance {
+        self.appearance
+    }
+
     pub fn colors(&self) -> &ThemeColors {
         &self.styles.colors
     }

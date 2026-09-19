@@ -22,13 +22,14 @@ use gpui::{
 
 use crate::base::button::ClickHandler;
 use crate::base::icon::IconName;
+use crate::components::tooltip::Tooltip;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use aa_gpui_kit_theme::ActiveTheme;
-use crate::components::tooltip::Tooltip;
-
 pub mod button_like;
+pub mod split_button;
 
 pub use button_like::{ButtonCommon, ButtonLike};
+pub use split_button::{SplitButton, SplitButtonKind, SplitButtonStyle};
 
 /// 按钮视觉语义（对齐 zed `ButtonStyle`，去掉需主题扩展的部分）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -240,12 +241,11 @@ impl RenderOnce for IconButton {
         }
         // on_click：ButtonLike 内部已处理 disabled 短路，这里只转发回调。
         let handler = self.on_click;
-        like = like
-            .on_click(move |event, window, cx| {
-                if let Some(handler) = handler.as_ref() {
-                    handler(event, window, cx);
-                }
-            });
+        like = like.on_click(move |event, window, cx| {
+            if let Some(handler) = handler.as_ref() {
+                handler(event, window, cx);
+            }
+        });
         if let Some(tooltip) = self.tooltip {
             like = like.tooltip_rc(tooltip);
         }
