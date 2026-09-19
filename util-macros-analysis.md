@@ -60,18 +60,34 @@
 |---|---|
 | `serde` `serde_json` `indexmap` `rustc-hash` `quote` `syn` | ✅ 全在（`Cargo.lock` 里分别位于 6009 / 6069 / 3608 / 5797 / 5397 / 6563 行） |
 | `collections` `gpui_util` @ `f6838a7c` | ✅ 已在（随 gpui 进来，`Cargo.lock:1456` / `:3106`） |
-| **`perf`** | ❌ 新增（1 个 zed crate） |
-| **`util_macros`** | ❌ 新增（1 个 zed crate） |
+| `perf` | ✅ 已编译（见下） |
+| `util_macros` | ✅ 已编译（见下） |
 
-对比 `crates/path`（3 包 / 1 秒），它确实贵一点；对比 `crates/util`（20+ 依赖、
-绑 zed 安装结构），它算便宜。**所以这次否决它的理由不是依赖，是「货不对板」。**
+**更正（写完本文后用 `cargo tree` 复核发现）**：`perf` 与 `util_macros` 也**已经在
+我们的编译图里** —— `gpui` 自己就依赖 `util_macros`（proc-macro），后者拉进 `perf`:
+
+```console
+$ cargo tree -p aa_gpui_kit_ui -i util_macros -i perf -e normal --target x86_64-unknown-linux-gnu
+perf v0.1.0 (zed?rev=f6838a7c#f6838a7c)
+└── util_macros v0.1.0 (proc-macro) (zed?rev=f6838a7c#f6838a7c)
+    └── gpui v0.2.2 (zed?rev=f6838a7c#f6838a7c)
+        ├── aa_gpui_kit_assets … ├── aa_gpui_kit_component … ├── aa_gpui_kit_theme …
+        ├── aa_gpui_kit_ui … └── editor …
+```
+
+即：**git 依赖 `util_macros` 的边际成本是 0 个新包**（41 包 / 16 秒那个数字是空
+目录探针的冷启动，不是我们仓库的增量）。
+
+—— 这反而让结论更干脆：**否决它的理由从头到尾就不是成本，是「货不对板」**。
+四样东西我们一样用得上（Linux 上前三个是恒等函数、第四个退化成 `#[test]`），
+成本再低也不该引进来。
 
 ## 决策表
 
 | 场景 | 怎么做 | 理由 |
 |---|---|---|
 | 现在 | **什么都不做** | 4 个宏全部无消费方；全仓无人写跨平台路径测试，也无人跑 zed 的 perf harness |
-| 将来 editor 测试里要断言 CRLF 行为 | **抄 `line_endings!` 一个宏**（~12 行）到 `ui_macros` | 为 12 行拉 2 个 crate 不划算 |
+| 将来 editor 测试里要断言 CRLF 行为 | **抄 `line_endings!` 一个宏**（~12 行）到 `ui_macros` | 12 行的宏不值得让自家 crate 多一个 git 依赖位点；且原版 `cfg(target_os)` 判的是 host（见下方陷阱），抄时可以顺手改对 |
 | 将来要引入 zed 的 `#[perf]` | **整 crate git 依赖**（并同步把 `tooling/perf` 的 harness 也要过来） | 只拿 client 半边没意义，宏会退化成 `#[test]` |
 | 只是想要某个宏的「跨平台」能力 | 直接写 `#[cfg(target_os = "windows")]` 的普通函数 | proc-macro 不是必需的，见下方「陷阱」 |
 
@@ -118,7 +134,7 @@ proc-macro crate 是为 **host** 编译的，`target_os` 在它里面等于**编
 
 | 判据 | `crates/path` | `crates/util_macros` |
 |---|---|---|
-| 依赖闭包 | anyhow + dunce（且 dunce 已在树上） | 6 个常规包已在树上，新加 `perf` + 自身 |
+| 依赖闭包 | anyhow + dunce（且 dunce 已在树上） | 一个包都不新增（`perf` / `util_macros` 已随 gpui 编译） |
 | 是不是通用库 | 是 —— 纯粹的路径不变量 | 否 —— 一半是 zed CI 的 client，一半是测试糖 |
 | 我们现在用得上吗 | 用不上（所以也先不引） | 用不上，且未来也只有 12 行的量 |
 
