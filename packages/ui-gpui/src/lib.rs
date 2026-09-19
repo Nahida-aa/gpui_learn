@@ -35,7 +35,7 @@ pub use base::slider::element::{DragSlider, Slider, SliderEvent};
 pub use base::slider::slider_state::{SliderState, ThumbMode};
 pub use base::slider::slider_value::SliderValue;
 // 主题系统在独立包 `aa-gpui-kit-theme`（原 `base/theme`）：组件从那里取色，
-// 调用方也用 `aa_gpui_kit_theme::init_theme`。这里**不做**别名 re-export——
+// 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
 // 「主题不隶属控件库」这件事在代码里应当可见。
 pub use component::button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
 pub use component::context_menu::{

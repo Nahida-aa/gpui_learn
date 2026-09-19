@@ -8,11 +8,11 @@
 //! ## 用法
 //!
 //! ```ignore
-//! // 启动时（一次）：装入内置主题 + 资产里的主题 JSON，并设为当前
-//! aa_gpui_kit_theme::init_theme(cx);
+//! // 启动时（一次）：在 theme-settings 包里装主题（本包不管装配）：
+//! //   theme_settings::init(LoadThemes::All(assets), cx);
 //!
 //! // 运行时切换
-//! aa_gpui_kit_theme::set_theme_by_name(cx, "Catppuccin Mocha");
+//! theme_settings::set_theme_by_name(cx, "Catppuccin Mocha");
 //!
 //! // 任意组件取色（对齐 zed 的 cx.theme()）
 //! use aa_gpui_kit_theme::ActiveTheme as _;

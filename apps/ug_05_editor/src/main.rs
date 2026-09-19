@@ -19,7 +19,7 @@ use gpui::{
     div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use theme_settings::{GlobalAssets, init_theme};
+use theme_settings::{GlobalAssets, init};
 use tracing_subscriber;
 use aa_gpui_kit_theme::LoadThemes;
 use ui_gpui::base::input::editor::{EDITOR_KEY_CONTEXT, Editor, EditorMode, bind_editor_keys};
@@ -85,7 +85,7 @@ fn run_demo() {
         .init();
     application().run(|cx: &mut App| {
         // 资产仍在 gpui 全局里,用适配器桥给主题注册表
-        init_theme(
+        init(
             LoadThemes::All(Box::new(GlobalAssets(cx.asset_source().clone()))),
             cx,
         );

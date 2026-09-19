@@ -73,7 +73,7 @@ impl Global for GlobalSystemAppearance {}
 impl SystemAppearance {
     /// 初始化系统明暗全局(从 gpui 当前窗口外观读取)。
     ///
-    /// 应用启动时调用一次(我们的 `theme-settings::init_theme` 已接入)。
+    /// 应用启动时调用一次(我们的 `theme-settings::init` 已接入)。
     pub fn init(cx: &mut App) {
         *cx.default_global::<GlobalSystemAppearance>() =
             GlobalSystemAppearance(SystemAppearance(cx.window_appearance().into()));
@@ -192,7 +192,7 @@ impl Global for GlobalTheme {}
 // 那是 zed 的做法,也比"注册表状态 + 外层 Global 包壳"少一层。
 
 /// 读取当前主题。未初始化时惰性返回内置深色主题——
-/// 这让单元测试与未调用 `init_theme` 的最小程序也能直接用。
+/// 这让单元测试与未调用 `theme_settings::init` 的最小程序也能直接用。
 /// 对齐 zed `ActiveTheme`:任意能拿到 `App` 的地方 `cx.theme()` 取当前主题。
 pub trait ActiveTheme {
     fn theme(&self) -> &Arc<Theme>;
