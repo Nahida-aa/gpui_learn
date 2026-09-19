@@ -19,3 +19,8 @@ tracing.workspace = true
 # 主题扩展 JSON 的解析。
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# init.rs 的兜底链路测试用 #[gpui::test]（需要 gpui 的 test-support）。
+# 与 ui-gpui 同款：feature 开关供 `cargo test -F test-support`。
+[features]
+test-support = ["gpui/test-support"]

@@ -275,7 +275,9 @@ dependencies = [
  "refineable 0.1.0 (git+https://github.com/zed-industries/zed?rev=f6838a7c4afecd7c212c43c70165588b92a5a11f)",
  "serde",
  "serde_json",
+ "thiserror 2.0.20",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

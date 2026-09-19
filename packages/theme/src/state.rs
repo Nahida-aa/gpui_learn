@@ -100,18 +100,13 @@ pub struct GlobalTheme(pub Arc<Theme>);
 
 impl Global for GlobalTheme {}
 
-/// 内置注册表(gpui `Global`):内置主题 + 运行时注册的主题。
-#[derive(Clone)]
-pub struct GlobalThemeRegistry(pub crate::builtin::ThemeRegistry);
-
-impl Global for GlobalThemeRegistry {}
+// 注:`GlobalThemeRegistry` 不在这里定义 —— registry 自己管全局
+// (`ThemeRegistry::global` / `set_global`,见 [`crate::registry`]),
+// 那是 zed 的做法,也比"注册表状态 + 外层 Global 包壳"少一层。
 
 /// 读取当前主题。未初始化时惰性返回内置深色主题——
 /// 这让单元测试与未调用 `init_theme` 的最小程序也能直接用。
 /// 对齐 zed `ActiveTheme`:任意能拿到 `App` 的地方 `cx.theme()` 取当前主题。
-///
-/// 未调用 `init_theme` 时惰性返回内置深色主题(常量泄漏一次),
-/// 这让单元测试与最小程序也能直接用。
 pub trait ActiveTheme {
     fn theme(&self) -> &Arc<Theme>;
 }
@@ -123,10 +118,7 @@ impl ActiveTheme for App {
             Some(global) => &global.0,
             None => DEFAULT.get_or_init(|| {
                 Arc::new(
-                    crate::builtin::ThemeRegistry::with_builtins()
-                        .get("ui-gpui-default-dark")
-                        .expect("builtin theme must exist")
-                        .clone(),
+                    crate::fallback_themes::ctp_default_dark(),
                 )
             }),
         }

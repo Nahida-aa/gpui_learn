@@ -17,7 +17,7 @@
 //!
 //! 与本 crate 其他模块的关系:本模块只放**颜色结构体本身**;
 //! 装配(注册表、全局状态、切换)在 [`Theme`](crate::Theme) 所在的 `state` 模块,
-//! 内置配色值在 [`builtin`](crate::builtin);
+//! 内置配色值在 [`default_colors`](crate::default_colors);
 //! JSON 解析不在这里 —— 那在独立的 `theme-settings` 包
 //! (`content` / `loaders` / `init`),依赖方向 `theme-settings → theme`。
 

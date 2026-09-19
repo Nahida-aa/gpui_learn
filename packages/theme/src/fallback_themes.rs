@@ -10,8 +10,8 @@
 //!
 //! zed 这里是 `zed_default_themes()`：zed 自己的默认灰阶配色，约 300 行
 //! 手写色值。我们改用 **Catppuccin Mocha**（`ctp` = Catppuccin）：它已经
-//! 是本仓库的内置主题（见 [`builtin`](crate::builtin)），色值不必重复
-//! 定义一遍，视觉也与其余内置主题一致。
+//! 是本仓库的内置主题（见 [`default_colors`](crate::default_colors)），
+//! 色值不必重复定义一遍，视觉也与其余内置主题一致。
 //!
 //! 另外 zed 的 `ThemeFamily` 带 `scales`（色板集合）字段，我们的色板是
 //! 全局函数（[`default_colors`](crate::default_colors)）不随家族走，
@@ -32,12 +32,10 @@ pub const DEFAULT_DARK_THEME_NAME: &str = "Catppuccin Mocha";
 
 /// Catppuccin Mocha 兜底主题。
 ///
-/// 复用 [`builtin`](crate::builtin) 的内置配色，不重复定义色值。
+/// 直接复用 [`default_colors`](crate::default_colors) 的内置主题构造，
+/// 不再绕道注册表——兜底要的就是「一定能拿到」。
 pub fn ctp_default_dark() -> crate::Theme {
-    crate::builtin::ThemeRegistry::with_builtins()
-        .get("ui-gpui-default-dark")
-        .cloned()
-        .expect("内置注册表必须含默认深色主题")
+    crate::default_colors::catppuccin_mocha()
 }
 
 /// 兜底主题家族（Catppuccin Mocha 单主题）。

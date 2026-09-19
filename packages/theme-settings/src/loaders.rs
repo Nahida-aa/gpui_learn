@@ -130,15 +130,15 @@ fn theme_from_style(
 
 fn base_colors(appearance: Appearance) -> ThemeColors {
     match appearance {
-        Appearance::Light => aa_gpui_kit_theme::builtin::theme_colors_latte(),
-        Appearance::Dark => aa_gpui_kit_theme::builtin::theme_colors_mocha(),
+        Appearance::Light => aa_gpui_kit_theme::default_colors::theme_colors_latte(),
+        Appearance::Dark => aa_gpui_kit_theme::default_colors::theme_colors_mocha(),
     }
 }
 
 fn base_status(appearance: Appearance) -> StatusColors {
     match appearance {
-        Appearance::Light => aa_gpui_kit_theme::builtin::status_colors_latte(),
-        Appearance::Dark => aa_gpui_kit_theme::builtin::status_colors_mocha(),
+        Appearance::Light => aa_gpui_kit_theme::default_colors::status_colors_latte(),
+        Appearance::Dark => aa_gpui_kit_theme::default_colors::status_colors_mocha(),
     }
 }
 

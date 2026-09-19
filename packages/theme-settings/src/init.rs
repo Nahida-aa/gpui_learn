@@ -8,57 +8,96 @@
 //! 而「当前主题是什么」这份状态归 theme 包的 `GlobalTheme` 管
 //! （切换最终调用 `aa_gpui_kit_theme::set_theme`）。
 
+use std::borrow::Cow;
 use std::sync::Arc;
 
-use aa_gpui_kit_theme::builtin::ThemeRegistry;
-use aa_gpui_kit_theme::{GlobalThemeRegistry, Theme, set_theme};
-use gpui::App;
+use aa_gpui_kit_theme::default_colors::{catppuccin_latte, catppuccin_mocha};
+use aa_gpui_kit_theme::registry::ThemeRegistry;
+use aa_gpui_kit_theme::{Theme, set_theme};
+use gpui::{App, AssetSource, Result, SharedString};
+
+/// 把 gpui 全局里的 `Arc<dyn AssetSource>` 适配成注册表要的
+/// `Box<dyn AssetSource>`。
+///
+/// gpui 只给 `()` 提供了 `AssetSource` 实现，而 `App::asset_source()`
+/// 返回的是 `&Arc<dyn AssetSource>` —— 两者不能直接对接，故这里包一层。
+/// zed 的做法是 init 时由调用方把资产传进来（`LoadThemes::All(assets)`），
+/// 我们保持「资产在 gpui 全局」的现有约定，用适配器桥接。
+struct GlobalAssets(Arc<dyn AssetSource>);
+
+impl AssetSource for GlobalAssets {
+    fn load(&self, path: &str) -> Result<Option<Cow<'static, [u8]>>> {
+        self.0.load(path)
+    }
+
+    fn list(&self, path: &str) -> Result<Vec<SharedString>> {
+        self.0.list(path)
+    }
+}
+
+/// 装入内置主题（Catppuccin Mocha / Latte）。
+///
+/// 新版注册表是注入式（构造时给 `AssetSource`），内置主题在
+/// [`ThemeRegistry::new`] 里已装入兜底家族；这里再补上成对的 Mocha / Latte。
+fn builtin_family() -> aa_gpui_kit_theme::ThemeFamily {
+    aa_gpui_kit_theme::ThemeFamily {
+        id: "ui-gpui-default".into(),
+        name: "ui-gpui Default".into(),
+        author: String::new(),
+        themes: vec![catppuccin_mocha(), catppuccin_latte()],
+    }
+}
 
 /// 安装主题系统（应用启动时调用一次）：
-/// 1. 装入内置主题（`ThemeRegistry::with_builtins`）；
-/// 2. 从 `asset_source` 加载 `themes/**/*.json`（[`load_asset_themes`]）；
-/// 3. 写入 `GlobalThemeRegistry`；
-/// 4. 默认选用 JSON 里的 `Catppuccin Mocha`（与内置深色同配色），
-///    找不到再回退内置深色，最后 `set_theme` 生效。
+/// 1. 以 gpui 的 `asset_source` 构造注册表并写入全局；
+/// 2. 装入内置主题家族（Catppuccin Mocha / Latte 成对）；
+/// 3. 从资产加载 `themes/**/*.json`（[`load_asset_themes`]）；
+/// 4. 默认选用 `Catppuccin Mocha`，找不到再回退内置深色，最后 `set_theme` 生效。
 pub fn init_theme(cx: &mut App) {
-    let mut registry = ThemeRegistry::with_builtins();
-    load_asset_themes(cx, &mut registry);
-    cx.set_global(GlobalThemeRegistry(registry));
+    // 注册表持有 asset_source（供后续加载主题 / 图标资产）。
+    let assets: Box<dyn AssetSource> = Box::new(GlobalAssets(cx.asset_source().clone()));
+    ThemeRegistry::set_global(assets, cx);
+    let registry = ThemeRegistry::global(cx);
+
+    registry.insert_theme_families([builtin_family()]);
+    load_asset_themes(&registry);
+
     set_theme(cx, Arc::new(default_theme(cx)));
 }
 
-/// 默认主题：JSON 里的 `Catppuccin Mocha` 优先，找不到再回退内置深色。
+/// 默认主题：`Catppuccin Mocha` 优先（资产里的主题扩展），
+/// 找不到再回退内置深色（id `ui-gpui-default-dark`）。
+///
+/// 注册表的 `get` 返回 `Result`，所以这里逐个尝试；两个都失败时兜底
+/// 直接构造内置主题 —— 兜底路径不该再依赖注册表。
 fn default_theme(cx: &App) -> Theme {
-    cx.try_global::<GlobalThemeRegistry>()
-        .and_then(|registry| {
-            registry
-                .0
-                .get("Catppuccin Mocha")
-                .or_else(|| registry.0.get("ui-gpui-default-dark"))
-                .cloned()
-        })
-        .expect("theme registry must have a default")
+    let registry = ThemeRegistry::global(cx);
+    registry
+        .get("Catppuccin Mocha")
+        .or_else(|_| registry.get("ui-gpui-default-dark"))
+        .map(|theme| (*theme).clone())
+        .unwrap_or_else(|_| catppuccin_mocha())
 }
 
-/// 从 `asset_source` 加载 `themes/` 下的所有主题 JSON 进注册表
+/// 从资产源加载 `themes/` 下的所有主题 JSON 进注册表
 /// （资产由 assets crate 的 RustEmbed 内嵌）。
 ///
 /// 单个文件解析失败只告警不中断，保证其中一个损坏不影响其余主题。
-pub fn load_asset_themes(cx: &mut App, registry: &mut ThemeRegistry) {
-    let Ok(paths) = cx.asset_source().list("themes/") else {
+pub fn load_asset_themes(registry: &ThemeRegistry) {
+    let Ok(paths) = registry.assets().list("themes/") else {
         return;
     };
     for path in paths {
         if !path.ends_with(".json") {
             continue;
         }
-        let Ok(Some(bytes)) = cx.asset_source().load(&path) else {
+        let Ok(Some(bytes)) = registry.assets().load(&path) else {
             continue;
         };
         match crate::loaders::parse_theme_family(&bytes) {
             Ok(family) => {
                 tracing::info!("theme family: {} (n={})", family.name, family.themes.len());
-                registry.load_theme_family(family);
+                registry.insert_theme_families([family]);
             }
             Err(err) => tracing::warn!("failed to parse theme {path}: {err:#}"),
         }
@@ -67,12 +106,41 @@ pub fn load_asset_themes(cx: &mut App, registry: &mut ThemeRegistry) {
 
 /// 按 id / 名称切换主题（需已 [`init_theme`]）。找不到时保持不变并返回 false。
 pub fn set_theme_by_name(cx: &mut App, id_or_name: &str) -> bool {
-    let Some(theme) = cx
-        .try_global::<GlobalThemeRegistry>()
-        .and_then(|registry| registry.0.get(id_or_name).cloned())
-    else {
+    let Ok(theme) = ThemeRegistry::global(cx).get(id_or_name) else {
         return false;
     };
-    set_theme(cx, Arc::new(theme));
+    set_theme(cx, theme);
     true
+}
+
+/// 列出注册表里全部主题名（调试 / 主题选择器用）。
+pub fn list_theme_names(cx: &App) -> Vec<gpui::SharedString> {
+    ThemeRegistry::global(cx).list_names()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use aa_gpui_kit_theme::ActiveTheme as _;
+
+    /// 兜底路径：未 `init_theme` 时 `cx.theme()` 也应拿到内置深色主题。
+    /// 这条链路在注册表重构后改成直接构造，单独锁一下。
+    #[gpui::test]
+    fn theme_falls_back_to_builtin_dark(cx: &mut gpui::TestAppContext) {
+        let theme = cx.update(|cx| cx.theme().clone());
+        assert_eq!(theme.id, "ui-gpui-default-dark");
+        assert_eq!(theme.name, "ui-gpui Dark");
+    }
+
+    /// 内置家族是成对的深浅主题（纯函数，不需要 App）。
+    #[test]
+    fn builtin_family_has_dark_and_light() {
+        let family = builtin_family();
+        assert_eq!(family.themes.len(), 2);
+        assert_eq!(family.themes[0].id, "ui-gpui-default-dark");
+        assert_eq!(family.themes[1].id, "ui-gpui-default-light");
+        // 注册表默认构造（无资产源）也会装入兜底家族，不应 panic
+        let registry = ThemeRegistry::default();
+        let _ = registry.list_names();
+    }
 }

@@ -33,3 +33,8 @@ parking_lot = "0.12"
 # 主题的「部分覆盖」机制:`ThemeColors` / `StatusColors` 加 derive 后
 # 得到 `XxxRefinement`(每字段 Option 化),主题 JSON 只写要覆盖的字段。
 refineable.workspace = true
+
+# 注册表(registry.rs):错误类型定义(`ThemeNotFoundError` 等)。
+thiserror = "2"
+# 图标主题的 id 生成(注册表装载图标主题时给每个主题一个唯一 id)。
+uuid = { version = "1", features = ["v4"] }
