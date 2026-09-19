@@ -38,8 +38,10 @@
 
 pub mod builtin;
 pub mod content;
+pub mod default_colors;
 pub mod icon_theme;
 pub mod loaders;
+pub mod scale;
 pub mod schema;
 pub mod settings_provider;
 pub mod styles;
@@ -48,6 +50,7 @@ pub mod ui_density;
 mod state;
 
 pub use schema::{AppearanceContent, try_parse_color};
+pub use scale::{ColorScale, ColorScaleSet, ColorScaleStep, ColorScales};
 pub use settings_provider::{
     DefaultThemeSettingsProvider, ThemeSettingsProvider, buffer_font, buffer_font_size,
     scaled_spacing, set_theme_settings_provider, theme_settings, ui_density, ui_font, ui_font_size,

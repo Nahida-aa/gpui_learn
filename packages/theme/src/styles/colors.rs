@@ -1,106 +1,360 @@
-//! UI 语义色（`ThemeColors`），对齐 zed `styles/colors.rs` 的精简子集。
+//! UI 语义色（`ThemeColors`），对齐 zed `styles/colors.rs`。
 //!
-//! 字段取舍原则：编辑器内核 + 通用组件够用即可（约 55 个语义色），
-//! zed 的 150 个字段里面板/工作区相关的暂不收录，需要时按同名补齐。
+//! 字段与 zed **一一对应**（143 个），因此可以直接吃 zed 主题扩展的
+//! `style` 字段；另增补 3 个本仓库自用字段（见结构体末尾）。
 //! 所有颜色统一用 `Hsla`（与 gpui 的填充系统无缝衔接，`rgb(..).into()` 可转）。
 //!
+//! 默认值见 [`crate::default_colors`]（`ThemeColors::{light,dark}` 与
+//! 33 个色板）；内置主题（Catppuccin）的取值见 [`crate::builtin`]。
+//!
 //! 同目录的其他样式集合见 [`system`](super::system) / [`status`](super::status)
-//! / [`accents`](super::accents) / [`syntax`](super::syntax)。
+//! / [`accents`](super::accents) / [`players`](super::players)
+//! / [`syntax`](super::syntax)。
 
 use gpui::Hsla;
 
-/// UI 语义色(对齐 zed `ThemeColors` 的常用子集,字段名与其保持一致,
-/// 便于将来直接对接 zed 的主题 JSON)。
+/// UI 语义色（对齐 zed `ThemeColors`，字段名与注释均沿用 zed 原文）。
 #[derive(Clone, Debug, PartialEq)]
 pub struct ThemeColors {
-    // ---- border ----
-    /// 常规边框,高对比。
+
+    /// Border color. Used for most borders, is usually a high contrast color.
     pub border: Hsla,
-    /// 弱化边框,如两块区域的分隔线。
+    /// Border color. Used for deemphasized borders, like a visual divider between two sections
     pub border_variant: Hsla,
-    /// 键盘焦点边框。
+    /// Border color. Used for focused elements, like keyboard focused list item.
     pub border_focused: Hsla,
-    /// 选中态边框。
+    /// Border color. Used for selected elements, like an active search filter or selected checkbox.
     pub border_selected: Hsla,
-    /// 禁用态边框。
-    pub border_disabled: Hsla,
-    /// 透明占位边框(状态切换时浮现的边框)。
+    /// Border color. Used for transparent borders. Used for placeholder borders when an element gains a border on state change.
     pub border_transparent: Hsla,
-
-    // ---- background ----
-    /// 应用/窗口背景。
-    pub background: Hsla,
-    /// 面板、tab 等贴地表面。
-    pub surface_background: Hsla,
-    /// 浮层表面(菜单、弹窗、对话框)。
+    /// Border color. Used for disabled elements, like a disabled input or button.
+    pub border_disabled: Hsla,
+    /// Border color. Used for elevated surfaces, like a context menu, popup, or dialog.
     pub elevated_surface_background: Hsla,
-    /// 有自己底色的元素(按钮、输入框……)。
+    /// Background Color. Used for grounded surfaces like a panel or tab.
+    pub surface_background: Hsla,
+    /// Background Color. Used for the app background and blank panels or windows.
+    pub background: Hsla,
+    /// Background Color. Used for the background of an element that should have a different background than the surface it's on.
+    ///
+    /// Elements might include: Buttons, Inputs, Checkboxes, Radio Buttons...
+    ///
+    /// For an element that should have the same background as the surface it's on, use `ghost_element_background`.
     pub element_background: Hsla,
-    /// 该类元素的 hover 态。
+    /// Background Color. Used for the hover state of an element that should have a different background than the surface it's on.
+    ///
+    /// Hover states are triggered by the mouse entering an element, or a finger touching an element on a touch screen.
     pub element_hover: Hsla,
-    /// 该类元素的按下态。
+    /// Background Color. Used for the active state of an element that should have a different background than the surface it's on.
+    ///
+    /// Active states are triggered by the mouse button being pressed down on an element, or the Return button or other activator being pressed.
     pub element_active: Hsla,
-    /// 该类元素的选中态。
+    /// Background Color. Used for the selected state of an element that should have a different background than the surface it's on.
+    ///
+    /// Selected states are triggered by the element being selected (or "activated") by the user.
+    ///
+    /// This could include a selected checkbox, a toggleable button that is toggled on, etc.
     pub element_selected: Hsla,
-    /// 该类元素的禁用态。
+    /// Background Color. Used for the background of selections in a UI element.
+    pub element_selection_background: Hsla,
+    /// Background Color. Used for the disabled state of an element that should have a different background than the surface it's on.
+    ///
+    /// Disabled states are shown when a user cannot interact with an element, like a disabled button or input.
     pub element_disabled: Hsla,
-    /// 与所在表面同底色的「幽灵」元素(纯文本按钮等)。
+    /// Background Color. Used for the area that shows where a dragged element will be dropped.
+    pub drop_target_background: Hsla,
+    /// Border Color. Used for the border that shows where a dragged element will be dropped.
+    pub drop_target_border: Hsla,
+    /// Used for the background of a ghost element that should have the same background as the surface it's on.
+    ///
+    /// Elements might include: Buttons, Inputs, Checkboxes, Radio Buttons...
+    ///
+    /// For an element that should have a different background than the surface it's on, use `element_background`.
     pub ghost_element_background: Hsla,
+    /// Background Color. Used for the hover state of a ghost element that should have the same background as the surface it's on.
+    ///
+    /// Hover states are triggered by the mouse entering an element, or a finger touching an element on a touch screen.
     pub ghost_element_hover: Hsla,
+    /// Background Color. Used for the active state of a ghost element that should have the same background as the surface it's on.
+    ///
+    /// Active states are triggered by the mouse button being pressed down on an element, or the Return button or other activator being pressed.
     pub ghost_element_active: Hsla,
+    /// Background Color. Used for the selected state of a ghost element that should have the same background as the surface it's on.
+    ///
+    /// Selected states are triggered by the element being selected (or "activated") by the user.
+    ///
+    /// This could include a selected checkbox, a toggleable button that is toggled on, etc.
     pub ghost_element_selected: Hsla,
+    /// Background Color. Used for the disabled state of a ghost element that should have the same background as the surface it's on.
+    ///
+    /// Disabled states are shown when a user cannot interact with an element, like a disabled button or input.
     pub ghost_element_disabled: Hsla,
-
-    // ---- text ----
+    /// Text Color. Default text color used for most text.
     pub text: Hsla,
+    /// Text Color. Color of muted or deemphasized text. It is a subdued version of the standard text color.
     pub text_muted: Hsla,
+    /// Text Color. Color of the placeholder text typically shown in input fields to guide the user to enter valid data.
     pub text_placeholder: Hsla,
+    /// Text Color. Color used for text denoting disabled elements. Typically, the color is faded or grayed out to emphasize the disabled state.
     pub text_disabled: Hsla,
+    /// Text Color. Color used for emphasis or highlighting certain text, like an active filter or a matched character in a search.
     pub text_accent: Hsla,
-
-    // ---- icon ----
+    /// Fill Color. Used for the default fill color of an icon.
     pub icon: Hsla,
+    /// Fill Color. Used for the muted or deemphasized fill color of an icon.
+    ///
+    /// This might be used to show an icon in an inactive pane, or to deemphasize a series of icons to give them less visual weight.
     pub icon_muted: Hsla,
+    /// Fill Color. Used for the disabled fill color of an icon.
+    ///
+    /// Disabled states are shown when a user cannot interact with an element, like a icon button.
     pub icon_disabled: Hsla,
+    /// Fill Color. Used for the placeholder fill color of an icon.
+    ///
+    /// This might be used to show an icon in an input that disappears when the user enters text.
+    pub icon_placeholder: Hsla,
+    /// Fill Color. Used for the accent fill color of an icon.
+    ///
+    /// This might be used to show when a toggleable icon button is selected.
     pub icon_accent: Hsla,
+    /// Color used to accent some debugger elements
+    /// Is used by breakpoints
+    pub debugger_accent: Hsla,
 
-    // ---- editor ----
-    pub editor_foreground: Hsla,
-    pub editor_background: Hsla,
-    pub editor_gutter_background: Hsla,
-    /// 光标所在行的底色。
-    pub editor_active_line_background: Hsla,
-    pub editor_line_number: Hsla,
-    pub editor_active_line_number: Hsla,
-    /// 换行参考线(80 列等)。
-    pub editor_wrap_guide: Hsla,
-    pub editor_indent_guide: Hsla,
-    pub editor_indent_guide_active: Hsla,
-    /// 组字下划线等「不可见字符」的颜色。
-    pub editor_invisible: Hsla,
-    /// 通用选区底色。
-    ///
-    /// 注:zed 用 `PlayerColors`(协同每人一色),我们简化为单选区字段。
-    pub selection_background: Hsla,
-    /// 文本光标(caret)。
-    ///
-    /// 注:同上,zed 用 `PlayerColors` 里的 cursor。
-    pub editor_cursor: Hsla,
-    pub editor_document_highlight_read_background: Hsla,
-    pub editor_document_highlight_write_background: Hsla,
-
-    // ---- 面板 / 杂项 ----
-    pub panel_background: Hsla,
-    pub pane_focused_border: Hsla,
-    pub pane_group_border: Hsla,
+    // ===
+    // UI Elements
+    // ===
+    pub status_bar_background: Hsla,
+    pub title_bar_background: Hsla,
+    pub title_bar_inactive_background: Hsla,
+    pub toolbar_background: Hsla,
+    pub tab_bar_background: Hsla,
+    pub tab_inactive_background: Hsla,
+    pub tab_active_background: Hsla,
     pub search_match_background: Hsla,
     pub search_active_match_background: Hsla,
+    pub panel_background: Hsla,
+    pub panel_focused_border: Hsla,
+    pub panel_indent_guide: Hsla,
+    pub panel_indent_guide_hover: Hsla,
+    pub panel_indent_guide_active: Hsla,
+
+    /// The color of the overlay surface on top of panel.
+    pub panel_overlay_background: Hsla,
+    /// The color of the overlay surface on top of panel when hovered over.
+    pub panel_overlay_hover: Hsla,
+
+    pub pane_focused_border: Hsla,
+    pub pane_group_border: Hsla,
+    /// The color of the scrollbar thumb.
     pub scrollbar_thumb_background: Hsla,
+    /// The color of the scrollbar thumb when hovered over.
     pub scrollbar_thumb_hover_background: Hsla,
+    /// The color of the scrollbar thumb whilst being actively dragged.
     pub scrollbar_thumb_active_background: Hsla,
+    /// The border color of the scrollbar thumb.
     pub scrollbar_thumb_border: Hsla,
+    /// The background color of the scrollbar track.
     pub scrollbar_track_background: Hsla,
+    /// The border color of the scrollbar track.
     pub scrollbar_track_border: Hsla,
-    /// 链接色。
+    /// The color of the minimap thumb.
+    pub minimap_thumb_background: Hsla,
+    /// The color of the minimap thumb when hovered over.
+    pub minimap_thumb_hover_background: Hsla,
+    /// The color of the minimap thumb whilst being actively dragged.
+    pub minimap_thumb_active_background: Hsla,
+    /// The border color of the minimap thumb.
+    pub minimap_thumb_border: Hsla,
+
+    /// Background color for Vim Normal mode indicator.
+    pub vim_normal_background: Hsla,
+    /// Background color for Vim Insert mode indicator.
+    pub vim_insert_background: Hsla,
+    /// Background color for Vim Replace mode indicator.
+    pub vim_replace_background: Hsla,
+    /// Background color for Vim Visual mode indicator.
+    pub vim_visual_background: Hsla,
+    /// Background color for Vim Visual Line mode indicator.
+    pub vim_visual_line_background: Hsla,
+    /// Background color for Vim Visual Block mode indicator.
+    pub vim_visual_block_background: Hsla,
+    /// Background color for Vim yank highlight.
+    pub vim_yank_background: Hsla,
+    /// Foreground color for Helix jump labels.
+    pub vim_helix_jump_label_foreground: Hsla,
+    /// Background color for Vim Helix Normal mode indicator.
+    pub vim_helix_normal_background: Hsla,
+    /// Background color for Vim Helix Select mode indicator.
+    pub vim_helix_select_background: Hsla,
+    /// Foreground color for Vim Normal mode indicator.
+    pub vim_normal_foreground: Hsla,
+    /// Foreground color for Vim Insert mode indicator.
+    pub vim_insert_foreground: Hsla,
+    /// Foreground color for Vim Replace mode indicator.
+    pub vim_replace_foreground: Hsla,
+    /// Foreground color for Vim Visual mode indicator.
+    pub vim_visual_foreground: Hsla,
+    /// Foreground color for Vim Visual Line mode indicator.
+    pub vim_visual_line_foreground: Hsla,
+    /// Foreground color for Vim Visual Block mode indicator.
+    pub vim_visual_block_foreground: Hsla,
+    /// Foreground color for Vim Helix Normal mode indicator.
+    pub vim_helix_normal_foreground: Hsla,
+    /// Foreground color for Vim Helix Select mode indicator.
+    pub vim_helix_select_foreground: Hsla,
+
+    // ===
+    // Editor
+    // ===
+    pub editor_foreground: Hsla,
+    /// Text color used for CodeLens items in the editor.
+    ///
+    /// Falls back to `text_muted` when not explicitly set.
+    pub editor_code_lens_foreground: Option<Hsla>,
+    pub editor_background: Hsla,
+    pub editor_gutter_background: Hsla,
+    pub editor_subheader_background: Hsla,
+    pub editor_active_line_background: Hsla,
+    pub editor_highlighted_line_background: Hsla,
+    /// Line color of the line a debugger is currently stopped at
+    pub editor_debugger_active_line_background: Hsla,
+    /// Text Color. Used for the text of the line number in the editor gutter.
+    pub editor_line_number: Hsla,
+    /// Text Color. Used for the text of the line number in the editor gutter when the line is highlighted.
+    pub editor_active_line_number: Hsla,
+    /// Text Color. Used for the text of the line number in the editor gutter when the line is hovered over.
+    pub editor_hover_line_number: Hsla,
+    /// Text Color. Used to mark invisible characters in the editor.
+    ///
+    /// Example: spaces, tabs, carriage returns, etc.
+    pub editor_invisible: Hsla,
+    pub editor_wrap_guide: Hsla,
+    pub editor_active_wrap_guide: Hsla,
+    pub editor_indent_guide: Hsla,
+    pub editor_indent_guide_active: Hsla,
+    /// Read-access of a symbol, like reading a variable.
+    ///
+    /// A document highlight is a range inside a text document which deserves
+    /// special attention. Usually a document highlight is visualized by changing
+    /// the background color of its range.
+    pub editor_document_highlight_read_background: Hsla,
+    /// Read-access of a symbol, like reading a variable.
+    ///
+    /// A document highlight is a range inside a text document which deserves
+    /// special attention. Usually a document highlight is visualized by changing
+    /// the background color of its range.
+    pub editor_document_highlight_write_background: Hsla,
+    /// Highlighted brackets background color.
+    ///
+    /// Matching brackets in the cursor scope are highlighted with this background color.
+    pub editor_document_highlight_bracket_background: Hsla,
+    /// Filled background color for added diff hunk row highlights in the editor.
+    pub editor_diff_hunk_added_background: Hsla,
+    /// Hollow background color for added diff hunk row highlights in the editor.
+    pub editor_diff_hunk_added_hollow_background: Hsla,
+    /// Hollow border color for added diff hunk row highlights in the editor.
+    pub editor_diff_hunk_added_hollow_border: Hsla,
+    /// Filled background color for deleted diff hunk row highlights in the editor.
+    pub editor_diff_hunk_deleted_background: Hsla,
+    /// Hollow background color for deleted diff hunk row highlights in the editor.
+    pub editor_diff_hunk_deleted_hollow_background: Hsla,
+    /// Hollow border color for deleted diff hunk row highlights in the editor.
+    pub editor_diff_hunk_deleted_hollow_border: Hsla,
+
+    // ===
+    // Terminal
+    // ===
+    /// Terminal layout background color.
+    pub terminal_background: Hsla,
+    /// Terminal foreground color.
+    pub terminal_foreground: Hsla,
+    /// Bright terminal foreground color.
+    pub terminal_bright_foreground: Hsla,
+    /// Dim terminal foreground color.
+    pub terminal_dim_foreground: Hsla,
+    /// Terminal ANSI background color.
+    pub terminal_ansi_background: Hsla,
+    /// Black ANSI terminal color.
+    pub terminal_ansi_black: Hsla,
+    /// Bright black ANSI terminal color.
+    pub terminal_ansi_bright_black: Hsla,
+    /// Dim black ANSI terminal color.
+    pub terminal_ansi_dim_black: Hsla,
+    /// Red ANSI terminal color.
+    pub terminal_ansi_red: Hsla,
+    /// Bright red ANSI terminal color.
+    pub terminal_ansi_bright_red: Hsla,
+    /// Dim red ANSI terminal color.
+    pub terminal_ansi_dim_red: Hsla,
+    /// Green ANSI terminal color.
+    pub terminal_ansi_green: Hsla,
+    /// Bright green ANSI terminal color.
+    pub terminal_ansi_bright_green: Hsla,
+    /// Dim green ANSI terminal color.
+    pub terminal_ansi_dim_green: Hsla,
+    /// Yellow ANSI terminal color.
+    pub terminal_ansi_yellow: Hsla,
+    /// Bright yellow ANSI terminal color.
+    pub terminal_ansi_bright_yellow: Hsla,
+    /// Dim yellow ANSI terminal color.
+    pub terminal_ansi_dim_yellow: Hsla,
+    /// Blue ANSI terminal color.
+    pub terminal_ansi_blue: Hsla,
+    /// Bright blue ANSI terminal color.
+    pub terminal_ansi_bright_blue: Hsla,
+    /// Dim blue ANSI terminal color.
+    pub terminal_ansi_dim_blue: Hsla,
+    /// Magenta ANSI terminal color.
+    pub terminal_ansi_magenta: Hsla,
+    /// Bright magenta ANSI terminal color.
+    pub terminal_ansi_bright_magenta: Hsla,
+    /// Dim magenta ANSI terminal color.
+    pub terminal_ansi_dim_magenta: Hsla,
+    /// Cyan ANSI terminal color.
+    pub terminal_ansi_cyan: Hsla,
+    /// Bright cyan ANSI terminal color.
+    pub terminal_ansi_bright_cyan: Hsla,
+    /// Dim cyan ANSI terminal color.
+    pub terminal_ansi_dim_cyan: Hsla,
+    /// White ANSI terminal color.
+    pub terminal_ansi_white: Hsla,
+    /// Bright white ANSI terminal color.
+    pub terminal_ansi_bright_white: Hsla,
+    /// Dim white ANSI terminal color.
+    pub terminal_ansi_dim_white: Hsla,
+
+    /// Represents a link text hover color.
+    pub link_text_hover: Hsla,
+
+    /// Represents an added entry or hunk in vcs, like git.
+    pub version_control_added: Hsla,
+    /// Represents a deleted entry in version control systems.
+    pub version_control_deleted: Hsla,
+    /// Represents a modified entry in version control systems.
+    pub version_control_modified: Hsla,
+    /// Represents a renamed entry in version control systems.
+    pub version_control_renamed: Hsla,
+    /// Represents a conflicting entry in version control systems.
+    pub version_control_conflict: Hsla,
+    /// Represents an ignored entry in version control systems.
+    pub version_control_ignored: Hsla,
+    /// Represents an added word in a word diff.
+    pub version_control_word_added: Hsla,
+    /// Represents a deleted word in a word diff.
+    pub version_control_word_deleted: Hsla,
+    /// Represents the "ours" region of a merge conflict.
+    pub version_control_conflict_marker_ours: Hsla,
+    /// Represents the "theirs" region of a merge conflict.
+    pub version_control_conflict_marker_theirs: Hsla,
+
+    // ---- 以下是我们相对 zed 增补的字段 ----
+
+    /// 选区背景色。zed 的 v0.2.0 主题扩展里没有对应 key，由加载器派生于
+    /// `element_selected`。
+    pub selection_background: Hsla,
+    /// 编辑器光标色。同样由加载器派生于 `editor_foreground`。
+    pub editor_cursor: Hsla,
+    /// 链接色。zed 用 `text_accent` 表达，我们保留这个更直白的名字。
     pub link: Hsla,
 }
