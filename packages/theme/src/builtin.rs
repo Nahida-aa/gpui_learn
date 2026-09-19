@@ -12,7 +12,7 @@ use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, hsla};
 
 use crate::state::{Appearance, Theme, ThemeFamily, ThemeStyles};
 use crate::styles::{
-    AccentColors, PlayerColors, StatusColor, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
+    AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
 };
 
 /// `0xRRGGBB` → `Hsla`。
@@ -27,13 +27,12 @@ fn ha(hex: u32, a: f32) -> Hsla {
     c
 }
 
-/// 单状态三色组:base / 15% 透明底 / 边框即 base。
-fn status(hex: u32) -> StatusColor {
-    StatusColor {
-        base: h(hex),
-        background: ha(hex, 0.15),
-        border: h(hex),
-    }
+/// 单状态三色组：(前景, 15% 透明底, 边框)。
+///
+/// zed 的 `StatusColors` 是扁平结构（`error` / `error_background` /
+/// `error_border` 三个独立字段），所以这里返回三元组。
+fn status(hex: u32) -> (Hsla, Hsla, Hsla) {
+    (h(hex), ha(hex, 0.15), h(hex))
 }
 
 fn syntax_mocha() -> SyntaxTheme {
@@ -247,35 +246,105 @@ fn syntax_latte() -> SyntaxTheme {
 }
 
 pub(crate) fn status_colors_mocha() -> StatusColors {
-    StatusColors {
-        conflict: status(0xf38ba8),
-        created: status(0xa6e3a1),
-        deleted: status(0xf38ba8),
-        error: status(0xf38ba8),
-        hidden: status(0x6c7086),
-        ignored: status(0x6c7086),
-        info: status(0x89dceb),
-        modified: status(0xfab387),
-        renamed: status(0x89b4fa),
-        success: status(0xa6e3a1),
-        warning: status(0xf9e2af),
-    }
+    // 以前景为基底派生 background(15% 透明) / border(同前景),对齐 zed 的派生规则。
+
+    let mut colors = StatusColors::dark();
+    let (fg, bg, border) = status(0xf38ba8);
+    colors.conflict = fg;
+    colors.conflict_background = bg;
+    colors.conflict_border = border;
+    let (fg, bg, border) = status(0xa6e3a1);
+    colors.created = fg;
+    colors.created_background = bg;
+    colors.created_border = border;
+    let (fg, bg, border) = status(0xf38ba8);
+    colors.deleted = fg;
+    colors.deleted_background = bg;
+    colors.deleted_border = border;
+    let (fg, bg, border) = status(0xf38ba8);
+    colors.error = fg;
+    colors.error_background = bg;
+    colors.error_border = border;
+    let (fg, bg, border) = status(0x6c7086);
+    colors.hidden = fg;
+    colors.hidden_background = bg;
+    colors.hidden_border = border;
+    let (fg, bg, border) = status(0x6c7086);
+    colors.ignored = fg;
+    colors.ignored_background = bg;
+    colors.ignored_border = border;
+    let (fg, bg, border) = status(0x89dceb);
+    colors.info = fg;
+    colors.info_background = bg;
+    colors.info_border = border;
+    let (fg, bg, border) = status(0xfab387);
+    colors.modified = fg;
+    colors.modified_background = bg;
+    colors.modified_border = border;
+    let (fg, bg, border) = status(0x89b4fa);
+    colors.renamed = fg;
+    colors.renamed_background = bg;
+    colors.renamed_border = border;
+    let (fg, bg, border) = status(0xa6e3a1);
+    colors.success = fg;
+    colors.success_background = bg;
+    colors.success_border = border;
+    let (fg, bg, border) = status(0xf9e2af);
+    colors.warning = fg;
+    colors.warning_background = bg;
+    colors.warning_border = border;
+    colors
 }
 
 pub(crate) fn status_colors_latte() -> StatusColors {
-    StatusColors {
-        conflict: status(0xd20f39),
-        created: status(0x40a02b),
-        deleted: status(0xd20f39),
-        error: status(0xd20f39),
-        hidden: status(0x9ca0b0),
-        ignored: status(0x9ca0b0),
-        info: status(0x179299),
-        modified: status(0xdf8e1d),
-        renamed: status(0x1e66f5),
-        success: status(0x40a02b),
-        warning: status(0xdf8e1d),
-    }
+    // 同 `status_colors_mocha`。
+
+    let mut colors = StatusColors::light();
+    let (fg, bg, border) = status(0xd20f39);
+    colors.conflict = fg;
+    colors.conflict_background = bg;
+    colors.conflict_border = border;
+    let (fg, bg, border) = status(0x40a02b);
+    colors.created = fg;
+    colors.created_background = bg;
+    colors.created_border = border;
+    let (fg, bg, border) = status(0xd20f39);
+    colors.deleted = fg;
+    colors.deleted_background = bg;
+    colors.deleted_border = border;
+    let (fg, bg, border) = status(0xd20f39);
+    colors.error = fg;
+    colors.error_background = bg;
+    colors.error_border = border;
+    let (fg, bg, border) = status(0x9ca0b0);
+    colors.hidden = fg;
+    colors.hidden_background = bg;
+    colors.hidden_border = border;
+    let (fg, bg, border) = status(0x9ca0b0);
+    colors.ignored = fg;
+    colors.ignored_background = bg;
+    colors.ignored_border = border;
+    let (fg, bg, border) = status(0x179299);
+    colors.info = fg;
+    colors.info_background = bg;
+    colors.info_border = border;
+    let (fg, bg, border) = status(0xdf8e1d);
+    colors.modified = fg;
+    colors.modified_background = bg;
+    colors.modified_border = border;
+    let (fg, bg, border) = status(0x1e66f5);
+    colors.renamed = fg;
+    colors.renamed_background = bg;
+    colors.renamed_border = border;
+    let (fg, bg, border) = status(0x40a02b);
+    colors.success = fg;
+    colors.success_background = bg;
+    colors.success_border = border;
+    let (fg, bg, border) = status(0xdf8e1d);
+    colors.warning = fg;
+    colors.warning_background = bg;
+    colors.warning_border = border;
+    colors
 }
 
 pub(crate) fn theme_colors_mocha() -> ThemeColors {

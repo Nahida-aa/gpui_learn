@@ -12,9 +12,14 @@
 //! / [`syntax`](super::syntax)。
 
 use gpui::Hsla;
+use refineable::Refineable;
 
 /// UI 语义色（对齐 zed `ThemeColors`，字段名与注释均沿用 zed 原文）。
-#[derive(Clone, Debug, PartialEq)]
+///
+/// `#[derive(Refineable)]` 会生成 [`ThemeColorsRefinement`]——每个字段都是
+/// `Option<Hsla>` 的版本；主题 JSON 只填想覆盖的字段，再 `refine` 到默认值上。
+#[derive(Refineable, Clone, Debug, PartialEq)]
+#[refineable(Debug)]
 pub struct ThemeColors {
 
     /// Border color. Used for most borders, is usually a high contrast color.

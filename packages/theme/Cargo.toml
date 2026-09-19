@@ -25,3 +25,11 @@ serde_json = "1"
 palette = { version = "0.7.5", default-features = false, features = ["std"] }
 # try_parse_color 用 anyhow 返回带上下文的错误(与 zed 同款)。
 anyhow.workspace = true
+
+# font_family_cache 的读写锁:字体列表很贵(要问系统),缓存后并发读。
+# 已在依赖树里(gpui 间接引入),加为直接依赖零成本。
+parking_lot = "0.12"
+
+# 主题的「部分覆盖」机制:`ThemeColors` / `StatusColors` 加 derive 后
+# 得到 `XxxRefinement`(每字段 Option 化),主题 JSON 只写要覆盖的字段。
+refineable.workspace = true

@@ -36,9 +36,12 @@
 //! 2026-09 拆成 workspace 独立包。**不提供** `ui_gpui::base::theme` 别名——
 //! 调用方一律用 `aa_gpui_kit_theme::`，让「主题不隶属控件库」这件事在代码里可见。
 
+pub mod buffer_line_height;
 pub mod builtin;
+pub mod color_space;
 pub mod content;
 pub mod default_colors;
+pub mod font_family_cache;
 pub mod icon_theme;
 pub mod loaders;
 pub mod scale;
@@ -50,6 +53,9 @@ pub mod ui_density;
 mod state;
 
 pub use schema::{AppearanceContent, try_parse_color};
+pub use buffer_line_height::BufferLineHeight;
+pub use color_space::{Oklab, Oklch, hsla_to_oklab, hsla_to_oklch, oklch_to_hsla};
+pub use font_family_cache::FontFamilyCache;
 pub use scale::{ColorScale, ColorScaleSet, ColorScaleStep, ColorScales};
 pub use settings_provider::{
     DefaultThemeSettingsProvider, ThemeSettingsProvider, buffer_font, buffer_font_size,
@@ -62,5 +68,6 @@ pub use state::{
     init_theme, load_asset_themes, set_theme, set_theme_by_name,
 };
 pub use styles::{
-    AccentColors, StatusColor, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
+    AccentColors, DiagnosticColors, PlayerColor, PlayerColors, StatusColors, SyntaxTheme,
+    SystemColors, ThemeColors,
 };

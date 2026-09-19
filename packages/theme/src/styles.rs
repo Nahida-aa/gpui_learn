@@ -30,6 +30,6 @@ mod system;
 pub use accents::AccentColors;
 pub use colors::ThemeColors;
 pub use players::{PlayerColor, PlayerColors};
-pub use status::{StatusColor, StatusColors};
+pub use status::{DiagnosticColors, StatusColors};
 pub use syntax::SyntaxTheme;
 pub use system::SystemColors;

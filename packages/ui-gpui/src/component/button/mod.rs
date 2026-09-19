@@ -55,16 +55,18 @@ pub enum TintColor {
 
 impl TintColor {
     /// 取该语义色的 (background, border)（对齐 zed `TintColor::button_like_style`）。
+    ///
+    /// `StatusColors` 是扁平结构（`info` / `info_background` / `info_border`
+    /// 三个独立字段），所以这里按状态名分别取那两格。
     fn status_color(self, theme: &Theme) -> (Hsla, Hsla) {
         let status = theme.status();
-        let color = match self {
+        match self {
             // zed 的 Accent 实际套用 info 状态色。
-            TintColor::Accent => &status.info,
-            TintColor::Error => &status.error,
-            TintColor::Warning => &status.warning,
-            TintColor::Success => &status.success,
-        };
-        (color.background, color.border)
+            TintColor::Accent => (status.info_background, status.info_border),
+            TintColor::Error => (status.error_background, status.error_border),
+            TintColor::Warning => (status.warning_background, status.warning_border),
+            TintColor::Success => (status.success_background, status.success_border),
+        }
     }
 }
 
