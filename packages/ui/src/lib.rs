@@ -19,8 +19,15 @@
 //! - `aa-gpui-kit-assets`（`packages/assets`）：图标等资源内嵌。
 
 pub mod base;
+pub mod component_prelude;
 pub mod components;
 pub mod prelude;
+pub mod utils;
+
+// 布局 helper 与 rem 换算（typography/color 等模块经 crate:: 根路径引用）。
+pub use components::stack::{h_flex, v_flex};
+pub use components::label::{Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle};
+pub use styles::units::{vh, vw, BASE_REM_SIZE_IN_PX, rems_from_px};
 mod styles;
 pub mod traits;
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
@@ -39,8 +46,8 @@ pub use styles::*;
 // 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
 // 「主题不隶属控件库」这件事在代码里应当可见。
 pub use components::button::{
-    ButtonLike, ButtonRadius, ButtonStyle, ButtonCommon, IconButton, SplitButton,
-    SplitButtonKind, SplitButtonStyle, TintColor,
+    ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, SplitButton, SplitButtonKind,
+    SplitButtonStyle, TintColor,
 };
 pub use components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,

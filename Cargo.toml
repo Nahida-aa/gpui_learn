@@ -96,6 +96,7 @@ aa_gpui_kit_assets = { path = "packages/assets" }
 # 语法色与主题注册表。独立成包是因为它不隶属控件库——aa_gpui_kit_ui 只是调用方，
 # 因此 aa_gpui_kit_ui 也通过 `aa_gpui_kit_theme.workspace = true` 引用（不留 module 别名）。
 aa_gpui_kit_theme = { path = "packages/theme" }
+aa_gpui_kit_component = { path = "packages/component" }
 
 # 主题的 JSON 装载与装配（packages/theme-settings）：知道主题扩展 JSON 的
 # schema 并把它装进注册表。**单向依赖** aa_gpui_kit_theme——theme 包反过来
@@ -118,6 +119,12 @@ proc-macro2 = "1"
 quote = "1"
 syn = { version = "2", features = ["full"] }
 
+# 组件示例库（packages/component）的依赖：inventory 做链接期静态注册。
+smallvec = "1"
+inventory = "0.3"
+parking_lot = "0.12"
+strum = { version = "0.27", features = ["derive"] }
+documented = "0.10"
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
 # 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），
 # cargo 就会用 git 源里的版本替掉 crates.io 的版本，并写进 Cargo.lock。
