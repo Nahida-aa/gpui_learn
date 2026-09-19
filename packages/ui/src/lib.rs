@@ -19,7 +19,7 @@
 //! - `aa-gpui-kit-assets`（`packages/assets`）：图标等资源内嵌。
 
 pub mod base;
-pub mod component;
+pub mod components;
 pub mod traits;
 
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
@@ -36,13 +36,13 @@ pub use base::slider::slider_value::SliderValue;
 // 主题系统在独立包 `aa-gpui-kit-theme`（原 `base/theme`）：组件从那里取色，
 // 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
 // 「主题不隶属控件库」这件事在代码里应当可见。
-pub use component::button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
-pub use component::context_menu::{
+pub use components::button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
+pub use components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
 };
-pub use component::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
-pub use component::divider::{Divider, DividerColor, DividerDirection};
-pub use component::tooltip::{Tooltip, TooltipHost, tooltip_host};
+pub use components::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
+pub use components::divider::{Divider, DividerColor, DividerDirection};
+pub use components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use traits::{
     Clickable, CommonAnimationExt, Disableable, StyledExt, ToggleState, Toggleable, Transformable,
 };

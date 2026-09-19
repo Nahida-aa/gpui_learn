@@ -8,7 +8,7 @@
 //! - [`TooltipHost`]：自定义 gpui `Element`，把任意 trigger 子元素包起来，在
 //!   鼠标**悬停触发元素**一小段时间（默认 500ms）后在元素下方弹出 [`Tooltip`]，
 //!   离开元素 / 任意按下 / 鼠标移出窗口时隐藏。仿照
-//!   [`RightClickMenu`](crate::component::context_menu::RightClickMenu) 的实现骨架
+//!   [`RightClickMenu`](crate::components::context_menu::RightClickMenu) 的实现骨架
 //!   （`anchored()` + `deferred(priority=1)` 浮层），触发从右键改为 hover 计时。
 //!
 //! 用法（与 zed 的 `IconButton::tooltip` 同构）：

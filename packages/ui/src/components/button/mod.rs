@@ -1,4 +1,4 @@
-//! component/button：复合按钮（在 [`crate::base::button`] 基础上扩展）。
+//! components/button：复合按钮（在 [`crate::base::button`] 基础上扩展）。
 //!
 //! 基础层 [`crate::base::icon`]/[`crate::base::button`] 只负责"单个图标"与
 //! "文字按钮"；这里把图标 + 按钮交互 + 主题样式拼成更高层的组件：
@@ -16,15 +16,19 @@
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, App, ClickEvent, CursorStyle, ElementId, Entity, Hsla, IntoElement, Pixels, SharedString,
-    Window, div, hsla, prelude::*, px,
+    Anchor, App, ClickEvent, CursorStyle, ElementId, Entity, Hsla, IntoElement, Pixels,
+    SharedString, Window, prelude::*, px,
 };
 
 use crate::base::button::ClickHandler;
-use crate::base::icon::{Icon, IconName};
+use crate::base::icon::IconName;
 use crate::traits::{Clickable, Disableable, Toggleable};
-use aa_gpui_kit_theme::{ActiveTheme, Theme};
-use crate::component::tooltip::{Tooltip, TooltipHost};
+use aa_gpui_kit_theme::ActiveTheme;
+use crate::components::tooltip::Tooltip;
+
+pub mod button_like;
+
+pub use button_like::{ButtonCommon, ButtonLike};
 
 /// 按钮视觉语义（对齐 zed `ButtonStyle`，去掉需主题扩展的部分）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -54,97 +58,7 @@ pub enum TintColor {
     Success,
 }
 
-impl TintColor {
-    /// 取该语义色的 (background, border)（对齐 zed `TintColor::button_like_style`）。
-    ///
-    /// `StatusColors` 是扁平结构（`info` / `info_background` / `info_border`
-    /// 三个独立字段），所以这里按状态名分别取那两格。
-    fn status_color(self, theme: &Theme) -> (Hsla, Hsla) {
-        let status = theme.status();
-        match self {
-            // zed 的 Accent 实际套用 info 状态色。
-            TintColor::Accent => (status.info_background, status.info_border),
-            TintColor::Error => (status.error_background, status.error_border),
-            TintColor::Warning => (status.warning_background, status.warning_border),
-            TintColor::Success => (status.success_background, status.success_border),
-        }
-    }
-}
-
 /// 一组待应用的按钮色（背景 / 边框 / 前景）。
-#[derive(Clone, Copy)]
-struct ButtonColors {
-    /// 常态 / hover / active 各自的背景。
-    bg: [Hsla; 3],
-    /// 边框色（默认透明）。
-    border: Hsla,
-    /// 图标 / 文字前景色。
-    fg: Hsla,
-}
-
-impl ButtonStyle {
-    /// 解析该样式在 `enabled` / `hovered` / `active` 三个状态下的颜色。
-    fn colors(self, theme: &Theme) -> ButtonColors {
-        let colors = theme.colors();
-        let transparent = hsla(0., 0., 0., 0.);
-        let text = colors.text;
-
-        match self {
-            ButtonStyle::Filled => {
-                let mut hover_bg = colors.element_background;
-                hover_bg.fade_out(0.5);
-                ButtonColors {
-                    bg: [colors.element_background, hover_bg, colors.element_active],
-                    border: transparent,
-                    fg: text,
-                }
-            }
-            ButtonStyle::Outlined => ButtonColors {
-                bg: [
-                    colors.element_background,
-                    colors.ghost_element_hover,
-                    colors.element_active,
-                ],
-                border: colors.border_variant,
-                fg: text,
-            },
-            ButtonStyle::OutlinedGhost => ButtonColors {
-                bg: [
-                    transparent,
-                    colors.ghost_element_hover,
-                    colors.ghost_element_active,
-                ],
-                border: colors.border_variant,
-                fg: text,
-            },
-            ButtonStyle::Subtle => ButtonColors {
-                bg: [
-                    transparent,
-                    colors.ghost_element_hover,
-                    colors.ghost_element_active,
-                ],
-                border: transparent,
-                fg: text,
-            },
-            ButtonStyle::Transparent => ButtonColors {
-                bg: [transparent, transparent, transparent],
-                border: transparent,
-                // zed：Transparent 前景随 hover 变为 muted。
-                fg: colors.text_muted,
-            },
-            ButtonStyle::Tinted(tint) => {
-                let (bg, border) = tint.status_color(theme);
-                ButtonColors {
-                    bg: [bg, bg, colors.element_active],
-                    border,
-                    fg: text,
-                }
-            }
-        }
-    }
-}
-
-/// 图标按钮圆角。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ButtonRadius {
     /// 常规圆角 `rounded_md`（默认）。
@@ -292,95 +206,56 @@ impl IconButton {
 }
 
 impl RenderOnce for IconButton {
-    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+    #[allow(refining_impl_trait)]
+    fn render(self, _window: &mut Window, cx: &mut App) -> ButtonLike {
         let theme = cx.theme().clone();
         let colors = theme.colors();
-        let style_colors = self.style.colors(&theme);
-
+        let style_colors = button_like::button_like_colors(self.style, &theme);
         let disabled = self.disabled;
         let selected = self.selected;
-        let handler = self.on_click;
 
-        // 图标前景：disabled → 置灰；显式 icon_color → 取之；
-        // selected → accent；否则样式 fg。
+        // 图标前景：disabled → 置灰；selected → accent；
+        // 显式 icon_color → 取之；否则样式 fg。
         let icon_color = if disabled {
             colors.icon_disabled
-        } else if let Some(icon_color) = self.icon_color {
-            icon_color
         } else if selected {
             colors.icon_accent
         } else {
-            style_colors.fg
+            self.icon_color.unwrap_or(style_colors.fg)
         };
 
-        let icon = Icon::new(self.icon).size(self.icon_size).color(icon_color);
-
-        let button_id = self.id.clone();
-
-        let mut button = div()
-            .id(self.id)
-            .flex()
-            .items_center()
-            .justify_center()
+        let mut like = ButtonLike::new(self.id)
+            .style(self.style)
+            .icon(self.icon)
+            .icon_color(Some(icon_color))
+            .icon_size(self.icon_size)
             .size(self.size)
-            .child(icon);
-
-        button = match self.radius {
-            ButtonRadius::Medium => button.rounded_md(),
-            ButtonRadius::Full => button.rounded_full(),
-            ButtonRadius::Square => button.rounded_none(),
-        };
-
-        if disabled {
-            button = button.bg(colors.ghost_element_disabled);
-        } else {
-            let (bg, hover_bg, active_bg) =
-                (style_colors.bg[0], style_colors.bg[1], style_colors.bg[2]);
-            button = button
-                .bg(bg)
-                .border_1()
-                .border_color(style_colors.border)
-                .hover(move |style| style.bg(hover_bg))
-                .active(move |style| style.bg(active_bg));
-            // 光标样式：trait `Clickable::cursor_style` 可覆盖,默认 pointer。
-            button = match self.cursor_style {
-                Some(cursor) => button.cursor(cursor),
-                None => button.cursor_pointer(),
-            };
-        }
-
-        button = button.on_click(move |event, window, cx| {
-            if disabled {
-                return;
-            }
-            if let Some(handler) = handler.as_ref() {
-                handler(event, window, cx);
-            }
-        });
+            .radius(self.radius)
+            .selected(selected)
+            .disabled(disabled)
+            .cursor_style(self.cursor_style.unwrap_or(CursorStyle::PointingHand));
 
         if let Some(aria_label) = self.aria_label {
-            button = button.aria_label(aria_label);
+            like = like.aria_label(aria_label);
         }
-
-        let button = button.into_any_element();
-
-        // 有悬停提示时把按钮包进 TooltipHost（host 与按钮各用自己的 ElementId）。
-        match self.tooltip {
-            Some(tooltip) => {
-                let mut host =
-                    TooltipHost::new(ElementId::Name(format!("tip-{button_id:?}").into()))
-                        .tooltip(move |window, cx| (tooltip)(window, cx))
-                        .trigger(move |_, _window, _cx| button);
-                if let Some(anchor) = self.tooltip_anchor {
-                    host = host.anchor(anchor);
+        // on_click：ButtonLike 内部已处理 disabled 短路，这里只转发回调。
+        let handler = self.on_click;
+        like = like
+            .on_click(move |event, window, cx| {
+                if let Some(handler) = handler.as_ref() {
+                    handler(event, window, cx);
                 }
-                if let Some(attach) = self.tooltip_attach {
-                    host = host.attach(attach);
-                }
-                host.into_any_element()
-            }
-            None => button,
+            });
+        if let Some(tooltip) = self.tooltip {
+            like = like.tooltip_rc(tooltip);
         }
+        if let Some(anchor) = self.tooltip_anchor {
+            like = like.tooltip_anchor(anchor);
+        }
+        if let Some(attach) = self.tooltip_attach {
+            like = like.tooltip_attach(attach);
+        }
+        like
     }
 }
 

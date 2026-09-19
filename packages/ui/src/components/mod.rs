@@ -1,4 +1,4 @@
-//! component：复合组件层。
+//! components：复合组件层。
 //!
 //! [`crate::base`] 放"单个基础控件"（icon/button/input/slider）；本层放在
 //! 基础控件之上、直接面向业务 UI 的组合件。与基础层的区别：
