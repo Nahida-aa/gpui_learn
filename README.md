@@ -17,16 +17,16 @@ gpui_learn/
 │   ├── _01…_45/            # 官方线：一一对应 zed `crates/gpui/examples/`
 │   │                       #   编号即官方索引；_03 / _05 空缺（对应的是自研
 │   │                       #   Android 移植，已归入 ug_ 线）
-│   ├── ug_01_hello_android/# 自研线（ug_ = ui-gpui）：Android 平台的 hello world
+│   ├── ug_01_hello_android/# 自研线（ug_ = aa-gpui-kit-ui）：Android 平台的 hello world
 │   ├── ug_02_android_input/# 自研线：Android 软键盘输入
-│   ├── ug_03_slider/       # 自研线：ui-gpui Slider 组件
-│   ├── ug_04_input_button/ # 自研线：ui-gpui Input（单行）+ Button
-│   └── ug_05_editor/       # 自研线：ui-gpui Editor（多行编辑器）
+│   ├── ug_03_slider/       # 自研线：aa-gpui-kit-ui Slider 组件
+│   ├── ug_04_input_button/ # 自研线：aa-gpui-kit-ui Input（单行）+ Button
+│   └── ug_05_editor/       # 自研线：aa-gpui-kit-ui Editor（多行编辑器）
 ├── packages/               # 库 crate（被 apps 共享的内部包）
 │   ├── assets/             # 内嵌资源（字体/图标），供各 app 引用
 │   ├── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
 │   ├── gpui-cli/           # 开发工具：android init 等，配置驱动生成 Android 工程
-│   └── ui-gpui/            # 组件库（后续例子的「共享库」演示）
+│   └── ui/                 # 组件库（aa-gpui-kit-ui）（后续例子的「共享库」演示）
 ├── justfile                # 常用命令快捷方式
 └── README.md               # 本文件
 ```
@@ -38,7 +38,7 @@ gpui_learn/
 ## Rust 版本与 workspace
 
 - `edition = "2024"`，`resolver = "3"`（写在根 `Cargo.toml`）。
-- GPUI 通过 **git 源**引入（锁 `rev`）；共享库与平台层见 `packages/ui-gpui/README.md`。
+- GPUI 通过 **git 源**引入（锁 `rev`）；共享库与平台层见 `packages/ui/README.md`。
 - 本仓库的「移动端」有两个路线：
   - **浏览器路线**：`apps/02_hello_web` 把 GPUI 编译成 WASM，在移动端浏览器运行
     （需注意可信源/HTTPS，见其 `TROUBLESHOOTING.md`）。
@@ -53,7 +53,7 @@ cargo run -p _01_hello_world     # 运行某个例子（包名 == 目录名）
 cargo run -- android init        # 裸 cargo run 走 gpui-cli（需带子命令）
 cargo build                      # 只构建默认成员（packages/gpui-cli，秒完）
 cargo build --workspace          # 构建全部（48 个示例 + 库）
-just test                        # 跑 ui-gpui 库测试（engine / editor 单测）
+just test                        # 跑 aa-gpui-kit-ui 库测试（engine / editor 单测）
 just run _01_hello_world         # justfile 提供的等价快捷命令
 ```
 
@@ -69,7 +69,7 @@ just run _01_hello_world         # justfile 提供的等价快捷命令
 
 - `_01`–`_45`：官方线，编号即 zed `crates/gpui/examples/` 的索引（`_03`/`_05`
   空缺，那两个是自研 Android 移植，已归入 `ug_` 线）；
-- `ug_01`–：自研线（`ug_` = ui-gpui），编号独立增长；
+- `ug_01`–：自研线（`ug_` = aa-gpui-kit-ui），编号独立增长；
 - 号位一经分配即保留，未实现的留空，不挪作他用。
 
 ## 学习路线（例子索引）
@@ -84,7 +84,7 @@ just run _01_hello_world         # justfile 提供的等价快捷命令
 | `apps/05_grid_layout`   | CSS Grid 圣杯布局 + `container_query` 响应式（桌面，移植自官方例子）             |
 
 > 教学顺序的设计：第一个例子**故意不用任何共享库**，让学习者先看 GPUI 原貌。
-> 等例子变多、样板开始重复时，再引入 `packages/ui-gpui` 演示
+> 等例子变多、样板开始重复时，再引入 `packages/ui` 演示
 > 「monorepo 如何用内部共享库收敛重复」——此时共享包的概念才自然出场。
 >
 > 后续会逐步加入：绘制图形、文本输入、布局（flex/taffy）、状态管理、

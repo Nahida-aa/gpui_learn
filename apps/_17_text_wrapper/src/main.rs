@@ -20,7 +20,7 @@
 //! ## 为什么这个例子对编辑器重要
 //!
 //! - **默认换行**就是 editor 软换行想要的效果——editor 的 display_map
-//!   （见 `packages/ui-gpui/src/base/input/editor/display_map.rs`）要复刻的
+//!   （见 `packages/editor/src/editor/display_map.rs`）要复刻的
 //!   正是这套换行点规则，只是编辑器还需要把换行点记下来做坐标映射。
 //! - **`truncate` / `line_clamp`** 是文件名列表、诊断消息、补全文档的常用手段。
 //! - 演示文本里的 CJK 段落可以观察：中文/日文没有空格，换行点按字符走，

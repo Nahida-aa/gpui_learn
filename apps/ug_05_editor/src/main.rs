@@ -1,6 +1,6 @@
-//! # ug_05_editor —— ui-gpui 的多行编辑器演示
+//! # ug_05_editor —— aa-gpui-kit-ui 的多行编辑器演示
 //!
-//! 基于 `ui-gpui::base::input::editor::Editor`(MultiLine 模式)。
+//! 基于 `aa_gpui_kit_ui::base::input::editor::Editor`(MultiLine 模式)。
 //!
 //! 验证清单(手动过一遍):
 //! - 多行输入、Enter 换行(继承行首缩进)、Backspace 跨行合并;
@@ -23,7 +23,7 @@ use theme_settings::{GlobalAssets, init};
 use tracing_subscriber;
 use aa_gpui_kit_theme::LoadThemes;
 use editor::{EDITOR_KEY_CONTEXT, Editor, EditorMode, bind_editor_keys};
-use ui_gpui::base::input::input::{InputState, bind_input_keys};
+use aa_gpui_kit_ui::base::input::input::{InputState, bind_input_keys};
 
 actions!(editor_demo, [Quit]);
 
@@ -57,7 +57,7 @@ impl Render for EditorDemo {
             .bg(rgb(0x11111b))
             .text_color(rgb(0xcdd6f4))
             .p_4()
-            .child(div().text_lg().child("ug_05_editor —— ui-gpui 多行编辑器"))
+            .child(div().text_lg().child("ug_05_editor —— aa-gpui-kit-ui 多行编辑器"))
             .child(
                 div()
                     .text_sm()

@@ -1,8 +1,8 @@
-# ui-gpui 文本输入/编辑器开发路线
+# aa-gpui-kit-ui 编辑器（原 ui-gpui）文本输入/编辑器开发路线
 
-> 目标：建设自己的文本编辑引擎及衍生组件。诞生于 `packages/ui-gpui/src/base/input`，
+> 目标：建设自己的文本编辑引擎及衍生组件。诞生于 `packages/ui/src/base/input`，
 > 2026-09 内核（engine + editor）独立为 `packages/editor` 包（单行 Input /
-> 多行 Textarea 的薄 facade 留守 ui-gpui，依赖方向 `ui-gpui → editor`）。
+> 多行 Textarea 的薄 facade 留守 aa-gpui-kit-ui，依赖方向 `ui → editor`）。
 > 最终能力对标 `/home/aa/repos/ide_ls/gpui-component/crates/base/src/input` 的分层。
 >
 > 本文档回答的问题：zed 的 gpui examples 还没走完，是继续走完还是现在开工？
@@ -15,7 +15,7 @@
 |---|---|
 | `gpui-component/crates/base/src/input` | **主参考**：成熟的三层实现（约 14k 行），目录结构即路线图 |
 | `learn_ls/zed/crates/gpui/examples` | **知识补给**：与 editor 相关的少数示例作课前阅读 |
-| 本仓库已有资产 | **迁移来源**：`04_input`、`06_text_area`、ui-gpui 现有 Input 已实现过三遍引擎骨架 |
+| 本仓库已有资产 | **迁移来源**：`04_input`、`06_text_area`、控件库现有 Input 已实现过三遍引擎骨架 |
 
 gpui-component 的 `input` 模块分层（自述见其 `README.md`）：
 
@@ -39,7 +39,7 @@ input/
 |---|---|---|
 | `apps/04_input` | 778 行单文件 | 手写 `EntityInputHandler` 教学版（对应 zed `examples/input.rs`） |
 | `apps/06_text_area` | editor.rs 1051 行 + text_area.rs 257 行 | 自建轻量 `Editor` 引擎 + `TextArea` 外壳（`Source::Editor`/`Source::Value` 双来源） |
-| `packages/ui-gpui/src/base/input` | input_state.rs 584 + element.rs 211 | **工程化单行 Input**：`Entity<InputState>` + `Render`、`InputEvent::{Change, Submit}`、IME `marked_range`、`key_context` 限定绑定 |
+| `packages/ui/src/base/input` | input_state.rs 584 + element.rs 211 | **工程化单行 Input**：`Entity<InputState>` + `Render`、`InputEvent::{Change, Submit}`、IME `marked_range`、`key_context` 限定绑定 |
 | `apps/ug_04_input_button` | — | 单行 Input 完整手动验证清单（含中文 IME 组字），已通过 |
 
 现有 Input 的存储是 `SharedString` + 单行 `ShapedLine` 布局缓存 +
@@ -110,7 +110,7 @@ input/
 
 ### 阶段 4｜浮层与装饰（Editor 前置）
 - 课前阅读：zed `popover`、`anchor`、`painting`、`focus_visible`、`tab_stop`
-- 产出：ui-gpui 通用浮层能力（deferred + anchored）+ 下划线/波浪线装饰绘制
+- 产出：aa-gpui-kit-ui 通用浮层能力（deferred + anchored）+ 下划线/波浪线装饰绘制
 - 验收：Input 内右键菜单或补全提示框可弹出、定位正确
 
 ### 阶段 5｜Editor：display_map、highlighting、search
@@ -136,7 +136,7 @@ input/
 - [x] 词级移动/词删除/双击选词(119c528)
 - [x] 多光标:`selections` 集合 + 一次事务多点编辑 + 加光标/Esc 收拢
 - [x] `SelectUp`/`SelectDown` 走 display 空间(统一到 `vertical_target`)
-- [x] 内核独立成包:engine + editor → `packages/editor`(facade 留守 ui-gpui)
+- [x] 内核独立成包:engine + editor → `packages/editor`(facade 留守 aa-gpui-kit-ui)
 
 ### 目标定位(重要)
 

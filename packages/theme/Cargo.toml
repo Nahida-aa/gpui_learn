@@ -11,7 +11,7 @@ workspace = true
 [dependencies]
 # 主题本质是 gpui 的全局状态(`Global`)与颜色类型(`Hsla`/`GlobalColors`),
 # 因此这个包不是纯数据包,必须依赖 gpui。物理上独立成 crate 的价值在
-# 「主题系统与控件库解耦」:ui-gpui 只是它的一个调用方。
+# 「主题系统与控件库解耦」:控件库只是它的一个调用方。
 gpui.workspace = true
 tracing.workspace = true
 

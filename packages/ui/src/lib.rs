@@ -1,4 +1,4 @@
-//! # ui-gpui —— 自研 GPUI 控件库（教学）
+//! # aa-gpui-kit-ui —— 自研 GPUI 控件库（教学）
 //!
 //! 当前提供通用 [`Slider`]：单值（进度条/音量）与区间（Range 双 thumb）、
 //! 线性/对数刻度、min/max/step、reverse 反向填充、无障碍 role/aria。
@@ -23,7 +23,7 @@ pub mod component;
 pub mod traits;
 
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
-/// ui-gpui 复用它，不自带资源目录。
+/// aa-gpui-kit-ui 复用它，不自带资源目录。
 pub use aa_gpui_kit_assets::Assets;
 pub use base::button::{Button, ButtonVariant};
 pub use base::geometry::{Scale, quantize};

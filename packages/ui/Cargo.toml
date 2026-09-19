@@ -1,5 +1,5 @@
 [package]
-name = "ui-gpui"
+name = "aa-gpui-kit-ui"
 version = "0.1.0"
 edition.workspace = true
 publish.workspace = true
@@ -12,11 +12,11 @@ gpui.workspace = true
 gpui_macros.workspace = true
 tracing.workspace = true
 # 复用工作区共享的 assets crate（packages/assets）：图标等资源内嵌在仓库根
-# assets/ 下，由该 crate 的 RustEmbed 统一加载。ui-gpui 不再自带资源。
+# assets/ 下，由该 crate 的 RustEmbed 统一加载。本包不自带资源。
 # 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。
 aa-gpui-kit-assets.workspace = true
 
-# 主题系统（packages/theme）：语义色/语法色/注册表。ui-gpui 只是它的调用方，
+# 主题系统（packages/theme）：语义色/语法色/注册表。本包只是它的调用方，
 # 组件通过 `aa_gpui_kit_theme::ActiveTheme` 取色，因此这里不加 module 别名。
 # 编辑器内核（packages/editor）：InputState/Textarea 是它的薄 facade。
 editor.workspace = true

@@ -2,7 +2,7 @@
 //!
 //! 编辑器内核(Rope 引擎 + 多行编辑器)已独立成 `packages/editor` 包
 //! (2026-09 拆出,原 `base::input::{engine,editor}`),依赖方向
-//! `ui-gpui → editor`。这里只剩两个门面控件:
+//! `ui → editor`。这里只剩两个门面控件:
 //!
 //! - [`input`]——单行输入 facade(`InputState` = Editor 的 SingleLine 模式,
 //!   兼容旧 API)

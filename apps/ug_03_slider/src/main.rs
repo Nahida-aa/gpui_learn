@@ -5,7 +5,7 @@ use gpui::{
     SharedString, Window, WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use ui_gpui::{Scale, Slider, SliderEvent, SliderState};
+use aa_gpui_kit_ui::{Scale, Slider, SliderEvent, SliderState};
 
 /// 一行：标签 + 滑块 + 当前值文本。按滑块轴方向给合适尺寸：
 /// 水平滑块 → 高条横向铺满；垂直滑块 → 细长的竖条。
@@ -205,7 +205,7 @@ impl Render for SliderDemo {
             .size_full()
             .p_4()
             .gap_3()
-            .child(div().text_size(px(20.0)).child("ui-gpui Slider 演示"))
+            .child(div().text_size(px(20.0)).child("aa-gpui-kit-ui Slider 演示"))
             .child(slider_row("通用".into(), &self.basic, cx))
             .child(slider_row("音量(对数)".into(), &self.volume, cx))
             .child(slider_row("step=10".into(), &self.stepped, cx))

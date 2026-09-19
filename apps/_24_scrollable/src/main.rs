@@ -21,7 +21,7 @@
 //! `ug_05_editor` 第一版的垂直滚动是手搓的（`on_scroll_wheel` 里改
 //! `scroll_top` 字段）；移植本例后已换成官方做法：
 //! `overflow_scroll() + track_scroll(&ScrollHandle)`，见
-//! `packages/ui-gpui/src/base/input/editor/mod.rs` 的 `Render` 实现。
+//! `packages/editor/src/editor/mod.rs` 的 `Render` 实现。
 //!
 //! ## 与官方原版的差异
 //!

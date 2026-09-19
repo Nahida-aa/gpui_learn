@@ -1,4 +1,4 @@
-//! # ug_04_input_button —— ui-gpui 的 Input 与 Button 演示
+//! # ug_04_input_button —— aa-gpui-kit-ui 的 Input 与 Button 演示
 //!
 //! 验证清单（手动过一遍）：
 //! - 输入、退格、删除、左右移动、Shift 选区、Ctrl/Cmd+A/C/V/X（secondary）；
@@ -14,7 +14,7 @@ use gpui::{
     WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use ui_gpui::{Button, InputEvent, InputState, bind_input_keys};
+use aa_gpui_kit_ui::{Button, InputEvent, InputState, bind_input_keys};
 
 struct InputDemo {
     input: Entity<InputState>,

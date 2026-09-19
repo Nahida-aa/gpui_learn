@@ -31,7 +31,7 @@ members = [
 #     `cargo run -- android init`）。
 #
 # 注意：`default-members` 同时决定裸 `cargo test` 的范围——收窄后
-# `cargo test` 只测 gpui-cli。ui-gpui 的测试请用 `just test`，
+# `cargo test` 只测 gpui-cli。aa-gpui-kit-ui 的测试请用 `just test`，
 # 全量用 `cargo test --workspace`；全量构建用 `cargo build --workspace`。
 default-members = [
     "packages/gpui-cli",
@@ -93,8 +93,8 @@ rust-embed = { version = "8.11", features = ["include-exclude"] }
 aa-gpui-kit-assets = { path = "packages/assets" }
 
 # 主题系统（packages/theme）：对齐 zed crates/theme 的精简版，含语义色、
-# 语法色与主题注册表。独立成包是因为它不隶属控件库——ui-gpui 只是调用方，
-# 因此 ui-gpui 也通过 `aa-gpui-kit-theme.workspace = true` 引用（不留 module 别名）。
+# 语法色与主题注册表。独立成包是因为它不隶属控件库——aa-gpui-kit-ui 只是调用方，
+# 因此 aa-gpui-kit-ui 也通过 `aa-gpui-kit-theme.workspace = true` 引用（不留 module 别名）。
 aa-gpui-kit-theme = { path = "packages/theme" }
 
 # 主题的 JSON 装载与装配（packages/theme-settings）：知道主题扩展 JSON 的
@@ -102,9 +102,13 @@ aa-gpui-kit-theme = { path = "packages/theme" }
 # 完全不知道 JSON 存在（对齐 zed 的 crates/theme ← crates/theme_settings）。
 theme-settings = { path = "packages/theme-settings" }
 
-# 编辑器内核（packages/editor）：自研 Rope 引擎 + 多行编辑器，从 ui-gpui
-# 拆出（2026-09）。ui-gpui 的 InputState/Textarea 是它的薄 facade。
+# 编辑器内核（packages/editor）：自研 Rope 引擎 + 多行编辑器，从 aa-gpui-kit-ui
+# 拆出（2026-09）。aa-gpui-kit-ui 的 InputState/Textarea 是它的薄 facade。
 editor = { path = "packages/editor" }
+
+# 控件库（packages/ui，原 ui-gpui）：slider/icon/button/divider/tooltip/
+# context_menu 与 Input/Textarea facade。
+aa-gpui-kit-ui = { path = "packages/ui" }
 
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
 # 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），
