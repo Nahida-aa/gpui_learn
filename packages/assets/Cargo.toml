@@ -2,6 +2,8 @@
 name = "aa_gpui_kit_assets"
 version = "0.1.0"
 edition.workspace = true
+# 整包从 zed 主 crate 原样拆出（见 src/lib.rs 头部注释），继承默认 GPL-3.0-or-later。
+license.workspace = true
 publish.workspace = true
 
 [lints]

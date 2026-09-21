@@ -4,6 +4,7 @@
 # 本例完全照搬 zed 官方 crates/gpui_web/examples/hello_web，用 trunk 构建 Web。
 name = "_02_hello_web"
 version = "0.1.0"
+license = "GPL-3.0-or-later"   # 照搬 zed 官方 gpui_web 示例，跟随上游许可
 edition = "2024"
 publish = false
 

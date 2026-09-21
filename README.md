@@ -97,6 +97,22 @@ just run _01_hello_world         # justfile 提供的等价快捷命令
 把讲解写进源码文档注释和包内 `README.md` 即可。workspace 的 `members`
 用通配符自动收纳，无需改根 `Cargo.toml`。
 
+## 许可证（两套，默认 GPL）
+
+与上游 zed 同款的分法：
+
+| 范围 | 许可证 | 说明 |
+|---|---|---|
+| **默认**（绝大多数包） | **GPL-3.0-or-later** | 这些包含照搬 / 改写自 zed 的代码（`ui`、`theme`、`theme-settings`、`component`、`assets`、`ui_input`、`ui_macros`、`base`、`editor`、`gpui_fuzzy`、`clock`…），上游是 GPL-3.0-or-later，因此必须同许可 |
+| `packages/gpui-cli` | Apache-2.0 | 构建/开发工具，零 zed 代码 |
+| `packages/gpui-android` | Apache-2.0 | Android 平台适配，只依赖 zed 的 Apache-2.0 侧（`gpui` / `gpui_wgpu`） |
+
+默认值写在根 `Cargo.toml` 的 `[workspace.package].license`，Apache 的两个包在各自
+`Cargo.toml` 里显式覆盖。许可证全文：根目录 `LICENSE-GPL` / `LICENSE-APACHE`。
+
+> **下游注意**：任何链接了默认（GPL）包的二进制，分发时整体必须是
+> GPL-3.0-or-later —— 这是 copyleft 的传染性，与「只是当依赖用」无关。
+
 ## 扩展阅读（`docs/`）
 
 对 `gpui_learn` 之外的 GPUI 生态做代码级调研的笔记，均基于实际仓库阅读：

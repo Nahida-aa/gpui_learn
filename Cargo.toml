@@ -42,7 +42,15 @@ default-members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-license = "Apache-2.0"
+# **默认 GPL-3.0-or-later**（2026-09-22 变更，与 zed 同款的两套许可证）：
+# 本仓库大量文件是照搬 / 改写自 zed（crates/ui、component、theme_settings、
+# settings_json、fuzzy …），上游是 GPL-3.0-or-later，承载它们就必须同许可。
+# 只有**确认零 zed 代码**的包才在各自的 Cargo.toml 里覆盖成 Apache-2.0：
+#   - packages/gpui-cli（构建/开发工具）
+#   - packages/gpui-android（Android 平台适配，只依赖 zed 的 Apache-2.0 侧 gpui）
+# 新增包时：含 zed 来源代码 → 继承默认（别写 license 字段）；纯自研 → 显式写
+# `license = "Apache-2.0"`。许可证文本见根目录 LICENSE-GPL / LICENSE-APACHE。
+license = "GPL-3.0-or-later"
 publish = false   # 教学仓库，不发布到 crates.io
 
 # [workspace.dependencies] 是 monorepo 共享依赖的核心机制。

@@ -2,6 +2,8 @@
 name = "aa_gpui_kit_ui"
 version = "0.1.0"
 edition.workspace = true
+# 含照搬自 zed crates/ui 的文件，继承 workspace 默认的 GPL-3.0-or-later。
+license.workspace = true
 publish.workspace = true
 
 [lints]
