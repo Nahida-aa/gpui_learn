@@ -1,0 +1,16 @@
+[package]
+name = "aa_gpui_base"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "自研基础控件层（zed ui 没有对应物；aa_gpui_kit_ui 在它之上对齐 zed）"
+
+[dependencies]
+gpui.workspace = true
+# IconName 枚举由 assets 包的 build.rs 扫描 assets/icons/*.svg 生成，
+# RustEmbed 的资源目录也在那里，所以 path() 由它定义。
+aa_gpui_kit_assets.workspace = true
+
+[lints]
+workspace = true

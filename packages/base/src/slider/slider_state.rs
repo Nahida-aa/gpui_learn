@@ -7,9 +7,9 @@
 //! 支持单值（`SliderValue::Single`，进度条/音量）与区间（`SliderValue::Range`，
 //! 双 thumb，如时间轴选段）。
 
-use crate::base::geometry::{Scale, position_to_value, quantize, value_to_percentage};
-use crate::base::slider::element::SliderEvent;
-use crate::base::slider::slider_value::SliderValue;
+use crate::geometry::{Scale, position_to_value, quantize, value_to_percentage};
+use crate::slider::element::SliderEvent;
+use crate::slider::slider_value::SliderValue;
 use gpui::{
     Axis, Bounds, Context, EventEmitter, FocusHandle, Focusable, Pixels, Point, Render, Window,
     div, prelude::*,

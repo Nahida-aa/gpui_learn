@@ -1,24 +1,27 @@
-//! # aa-gpui-kit-ui —— 自研 GPUI 控件库（教学）
+//! # aa_gpui_kit_ui —— GPUI 控件库，**API 面逐字段对齐 zed `crates/ui`**
 //!
-//! 当前提供通用 [`Slider`]：单值（进度条/音量）与区间（Range 双 thumb）、
-//! 线性/对数刻度、min/max/step、reverse 反向填充、无障碍 role/aria。
-//! 借鉴自 `gpui-component` 的 `slider.rs`（Entity 状态 + 一次性元素双层架构），
-//! 并补齐了原库缺失的交互：键盘分级微调、Esc 拖动取消、hover 视觉态。
+//! 这里放的是「zed 也有的那些控件」：Button / Icon / Label / KeyBinding /
+//! Avatar / Checkbox / Switch / Tooltip / PopoverMenu …。目标是外部代码能
+//! **原样 import** zed 的写法（见 `packages/ui/tests/prelude.rs`）。
 //!
-//! 进度条只是它的一个用法：外部定时 `set_value` + `disabled(true)` 即只读进度条。
+//! ## 与 `aa_gpui_base` 的分工（2026-09 拆出）
 //!
-//! 值的变更通过 [`SliderEvent`]（`Change` / `Release`）用 `cx.subscribe` 订阅；
-//! 拖动状态可用 [`SliderState::is_dragging`] 查询（如播放器拖动 seek 时静音）。
+//! | 包 | 定位 |
+//! |---|---|
+//! | `aa_gpui_kit_ui`（本包） | 对齐 zed，API 面以 zed 为准 |
+//! | `aa_gpui_base` | **zed 没有对应物**的自研基础件（geometry / icon / slider） |
 //!
-//! 目录结构：
-//! - [`base`]：通用基础控件层（`geometry` 数学换算 + `slider` 滑块）。
-//!   未来其他组件（button/input 等）可并排放在 `base/` 下。
+//! 依赖方向是**单向** `ui → base`：base 只管几何与图元，不认识主题、不认识
+//! 复合控件；ui 在它之上搭 zed 那套。这样两边互不干扰 —— base 可以自由演化，
+//! ui 也能专心对齐。拆分的完整理由见 `docs/zed/ui-input-analysis.md` 同级的分析。
 //!
-//! 相关 workspace 包（不在本 crate 内）：
-//! - `aa-gpui-kit-theme`（`packages/theme`）：主题系统，组件用它取色。
-//! - `aa-gpui-kit-assets`（`packages/assets`）：图标等资源内嵌。
+//! ## 相关 workspace 包（不在本 crate 内）
+//!
+//! - `aa_gpui_base`（`packages/base`）：图标 / 滑块 / 几何数学
+//! - `aa_gpui_kit_theme`（`packages/theme`）：主题系统，组件用它取色
+//! - `aa_gpui_kit_assets`（`packages/assets`）：图标等资源内嵌
+//! - `aa_gpui_kit_ui_input`（`packages/ui_input`）：需要编辑器的表单件
 
-pub mod base;
 pub mod component_prelude;
 pub mod components;
 pub mod prelude;
@@ -31,14 +34,17 @@ pub use styles::units::{vh, vw, BASE_REM_SIZE_IN_PX, rems_from_px};
 mod styles;
 pub mod traits;
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
-/// aa-gpui-kit-ui 复用它，不自带资源目录。
+/// aa_gpui_kit_ui 复用它，不自带资源目录。
 pub use aa_gpui_kit_assets::Assets;
-pub use base::button::{Button, ButtonVariant};
-pub use base::geometry::{Scale, quantize};
-pub use base::icon::{Icon, IconName, IconSize};
-pub use base::slider::element::{DragSlider, Slider, SliderEvent};
-pub use base::slider::slider_state::{SliderState, ThumbMode};
-pub use base::slider::slider_value::SliderValue;
+
+// ---- 基础控件层：来自 aa_gpui_base（原 packages/ui/src/base，2026-09 拆出）----
+pub use aa_gpui_base::{
+    DragSlider, Icon, IconName, IconSize, Scale, Slider, SliderEvent, SliderState, SliderValue,
+    ThumbMode, position_to_value, quantize, value_to_percentage,
+};
+// 自研的普通按钮（`Button` + `ButtonVariant`）。注意它与对齐 zed 的
+// `ButtonLike` / `IconButton` 是两套东西：后者是 zed 的面，这个是我们的。
+pub use components::button::plain::{Button, ButtonVariant};
 pub use styles::*;
 // 主题系统在独立包 `aa-gpui-kit-theme`（原 `base/theme`）：组件从那里取色，
 // 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
@@ -57,6 +63,7 @@ pub use components::avatar::{
 pub use components::divider::{Divider, DividerColor, DividerDirection};
 pub use components::facepile::{EXAMPLE_FACES, Facepile};
 pub use components::icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
+pub use components::image::{Vector, VectorName};
 pub use components::indicator::Indicator;
 pub use components::keybinding::{
     Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,

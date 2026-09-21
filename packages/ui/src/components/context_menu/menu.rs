@@ -17,7 +17,7 @@ use gpui::{
     KeyDownEvent, MouseDownEvent, SharedString, Window, div, prelude::*, px,
 };
 
-use crate::base::icon::{Icon, IconName};
+use aa_gpui_base::{Icon, IconName};
 use aa_gpui_kit_theme::ActiveTheme;
 
 use super::entry::ContextMenuItem;

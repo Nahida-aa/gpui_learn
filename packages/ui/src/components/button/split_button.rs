@@ -122,7 +122,7 @@ impl RenderOnce for SplitButton {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::base::icon::IconName;
+    use aa_gpui_base::IconName;
 
     /// 冒烟：left/right 两种组合的 builder 链完整走一遍。
     #[test]

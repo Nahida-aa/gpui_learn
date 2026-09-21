@@ -1,17 +1,17 @@
-//! components/button：复合按钮（在 [`crate::base::button`] 基础上扩展）。
+//! components/button：本包所有按钮。
 //!
-//! 基础层 [`crate::base::icon`]/[`crate::base::button`] 只负责"单个图标"与
-//! "文字按钮"；这里把图标 + 按钮交互 + 主题样式拼成更高层的组件：
+//! 三个层次，别混用：
 //!
-//! - [`ButtonStyle`]：对齐 zed `ButtonStyle` 的视觉语义（Filled/Outlined/
-//!   OutlinedGhost/Subtle/Transparent/Tinted），颜色从当前主题读取
-//!   （`cx.theme().colors()` / `status()`），而非基础层那样硬编码。
-//! - [`IconButton`]：图标按钮。zed 里它是最高频的组件（标题栏、状态栏、
-//!   tab 全部用它），所以单独成件放在 component 层。
+//! - [`plain`]：自研的普通按钮（[`plain::Button`]），形状与 zed 无关；
+//! - [`button_like`]：**对齐 zed** 的 `ButtonLike` / `ButtonCommon` / `ButtonStyle`，
+//!   以及用它的 [`IconButton`]；
+//! - [`split_button`]：对齐 zed 的 `SplitButton`。
 //!
-//! 与基础层的差异：基础按钮一次性 `IntoElement` 直接产出 `Div`（无 App，
-//! 只能硬编码色）；本组件实现 gpui 的 `RenderOnce`，render 阶段能拿到
-//! `&mut App` 读主题，与 zed 的 `IconButton` 一致。
+//! 图标来自 `aa_gpui_base`（独立的基础控件包，见本 crate 顶部文档）。
+//!
+//! 与 [`plain`] 的差异：`plain::Button` 是自研形状（颜色硬编码或调用方传入）；
+//! 本模块的组件实现 gpui 的 `RenderOnce`，render 阶段能拿到 `&mut App` 读主题，
+//! 与 zed 一致。
 
 use std::rc::Rc;
 
@@ -20,12 +20,13 @@ use gpui::{
     SharedString, Window, prelude::*, px,
 };
 
-use crate::base::button::ClickHandler;
-use crate::base::icon::IconName;
+use crate::components::button::plain::ClickHandler;
+use aa_gpui_base::IconName;
 use crate::components::tooltip::Tooltip;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use aa_gpui_kit_theme::ActiveTheme;
 pub mod button_like;
+pub mod plain;
 pub mod split_button;
 
 pub use button_like::{ButtonCommon, ButtonLike};

@@ -29,8 +29,8 @@ use gpui::{
 
 use aa_gpui_kit_theme::ActiveTheme;
 
-use crate::base::button::ClickHandler;
-use crate::base::icon::{Icon, IconName};
+use crate::components::button::plain::ClickHandler;
+use aa_gpui_base::{Icon, IconName};
 use crate::components::button::{ButtonRadius, ButtonStyle};
 use crate::components::tooltip::{Tooltip, TooltipHost};
 use crate::traits::{Clickable, Disableable, Toggleable};

@@ -1,6 +1,6 @@
-//! base/icon：通用图标控件。
+//! icon：通用图标控件（aa_gpui_base）。
 //!
-//! `IconName` 枚举由 `aa-gpui-kit-assets` crate 的 build.rs 自动生成
+//! `IconName` 枚举由 `aa_gpui_kit_assets` crate 的 build.rs 自动生成
 //! （扫描 assets/icons/*.svg）。加图标 = 扔 SVG 文件即可，零手动维护。
 //!
 //! `Icon` 是一次渲染控件，持有 `IconName` + 尺寸 + 颜色 + 旋转，
@@ -8,12 +8,16 @@
 
 use gpui::{
     Hsla, IntoElement, Pixels, Radians, Rems, RenderOnce, Transformation, Window, prelude::*, px,
-    svg,
+    rems, svg,
 };
 
 pub use aa_gpui_kit_assets::IconName;
 
-use crate::styles::units::rems_from_px;
+/// 1rem = 16px 的换算（原在 `ui::styles::units`，除本文件外无其他调用方，
+/// 拆包时一并搬来，避免 base 反向依赖 ui）。
+fn rems_from_px(px: f32) -> Rems {
+    rems(px / 16.0)
+}
 
 /// 图标尺寸的语义档位（对齐 zed `crates/ui/src/components/icon.rs:54`）。
 ///
@@ -90,9 +94,9 @@ impl Icon {
         self
     }
 
-    /// 当前边长。供同 crate 的复合件布局用（如 `DecoratedIcon` 要让容器
-    /// 与图标等大）。不对外暴露——外部直接调 [`Self::size`] 设置即可。
-    pub(crate) fn size_px(&self) -> Pixels {
+    /// 当前边长。供上层的复合件布局用（如 `ui::DecoratedIcon` 要让容器与
+    /// 图标等大，而它的 `size` 字段在本包内是私有的）。
+    pub fn size_px(&self) -> Pixels {
         self.size
     }
 }

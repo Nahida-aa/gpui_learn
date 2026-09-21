@@ -92,6 +92,11 @@ rust-embed = { version = "8.11", features = ["include-exclude"] }
 # 子包用 `assets.workspace = true` 引用，位置统一在此声明，避免各包散写相对路径。
 aa_gpui_kit_assets = { path = "packages/assets" }
 
+# 基础控件层（packages/base）：geometry / icon / slider。
+# **zed 的 ui 里没有对应物** —— 这是我们自研的一层，`aa_gpui_kit_ui` 在它
+# 之上对齐 zed，所以依赖方向是 ui → base（单向，base 不反向依赖 ui / theme）。
+aa_gpui_base = { path = "packages/base" }
+
 # 主题系统（packages/theme）：对齐 zed crates/theme 的精简版，含语义色、
 # 语法色与主题注册表。独立成包是因为它不隶属控件库——aa_gpui_kit_ui 只是调用方，
 # 因此 aa_gpui_kit_ui 也通过 `aa_gpui_kit_theme.workspace = true` 引用（不留 module 别名）。

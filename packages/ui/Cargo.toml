@@ -25,6 +25,11 @@ aa_gpui_kit_assets.workspace = true
 # 表单壳 InputField 住在 aa_gpui_kit_ui_input（依赖本包、编译期不依赖 editor）。
 aa_gpui_kit_theme.workspace = true
 
+# 基础控件层（packages/base）：geometry / icon / slider。**zed 的 ui 里没有
+# 对应物**，是我们自研的一层。方向是单向 `ui → base`（base 不反向依赖 ui/theme），
+# 这样 base 可自由演化、ui 专心对齐 zed。
+aa_gpui_base.workspace = true
+
 # 宏包：derive_dynamic_spacing!（styles/spacing 的密度间距枚举）。
 # 组件示例库基建（packages/component）：Component trait / 注册 / 示例。
 aa_gpui_kit_component.workspace = true

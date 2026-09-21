@@ -42,6 +42,7 @@ pub use crate::components::context_menu::{
 pub use crate::components::divider::{Divider, DividerColor, DividerDirection};
 pub use crate::components::facepile::Facepile;
 pub use crate::components::icon::{DecoratedIcon, IconDecoration, IconDecorationKind};
+pub use crate::components::image::{Vector, VectorName};
 pub use crate::components::indicator::Indicator;
 pub use crate::components::keybinding::{Key, KeyBinding, KeyBindingStyle, KeyIcon};
 pub use crate::components::keybinding_hint::KeybindingHint;
@@ -50,7 +51,9 @@ pub use crate::components::stack::{h_flex, v_flex};
 pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use crate::components::toggle::{Checkbox, Switch, SwitchColor, SwitchLabelPosition};
 pub use crate::components::label::{Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle};
-pub use crate::{Button, ButtonVariant, Icon, IconName, Slider, SliderEvent, SliderState};
+pub use crate::{
+    Button, ButtonVariant, Icon, IconName, IconSize, Slider, SliderEvent, SliderState,
+};
 
 pub use crate::styles::{Color, DynamicSpacing, StyledTypography, TextSize, UiDensity};
 

@@ -14,7 +14,7 @@ use gpui::{
 };
 use itertools::Itertools;
 
-use crate::base::icon::IconSize;
+use aa_gpui_base::IconSize;
 use crate::styles::{Color, DynamicSpacing, PlatformStyle, TextSize, UiDensity};
 use crate::utils::capitalize;
 use crate::{Icon, IconName, h_flex, prelude::*, v_flex};

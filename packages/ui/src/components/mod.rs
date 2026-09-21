@@ -19,6 +19,7 @@ pub mod context_menu;
 pub mod divider;
 pub mod facepile;
 pub mod icon;
+pub mod image;
 pub mod indicator;
 pub mod keybinding;
 pub mod keybinding_hint;
@@ -37,6 +38,7 @@ pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, RightClic
 pub use divider::{Divider, DividerColor, DividerDirection};
 pub use facepile::{EXAMPLE_FACES, Facepile};
 pub use icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
+pub use image::{Vector, VectorName};
 pub use indicator::Indicator;
 pub use keybinding::{
     Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,
