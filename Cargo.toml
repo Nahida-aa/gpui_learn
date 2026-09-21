@@ -88,6 +88,11 @@ tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 
 rust-embed = { version = "8.11", features = ["include-exclude"] }
 
+# 模糊匹配（packages/gpui_fuzzy）：字符串 / 路径的打分与高亮，对齐 zed
+# crates/fuzzy_nucleo（底层用 crates.io 的 nucleo，MPL-2.0）。依赖 gpui 是因为
+# 需要 BackgroundExecutor（并行分段 + 可取消）与 SharedString。
+aa_gpui_fuzzy = { path = "packages/gpui_fuzzy" }
+
 # 时钟（packages/clock）：逻辑时钟（Lamport / 版本向量）+ 可注入的系统时钟。
 # **零 gpui 依赖**（对齐 zed crates/clock 的自研版，见 docs/zed/clock-analysis.md），
 # 所以任何层都可以引用它而不会把 gpui 拖进依赖图。

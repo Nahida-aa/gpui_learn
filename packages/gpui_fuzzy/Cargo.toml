@@ -1,0 +1,23 @@
+[package]
+name = "aa_gpui_fuzzy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "模糊匹配：字符串与文件路径的打分/高亮（对齐 zed crates/fuzzy_nucleo，底层用 nucleo）"
+
+[dependencies]
+# BackgroundExecutor（并行分段 + 可取消）与 SharedString（候选字符串零拷贝）。
+gpui.workspace = true
+# truncate_to_bottom_n_sorted_by：只保留得分最高的 N 个。
+gpui_util.workspace = true
+# helix 的模糊匹配引擎（crates.io，MPL-2.0，仅作依赖使用、不修改），
+# 提供 Pattern / Matcher / Utf32Str —— zed 的 fuzzy_nucleo 用的也是这一层。
+nucleo = "0.5"
+
+[features]
+# #[gpui::test] 与 BackgroundExecutor::set_num_cpus 需要它。
+test-support = ["gpui/test-support"]
+
+[lints]
+workspace = true
