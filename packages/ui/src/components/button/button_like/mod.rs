@@ -32,7 +32,7 @@ use aa_gpui_kit_theme::ActiveTheme;
 use crate::components::button::ClickHandler;
 use aa_gpui_base::{Icon, IconName};
 use crate::components::button::{ButtonRadius, ButtonStyle};
-use crate::styles::ElevationIndex;
+use crate::styles::{DynamicSpacing, ElevationIndex};
 use crate::components::tooltip::{Tooltip, TooltipHost};
 use crate::traits::{Clickable, Disableable, Toggleable};
 use crate::styles::units::rems_from_px;
@@ -421,7 +421,8 @@ impl RenderOnce for ButtonLike {
             .flex()
             .items_center()
             .justify_center()
-            .when(has_label, |this| this.gap(px(6.)))
+            // 图标与文字的间距由下面的 `.gap(DynamicSpacing::Base04..)` 统一负责
+            // （对齐 zed：zed 的 ButtonLike 也只设一处 gap）。
             .aria_label(self.aria_label.clone().unwrap_or_default());
 
         // 无障碍属性（对齐 zed ButtonLike 的 aria_* 系列）。
@@ -451,18 +452,36 @@ impl RenderOnce for ButtonLike {
             button = button.track_focus(&focus_handle);
         }
 
-        // 尺寸：icon-only 用方形（size 覆盖 icon_size）；有文字按档位定高 + 内边距。
+        // 尺寸：高度按档位、左右内边距按档位分档（对齐 zed）。
         //
-        // 与 zed 的差异：zed 的 `ButtonLike` 高度取 `size.rems()`、左右内边距按
-        // 档位分 `Base08` / `Base04`。我们把比例缩放由 `rem_size` 承担，
-        // 内边距沿用原来的 `px_3` / `px_0p5`，避免引入尚未校准的档位表。
-        button = button.h(self.height.unwrap_or_else(|| self.button_size.rems() * rem_size));
-        button = if has_label {
-            button.px_3().text_size(px(14.))
-        } else {
+        // zed 的对照（button_like.rs:786-806）：
+        //   .h(self.height.unwrap_or(self.size.rems().into()))
+        //   .map(|this| match self.size {
+        //       Large | Medium   => this.px(DynamicSpacing::Base08.rems(cx)),
+        //       Default | Compact=> this.px(DynamicSpacing::Base04.rems(cx)),
+        //       None             => this.px_px(),
+        //   })
+        //
+        // `gap` 也按 zed 取 `Base04`。
+        button = button
+            .h(self.height.unwrap_or_else(|| self.button_size.rems() * rem_size))
+            .gap(DynamicSpacing::Base04.rems(cx))
+            .map(|this| match self.button_size {
+                ButtonSize::Large | ButtonSize::Medium => {
+                    this.px(DynamicSpacing::Base08.rems(cx))
+                }
+                ButtonSize::Default | ButtonSize::Compact => {
+                    this.px(DynamicSpacing::Base04.rems(cx))
+                }
+                // 与 zed 一致：None 档只在左右各留 1px 的视觉呼吸位。
+                ButtonSize::None => this.px(px(1.)),
+            });
+
+        // icon-only：容器是正方形，边长由 `box_size` 或图标尺寸推出。
+        if !has_label {
             let side = self.box_size.unwrap_or(self.icon_size * 12. / 7.);
-            button.size(side)
-        };
+            button = button.size(side);
+        }
 
         // 宽度覆盖（FixedWidth）与 tab 序号（ButtonCommon）。
         if let Some(width) = self.width {

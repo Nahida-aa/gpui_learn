@@ -7,7 +7,11 @@
 //! 实现为原创（zed 同名宏为 GPL），契约保持一致：
 //! - 变体名 `BaseXX`（XX = Default 档像素，两位补零）；
 //! - 单值按 `(n-4).max(0) / n / n+4` 展开三档；
-//! - 比值以 16px/rem 为基准，配合 `UiDensity` 显式传参。
+//! - 比值以 16px/rem 为基准；`rems(cx)` / `px(cx)` 内部读当前 `UiDensity` 与
+//!   UI 字号，调用方不传参数（与 zed 同形）。
+//!
+//! 生成的代码引用 `gpui::` / `aa_gpui_kit_theme::`，因此**使用方的 Cargo.toml
+//! 必须同时有 gpui 与 aa_gpui_kit_theme 两个依赖**（`aa_gpui_kit_ui` 两者都有）。
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -116,28 +120,34 @@ pub fn expand(input: TokenStream) -> TokenStream {
         }
 
         impl DynamicSpacing {
-            /// 按密度返回间距与基准 rem（16px）的比值。
-            pub fn spacing_ratio(&self, density: UiDensity) -> f32 {
+            /// 按当前 `UiDensity` 返回间距与基准 rem（16px）的比值。
+            ///
+            /// `cx` 只用于读设置（密度来自注册的 `ThemeSettingsProvider`），
+            /// 不参与换算 —— 与 zed `DynamicSpacing::spacing_ratio(cx)` 同形。
+            pub fn spacing_ratio(&self, cx: &gpui::App) -> f32 {
                 const BASE_REM_SIZE_IN_PX: f32 = 16.0;
+                let density = aa_gpui_kit_theme::ui_density(cx);
                 match self {
                     #(
                         Self::#variants => match density {
-                            UiDensity::Compact => #compacts / BASE_REM_SIZE_IN_PX,
-                            UiDensity::Default => #defaults / BASE_REM_SIZE_IN_PX,
-                            UiDensity::Comfortable => #comfortables / BASE_REM_SIZE_IN_PX,
+                            aa_gpui_kit_theme::UiDensity::Compact => #compacts / BASE_REM_SIZE_IN_PX,
+                            aa_gpui_kit_theme::UiDensity::Default => #defaults / BASE_REM_SIZE_IN_PX,
+                            aa_gpui_kit_theme::UiDensity::Comfortable => #comfortables / BASE_REM_SIZE_IN_PX,
                         },
                     )*
                 }
             }
 
             /// 间距值（rems）。配 `Styled::gap` / `p` 等接受 rems 的方法。
-            pub fn rems(&self, density: UiDensity) -> Rems {
-                rems(self.spacing_ratio(density))
+            pub fn rems(&self, cx: &gpui::App) -> Rems {
+                rems(self.spacing_ratio(cx))
             }
 
-            /// 间距值（pixels）。`rem_size` 一般传 `window.rem_size()`。
-            pub fn px(&self, density: UiDensity, rem_size: Pixels) -> Pixels {
-                px(f32::from(rem_size) * self.spacing_ratio(density))
+            /// 间距值（pixels）。基数是**当前 UI 字号**（不是窗口 rem_size），
+            /// 这样「界面缩放」设置能生效 —— 与 zed 一致。
+            pub fn px(&self, cx: &gpui::App) -> Pixels {
+                let ui_font_size: f32 = f32::from(aa_gpui_kit_theme::ui_font_size(cx));
+                px(ui_font_size * self.spacing_ratio(cx))
             }
         }
     };

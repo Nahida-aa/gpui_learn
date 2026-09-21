@@ -15,7 +15,7 @@ use gpui::{
 use itertools::Itertools;
 
 use aa_gpui_base::IconSize;
-use crate::styles::{Color, DynamicSpacing, PlatformStyle, TextSize, UiDensity};
+use crate::styles::{Color, DynamicSpacing, PlatformStyle, TextSize};
 use crate::utils::capitalize;
 use crate::{Icon, IconName, h_flex, prelude::*, v_flex};
 
@@ -287,10 +287,7 @@ impl RenderOnce for KeyBinding {
                             .join(" ")
                     )
                 })
-                // 与 zed 的差异：zed 是 `DynamicSpacing::Base04.rems(cx)`（从
-                // `theme_settings.ui_density(cx)` 读当前密度）；我们没有设置系统，
-                // 密度由调用方显式传入，这里取 Default。
-                .gap(DynamicSpacing::Base04.rems(UiDensity::Default))
+                .gap(DynamicSpacing::Base04.rems(cx))
                 .flex_none()
                 .children(keystrokes.iter().map(|keystroke| {
                     h_flex()

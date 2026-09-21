@@ -15,9 +15,7 @@ use gpui::{
 use std::{rc::Rc, sync::Arc};
 
 use crate::prelude::*;
-use crate::{
-    DynamicSpacing, ElevationIndex, IconSize, KeyBinding, ToggleState, UiDensity,
-};
+use crate::{DynamicSpacing, ElevationIndex, IconSize, KeyBinding, ToggleState};
 use aa_gpui_kit_theme::Appearance;
 
 /// Creates a new checkbox.
@@ -41,12 +39,6 @@ pub enum ToggleStyle {
     ElevationBased(ElevationIndex),
     /// A custom style using a color to tint the toggle
     Custom(Hsla),
-}
-
-// 与 zed 的差异：zed 从 `theme_settings.ui_density(cx)` 读当前密度；我们没有
-// 设置系统，密度显式取 Default。设置系统就绪后改为传当前值。
-fn density() -> UiDensity {
-    UiDensity::Default
 }
 
 /// # Checkbox
@@ -286,7 +278,7 @@ impl RenderOnce for Checkbox {
                     this.cursor_pointer()
                 }
             })
-            .gap(DynamicSpacing::Base06.rems(density()))
+            .gap(DynamicSpacing::Base06.rems(cx))
             .child(checkbox)
             .when_some(self.label, |this, label| {
                 this.child(Label::new(label).color(self.label_color).size(self.label_size))
@@ -533,8 +525,8 @@ impl RenderOnce for Switch {
             })
             .child(
                 h_flex()
-                    .w(DynamicSpacing::Base32.rems(density()))
-                    .h(DynamicSpacing::Base20.rems(density()))
+                    .w(DynamicSpacing::Base32.rems(cx))
+                    .h(DynamicSpacing::Base20.rems(cx))
                     .group(group_id.clone())
                     .child(
                         h_flex()
@@ -542,7 +534,7 @@ impl RenderOnce for Switch {
                             .when(!is_on, |off| off.justify_start())
                             .size_full()
                             .rounded_full()
-                            .px(DynamicSpacing::Base02.px(density(), window.rem_size()))
+                            .px(DynamicSpacing::Base02.px(cx))
                             .bg(bg_color)
                             .when(!self.disabled, |this| {
                                 this.group_hover(group_id.clone(), |el| el.bg(bg_hover_color))
@@ -551,7 +543,7 @@ impl RenderOnce for Switch {
                             .border_color(border_color)
                             .child(
                                 div()
-                                    .size(DynamicSpacing::Base12.rems(density()))
+                                    .size(DynamicSpacing::Base12.rems(cx))
                                     .rounded_full()
                                     .bg(thumb_color)
                                     .opacity(thumb_opacity),
@@ -562,7 +554,7 @@ impl RenderOnce for Switch {
         h_flex()
             .id(self.id)
             .cursor_pointer()
-            .gap(DynamicSpacing::Base06.rems(density()))
+            .gap(DynamicSpacing::Base06.rems(cx))
             .when(self.full_width, |this| this.w_full().justify_between())
             .when(
                 self.label_position == Some(SwitchLabelPosition::Start),

@@ -6,6 +6,11 @@ license.workspace = true
 publish.workspace = true
 description = "aa_gpui_kit_ui 的 proc-macro 宏包（对齐 zed crates/ui_macros 的精简版）"
 
+# 注意：本包是 proc-macro 包，**编译期不依赖** gpui / theme，但它**生成的代码**
+# 会引用 `gpui::…` 与 `aa_gpui_kit_theme::…`（见 dynamic_spacing 生成的
+# `rems(cx)` / `px(cx)`）。所以**使用方**（如 aa_gpui_kit_ui）必须同时声明
+# gpui 与 aa_gpui_kit_theme 两个依赖，否则宏展开后编译不过。
+
 [lib]
 proc-macro = true
 

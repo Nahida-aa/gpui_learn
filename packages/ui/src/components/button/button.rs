@@ -17,7 +17,7 @@ use crate::components::button::{ButtonLike, ButtonStyle, KeybindingPosition};
 use crate::components::label::LabelLike;
 use crate::prelude::*;
 use crate::traits::SelectableButton;
-use crate::{Color, DynamicSpacing, ElevationIndex, Icon, KeyBinding, LabelSize, UiDensity};
+use crate::{Color, DynamicSpacing, ElevationIndex, Icon, KeyBinding, LabelSize};
 
 /// An element that creates a button with a label and optional icons.
 ///
@@ -340,8 +340,8 @@ impl RenderOnce for Button {
         // 我们的 `Icon` 收 `Pixels` / `Hsla`，所以尺寸与颜色在这里展开。
         // loading 的旋转动画已对齐（`with_keyed_rotate_animation`）。
         let start_icon_size = IconSize::Small.rems() * window.rem_size();
-        let gap = DynamicSpacing::Base04.rems(UiDensity::Default);
-        let label_gap = DynamicSpacing::Base06.rems(UiDensity::Default);
+        let gap = DynamicSpacing::Base04.rems(cx);
+        let label_gap = DynamicSpacing::Base06.rems(cx);
 
         let icon_color = |color: Color| color.color(cx);
 
