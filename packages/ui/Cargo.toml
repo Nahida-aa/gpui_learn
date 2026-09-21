@@ -39,6 +39,10 @@ smallvec = "1"
 # KeyBinding：itertools::intersperse（按键之间的分隔符）与 Itertools::join。
 itertools.workspace = true
 
+# IconDecoration 的 KnockoutIconName：EnumIter / EnumString / IntoStaticStr
+# （拿 snake_case 文件名拼 SVG 路径）。版本与 theme / component 包一致。
+strum = { version = "0.27", features = ["derive"] }
+
 # 主题加载器：解析 zed 主题扩展 JSON（v0.2.0 扁平格式）进 ThemeRegistry。
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

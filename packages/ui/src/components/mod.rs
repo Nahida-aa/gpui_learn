@@ -13,23 +13,40 @@
 //! - [`popover_menu`]：点击触发的锚定浮层菜单（[`PopoverMenu`] +
 //!   [`PopoverMenuHandle`]，对齐 zed `PopoverMenu`）。
 
+pub mod avatar;
 pub mod button;
 pub mod context_menu;
 pub mod divider;
+pub mod facepile;
+pub mod icon;
+pub mod indicator;
 pub mod keybinding;
+pub mod keybinding_hint;
 pub mod label;
 pub mod popover_menu;
 pub mod stack;
+pub mod toggle;
 pub mod tooltip;
 
+pub use avatar::{
+    AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
+    CollaboratorAvailability,
+};
 pub use button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu};
 pub use divider::{Divider, DividerColor, DividerDirection};
+pub use facepile::{EXAMPLE_FACES, Facepile};
+pub use icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
+pub use indicator::Indicator;
 pub use keybinding::{
     Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,
     text_for_action, text_for_keystroke, text_for_keystrokes, text_for_keybinding_keystrokes,
 };
+pub use keybinding_hint::KeybindingHint;
 pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle};
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use stack::{h_flex, v_flex};
+pub use toggle::{
+    Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
+};
 pub use tooltip::{Tooltip, TooltipHost, tooltip_host};

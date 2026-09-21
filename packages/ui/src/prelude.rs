@@ -28,6 +28,10 @@ pub use crate::traits::styled_ext::*;
 pub use crate::traits::toggleable::*;
 pub use crate::traits::transformable::*;
 
+pub use crate::components::avatar::{
+    AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
+    CollaboratorAvailability,
+};
 pub use crate::components::button::{
     ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, SplitButton, SplitButtonKind,
     SplitButtonStyle, TintColor,
@@ -36,10 +40,15 @@ pub use crate::components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
 };
 pub use crate::components::divider::{Divider, DividerColor, DividerDirection};
+pub use crate::components::facepile::Facepile;
+pub use crate::components::icon::{DecoratedIcon, IconDecoration, IconDecorationKind};
+pub use crate::components::indicator::Indicator;
 pub use crate::components::keybinding::{Key, KeyBinding, KeyBindingStyle, KeyIcon};
+pub use crate::components::keybinding_hint::KeybindingHint;
 pub use crate::components::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use crate::components::stack::{h_flex, v_flex};
 pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
+pub use crate::components::toggle::{Checkbox, Switch, SwitchColor, SwitchLabelPosition};
 pub use crate::components::label::{Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle};
 pub use crate::{Button, ButtonVariant, Icon, IconName, Slider, SliderEvent, SliderState};
 

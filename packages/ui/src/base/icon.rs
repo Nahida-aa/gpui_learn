@@ -89,6 +89,12 @@ impl Icon {
         self.rotation = Some(radians.into());
         self
     }
+
+    /// 当前边长。供同 crate 的复合件布局用（如 `DecoratedIcon` 要让容器
+    /// 与图标等大）。不对外暴露——外部直接调 [`Self::size`] 设置即可。
+    pub(crate) fn size_px(&self) -> Pixels {
+        self.size
+    }
 }
 
 impl Default for Icon {

@@ -1,5 +1,7 @@
+pub mod color_contrast;
 pub mod control_characters;
 
+pub use color_contrast::*;
 pub use control_characters::*;
 
 /// 把首字符改成大写，其余原样保留（对齐 zed `crates/ui/src/utils.rs:69`）。
