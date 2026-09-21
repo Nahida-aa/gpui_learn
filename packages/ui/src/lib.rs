@@ -54,7 +54,8 @@ pub use components::button::{
     SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
 pub use components::context_menu::{
-    ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
+    ContextMenu, ContextMenuEntry, ContextMenuItem, IconPosition, RightClickMenu,
+    right_click_menu,
 };
 pub use components::avatar::{
     AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,

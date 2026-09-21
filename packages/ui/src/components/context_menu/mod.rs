@@ -19,7 +19,7 @@
 //!         IconButton::new(("dock", kind), kind.icon()).into_any_element()
 //!     })
 //!     .menu(move |_window, cx| {
-//!         ContextMenu::build(cx, |menu, _cx| {
+//!         ContextMenu::build(window, cx, |menu, _window, _cx| {
 //!             menu.item(ContextMenuEntry::new("Dock Left").checked(true))
 //!         })
 //!     })
@@ -29,6 +29,6 @@ pub mod entry;
 pub mod menu;
 pub mod right_click_menu;
 
-pub use entry::{ContextMenuEntry, ContextMenuItem};
+pub use entry::{ContextMenuEntry, ContextMenuItem, IconPosition};
 pub use menu::ContextMenu;
 pub use right_click_menu::{RightClickMenu, right_click_menu};

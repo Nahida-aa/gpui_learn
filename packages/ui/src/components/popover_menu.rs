@@ -510,7 +510,7 @@ mod tests {
 
             let popover = PopoverMenu::new("test-popover")
                 .menu(|window, cx| {
-                    crate::ContextMenu::build(cx, |menu, _cx| menu)
+                    crate::ContextMenu::build(window, cx, |menu, _window, _cx| menu)
                 })
                 .with_handle(handle.clone())
                 .anchor(Anchor::BottomLeft)
