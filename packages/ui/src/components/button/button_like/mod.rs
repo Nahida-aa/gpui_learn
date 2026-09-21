@@ -22,14 +22,14 @@ mod style;
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, App, ClickEvent, CursorStyle, ElementId, Entity, Hsla, InteractiveElement,
-    IntoElement, ParentElement, Pixels, RenderOnce, SharedString, Styled, Window, div, prelude::*,
-    px,
+    Anchor, AnyElement, App, ClickEvent, CursorStyle, DefiniteLength, ElementId, Entity, Hsla,
+    InteractiveElement, IntoElement, ParentElement, Pixels, RenderOnce, SharedString, Styled,
+    Window, div, prelude::*, px,
 };
 
 use aa_gpui_kit_theme::ActiveTheme;
 
-use crate::components::button::plain::ClickHandler;
+use crate::components::button::ClickHandler;
 use aa_gpui_base::{Icon, IconName};
 use crate::components::button::{ButtonRadius, ButtonStyle};
 use crate::components::tooltip::{Tooltip, TooltipHost};
@@ -52,6 +52,10 @@ pub struct ButtonLike {
     icon_size: Pixels,
     /// 容器边长（icon-only 时的方形边长）；`None` 时按内容自适应。
     size: Option<Pixels>,
+    /// 宽度覆盖（`FixedWidth::width` / `full_width` 设入）；`None` 时按内容自适应。
+    width: Option<DefiniteLength>,
+    /// Tab 键导航序号（`ButtonCommon::tab_index`）。
+    tab_index: Option<isize>,
     radius: ButtonRadius,
     disabled: bool,
     selected: bool,
@@ -64,6 +68,27 @@ pub struct ButtonLike {
     tooltip_anchor: Option<Anchor>,
     /// 提示 attachment（默认 `Anchor::BottomLeft`，即提示在元素下方）。
     tooltip_attach: Option<Anchor>,
+    /// 追加的子元素（`Button` / `IconButton` 这类壳把自己的内容挂进来）。
+    ///
+    /// 对齐 zed：zed 的 `ButtonLike` 也是 `ParentElement`，`Button::render`
+    /// 直接 `self.base.child(...)`。这比让壳自己去拼 `div` 更贴 zed 的写法。
+    children: Vec<AnyElement>,
+    // ---- 无障碍（对齐 zed ButtonLike 的 aria_* 系列）----
+    /// 无障碍名称；缺省时 `Button` 会用可见文字补上。
+    aria_description: Option<SharedString>,
+    /// 无障碍当前值（如 combobox 触发器显示当前选项）。
+    aria_value: Option<SharedString>,
+    /// 覆盖无障碍 role（默认由 gpui 按元素推断）。
+    aria_role: Option<gpui::Role>,
+    /// 弹出层展开态（dropdown / disclosure 触发器用）。
+    aria_expanded: Option<bool>,
+    /// 无障碍快捷键串（`aria-keyshortcuts`），如 `"Ctrl-S"`。
+    pub(crate) aria_keyshortcuts: Option<SharedString>,
+    /// 无障碍动作回调（如辅助技术派发 `Action::Expand`）。
+    on_a11y_action: Option<(
+        gpui::accesskit::Action,
+        Box<dyn FnMut(Option<&gpui::accesskit::ActionData>, &mut Window, &mut App) + 'static>,
+    )>,
 }
 
 impl ButtonLike {
@@ -77,6 +102,8 @@ impl ButtonLike {
             icon_color: None,
             icon_size: px(14.0),
             size: None,
+            width: None,
+            tab_index: None,
             radius: ButtonRadius::Medium,
             disabled: false,
             selected: false,
@@ -86,6 +113,13 @@ impl ButtonLike {
             tooltip: None,
             tooltip_anchor: None,
             tooltip_attach: None,
+            children: Vec::new(),
+            aria_description: None,
+            aria_value: None,
+            aria_role: None,
+            aria_expanded: None,
+            aria_keyshortcuts: None,
+            on_a11y_action: None,
         }
     }
 
@@ -141,6 +175,110 @@ impl ButtonLike {
     pub fn aria_label(mut self, label: impl Into<SharedString>) -> Self {
         self.aria_label = Some(label.into());
         self
+    }
+
+    /// 无障碍补充说明（在 name / role / value 之后播报）。
+    pub fn aria_description(mut self, description: impl Into<SharedString>) -> Self {
+        self.aria_description = Some(description.into());
+        self
+    }
+
+    /// 无障碍当前值（按钮代表"有值的控件"时用，如 combobox 触发器）。
+    pub fn aria_value(mut self, value: impl Into<SharedString>) -> Self {
+        self.aria_value = Some(value.into());
+        self
+    }
+
+    /// 覆盖无障碍 role（默认 [`gpui::Role::Button`]）。
+    pub fn aria_role(mut self, role: gpui::Role) -> Self {
+        self.aria_role = Some(role);
+        self
+    }
+
+    /// 弹出层展开态（dropdown / disclosure 触发器用）。
+    pub fn aria_expanded(mut self, expanded: bool) -> Self {
+        self.aria_expanded = Some(expanded);
+        self
+    }
+
+    /// 注册无障碍动作处理（如辅助技术派发 `Action::Expand`）。
+    pub fn on_a11y_action(
+        mut self,
+        action: gpui::accesskit::Action,
+        listener: impl FnMut(Option<&gpui::accesskit::ActionData>, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_a11y_action = Some((action, Box::new(listener)));
+        self
+    }
+
+    /// 追加一个子元素（供 `Button` / `IconButton` 这类壳挂内容）。
+    pub fn child(mut self, child: impl IntoElement) -> Self {
+        self.children.push(child.into_any_element());
+        self
+    }
+
+    /// 批量追加子元素。
+    pub fn children(mut self, children: impl IntoIterator<Item = impl IntoElement>) -> Self {
+        self.children
+            .extend(children.into_iter().map(IntoElement::into_any_element));
+        self
+    }
+
+    /// 设置无障碍快捷键串（`aria-keyshortcuts`），如 `"Ctrl-S"`。
+    ///
+    /// 由 [`Button`](super::button::Button) 从可见的 `KeyBinding` 推出后写入 ——
+    /// 让读屏用户听到与视觉用户看到的是同一个快捷键。
+    pub fn aria_keyshortcuts(mut self, keyshortcuts: impl Into<SharedString>) -> Self {
+        self.aria_keyshortcuts = Some(keyshortcuts.into());
+        self
+    }
+
+    /// 固定宽度（对齐 zed `FixedWidth::width`）。
+    pub fn width(mut self, width: impl Into<DefiniteLength>) -> Self {
+        self.width = Some(width.into());
+        self
+    }
+
+    /// 撑满容器宽度（对齐 zed `FixedWidth::full_width`）。
+    pub fn full_width(mut self) -> Self {
+        self.width = Some(gpui::relative(1.).into());
+        self
+    }
+
+    /// Tab 键导航序号（对齐 zed `ButtonCommon::tab_index`）。
+    pub fn tab_index(mut self, tab_index: impl Into<isize>) -> Self {
+        self.tab_index = Some(tab_index.into());
+        self
+    }
+
+    // ---- 供壳（Button / IconButton）读取状态的访问器 ----
+    //
+    // 与 zed 的差异：zed 的壳与 `ButtonLike` 同模块，直接读私有字段。
+    // 我们分了文件，所以开这几个只读访问器。
+
+    /// 当前是否禁用。
+    pub fn is_disabled(&self) -> bool {
+        self.disabled
+    }
+
+    /// 元素 id 的只读引用（`ButtonCommon::id` 用它）。
+    pub fn id_ref(&self) -> &ElementId {
+        &self.id
+    }
+
+    /// 当前是否选中。
+    pub fn is_selected(&self) -> bool {
+        self.selected
+    }
+
+    /// 已设置的无障碍名称（`None` 表示壳可以用可见文字补上）。
+    pub fn aria_label_ref(&self) -> Option<&SharedString> {
+        self.aria_label.as_ref()
+    }
+
+    /// 已设置的无障碍快捷键串。
+    pub fn aria_keyshortcuts_ref(&self) -> Option<&SharedString> {
+        self.aria_keyshortcuts.as_ref()
     }
 
     /// 悬停时的光标样式（默认 pointer）。
@@ -219,6 +357,28 @@ impl RenderOnce for ButtonLike {
             .when(has_label, |this| this.gap(px(6.)))
             .aria_label(self.aria_label.clone().unwrap_or_default());
 
+        // 无障碍属性（对齐 zed ButtonLike 的 aria_* 系列）。
+        if let Some(description) = self.aria_description.clone() {
+            button = button.aria_description(description);
+        }
+        if let Some(value) = self.aria_value.clone() {
+            button = button.aria_value(value);
+        }
+        if let Some(role) = self.aria_role {
+            button = button.role(role);
+        }
+        if let Some(expanded) = self.aria_expanded {
+            button = button.aria_expanded(expanded);
+        }
+        if let Some(keyshortcuts) = self.aria_keyshortcuts.clone() {
+            button = button.aria_keyshortcuts(keyshortcuts);
+        }
+        if let Some((action, mut listener)) = self.on_a11y_action {
+            button = button.on_a11y_action(action, move |data, window, cx| {
+                listener(data, window, cx)
+            });
+        }
+
         // 尺寸：icon-only 用方形（size 覆盖 icon_size）；有文字按内边距自适应。
         button = if has_label {
             button.px_3().py_0p5().text_size(px(14.))
@@ -226,6 +386,14 @@ impl RenderOnce for ButtonLike {
             let side = self.size.unwrap_or(self.icon_size * 12. / 7.);
             button.size(side)
         };
+
+        // 宽度覆盖（FixedWidth）与 tab 序号（ButtonCommon）。
+        if let Some(width) = self.width {
+            button = button.w(width);
+        }
+        if let Some(tab_index) = self.tab_index {
+            button = button.tab_index(tab_index);
+        }
 
         button = match self.radius {
             ButtonRadius::Medium => button.rounded_md(),
@@ -239,6 +407,13 @@ impl RenderOnce for ButtonLike {
         if let Some(label) = self.label {
             button = button.child(div().text_color(fg).child(label));
         }
+        // 壳（Button / IconButton）挂进来的内容。
+        //
+        // 与 zed 的差异：zed 的 `ButtonLike` 是「纯容器」，内容全由壳通过
+        // `child()` 挂入，内置的 `label` / `icon` 字段其实是给直接使用
+        // `ButtonLike` 的场景用的。我们保留那套字段，同时接受 children ——
+        // 壳走 children，直接使用者走字段。
+        button = button.children(self.children);
 
         if disabled {
             button = button.bg(colors.ghost_element_disabled);
@@ -316,6 +491,11 @@ impl ButtonCommon for ButtonLike {
 
     fn style(mut self, style: ButtonStyle) -> Self {
         self.style = style;
+        self
+    }
+
+    fn tab_index(mut self, tab_index: impl Into<isize>) -> Self {
+        self.tab_index = Some(tab_index.into());
         self
     }
 

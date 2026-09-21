@@ -17,6 +17,8 @@ pub trait ButtonCommon {
     fn id(&self) -> &ElementId;
     /// The visual style of the button.
     fn style(self, style: crate::components::button::ButtonStyle) -> Self;
+    /// Tab 键导航序号（对齐 zed `ButtonCommon::tab_index`）。
+    fn tab_index(self, tab_index: impl Into<isize>) -> Self;
     /// The tooltip that shows when a user hovers over the button.
     ///
     /// Nearly all interactable elements should have a tooltip. Some example

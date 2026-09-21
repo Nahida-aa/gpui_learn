@@ -14,7 +14,10 @@ use gpui::{
     WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use aa_gpui_kit_ui::Button;
+// 与 zed 一致：trait（Clickable / Disableable / ButtonCommon…）随 prelude 进来，
+// 否则 `.on_click(..)` / `.style(..)` 这类 trait 方法不可见。
+use aa_gpui_kit_ui::prelude::*;
+use aa_gpui_kit_ui::{ButtonStyle, TintColor};
 // 输入 facade 住在 editor 包（依赖方向已翻转，见 docs/zed/ui-input-analysis.md）。
 use editor::{InputEvent, InputState, bind_input_keys};
 
@@ -87,9 +90,8 @@ impl Render for InputDemo {
                     .gap_2()
                     .items_center()
                     .child(
-                        Button::new("submit")
-                            .label("提交（Enter 也行）")
-                            .primary()
+                        Button::new("submit", "提交（Enter 也行）")
+                            .style(ButtonStyle::Filled)
                             .on_click({
                                 let input = self.input.clone();
                                 move |_, _, cx| {
@@ -99,14 +101,13 @@ impl Render for InputDemo {
                             }),
                     )
                     .child(
-                        Button::new("clear").label("清空").on_click(
+                        Button::new("clear", "清空").on_click(
                             cx.listener(|this, _, window, cx| this.clear_input(window, cx)),
                         ),
                     )
                     .child(
-                        Button::new("disabled")
-                            .label("禁用示例")
-                            .danger()
+                        Button::new("disabled", "禁用示例")
+                            .style(ButtonStyle::Tinted(TintColor::Error))
                             .disabled(true),
                     ),
             )

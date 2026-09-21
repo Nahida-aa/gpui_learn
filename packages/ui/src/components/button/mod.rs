@@ -2,16 +2,23 @@
 //!
 //! 三个层次，别混用：
 //!
-//! - [`plain`]：自研的普通按钮（[`plain::Button`]），形状与 zed 无关；
-//! - [`button_like`]：**对齐 zed** 的 `ButtonLike` / `ButtonCommon` / `ButtonStyle`，
+//! - [`button`]：**对齐 zed** 的 [`Button`]（`new(id, label)`），建在
+//!   [`ButtonLike`] 之上；
+//! - [`button_like`]：对齐 zed 的 `ButtonLike` / `ButtonCommon` / `ButtonStyle`，
 //!   以及用它的 [`IconButton`]；
 //! - [`split_button`]：对齐 zed 的 `SplitButton`。
 //!
 //! 图标来自 `aa_gpui_base`（独立的基础控件包，见本 crate 顶部文档）。
-//!
-//! 与 [`plain`] 的差异：`plain::Button` 是自研形状（颜色硬编码或调用方传入）；
-//! 本模块的组件实现 gpui 的 `RenderOnce`，render 阶段能拿到 `&mut App` 读主题，
-//! 与 zed 一致。
+
+/// 按键提示在按钮上的位置（对齐 zed `KeybindingPosition`）。
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Default)]
+pub enum KeybindingPosition {
+    /// 按键提示在文字之前。
+    Start,
+    /// 按键提示在文字之后（默认）。
+    #[default]
+    End,
+}
 
 use std::rc::Rc;
 
@@ -20,16 +27,19 @@ use gpui::{
     SharedString, Window, prelude::*, px,
 };
 
-use crate::components::button::plain::ClickHandler;
 use aa_gpui_base::IconName;
 use crate::components::tooltip::Tooltip;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use aa_gpui_kit_theme::ActiveTheme;
+pub mod button;
 pub mod button_like;
-pub mod plain;
 pub mod split_button;
 
+pub use button::Button;
 pub use button_like::{ButtonCommon, ButtonLike};
+
+/// 点击回调（`ButtonLike` / `IconButton` 的内部存储类型）。
+pub type ClickHandler = Box<dyn Fn(&ClickEvent, &mut Window, &mut App)>;
 pub use split_button::{SplitButton, SplitButtonKind, SplitButtonStyle};
 
 /// 按钮视觉语义（对齐 zed `ButtonStyle`，去掉需主题扩展的部分）。

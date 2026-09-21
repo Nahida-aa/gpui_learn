@@ -42,16 +42,14 @@ pub use aa_gpui_base::{
     DragSlider, Icon, IconName, IconSize, Scale, Slider, SliderEvent, SliderState, SliderValue,
     ThumbMode, position_to_value, quantize, value_to_percentage,
 };
-// 自研的普通按钮（`Button` + `ButtonVariant`）。注意它与对齐 zed 的
-// `ButtonLike` / `IconButton` 是两套东西：后者是 zed 的面，这个是我们的。
-pub use components::button::plain::{Button, ButtonVariant};
+pub use components::button::Button;
 pub use styles::*;
 // 主题系统在独立包 `aa-gpui-kit-theme`（原 `base/theme`）：组件从那里取色，
 // 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
 // 「主题不隶属控件库」这件事在代码里应当可见。
 pub use components::button::{
-    ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, SplitButton, SplitButtonKind,
-    SplitButtonStyle, TintColor,
+    ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, KeybindingPosition,
+    SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
 pub use components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,

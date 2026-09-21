@@ -24,6 +24,8 @@ pub use gpui::{
 pub use crate::traits::animation_ext::*;
 pub use crate::traits::clickable::*;
 pub use crate::traits::disableable::*;
+pub use crate::traits::fixed::*;
+pub use crate::traits::selectable_button::*;
 pub use crate::traits::styled_ext::*;
 pub use crate::traits::toggleable::*;
 pub use crate::traits::transformable::*;
@@ -33,8 +35,8 @@ pub use crate::components::avatar::{
     CollaboratorAvailability,
 };
 pub use crate::components::button::{
-    ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, SplitButton, SplitButtonKind,
-    SplitButtonStyle, TintColor,
+    ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, KeybindingPosition,
+    SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
 pub use crate::components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
@@ -52,7 +54,7 @@ pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use crate::components::toggle::{Checkbox, Switch, SwitchColor, SwitchLabelPosition};
 pub use crate::components::label::{Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle};
 pub use crate::{
-    Button, ButtonVariant, Icon, IconName, IconSize, Slider, SliderEvent, SliderState,
+    Button, Icon, IconName, IconSize, Slider, SliderEvent, SliderState,
 };
 
 pub use crate::styles::{Color, DynamicSpacing, StyledTypography, TextSize, UiDensity};
