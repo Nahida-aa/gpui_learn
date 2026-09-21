@@ -117,7 +117,31 @@ pub static ERASED_EDITOR_FACTORY: OnceLock<fn(&mut Window, &mut App) -> Arc<dyn 
 即：zed 宁可让 `ui` 缺一个"文本框"这种基础控件，也不肯让 `ui` 依赖 `editor`。
 这条约束的强度，比 `ui_input` 这个 crate 本身更说明问题。
 
-## 与我们 `gpui_learn` 的对比
+## 我们已经翻转了（2026-09）
+
+按本文档的结论把依赖方向翻过来了：
+
+```text
+旧:  aa_gpui_kit_ui → editor        （ui 认识编辑器内核）
+新:  editor → aa_gpui_kit_ui_input → aa_gpui_kit_ui
+```
+
+改动清单：
+
+| 位置 | 改动 |
+|---|---|
+| `packages/ui` | 删除 `src/base/input/`；Cargo.toml 去掉 `editor`。**依赖树里已无 editor**（`cargo tree -p aa_gpui_kit_ui` 可验） |
+| `packages/ui_input`（新） | `ErasedEditor` + `ErasedEditorEvent` + `ERASED_EDITOR_FACTORY` + `InputField`。依赖只有 `gpui` / `aa_gpui_kit_ui` / `aa_gpui_kit_component`，**编译期无 editor** |
+| `packages/editor` | 新增依赖 `aa_gpui_kit_ui_input`；加 `src/editor/erased.rs`（`ErasedEditorImpl`）+ `register_erased_editor_factory()`；`bind_editor_keys` / `bind_input_keys` 里幂等注册工厂 |
+| `packages/editor` | 新增 `src/editor/input.rs`：`InputState` / `Textarea` / `TextareaState` / `bind_input_keys`（从 ui 搬来） |
+| `packages/editor` | 为凑齐 trait 补了 `set_text` / `set_placeholder_text` / `set_masked` / `set_read_only` / `set_multiline` / `move_selection_to_end`，以及 `masked` 渲染与 `read_only` 编辑拦截 |
+| `apps/ug_04`、`apps/ug_05` | import 从 `aa_gpui_kit_ui::{InputState…}` 改到 `editor::{…}` |
+
+**注意运行时契约**：`ui_input::InputField::new()` 现在要求先调过
+`editor::bind_input_keys()` 或 `editor::bind_editor_keys()`，否则 panic。
+这是照搬 zed 换来的代价，不是 bug。
+
+## 与我们 `gpui_learn` 的对比（翻转前）
 
 | | zed | 我们 |
 |---|---|---|
@@ -126,16 +150,24 @@ pub static ERASED_EDITOR_FACTORY: OnceLock<fn(&mut Window, &mut App) -> Arc<dyn 
 | 独立的 `ui_input` 层? | 有 | 没有 |
 | `editor` 依赖 `ui`? | **是** | **否**（自研 Rope 引擎，不取 ui 主题） |
 
-两边的依赖方向正好相反：
+翻转前两边的依赖方向正好相反：
 
 ```
 zed:     ui ← ui_input ← editor     且  ui ← editor
 我们:    ui → editor                 （editor 不回头）
 ```
 
-**我们目前无环，但这是"editor 恰好不依赖 ui"给的，不是结构上保证的。**
+翻转后我们与 zed 同形（只差 `editor → ui` 那条边，我们暂时不需要它）：
+
+```
+zed:   ui ← ui_input ← editor ，另有 editor → ui
+我们:  ui ← ui_input ← editor
+```
+
+**当时无环，但那是"editor 恰好不依赖 ui"给的，不是结构上保证的。**
 一旦我们的 `editor` 开始要用 `ui` 的 `Label` / `Icon` / 主题色（比如做行号 gutter、
-内联提示），`ui → editor` + `editor → ui` 立刻成环，那就是 zed 当初遇到的同一个问题。
+内联提示），`ui → editor` + `editor → ui` 立刻成环 —— 那就是 zed 当初遇到的同一个问题，
+也正是这次提前翻转的动机。
 
 ## 决策表
 

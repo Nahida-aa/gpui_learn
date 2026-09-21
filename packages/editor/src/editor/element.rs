@@ -278,6 +278,8 @@ impl Element for EditorElement {
         let last_visible = (first_visible + visible_count).min(display_total);
 
         let show_placeholder = self.editor.read(cx).rope.is_empty();
+        // 掩码字段(密码 / API key):内容不直出。
+        let masked = self.editor.read(cx).masked;
         let mut lines: Vec<(ShapedLine, Pixels, Range<usize>)> = Vec::new();
         for display_row in first_visible..last_visible {
             // 该视觉行对应的 (buffer 行, 行内字节段)
@@ -299,7 +301,7 @@ impl Element for EditorElement {
                 .rope
                 .point_to_offset(crate::engine::Point::new(buffer_row, 0));
             // 该视觉行显示的文本(placeholder 或 buffer 段)
-            let seg_text: String = if show_placeholder {
+            let mut seg_text: String = if show_placeholder {
                 placeholder.clone()
             } else {
                 let full = self
@@ -309,6 +311,17 @@ impl Element for EditorElement {
                     .text_in_range(row_start..row_start + line_len);
                 full[seg_in_row.clone()].to_string()
             };
+            // 掩码:每个字符换成一个 `*`。
+            //
+            // 已知限制:`seg_len` 参与 TextRun 长度与选区区间换算,而原串里
+            // 的非 ASCII 字符(多字节)被换成单字节 `*` 后字节数会变短,
+            // 掩码字段里光标/选区的像素位置会有偏差。掩码字段的实际用途
+            // (密码 / API key)都是 ASCII,这里不做逐字符等宽替换。
+            if masked && !show_placeholder {
+                let chars = seg_text.chars().count();
+                seg_text.clear();
+                seg_text.extend(std::iter::repeat('*').take(chars));
+            }
             let seg_start = row_start + seg_in_row.start;
             let seg_len = seg_text.len();
 

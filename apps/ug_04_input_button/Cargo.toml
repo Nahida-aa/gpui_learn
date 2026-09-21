@@ -9,6 +9,9 @@ description = "ug_04_input_button —— 自研 aa_gpui_kit_ui 的 Input 与 But
 [dependencies]
 gpui = { workspace = true }
 aa_gpui_kit_ui.workspace = true
+# 输入 facade（InputState / InputEvent / bind_input_keys）2026-09 搬进 editor 包，
+# 依赖方向翻转成了 editor → aa_gpui_kit_ui_input → aa_gpui_kit_ui。
+editor.workspace = true
 
 # 桌面窗口后端需要显式开启，否则 open_window 不出窗口。
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]

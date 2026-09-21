@@ -18,8 +18,11 @@ aa_gpui_kit_assets.workspace = true
 
 # 主题系统（packages/theme）：语义色/语法色/注册表。本包只是它的调用方，
 # 组件通过 `aa_gpui_kit_theme::ActiveTheme` 取色，因此这里不加 module 别名。
-# 编辑器内核（packages/editor）：InputState/Textarea 是它的薄 facade。
-editor.workspace = true
+#
+# **本包不依赖 editor**（2026-09 翻转，见 docs/zed/ui-input-analysis.md）：
+# 输入框需要编辑器内核，放在本包会让 `ui → editor`，而 `editor` 反过来要用
+# `ui` 的 Label/Icon/主题色就成环了。现在输入 facade 住在 editor 包，
+# 表单壳 InputField 住在 aa_gpui_kit_ui_input（依赖本包、编译期不依赖 editor）。
 aa_gpui_kit_theme.workspace = true
 
 # 宏包：derive_dynamic_spacing!（styles/spacing 的密度间距枚举）。

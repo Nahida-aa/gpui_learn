@@ -108,8 +108,14 @@ theme-settings = { path = "packages/theme-settings" }
 editor = { path = "packages/editor" }
 
 # 控件库（packages/ui，原 ui-gpui）：slider/icon/button/divider/tooltip/
-# context_menu 与 Input/Textarea facade。
+# context_menu 与 Label/KeyBinding。它**不依赖 editor**（2026-09 翻转，见
+# docs/zed/ui-input-analysis.md）：输入类组件住在 aa_gpui_kit_ui_input。
 aa_gpui_kit_ui = { path = "packages/ui" }
+
+# 表单类输入组件（packages/ui_input）：需要编辑器内核的 UI 组件。
+# 对齐 zed crates/ui_input：依赖 aa_gpui_kit_ui，编译期**不**依赖 editor，
+# 对 editor 的依赖换成运行时注入（ErasedEditor + ERASED_EDITOR_FACTORY）。
+aa_gpui_kit_ui_input = { path = "packages/ui_input" }
 
 # 控件库的 proc-macro 宏包（derive_dynamic_spacing! 等）。
 aa_gpui_kit_ui_macros = { path = "packages/ui_macros" }

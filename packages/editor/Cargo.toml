@@ -22,7 +22,18 @@ unicode-segmentation = "1"
 # 主题是独立包（依赖方向 editor → theme）。
 aa_gpui_kit_theme.workspace = true
 
+# 表单类输入组件（packages/ui_input）。依赖方向 editor → ui_input → ui：
+# ui_input 里的 InputField 需要编辑器，但它编译期不能依赖本包（会成环），
+# 于是本包反过来实现它的 ErasedEditor trait 并在 bind_* 里注册工厂
+# （运行时注入）。见 docs/zed/ui-input-analysis.md。
+aa_gpui_kit_ui_input.workspace = true
+
 # 交互/状态逻辑测试（选区、undo、多光标等）需要 gpui 的 test-support
 # 特性与 #[gpui::test] 宏。feature 开关供 `cargo test -F test-support`。
 [features]
 test-support = ["gpui/test-support"]
+
+[dev-dependencies]
+# display_map 的属性测试（随机 wrap/展开往返）需要它。之前一直缺这条声明，
+# 所以 `cargo test -p editor` 直接编不过 —— 补上。
+rand = "0.9"

@@ -1,0 +1,15 @@
+[package]
+name = "aa_gpui_kit_ui_input"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "基于编辑器内核的表单类输入组件（架构对齐 zed crates/ui_input）"
+
+[dependencies]
+gpui.workspace = true
+aa_gpui_kit_ui.workspace = true
+aa_gpui_kit_component.workspace = true
+
+[lints]
+workspace = true

@@ -14,7 +14,9 @@ use gpui::{
     WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use aa_gpui_kit_ui::{Button, InputEvent, InputState, bind_input_keys};
+use aa_gpui_kit_ui::Button;
+// 输入 facade 住在 editor 包（依赖方向已翻转，见 docs/zed/ui-input-analysis.md）。
+use editor::{InputEvent, InputState, bind_input_keys};
 
 struct InputDemo {
     input: Entity<InputState>,

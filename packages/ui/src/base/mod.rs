@@ -4,8 +4,13 @@
 //!   不绑定某个具体控件，未来其他组件（button/input 等）也能复用。
 //! - [`slider`]：滑块控件（单值 / Range 双 thumb）。
 //! - [`icon`]：图标控件（`Icon` + 内置 [`icon::IconName`] 枚举），渲染内嵌 SVG。
-//! - [`input`]：单行文本输入框（`Entity<InputState>`，含 IME 组字与选区）。
 //! - [`button`]：按钮（一次性元素，无持久状态）。
+//!
+//! **输入框不在这里**：单行 `InputState` / 多行 `Textarea` 需要编辑器内核，
+//! 放在这里会让 `ui` 依赖 `editor`。2026-09 已翻转依赖方向，它们住在
+//! `editor` 包（`editor::{InputState, Textarea, bind_input_keys}`）；
+//! 表单壳 `InputField` 住在 `aa_gpui_kit_ui_input`。见
+//! `docs/zed/ui-input-analysis.md`。
 //!
 //! 主题系统**不在这里**：它已独立成 workspace 包 `aa-gpui-kit-theme`
 //! （原 `base/theme`，2026-09 拆出），组件通过 `aa_gpui_kit_theme::ActiveTheme`
@@ -14,5 +19,4 @@
 pub mod button;
 pub mod geometry;
 pub mod icon;
-pub mod input;
 pub mod slider;

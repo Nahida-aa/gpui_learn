@@ -16,7 +16,11 @@ mod actions;
 // Editor 动作切到 display 空间在阶段 C 渲染度量接入时完成。
 #[allow(dead_code)]
 mod display_map;
+/// 把 Editor 擦除成 `ui_input::ErasedEditor`(运行时注入的那半边)。
+pub mod erased;
 pub mod element;
+/// 输入控件 facade(`InputState` / `Textarea` / `bind_input_keys`)。
+pub mod input;
 #[allow(dead_code)]
 mod movement;
 mod selection;
@@ -33,6 +37,8 @@ use gpui::{
 pub use actions::*;
 pub use display_map::{DisplayMap, DisplayPoint, DisplayRow};
 pub use element::EditorElement;
+pub use erased::{ErasedEditorImpl, register_erased_editor_factory};
+pub use input::{InputState, Textarea, TextareaState, bind_input_keys};
 pub(super) use selection::Selection;
 pub(super) use undo::{Change, EditIntent};
 
@@ -142,6 +148,12 @@ pub struct Editor {
     pub(super) focus_handle: FocusHandle,
     pub(super) placeholder: SharedString,
     pub(super) disabled: bool,
+    /// 掩码显示:内容不直出,渲染成 `*` 串(密码 / API key 字段用)。
+    ///
+    /// 只影响渲染,`text()` 仍返回原文(对齐 zed `Editor::set_masked`)。
+    pub(super) masked: bool,
+    /// 只读:拦截所有编辑主路径(对齐 zed `Editor::set_read_only`)。
+    pub(super) read_only: bool,
     /// 单行模式:粘贴时把 \n 换成空格(见计划文档差异 1)。
     pub(super) submit_on_enter: bool,
     // ---- 渲染缓存(LastLayout 快照,prepaint 写入、命中测试/IME 读取)----
@@ -212,6 +224,8 @@ impl Editor {
             focus_handle: cx.focus_handle(),
             placeholder: "".into(),
             disabled: false,
+            masked: false,
+            read_only: false,
             // 多行默认 Enter 换行;单行模式忽略此字段(总是 Submitted)
             submit_on_enter: false,
             last_layout: None,
@@ -473,6 +487,60 @@ impl Editor {
         self.set_value("", cx);
     }
 
+    /// 程序化替换全部内容(与 [`Self::set_value`] 同义,取 zed 的命名)。
+    pub fn set_text(&mut self, text: &str, cx: &mut Context<Self>) {
+        self.set_value(text, cx);
+    }
+
+    /// 运行时改占位符(builder 版见 [`Self::placeholder`])。
+    pub fn set_placeholder_text(&mut self, text: impl Into<SharedString>, cx: &mut Context<Self>) {
+        self.placeholder = text.into();
+        cx.notify();
+    }
+
+    /// 掩码显示开关:渲染成 `*` 串,`text()` 仍返回原文。
+    pub fn set_masked(&mut self, masked: bool, cx: &mut Context<Self>) {
+        self.masked = masked;
+        cx.notify();
+    }
+
+    /// 只读开关:置位后所有编辑主路径直接返回(见 [`Self::transact`])。
+    pub fn set_read_only(&mut self, read_only: bool, cx: &mut Context<Self>) {
+        self.read_only = read_only;
+        cx.notify();
+    }
+
+    /// 在「单行」与「限高多行」之间切换(空 = 单行)。
+    ///
+    /// 对齐 zed `set_multiline` 的语义:给 `max_lines` 就变成最多 N 行的
+    /// 自适应高度框,否则回到单行。
+    pub fn set_multiline(&mut self, max_lines: Option<usize>, cx: &mut Context<Self>) {
+        self.mode = match max_lines {
+            Some(max_rows) => EditorMode::AutoHeight {
+                min_rows: 1,
+                max_rows,
+            },
+            None => EditorMode::SingleLine,
+        };
+        cx.notify();
+    }
+
+    /// 光标移到全文末尾(输入字段接手焦点后的常见动作)。
+    pub fn move_selection_to_end(&mut self, cx: &mut Context<Self>) {
+        let end = self.rope.len();
+        self.selections = vec![Selection::new(end, end)];
+        cx.emit(EditorEvent::SelectionsChanged);
+        cx.notify();
+    }
+
+    /// 把自己擦除成 `Arc<dyn ErasedEditor>`,供 `ui_input` 的输入字段使用。
+    ///
+    /// 对齐 zed `Editor::erased`:`ui_input` 编译期不能依赖本包,于是把实例
+    /// 包一层实现它的 `ErasedEditor` trait,由工厂在运行时交给输入字段。
+    pub fn erased(&self, cx: &Context<Self>) -> std::sync::Arc<dyn aa_gpui_kit_ui_input::ErasedEditor> {
+        std::sync::Arc::new(ErasedEditorImpl(cx.entity()))
+    }
+
     // ---- 编辑主路径(对齐 zed:transact → edit → change_selections)----
 
     /// 包一个事务:编辑后统一 emit Edited + SelectionsChanged。
@@ -481,6 +549,10 @@ impl Editor {
         edit: impl FnOnce(&mut Self, &mut Context<Self>),
         cx: &mut Context<Self>,
     ) {
+        // 只读:整条编辑主路径短路(对齐 zed `set_read_only` 的语义)。
+        if self.read_only {
+            return;
+        }
         edit(self, cx);
         self.text_revision += 1;
         self.request_autoscroll();
@@ -776,6 +848,10 @@ pub fn bind_editor_keys(cx: &mut App) {
         // escape:收拢为单个主光标(zed editor::Cancel)
         KeyBinding::new("escape", Cancel, Some(EDITOR_KEY_CONTEXT)),
     ]);
+
+    // 顺带注册 `ui_input` 的编辑器工厂:之后 `ui_input::InputField` 才可用
+    // (它编译期不能依赖本包,只能运行时取工厂)。幂等,重复调用无害。
+    register_erased_editor_factory();
 }
 
 // ---- UTF-16 ↔ UTF-8(IME 接口,走 Rope 树内查询)----
