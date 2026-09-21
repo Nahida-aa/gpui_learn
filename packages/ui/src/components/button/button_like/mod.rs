@@ -22,9 +22,9 @@ mod style;
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, AnyElement, App, ClickEvent, CursorStyle, DefiniteLength, ElementId, Entity, Hsla,
-    InteractiveElement, IntoElement, ParentElement, Pixels, RenderOnce, SharedString, Styled,
-    Window, div, prelude::*, px,
+    Anchor, AnyElement, App, ClickEvent, CursorStyle, DefiniteLength, ElementId, Entity,
+    FocusHandle, Hsla, InteractiveElement, IntoElement, ParentElement, Pixels, Rems, RenderOnce,
+    SharedString, Styled, Window, div, prelude::*, px,
 };
 
 use aa_gpui_kit_theme::ActiveTheme;
@@ -32,8 +32,35 @@ use aa_gpui_kit_theme::ActiveTheme;
 use crate::components::button::ClickHandler;
 use aa_gpui_base::{Icon, IconName};
 use crate::components::button::{ButtonRadius, ButtonStyle};
+use crate::styles::ElevationIndex;
 use crate::components::tooltip::{Tooltip, TooltipHost};
 use crate::traits::{Clickable, Disableable, Toggleable};
+use crate::styles::units::rems_from_px;
+
+/// 按钮尺寸档位（对齐 zed `ButtonSize`）。
+///
+/// `rems()` 给的是**容器高度**；宽度由左右内边距与内容决定（见渲染里的 px 分档）。
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Default)]
+pub enum ButtonSize {
+    Large,
+    Medium,
+    #[default]
+    Default,
+    Compact,
+    None,
+}
+
+impl ButtonSize {
+    pub fn rems(self) -> Rems {
+        match self {
+            ButtonSize::Large => rems_from_px(32_f32),
+            ButtonSize::Medium => rems_from_px(28_f32),
+            ButtonSize::Default => rems_from_px(22_f32),
+            ButtonSize::Compact => rems_from_px(18_f32),
+            ButtonSize::None => rems_from_px(16_f32),
+        }
+    }
+}
 
 pub use common::ButtonCommon;
 pub use style::{ButtonLikeColors, button_like_colors};
@@ -51,11 +78,19 @@ pub struct ButtonLike {
     /// 图标边长（icon-only 时同时决定容器边长）。
     icon_size: Pixels,
     /// 容器边长（icon-only 时的方形边长）；`None` 时按内容自适应。
-    size: Option<Pixels>,
+    box_size: Option<Pixels>,
     /// 宽度覆盖（`FixedWidth::width` / `full_width` 设入）；`None` 时按内容自适应。
     width: Option<DefiniteLength>,
     /// Tab 键导航序号（`ButtonCommon::tab_index`）。
     tab_index: Option<isize>,
+    /// 尺寸档位（`ButtonCommon::size`）。
+    button_size: ButtonSize,
+    /// 高度覆盖；`None` 时取 `button_size.rems()`。
+    height: Option<Pixels>,
+    /// 视觉层级（`ButtonCommon::layer`），影响取色。
+    layer: Option<ElevationIndex>,
+    /// 焦点跟踪（`ButtonCommon::track_focus`）。
+    focus_handle: Option<FocusHandle>,
     radius: ButtonRadius,
     disabled: bool,
     selected: bool,
@@ -101,9 +136,13 @@ impl ButtonLike {
             icon: None,
             icon_color: None,
             icon_size: px(14.0),
-            size: None,
+            box_size: None,
             width: None,
             tab_index: None,
+            button_size: ButtonSize::default(),
+            height: None,
+            layer: None,
+            focus_handle: None,
             radius: ButtonRadius::Medium,
             disabled: false,
             selected: false,
@@ -154,8 +193,11 @@ impl ButtonLike {
     }
 
     /// 容器边长（icon-only 时的方形边长）；有文字时忽略，按内容自适应。
-    pub fn size(mut self, size: impl Into<Pixels>) -> Self {
-        self.size = Some(size.into());
+    ///
+    /// 与 `ButtonCommon::size(ButtonSize)` 区别：那是**尺寸档位**（高度档），
+    /// 这是**显式边长**。名字取 `box_size` 以避开冲突。
+    pub fn box_size(mut self, size: impl Into<Pixels>) -> Self {
+        self.box_size = Some(size.into());
         self
     }
 
@@ -251,6 +293,30 @@ impl ButtonLike {
         self
     }
 
+    /// 尺寸档位（对齐 zed `ButtonCommon::size`）。
+    pub fn size(mut self, size: ButtonSize) -> Self {
+        self.button_size = size;
+        self
+    }
+
+    /// 高度覆盖（高于 `size` 的默认高度）。
+    pub fn height(mut self, height: impl Into<Pixels>) -> Self {
+        self.height = Some(height.into());
+        self
+    }
+
+    /// 视觉层级（对齐 zed `ButtonCommon::layer`），影响取色。
+    pub fn layer(mut self, elevation: ElevationIndex) -> Self {
+        self.layer = Some(elevation);
+        self
+    }
+
+    /// 焦点跟踪（对齐 zed `ButtonCommon::track_focus`）。
+    pub fn track_focus(mut self, focus_handle: &FocusHandle) -> Self {
+        self.focus_handle = Some(focus_handle.clone());
+        self
+    }
+
     // ---- 供壳（Button / IconButton）读取状态的访问器 ----
     //
     // 与 zed 的差异：zed 的壳与 `ButtonLike` 同模块，直接读私有字段。
@@ -330,6 +396,7 @@ impl ButtonLike {
 
 impl RenderOnce for ButtonLike {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let rem_size = _window.rem_size();
         let theme = cx.theme().clone();
         let colors = theme.colors();
         let style_colors = button_like_colors(self.style, &theme);
@@ -379,11 +446,21 @@ impl RenderOnce for ButtonLike {
             });
         }
 
-        // 尺寸：icon-only 用方形（size 覆盖 icon_size）；有文字按内边距自适应。
+        // 焦点跟踪（ButtonCommon::track_focus）。
+        if let Some(focus_handle) = self.focus_handle.clone() {
+            button = button.track_focus(&focus_handle);
+        }
+
+        // 尺寸：icon-only 用方形（size 覆盖 icon_size）；有文字按档位定高 + 内边距。
+        //
+        // 与 zed 的差异：zed 的 `ButtonLike` 高度取 `size.rems()`、左右内边距按
+        // 档位分 `Base08` / `Base04`。我们把比例缩放由 `rem_size` 承担，
+        // 内边距沿用原来的 `px_3` / `px_0p5`，避免引入尚未校准的档位表。
+        button = button.h(self.height.unwrap_or_else(|| self.button_size.rems() * rem_size));
         button = if has_label {
-            button.px_3().py_0p5().text_size(px(14.))
+            button.px_3().text_size(px(14.))
         } else {
-            let side = self.size.unwrap_or(self.icon_size * 12. / 7.);
+            let side = self.box_size.unwrap_or(self.icon_size * 12. / 7.);
             button.size(side)
         };
 
@@ -496,6 +573,21 @@ impl ButtonCommon for ButtonLike {
 
     fn tab_index(mut self, tab_index: impl Into<isize>) -> Self {
         self.tab_index = Some(tab_index.into());
+        self
+    }
+
+    fn size(mut self, size: ButtonSize) -> Self {
+        self.button_size = size;
+        self
+    }
+
+    fn layer(mut self, elevation: ElevationIndex) -> Self {
+        self.layer = Some(elevation);
+        self
+    }
+
+    fn track_focus(mut self, focus_handle: &FocusHandle) -> Self {
+        self.focus_handle = Some(focus_handle.clone());
         self
     }
 

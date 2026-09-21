@@ -22,6 +22,7 @@
 //! - `aa_gpui_kit_assets`（`packages/assets`）：图标等资源内嵌
 //! - `aa_gpui_kit_ui_input`（`packages/ui_input`）：需要编辑器的表单件
 
+pub mod animation;
 pub mod component_prelude;
 pub mod components;
 pub mod prelude;
@@ -48,7 +49,8 @@ pub use styles::*;
 // 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
 // 「主题不隶属控件库」这件事在代码里应当可见。
 pub use components::button::{
-    ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, KeybindingPosition,
+    ButtonCommon, ButtonLike, ButtonRadius, ButtonSize, ButtonStyle, IconButton,
+    KeybindingPosition,
     SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
 pub use components::context_menu::{

@@ -21,6 +21,7 @@ pub use gpui::{
     Styled, Window, div, hsla, percentage, px, rgb, rgba,
 };
 
+pub use crate::animation::{AnimationDirection, AnimationDuration, DefaultAnimations};
 pub use crate::traits::animation_ext::*;
 pub use crate::traits::clickable::*;
 pub use crate::traits::disableable::*;
@@ -35,7 +36,8 @@ pub use crate::components::avatar::{
     CollaboratorAvailability,
 };
 pub use crate::components::button::{
-    ButtonCommon, ButtonLike, ButtonRadius, ButtonStyle, IconButton, KeybindingPosition,
+    ButtonCommon, ButtonLike, ButtonRadius, ButtonSize, ButtonStyle, IconButton,
+    KeybindingPosition,
     SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
 pub use crate::components::context_menu::{

@@ -33,9 +33,11 @@
 pub mod geometry;
 pub mod icon;
 pub mod slider;
+pub mod transformable;
 
 pub use geometry::{Scale, position_to_value, quantize, value_to_percentage};
 pub use icon::{Icon, IconName, IconSize};
 pub use slider::element::{DragSlider, Slider, SliderEvent};
 pub use slider::slider_state::{SliderState, ThumbMode};
 pub use slider::slider_value::SliderValue;
+pub use transformable::Transformable;

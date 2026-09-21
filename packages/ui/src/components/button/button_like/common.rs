@@ -19,6 +19,12 @@ pub trait ButtonCommon {
     fn style(self, style: crate::components::button::ButtonStyle) -> Self;
     /// Tab 键导航序号（对齐 zed `ButtonCommon::tab_index`）。
     fn tab_index(self, tab_index: impl Into<isize>) -> Self;
+    /// The size of the button（对齐 zed `ButtonCommon::size`）。
+    fn size(self, size: super::ButtonSize) -> Self;
+    /// 视觉层级：决定按钮取哪一层的背景/边框色（对齐 zed `ButtonCommon::layer`）。
+    fn layer(self, elevation: crate::styles::ElevationIndex) -> Self;
+    /// 跟踪给定的焦点句柄（对齐 zed `ButtonCommon::track_focus`）。
+    fn track_focus(self, focus_handle: &gpui::FocusHandle) -> Self;
     /// The tooltip that shows when a user hovers over the button.
     ///
     /// Nearly all interactable elements should have a tooltip. Some example

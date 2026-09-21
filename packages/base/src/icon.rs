@@ -62,7 +62,9 @@ pub struct Icon {
     name: IconName,
     size: Pixels,
     color: Option<Hsla>,
-    rotation: Option<Radians>,
+    /// 完整变换（对齐 zed：zed 的 Icon 也存 `Transformation` 而非单个角度，
+    /// 这样 `Transformable::transform` 与旋转动画都能接上）。
+    transformation: Transformation,
 }
 
 impl Icon {
@@ -72,7 +74,7 @@ impl Icon {
             name,
             size: px(16.0),
             color: None,
-            rotation: None,
+            transformation: Transformation::default(),
         }
     }
 
@@ -88,9 +90,9 @@ impl Icon {
         self
     }
 
-    /// 旋转角度（弧度）。
+    /// 旋转角度（弧度）。设置后覆盖之前的变换。
     pub fn rotate(mut self, radians: impl Into<Radians>) -> Self {
-        self.rotation = Some(radians.into());
+        self.transformation = Transformation::rotate(radians.into());
         self
     }
 
@@ -107,8 +109,15 @@ impl Default for Icon {
             name: IconName::Check,
             size: px(16.0),
             color: None,
-            rotation: None,
+            transformation: Transformation::default(),
         }
+    }
+}
+
+impl crate::Transformable for Icon {
+    fn transform(mut self, transformation: Transformation) -> Self {
+        self.transformation = transformation;
+        self
     }
 }
 
@@ -126,8 +135,6 @@ impl RenderOnce for Icon {
             .size(self.size)
             .flex_none()
             .text_color(color)
-            .when_some(self.rotation, |this, rotation| {
-                this.with_transformation(Transformation::rotate(rotation))
-            })
+            .with_transformation(self.transformation)
     }
 }

@@ -36,7 +36,7 @@ pub mod button_like;
 pub mod split_button;
 
 pub use button::Button;
-pub use button_like::{ButtonCommon, ButtonLike};
+pub use button_like::{ButtonCommon, ButtonLike, ButtonSize};
 
 /// 点击回调（`ButtonLike` / `IconButton` 的内部存储类型）。
 pub type ClickHandler = Box<dyn Fn(&ClickEvent, &mut Window, &mut App)>;
@@ -241,7 +241,7 @@ impl RenderOnce for IconButton {
             .icon(self.icon)
             .icon_color(Some(icon_color))
             .icon_size(self.icon_size)
-            .size(self.size)
+            .box_size(self.size)
             .radius(self.radius)
             .selected(selected)
             .disabled(disabled)

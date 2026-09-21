@@ -17,7 +17,7 @@ use crate::components::button::{ButtonLike, ButtonStyle, KeybindingPosition};
 use crate::components::label::LabelLike;
 use crate::prelude::*;
 use crate::traits::SelectableButton;
-use crate::{Color, DynamicSpacing, Icon, KeyBinding, LabelSize, UiDensity};
+use crate::{Color, DynamicSpacing, ElevationIndex, Icon, KeyBinding, LabelSize, UiDensity};
 
 /// An element that creates a button with a label and optional icons.
 ///
@@ -268,6 +268,24 @@ impl ButtonCommon for Button {
         self
     }
 
+    /// 设置尺寸档位。
+    fn size(mut self, size: super::button_like::ButtonSize) -> Self {
+        self.base = self.base.size(size);
+        self
+    }
+
+    /// 设置视觉层级。
+    fn layer(mut self, elevation: ElevationIndex) -> Self {
+        self.base = self.base.layer(elevation);
+        self
+    }
+
+    /// 跟踪焦点句柄。
+    fn track_focus(mut self, focus_handle: &gpui::FocusHandle) -> Self {
+        self.base = self.base.track_focus(focus_handle);
+        self
+    }
+
     fn style(mut self, style: ButtonStyle) -> Self {
         self.base = self.base.style(style);
         self
@@ -318,10 +336,9 @@ impl RenderOnce for Button {
             self.label_color.unwrap_or_default()
         };
 
-        // 与 zed 的差异 2：zed 的 `Icon` 收 `IconSize`、`.color()` 收语义 `Color`，
-        // 且 loading 用 `.with_keyed_rotate_animation(...)`；我们的 `Icon` 收
-        // `Pixels` / `Hsla`，也还没有 keyed 旋转动画，所以 loading 退化成
-        // 静态的 spinner 图标。补动画机制后再对齐。
+        // 与 zed 的差异 2：zed 的 `Icon` 收 `IconSize`、`.color()` 收语义 `Color`；
+        // 我们的 `Icon` 收 `Pixels` / `Hsla`，所以尺寸与颜色在这里展开。
+        // loading 的旋转动画已对齐（`with_keyed_rotate_animation`）。
         let start_icon_size = IconSize::Small.rems() * window.rem_size();
         let gap = DynamicSpacing::Base04.rems(UiDensity::Default);
         let label_gap = DynamicSpacing::Base06.rems(UiDensity::Default);
@@ -329,10 +346,15 @@ impl RenderOnce for Button {
         let icon_color = |color: Color| color.color(cx);
 
         let start: Option<AnyElement> = if self.loading {
+            // 对齐 zed：loading 时用 keyed 旋转动画的 spinner，替代 start_icon。
+            // id 取按钮自己的 id + "loading"，避免同页多个按钮互相干扰动画状态。
+            let loading_icon_id = (base.id_ref().clone(), "loading");
             Some(
                 Icon::new(IconName::LoadCircle)
                     .size(start_icon_size)
                     .color(icon_color(Color::Muted))
+                    // 2 秒转一圈（与 zed 的 `loading_icon_id, 2` 一致）。
+                    .with_keyed_rotate_animation(loading_icon_id, 2)
                     .into_any_element(),
             )
         } else {

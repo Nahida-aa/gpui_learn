@@ -1,9 +1,4 @@
-use gpui::Transformation;
+//! `Transformable` 定义在 `aa_gpui_base`（`Icon` 在那里，孤儿规则要求 trait 与
+//! 类型同 crate）。这里原样转出，外部路径 `aa_gpui_kit_ui::Transformable` 不变。
 
-/// A trait for components that can be transformed.
-///
-/// 对齐 zed `crates/ui/src/traits/transformable.rs`。
-pub trait Transformable {
-    /// Sets the transformation for the element.
-    fn transform(self, transformation: Transformation) -> Self;
-}
+pub use aa_gpui_base::Transformable;
