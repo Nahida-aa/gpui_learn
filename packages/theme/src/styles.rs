@@ -29,7 +29,7 @@ mod syntax;
 mod system;
 
 pub use accents::AccentColors;
-pub use colors::{ThemeColors, ThemeColorsRefinement};
+pub use colors::{ThemeColorField, ThemeColors, ThemeColorsRefinement, all_theme_colors};
 pub use players::{PlayerColor, PlayerColors};
 pub use status::{DiagnosticColors, StatusColors, StatusColorsRefinement};
 pub use syntax::SyntaxTheme;

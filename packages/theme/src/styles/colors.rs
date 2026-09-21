@@ -11,8 +11,11 @@
 //! / [`accents`](super::accents) / [`players`](super::players)
 //! / [`syntax`](super::syntax)。
 
-use gpui::Hsla;
+use gpui::{App, Hsla, SharedString};
 use refineable::Refineable;
+
+// `all_theme_colors` 里的 `cx.theme()` 来自本包的 ActiveTheme。
+use crate::ActiveTheme;
 
 /// UI 语义色（对齐 zed `ThemeColors`，字段名与注释均沿用 zed 原文）。
 ///
@@ -362,4 +365,523 @@ pub struct ThemeColors {
     pub editor_cursor: Hsla,
     /// 链接色。zed 用 `text_accent` 表达，我们保留这个更直白的名字。
     pub link: Hsla,
+}
+
+/// 主题色字段的枚举（对齐 zed `theme::ThemeColorField`）。
+///
+/// 用途：把「结构体的字段」变成「可以遍历的值」。有了它才能:
+/// - 批量取出当前主题全部颜色（[`all_theme_colors`]，主题预览/色板用）；
+/// - 按名字单点取色（[`ThemeColors::color`]，设置里覆盖单个色用）。
+///
+/// `EnumIter` 让 `ThemeColorField::iter()` 可用，`AsRefStr` +
+/// `serialize_all = "snake_case"` 让 `field.as_ref()` 直接得到与
+/// `ThemeColors` 字段名一致的 snake_case 字符串。
+#[derive(strum::EnumIter, Debug, Clone, Copy, strum::AsRefStr)]
+#[strum(serialize_all = "snake_case")]
+pub enum ThemeColorField {
+    Border,
+    BorderVariant,
+    BorderFocused,
+    BorderSelected,
+    BorderTransparent,
+    BorderDisabled,
+    ElevatedSurfaceBackground,
+    SurfaceBackground,
+    Background,
+    ElementBackground,
+    ElementHover,
+    ElementActive,
+    ElementSelected,
+    ElementSelectionBackground,
+    ElementDisabled,
+    DropTargetBackground,
+    DropTargetBorder,
+    GhostElementBackground,
+    GhostElementHover,
+    GhostElementActive,
+    GhostElementSelected,
+    GhostElementDisabled,
+    Text,
+    TextMuted,
+    TextPlaceholder,
+    TextDisabled,
+    TextAccent,
+    Icon,
+    IconMuted,
+    IconDisabled,
+    IconPlaceholder,
+    IconAccent,
+    DebuggerAccent,
+    StatusBarBackground,
+    TitleBarBackground,
+    TitleBarInactiveBackground,
+    ToolbarBackground,
+    TabBarBackground,
+    TabInactiveBackground,
+    TabActiveBackground,
+    SearchMatchBackground,
+    SearchActiveMatchBackground,
+    PanelBackground,
+    PanelFocusedBorder,
+    PanelIndentGuide,
+    PanelIndentGuideHover,
+    PanelIndentGuideActive,
+    PanelOverlayBackground,
+    PanelOverlayHover,
+    PaneFocusedBorder,
+    PaneGroupBorder,
+    ScrollbarThumbBackground,
+    ScrollbarThumbHoverBackground,
+    ScrollbarThumbActiveBackground,
+    ScrollbarThumbBorder,
+    ScrollbarTrackBackground,
+    ScrollbarTrackBorder,
+    MinimapThumbBackground,
+    MinimapThumbHoverBackground,
+    MinimapThumbActiveBackground,
+    MinimapThumbBorder,
+    VimNormalBackground,
+    VimInsertBackground,
+    VimReplaceBackground,
+    VimVisualBackground,
+    VimVisualLineBackground,
+    VimVisualBlockBackground,
+    VimYankBackground,
+    VimHelixJumpLabelForeground,
+    VimHelixNormalBackground,
+    VimHelixSelectBackground,
+    VimNormalForeground,
+    VimInsertForeground,
+    VimReplaceForeground,
+    VimVisualForeground,
+    VimVisualLineForeground,
+    VimVisualBlockForeground,
+    VimHelixNormalForeground,
+    VimHelixSelectForeground,
+    EditorForeground,
+    EditorCodeLensForeground,
+    EditorBackground,
+    EditorGutterBackground,
+    EditorSubheaderBackground,
+    EditorActiveLineBackground,
+    EditorHighlightedLineBackground,
+    EditorDebuggerActiveLineBackground,
+    EditorLineNumber,
+    EditorActiveLineNumber,
+    EditorHoverLineNumber,
+    EditorInvisible,
+    EditorWrapGuide,
+    EditorActiveWrapGuide,
+    EditorIndentGuide,
+    EditorIndentGuideActive,
+    EditorDocumentHighlightReadBackground,
+    EditorDocumentHighlightWriteBackground,
+    EditorDocumentHighlightBracketBackground,
+    EditorDiffHunkAddedBackground,
+    EditorDiffHunkAddedHollowBackground,
+    EditorDiffHunkAddedHollowBorder,
+    EditorDiffHunkDeletedBackground,
+    EditorDiffHunkDeletedHollowBackground,
+    EditorDiffHunkDeletedHollowBorder,
+    TerminalBackground,
+    TerminalForeground,
+    TerminalBrightForeground,
+    TerminalDimForeground,
+    TerminalAnsiBackground,
+    TerminalAnsiBlack,
+    TerminalAnsiBrightBlack,
+    TerminalAnsiDimBlack,
+    TerminalAnsiRed,
+    TerminalAnsiBrightRed,
+    TerminalAnsiDimRed,
+    TerminalAnsiGreen,
+    TerminalAnsiBrightGreen,
+    TerminalAnsiDimGreen,
+    TerminalAnsiYellow,
+    TerminalAnsiBrightYellow,
+    TerminalAnsiDimYellow,
+    TerminalAnsiBlue,
+    TerminalAnsiBrightBlue,
+    TerminalAnsiDimBlue,
+    TerminalAnsiMagenta,
+    TerminalAnsiBrightMagenta,
+    TerminalAnsiDimMagenta,
+    TerminalAnsiCyan,
+    TerminalAnsiBrightCyan,
+    TerminalAnsiDimCyan,
+    TerminalAnsiWhite,
+    TerminalAnsiBrightWhite,
+    TerminalAnsiDimWhite,
+    LinkTextHover,
+    VersionControlAdded,
+    VersionControlDeleted,
+    VersionControlModified,
+    VersionControlRenamed,
+    VersionControlConflict,
+    VersionControlIgnored,
+    VersionControlWordAdded,
+    VersionControlWordDeleted,
+    VersionControlConflictMarkerOurs,
+    VersionControlConflictMarkerTheirs,
+    SelectionBackground,
+    EditorCursor,
+    Link,
+}
+
+impl ThemeColors {
+    /// 按字段取色。
+    ///
+    /// 与 zed 一致：`Option<Hsla>` 的字段在 `None` 时回落到 `text_muted`。
+    pub fn color(&self, field: ThemeColorField) -> Hsla {
+        match field {
+            ThemeColorField::Border => self.border,
+            ThemeColorField::BorderVariant => self.border_variant,
+            ThemeColorField::BorderFocused => self.border_focused,
+            ThemeColorField::BorderSelected => self.border_selected,
+            ThemeColorField::BorderTransparent => self.border_transparent,
+            ThemeColorField::BorderDisabled => self.border_disabled,
+            ThemeColorField::ElevatedSurfaceBackground => self.elevated_surface_background,
+            ThemeColorField::SurfaceBackground => self.surface_background,
+            ThemeColorField::Background => self.background,
+            ThemeColorField::ElementBackground => self.element_background,
+            ThemeColorField::ElementHover => self.element_hover,
+            ThemeColorField::ElementActive => self.element_active,
+            ThemeColorField::ElementSelected => self.element_selected,
+            ThemeColorField::ElementSelectionBackground => self.element_selection_background,
+            ThemeColorField::ElementDisabled => self.element_disabled,
+            ThemeColorField::DropTargetBackground => self.drop_target_background,
+            ThemeColorField::DropTargetBorder => self.drop_target_border,
+            ThemeColorField::GhostElementBackground => self.ghost_element_background,
+            ThemeColorField::GhostElementHover => self.ghost_element_hover,
+            ThemeColorField::GhostElementActive => self.ghost_element_active,
+            ThemeColorField::GhostElementSelected => self.ghost_element_selected,
+            ThemeColorField::GhostElementDisabled => self.ghost_element_disabled,
+            ThemeColorField::Text => self.text,
+            ThemeColorField::TextMuted => self.text_muted,
+            ThemeColorField::TextPlaceholder => self.text_placeholder,
+            ThemeColorField::TextDisabled => self.text_disabled,
+            ThemeColorField::TextAccent => self.text_accent,
+            ThemeColorField::Icon => self.icon,
+            ThemeColorField::IconMuted => self.icon_muted,
+            ThemeColorField::IconDisabled => self.icon_disabled,
+            ThemeColorField::IconPlaceholder => self.icon_placeholder,
+            ThemeColorField::IconAccent => self.icon_accent,
+            ThemeColorField::DebuggerAccent => self.debugger_accent,
+            ThemeColorField::StatusBarBackground => self.status_bar_background,
+            ThemeColorField::TitleBarBackground => self.title_bar_background,
+            ThemeColorField::TitleBarInactiveBackground => self.title_bar_inactive_background,
+            ThemeColorField::ToolbarBackground => self.toolbar_background,
+            ThemeColorField::TabBarBackground => self.tab_bar_background,
+            ThemeColorField::TabInactiveBackground => self.tab_inactive_background,
+            ThemeColorField::TabActiveBackground => self.tab_active_background,
+            ThemeColorField::SearchMatchBackground => self.search_match_background,
+            ThemeColorField::SearchActiveMatchBackground => self.search_active_match_background,
+            ThemeColorField::PanelBackground => self.panel_background,
+            ThemeColorField::PanelFocusedBorder => self.panel_focused_border,
+            ThemeColorField::PanelIndentGuide => self.panel_indent_guide,
+            ThemeColorField::PanelIndentGuideHover => self.panel_indent_guide_hover,
+            ThemeColorField::PanelIndentGuideActive => self.panel_indent_guide_active,
+            ThemeColorField::PanelOverlayBackground => self.panel_overlay_background,
+            ThemeColorField::PanelOverlayHover => self.panel_overlay_hover,
+            ThemeColorField::PaneFocusedBorder => self.pane_focused_border,
+            ThemeColorField::PaneGroupBorder => self.pane_group_border,
+            ThemeColorField::ScrollbarThumbBackground => self.scrollbar_thumb_background,
+            ThemeColorField::ScrollbarThumbHoverBackground => self.scrollbar_thumb_hover_background,
+            ThemeColorField::ScrollbarThumbActiveBackground => self.scrollbar_thumb_active_background,
+            ThemeColorField::ScrollbarThumbBorder => self.scrollbar_thumb_border,
+            ThemeColorField::ScrollbarTrackBackground => self.scrollbar_track_background,
+            ThemeColorField::ScrollbarTrackBorder => self.scrollbar_track_border,
+            ThemeColorField::MinimapThumbBackground => self.minimap_thumb_background,
+            ThemeColorField::MinimapThumbHoverBackground => self.minimap_thumb_hover_background,
+            ThemeColorField::MinimapThumbActiveBackground => self.minimap_thumb_active_background,
+            ThemeColorField::MinimapThumbBorder => self.minimap_thumb_border,
+            ThemeColorField::VimNormalBackground => self.vim_normal_background,
+            ThemeColorField::VimInsertBackground => self.vim_insert_background,
+            ThemeColorField::VimReplaceBackground => self.vim_replace_background,
+            ThemeColorField::VimVisualBackground => self.vim_visual_background,
+            ThemeColorField::VimVisualLineBackground => self.vim_visual_line_background,
+            ThemeColorField::VimVisualBlockBackground => self.vim_visual_block_background,
+            ThemeColorField::VimYankBackground => self.vim_yank_background,
+            ThemeColorField::VimHelixJumpLabelForeground => self.vim_helix_jump_label_foreground,
+            ThemeColorField::VimHelixNormalBackground => self.vim_helix_normal_background,
+            ThemeColorField::VimHelixSelectBackground => self.vim_helix_select_background,
+            ThemeColorField::VimNormalForeground => self.vim_normal_foreground,
+            ThemeColorField::VimInsertForeground => self.vim_insert_foreground,
+            ThemeColorField::VimReplaceForeground => self.vim_replace_foreground,
+            ThemeColorField::VimVisualForeground => self.vim_visual_foreground,
+            ThemeColorField::VimVisualLineForeground => self.vim_visual_line_foreground,
+            ThemeColorField::VimVisualBlockForeground => self.vim_visual_block_foreground,
+            ThemeColorField::VimHelixNormalForeground => self.vim_helix_normal_foreground,
+            ThemeColorField::VimHelixSelectForeground => self.vim_helix_select_foreground,
+            ThemeColorField::EditorForeground => self.editor_foreground,
+            ThemeColorField::EditorCodeLensForeground => self.editor_code_lens_foreground.unwrap_or(self.text_muted),
+            ThemeColorField::EditorBackground => self.editor_background,
+            ThemeColorField::EditorGutterBackground => self.editor_gutter_background,
+            ThemeColorField::EditorSubheaderBackground => self.editor_subheader_background,
+            ThemeColorField::EditorActiveLineBackground => self.editor_active_line_background,
+            ThemeColorField::EditorHighlightedLineBackground => self.editor_highlighted_line_background,
+            ThemeColorField::EditorDebuggerActiveLineBackground => self.editor_debugger_active_line_background,
+            ThemeColorField::EditorLineNumber => self.editor_line_number,
+            ThemeColorField::EditorActiveLineNumber => self.editor_active_line_number,
+            ThemeColorField::EditorHoverLineNumber => self.editor_hover_line_number,
+            ThemeColorField::EditorInvisible => self.editor_invisible,
+            ThemeColorField::EditorWrapGuide => self.editor_wrap_guide,
+            ThemeColorField::EditorActiveWrapGuide => self.editor_active_wrap_guide,
+            ThemeColorField::EditorIndentGuide => self.editor_indent_guide,
+            ThemeColorField::EditorIndentGuideActive => self.editor_indent_guide_active,
+            ThemeColorField::EditorDocumentHighlightReadBackground => self.editor_document_highlight_read_background,
+            ThemeColorField::EditorDocumentHighlightWriteBackground => self.editor_document_highlight_write_background,
+            ThemeColorField::EditorDocumentHighlightBracketBackground => self.editor_document_highlight_bracket_background,
+            ThemeColorField::EditorDiffHunkAddedBackground => self.editor_diff_hunk_added_background,
+            ThemeColorField::EditorDiffHunkAddedHollowBackground => self.editor_diff_hunk_added_hollow_background,
+            ThemeColorField::EditorDiffHunkAddedHollowBorder => self.editor_diff_hunk_added_hollow_border,
+            ThemeColorField::EditorDiffHunkDeletedBackground => self.editor_diff_hunk_deleted_background,
+            ThemeColorField::EditorDiffHunkDeletedHollowBackground => self.editor_diff_hunk_deleted_hollow_background,
+            ThemeColorField::EditorDiffHunkDeletedHollowBorder => self.editor_diff_hunk_deleted_hollow_border,
+            ThemeColorField::TerminalBackground => self.terminal_background,
+            ThemeColorField::TerminalForeground => self.terminal_foreground,
+            ThemeColorField::TerminalBrightForeground => self.terminal_bright_foreground,
+            ThemeColorField::TerminalDimForeground => self.terminal_dim_foreground,
+            ThemeColorField::TerminalAnsiBackground => self.terminal_ansi_background,
+            ThemeColorField::TerminalAnsiBlack => self.terminal_ansi_black,
+            ThemeColorField::TerminalAnsiBrightBlack => self.terminal_ansi_bright_black,
+            ThemeColorField::TerminalAnsiDimBlack => self.terminal_ansi_dim_black,
+            ThemeColorField::TerminalAnsiRed => self.terminal_ansi_red,
+            ThemeColorField::TerminalAnsiBrightRed => self.terminal_ansi_bright_red,
+            ThemeColorField::TerminalAnsiDimRed => self.terminal_ansi_dim_red,
+            ThemeColorField::TerminalAnsiGreen => self.terminal_ansi_green,
+            ThemeColorField::TerminalAnsiBrightGreen => self.terminal_ansi_bright_green,
+            ThemeColorField::TerminalAnsiDimGreen => self.terminal_ansi_dim_green,
+            ThemeColorField::TerminalAnsiYellow => self.terminal_ansi_yellow,
+            ThemeColorField::TerminalAnsiBrightYellow => self.terminal_ansi_bright_yellow,
+            ThemeColorField::TerminalAnsiDimYellow => self.terminal_ansi_dim_yellow,
+            ThemeColorField::TerminalAnsiBlue => self.terminal_ansi_blue,
+            ThemeColorField::TerminalAnsiBrightBlue => self.terminal_ansi_bright_blue,
+            ThemeColorField::TerminalAnsiDimBlue => self.terminal_ansi_dim_blue,
+            ThemeColorField::TerminalAnsiMagenta => self.terminal_ansi_magenta,
+            ThemeColorField::TerminalAnsiBrightMagenta => self.terminal_ansi_bright_magenta,
+            ThemeColorField::TerminalAnsiDimMagenta => self.terminal_ansi_dim_magenta,
+            ThemeColorField::TerminalAnsiCyan => self.terminal_ansi_cyan,
+            ThemeColorField::TerminalAnsiBrightCyan => self.terminal_ansi_bright_cyan,
+            ThemeColorField::TerminalAnsiDimCyan => self.terminal_ansi_dim_cyan,
+            ThemeColorField::TerminalAnsiWhite => self.terminal_ansi_white,
+            ThemeColorField::TerminalAnsiBrightWhite => self.terminal_ansi_bright_white,
+            ThemeColorField::TerminalAnsiDimWhite => self.terminal_ansi_dim_white,
+            ThemeColorField::LinkTextHover => self.link_text_hover,
+            ThemeColorField::VersionControlAdded => self.version_control_added,
+            ThemeColorField::VersionControlDeleted => self.version_control_deleted,
+            ThemeColorField::VersionControlModified => self.version_control_modified,
+            ThemeColorField::VersionControlRenamed => self.version_control_renamed,
+            ThemeColorField::VersionControlConflict => self.version_control_conflict,
+            ThemeColorField::VersionControlIgnored => self.version_control_ignored,
+            ThemeColorField::VersionControlWordAdded => self.version_control_word_added,
+            ThemeColorField::VersionControlWordDeleted => self.version_control_word_deleted,
+            ThemeColorField::VersionControlConflictMarkerOurs => self.version_control_conflict_marker_ours,
+            ThemeColorField::VersionControlConflictMarkerTheirs => self.version_control_conflict_marker_theirs,
+            ThemeColorField::SelectionBackground => self.selection_background,
+            ThemeColorField::EditorCursor => self.editor_cursor,
+            ThemeColorField::Link => self.link,
+        }
+    }
+
+    /// 遍历全部 (字段, 颜色)。
+    pub fn iter(&self) -> impl Iterator<Item = (ThemeColorField, Hsla)> + '_ {
+        use strum::IntoEnumIterator;
+
+        ThemeColorField::iter().map(move |field| (field, self.color(field)))
+    }
+
+    /// 收集成 `Vec`（批量渲染色板时常用）。
+    pub fn to_vec(&self) -> Vec<(ThemeColorField, Hsla)> {
+        self.iter().collect()
+    }
+}
+
+/// 当前主题的全部颜色：`(颜色, 字段名)`。
+///
+/// 对齐 zed `theme::all_theme_colors`。zed 里唯一的消费方是
+/// `workspace/src/theme_preview.rs`（把主题色铺成色板预览）。
+pub fn all_theme_colors(cx: &mut App) -> Vec<(Hsla, SharedString)> {
+    let theme = cx.theme();
+    theme
+        .colors()
+        .iter()
+        .map(|(field, color)| (color, SharedString::from(field.as_ref().to_string())))
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use strum::IntoEnumIterator;
+
+    /// 主题色字段总数。改 `ThemeColors` 的字段时这个数必须同步 ——
+    /// 忘了同步 `ThemeColorField` 就会在这里挂掉（枚举少一个变体，
+    /// `color()` 的 match 也会编译不过，双重保险）。
+    const THEME_COLOR_FIELD_COUNT: usize = 147;
+
+    #[test]
+    fn field_enum_covers_every_color() {
+        assert_eq!(
+            ThemeColorField::iter().count(),
+            THEME_COLOR_FIELD_COUNT,
+            "ThemeColorField 的变体数与 ThemeColors 的字段数不一致");
+    }
+
+    #[test]
+    fn field_names_match_struct_fields() {
+        // `AsRefStr` + snake_case 必须能还原出结构体里的字段名，
+        // 否则按名字取色 / 主题 JSON 覆盖会对不上。
+        // 注意不能收 `&str`：`as_ref()` 借用闭包里的临时值，收引用会悬垂。
+        let names: Vec<String> = ThemeColorField::iter()
+            .map(|f| f.as_ref().to_string())
+            .collect();
+        assert!(names.iter().any(|n| n == "border"), "缺少字段 border");
+        assert!(names.iter().any(|n| n == "border_variant"), "缺少字段 border_variant");
+        assert!(names.iter().any(|n| n == "border_focused"), "缺少字段 border_focused");
+        assert!(names.iter().any(|n| n == "border_selected"), "缺少字段 border_selected");
+        assert!(names.iter().any(|n| n == "border_transparent"), "缺少字段 border_transparent");
+        assert!(names.iter().any(|n| n == "border_disabled"), "缺少字段 border_disabled");
+        assert!(names.iter().any(|n| n == "elevated_surface_background"), "缺少字段 elevated_surface_background");
+        assert!(names.iter().any(|n| n == "surface_background"), "缺少字段 surface_background");
+        assert!(names.iter().any(|n| n == "background"), "缺少字段 background");
+        assert!(names.iter().any(|n| n == "element_background"), "缺少字段 element_background");
+        assert!(names.iter().any(|n| n == "element_hover"), "缺少字段 element_hover");
+        assert!(names.iter().any(|n| n == "element_active"), "缺少字段 element_active");
+        assert!(names.iter().any(|n| n == "element_selected"), "缺少字段 element_selected");
+        assert!(names.iter().any(|n| n == "element_selection_background"), "缺少字段 element_selection_background");
+        assert!(names.iter().any(|n| n == "element_disabled"), "缺少字段 element_disabled");
+        assert!(names.iter().any(|n| n == "drop_target_background"), "缺少字段 drop_target_background");
+        assert!(names.iter().any(|n| n == "drop_target_border"), "缺少字段 drop_target_border");
+        assert!(names.iter().any(|n| n == "ghost_element_background"), "缺少字段 ghost_element_background");
+        assert!(names.iter().any(|n| n == "ghost_element_hover"), "缺少字段 ghost_element_hover");
+        assert!(names.iter().any(|n| n == "ghost_element_active"), "缺少字段 ghost_element_active");
+        assert!(names.iter().any(|n| n == "ghost_element_selected"), "缺少字段 ghost_element_selected");
+        assert!(names.iter().any(|n| n == "ghost_element_disabled"), "缺少字段 ghost_element_disabled");
+        assert!(names.iter().any(|n| n == "text"), "缺少字段 text");
+        assert!(names.iter().any(|n| n == "text_muted"), "缺少字段 text_muted");
+        assert!(names.iter().any(|n| n == "text_placeholder"), "缺少字段 text_placeholder");
+        assert!(names.iter().any(|n| n == "text_disabled"), "缺少字段 text_disabled");
+        assert!(names.iter().any(|n| n == "text_accent"), "缺少字段 text_accent");
+        assert!(names.iter().any(|n| n == "icon"), "缺少字段 icon");
+        assert!(names.iter().any(|n| n == "icon_muted"), "缺少字段 icon_muted");
+        assert!(names.iter().any(|n| n == "icon_disabled"), "缺少字段 icon_disabled");
+        assert!(names.iter().any(|n| n == "icon_placeholder"), "缺少字段 icon_placeholder");
+        assert!(names.iter().any(|n| n == "icon_accent"), "缺少字段 icon_accent");
+        assert!(names.iter().any(|n| n == "debugger_accent"), "缺少字段 debugger_accent");
+        assert!(names.iter().any(|n| n == "status_bar_background"), "缺少字段 status_bar_background");
+        assert!(names.iter().any(|n| n == "title_bar_background"), "缺少字段 title_bar_background");
+        assert!(names.iter().any(|n| n == "title_bar_inactive_background"), "缺少字段 title_bar_inactive_background");
+        assert!(names.iter().any(|n| n == "toolbar_background"), "缺少字段 toolbar_background");
+        assert!(names.iter().any(|n| n == "tab_bar_background"), "缺少字段 tab_bar_background");
+        assert!(names.iter().any(|n| n == "tab_inactive_background"), "缺少字段 tab_inactive_background");
+        assert!(names.iter().any(|n| n == "tab_active_background"), "缺少字段 tab_active_background");
+        assert!(names.iter().any(|n| n == "search_match_background"), "缺少字段 search_match_background");
+        assert!(names.iter().any(|n| n == "search_active_match_background"), "缺少字段 search_active_match_background");
+        assert!(names.iter().any(|n| n == "panel_background"), "缺少字段 panel_background");
+        assert!(names.iter().any(|n| n == "panel_focused_border"), "缺少字段 panel_focused_border");
+        assert!(names.iter().any(|n| n == "panel_indent_guide"), "缺少字段 panel_indent_guide");
+        assert!(names.iter().any(|n| n == "panel_indent_guide_hover"), "缺少字段 panel_indent_guide_hover");
+        assert!(names.iter().any(|n| n == "panel_indent_guide_active"), "缺少字段 panel_indent_guide_active");
+        assert!(names.iter().any(|n| n == "panel_overlay_background"), "缺少字段 panel_overlay_background");
+        assert!(names.iter().any(|n| n == "panel_overlay_hover"), "缺少字段 panel_overlay_hover");
+        assert!(names.iter().any(|n| n == "pane_focused_border"), "缺少字段 pane_focused_border");
+        assert!(names.iter().any(|n| n == "pane_group_border"), "缺少字段 pane_group_border");
+        assert!(names.iter().any(|n| n == "scrollbar_thumb_background"), "缺少字段 scrollbar_thumb_background");
+        assert!(names.iter().any(|n| n == "scrollbar_thumb_hover_background"), "缺少字段 scrollbar_thumb_hover_background");
+        assert!(names.iter().any(|n| n == "scrollbar_thumb_active_background"), "缺少字段 scrollbar_thumb_active_background");
+        assert!(names.iter().any(|n| n == "scrollbar_thumb_border"), "缺少字段 scrollbar_thumb_border");
+        assert!(names.iter().any(|n| n == "scrollbar_track_background"), "缺少字段 scrollbar_track_background");
+        assert!(names.iter().any(|n| n == "scrollbar_track_border"), "缺少字段 scrollbar_track_border");
+        assert!(names.iter().any(|n| n == "minimap_thumb_background"), "缺少字段 minimap_thumb_background");
+        assert!(names.iter().any(|n| n == "minimap_thumb_hover_background"), "缺少字段 minimap_thumb_hover_background");
+        assert!(names.iter().any(|n| n == "minimap_thumb_active_background"), "缺少字段 minimap_thumb_active_background");
+        assert!(names.iter().any(|n| n == "minimap_thumb_border"), "缺少字段 minimap_thumb_border");
+        assert!(names.iter().any(|n| n == "vim_normal_background"), "缺少字段 vim_normal_background");
+        assert!(names.iter().any(|n| n == "vim_insert_background"), "缺少字段 vim_insert_background");
+        assert!(names.iter().any(|n| n == "vim_replace_background"), "缺少字段 vim_replace_background");
+        assert!(names.iter().any(|n| n == "vim_visual_background"), "缺少字段 vim_visual_background");
+        assert!(names.iter().any(|n| n == "vim_visual_line_background"), "缺少字段 vim_visual_line_background");
+        assert!(names.iter().any(|n| n == "vim_visual_block_background"), "缺少字段 vim_visual_block_background");
+        assert!(names.iter().any(|n| n == "vim_yank_background"), "缺少字段 vim_yank_background");
+        assert!(names.iter().any(|n| n == "vim_helix_jump_label_foreground"), "缺少字段 vim_helix_jump_label_foreground");
+        assert!(names.iter().any(|n| n == "vim_helix_normal_background"), "缺少字段 vim_helix_normal_background");
+        assert!(names.iter().any(|n| n == "vim_helix_select_background"), "缺少字段 vim_helix_select_background");
+        assert!(names.iter().any(|n| n == "vim_normal_foreground"), "缺少字段 vim_normal_foreground");
+        assert!(names.iter().any(|n| n == "vim_insert_foreground"), "缺少字段 vim_insert_foreground");
+        assert!(names.iter().any(|n| n == "vim_replace_foreground"), "缺少字段 vim_replace_foreground");
+        assert!(names.iter().any(|n| n == "vim_visual_foreground"), "缺少字段 vim_visual_foreground");
+        assert!(names.iter().any(|n| n == "vim_visual_line_foreground"), "缺少字段 vim_visual_line_foreground");
+        assert!(names.iter().any(|n| n == "vim_visual_block_foreground"), "缺少字段 vim_visual_block_foreground");
+        assert!(names.iter().any(|n| n == "vim_helix_normal_foreground"), "缺少字段 vim_helix_normal_foreground");
+        assert!(names.iter().any(|n| n == "vim_helix_select_foreground"), "缺少字段 vim_helix_select_foreground");
+        assert!(names.iter().any(|n| n == "editor_foreground"), "缺少字段 editor_foreground");
+        assert!(names.iter().any(|n| n == "editor_code_lens_foreground"), "缺少字段 editor_code_lens_foreground");
+        assert!(names.iter().any(|n| n == "editor_background"), "缺少字段 editor_background");
+        assert!(names.iter().any(|n| n == "editor_gutter_background"), "缺少字段 editor_gutter_background");
+        assert!(names.iter().any(|n| n == "editor_subheader_background"), "缺少字段 editor_subheader_background");
+        assert!(names.iter().any(|n| n == "editor_active_line_background"), "缺少字段 editor_active_line_background");
+        assert!(names.iter().any(|n| n == "editor_highlighted_line_background"), "缺少字段 editor_highlighted_line_background");
+        assert!(names.iter().any(|n| n == "editor_debugger_active_line_background"), "缺少字段 editor_debugger_active_line_background");
+        assert!(names.iter().any(|n| n == "editor_line_number"), "缺少字段 editor_line_number");
+        assert!(names.iter().any(|n| n == "editor_active_line_number"), "缺少字段 editor_active_line_number");
+        assert!(names.iter().any(|n| n == "editor_hover_line_number"), "缺少字段 editor_hover_line_number");
+        assert!(names.iter().any(|n| n == "editor_invisible"), "缺少字段 editor_invisible");
+        assert!(names.iter().any(|n| n == "editor_wrap_guide"), "缺少字段 editor_wrap_guide");
+        assert!(names.iter().any(|n| n == "editor_active_wrap_guide"), "缺少字段 editor_active_wrap_guide");
+        assert!(names.iter().any(|n| n == "editor_indent_guide"), "缺少字段 editor_indent_guide");
+        assert!(names.iter().any(|n| n == "editor_indent_guide_active"), "缺少字段 editor_indent_guide_active");
+        assert!(names.iter().any(|n| n == "editor_document_highlight_read_background"), "缺少字段 editor_document_highlight_read_background");
+        assert!(names.iter().any(|n| n == "editor_document_highlight_write_background"), "缺少字段 editor_document_highlight_write_background");
+        assert!(names.iter().any(|n| n == "editor_document_highlight_bracket_background"), "缺少字段 editor_document_highlight_bracket_background");
+        assert!(names.iter().any(|n| n == "editor_diff_hunk_added_background"), "缺少字段 editor_diff_hunk_added_background");
+        assert!(names.iter().any(|n| n == "editor_diff_hunk_added_hollow_background"), "缺少字段 editor_diff_hunk_added_hollow_background");
+        assert!(names.iter().any(|n| n == "editor_diff_hunk_added_hollow_border"), "缺少字段 editor_diff_hunk_added_hollow_border");
+        assert!(names.iter().any(|n| n == "editor_diff_hunk_deleted_background"), "缺少字段 editor_diff_hunk_deleted_background");
+        assert!(names.iter().any(|n| n == "editor_diff_hunk_deleted_hollow_background"), "缺少字段 editor_diff_hunk_deleted_hollow_background");
+        assert!(names.iter().any(|n| n == "editor_diff_hunk_deleted_hollow_border"), "缺少字段 editor_diff_hunk_deleted_hollow_border");
+        assert!(names.iter().any(|n| n == "terminal_background"), "缺少字段 terminal_background");
+        assert!(names.iter().any(|n| n == "terminal_foreground"), "缺少字段 terminal_foreground");
+        assert!(names.iter().any(|n| n == "terminal_bright_foreground"), "缺少字段 terminal_bright_foreground");
+        assert!(names.iter().any(|n| n == "terminal_dim_foreground"), "缺少字段 terminal_dim_foreground");
+        assert!(names.iter().any(|n| n == "terminal_ansi_background"), "缺少字段 terminal_ansi_background");
+        assert!(names.iter().any(|n| n == "terminal_ansi_black"), "缺少字段 terminal_ansi_black");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_black"), "缺少字段 terminal_ansi_bright_black");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_black"), "缺少字段 terminal_ansi_dim_black");
+        assert!(names.iter().any(|n| n == "terminal_ansi_red"), "缺少字段 terminal_ansi_red");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_red"), "缺少字段 terminal_ansi_bright_red");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_red"), "缺少字段 terminal_ansi_dim_red");
+        assert!(names.iter().any(|n| n == "terminal_ansi_green"), "缺少字段 terminal_ansi_green");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_green"), "缺少字段 terminal_ansi_bright_green");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_green"), "缺少字段 terminal_ansi_dim_green");
+        assert!(names.iter().any(|n| n == "terminal_ansi_yellow"), "缺少字段 terminal_ansi_yellow");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_yellow"), "缺少字段 terminal_ansi_bright_yellow");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_yellow"), "缺少字段 terminal_ansi_dim_yellow");
+        assert!(names.iter().any(|n| n == "terminal_ansi_blue"), "缺少字段 terminal_ansi_blue");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_blue"), "缺少字段 terminal_ansi_bright_blue");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_blue"), "缺少字段 terminal_ansi_dim_blue");
+        assert!(names.iter().any(|n| n == "terminal_ansi_magenta"), "缺少字段 terminal_ansi_magenta");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_magenta"), "缺少字段 terminal_ansi_bright_magenta");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_magenta"), "缺少字段 terminal_ansi_dim_magenta");
+        assert!(names.iter().any(|n| n == "terminal_ansi_cyan"), "缺少字段 terminal_ansi_cyan");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_cyan"), "缺少字段 terminal_ansi_bright_cyan");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_cyan"), "缺少字段 terminal_ansi_dim_cyan");
+        assert!(names.iter().any(|n| n == "terminal_ansi_white"), "缺少字段 terminal_ansi_white");
+        assert!(names.iter().any(|n| n == "terminal_ansi_bright_white"), "缺少字段 terminal_ansi_bright_white");
+        assert!(names.iter().any(|n| n == "terminal_ansi_dim_white"), "缺少字段 terminal_ansi_dim_white");
+        assert!(names.iter().any(|n| n == "link_text_hover"), "缺少字段 link_text_hover");
+        assert!(names.iter().any(|n| n == "version_control_added"), "缺少字段 version_control_added");
+        assert!(names.iter().any(|n| n == "version_control_deleted"), "缺少字段 version_control_deleted");
+        assert!(names.iter().any(|n| n == "version_control_modified"), "缺少字段 version_control_modified");
+        assert!(names.iter().any(|n| n == "version_control_renamed"), "缺少字段 version_control_renamed");
+        assert!(names.iter().any(|n| n == "version_control_conflict"), "缺少字段 version_control_conflict");
+        assert!(names.iter().any(|n| n == "version_control_ignored"), "缺少字段 version_control_ignored");
+        assert!(names.iter().any(|n| n == "version_control_word_added"), "缺少字段 version_control_word_added");
+        assert!(names.iter().any(|n| n == "version_control_word_deleted"), "缺少字段 version_control_word_deleted");
+        assert!(names.iter().any(|n| n == "version_control_conflict_marker_ours"), "缺少字段 version_control_conflict_marker_ours");
+        assert!(names.iter().any(|n| n == "version_control_conflict_marker_theirs"), "缺少字段 version_control_conflict_marker_theirs");
+        assert!(names.iter().any(|n| n == "selection_background"), "缺少字段 selection_background");
+        assert!(names.iter().any(|n| n == "editor_cursor"), "缺少字段 editor_cursor");
+        assert!(names.iter().any(|n| n == "link"), "缺少字段 link");
+    }
 }

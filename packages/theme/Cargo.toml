@@ -39,6 +39,10 @@ thiserror = "2"
 # 图标主题的 id 生成(注册表装载图标主题时给每个主题一个唯一 id)。
 uuid = { version = "1", features = ["v4"] }
 
+# ThemeColorField 的 `EnumIter` / `AsRefStr`（对齐 zed theme 同款用法）：
+# 让 147 个主题色字段能被遍历、并能取回 snake_case 字段名。
+strum = { version = "0.27", features = ["derive"] }
+
 # state.rs 的 SystemAppearance 等全局测试用 #[gpui::test]。
 [features]
 test-support = ["gpui/test-support"]

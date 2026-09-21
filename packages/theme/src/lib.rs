@@ -82,5 +82,6 @@ pub use state::{
 };
 pub use styles::{
     AccentColors, DiagnosticColors, PlayerColor, PlayerColors, StatusColors,
-    StatusColorsRefinement, SyntaxTheme, SystemColors, ThemeColors, ThemeColorsRefinement,
+    StatusColorsRefinement, SyntaxTheme, SystemColors, ThemeColorField, ThemeColors,
+    ThemeColorsRefinement, all_theme_colors,
 };
