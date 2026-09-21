@@ -7,9 +7,8 @@
 //! 有了它，`menu` / `toolbar` 这类容器就能接受"任何按钮"而不关心
 //! 具体是 `Button`、`IconButton` 还是 `ButtonLike`。
 
-use gpui::{App, ElementId, Entity, Window};
+use gpui::{AnyView, App, ElementId, Window};
 
-use crate::components::tooltip::Tooltip;
 
 /// 所有按钮类元素共有的配置接口（builder 风格，方法消费 self 返回 Self）。
 pub trait ButtonCommon {
@@ -29,8 +28,5 @@ pub trait ButtonCommon {
     ///
     /// Nearly all interactable elements should have a tooltip. Some example
     /// exceptions might be a scroll bar, or a slider.
-    fn tooltip(
-        self,
-        tooltip: impl Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static,
-    ) -> Self;
+    fn tooltip(self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self;
 }

@@ -22,7 +22,7 @@ mod style;
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, AnyElement, App, ClickEvent, CursorStyle, DefiniteLength, ElementId, Entity,
+    Anchor, AnyElement, AnyView, App, ClickEvent, CursorStyle, DefiniteLength, ElementId,
     FocusHandle, Hsla, InteractiveElement, IntoElement, ParentElement, Pixels, Rems, RenderOnce,
     SharedString, Styled, Window, div, prelude::*, px,
 };
@@ -33,7 +33,7 @@ use crate::components::button::ClickHandler;
 use aa_gpui_base::{Icon, IconName};
 use crate::components::button::{ButtonRadius, ButtonStyle};
 use crate::styles::{DynamicSpacing, ElevationIndex};
-use crate::components::tooltip::{Tooltip, TooltipHost};
+use crate::components::tooltip::TooltipHost;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use crate::styles::units::rems_from_px;
 
@@ -97,8 +97,12 @@ pub struct ButtonLike {
     aria_label: Option<SharedString>,
     cursor_style: CursorStyle,
     on_click: Option<ClickHandler>,
-    /// 悬停提示（工厂现场建 [`Tooltip`] 实体）。
-    tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static>>,
+    /// 悬停提示（工厂现场建视图）。
+    ///
+    /// 与 zed 一致收 `AnyView`（不是 `Entity<Tooltip>`）—— 这样
+    /// `Tooltip::text(..)` / `Tooltip::with_meta(.., cx)` / 任意自定义视图
+    /// 都能直接传。
+    tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
     /// 提示锚点（默认 `Anchor::TopLeft`）。
     tooltip_anchor: Option<Anchor>,
     /// 提示 attachment（默认 `Anchor::BottomLeft`，即提示在元素下方）。
@@ -363,10 +367,7 @@ impl ButtonLike {
     }
 
     /// 悬停提示（`Tooltip::text("...")` 等）。
-    pub fn tooltip(
-        mut self,
-        tooltip: impl Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static,
-    ) -> Self {
+    pub fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
         self
     }
@@ -375,7 +376,7 @@ impl ButtonLike {
     /// （`IconButton` 等薄壳内部持有 `Rc`，直接转发用）。
     pub fn tooltip_rc(
         mut self,
-        tooltip: Rc<dyn Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static>,
+        tooltip: Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>,
     ) -> Self {
         self.tooltip = Some(tooltip);
         self
@@ -612,7 +613,7 @@ impl ButtonCommon for ButtonLike {
 
     fn tooltip(
         mut self,
-        tooltip: impl Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static,
+        tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static,
     ) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
         self

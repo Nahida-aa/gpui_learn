@@ -23,12 +23,11 @@ pub enum KeybindingPosition {
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, App, ClickEvent, CursorStyle, ElementId, Entity, Hsla, IntoElement, Pixels,
+    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, Hsla, IntoElement, Pixels,
     SharedString, Window, prelude::*, px,
 };
 
 use aa_gpui_base::IconName;
-use crate::components::tooltip::Tooltip;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use aa_gpui_kit_theme::ActiveTheme;
 pub mod button;
@@ -107,7 +106,7 @@ pub struct IconButton {
     aria_label: Option<SharedString>,
     on_click: Option<ClickHandler>,
     /// 悬停提示（[`Tooltip::text`] 等工厂现场建实体）。
-    tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static>>,
+    tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
     /// 提示锚点（默认 `Anchor::TopLeft`）。
     tooltip_anchor: Option<Anchor>,
     /// 提示 attachment（默认 `Anchor::BottomLeft`，即提示在元素下方）。
@@ -196,10 +195,7 @@ impl IconButton {
     }
 
     /// 悬停提示（`Tooltip::text("...")` 等）。
-    pub fn tooltip(
-        mut self,
-        tooltip: impl Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static,
-    ) -> Self {
+    pub fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
         self
     }

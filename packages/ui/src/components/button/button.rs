@@ -293,7 +293,7 @@ impl ButtonCommon for Button {
 
     fn tooltip(
         mut self,
-        tooltip: impl Fn(&mut Window, &mut App) -> gpui::Entity<crate::components::Tooltip> + 'static,
+        tooltip: impl Fn(&mut Window, &mut App) -> gpui::AnyView + 'static,
     ) -> Self {
         self.base = ButtonLike::tooltip(self.base, tooltip);
         self

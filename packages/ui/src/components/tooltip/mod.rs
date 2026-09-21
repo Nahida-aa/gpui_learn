@@ -25,11 +25,11 @@ use std::{
 };
 
 use gpui::{
-    Anchor, AnyElement, App, AppContext, AsyncWindowContext, Bounds, Context, DismissEvent,
-    Element, ElementId, Entity, EventEmitter, FocusHandle, Focusable, GlobalElementId, Hitbox,
-    HitboxBehavior, InteractiveElement, IntoElement, LayoutId, MouseDownEvent, MouseExitEvent,
-    MouseMoveEvent, ParentElement, Pixels, Point, Render, SharedString, Window, anchored, deferred,
-    div, prelude::*, px,
+    Anchor, AnyElement, AnyView, App, AppContext, AsyncWindowContext, Bounds, Context,
+    DismissEvent, Element, ElementId, EventEmitter, FocusHandle, Focusable,
+    GlobalElementId, Hitbox, HitboxBehavior, InteractiveElement, IntoElement, LayoutId,
+    MouseDownEvent, MouseExitEvent, MouseMoveEvent, ParentElement, Pixels, Point, Render,
+    SharedString, Window, anchored, deferred, div, prelude::*, px,
 };
 
 use aa_gpui_kit_theme::ActiveTheme;
@@ -38,16 +38,32 @@ use aa_gpui_kit_theme::ActiveTheme;
 pub struct Tooltip {
     title: SharedString,
     meta: Option<SharedString>,
-    key_binding: Option<SharedString>,
+    /// 快捷键提示（对齐 zed：存的是 ui 的 [`KeyBinding`] 组件，不是字符串，
+    /// 这样能跟随平台显示 `⌘S` / `Ctrl+S`）。
+    key_binding: Option<crate::KeyBinding>,
     focus_handle: FocusHandle,
 }
 
 impl Tooltip {
+    /// 立即创建一个纯文字提示视图（对齐 zed `Tooltip::simple`）。
+    ///
+    /// 与 [`Self::text`] 的区别：`simple` 直接返回 `AnyView`（当场建实体），
+    /// `text` 返回**工厂闭包**（延迟到需要显示时才建）。`ButtonCommon::tooltip`
+    /// 收的是闭包，所以多数场景用 `text`。
+    pub fn simple(title: impl Into<SharedString>, cx: &mut App) -> AnyView {
+        let title = title.into();
+        cx.new(|cx| Tooltip {
+            title,
+            meta: None,
+            key_binding: None,
+            focus_handle: cx.focus_handle(),
+        })
+        .into()
+    }
+
     /// 创建纯文字提示；返回能在 `window`/`cx` 现场建实体的工厂函数，
     /// 可直接传给 [`TooltipHost::tooltip`] / `IconButton::tooltip`。
-    pub fn text(
-        title: impl Into<SharedString>,
-    ) -> impl Fn(&mut Window, &mut App) -> Entity<Tooltip> {
+    pub fn text(title: impl Into<SharedString>) -> impl Fn(&mut Window, &mut App) -> AnyView {
         let title = title.into();
         move |_window: &mut Window, cx: &mut App| {
             cx.new(|cx| Tooltip {
@@ -56,16 +72,17 @@ impl Tooltip {
                 key_binding: None,
                 focus_handle: cx.focus_handle(),
             })
+            .into()
         }
     }
 
-    /// 带快捷键提示（`<kbd>` 样式）的提示。
+    /// 带快捷键提示的提示（工厂形式）。`key_binding` 是 ui 的 [`KeyBinding`]
+    /// 组件（可用 `KeyBinding::for_action(action, cx)` 得到）。
     pub fn with_key_binding(
         title: impl Into<SharedString>,
-        key_binding: impl Into<SharedString>,
-    ) -> impl Fn(&mut Window, &mut App) -> Entity<Tooltip> {
+        key_binding: crate::KeyBinding,
+    ) -> impl Fn(&mut Window, &mut App) -> AnyView {
         let title = title.into();
-        let key_binding = key_binding.into();
         move |_window: &mut Window, cx: &mut App| {
             cx.new(|cx| Tooltip {
                 title: title.clone(),
@@ -73,24 +90,57 @@ impl Tooltip {
                 key_binding: Some(key_binding.clone()),
                 focus_handle: cx.focus_handle(),
             })
+            .into()
         }
     }
 
-    /// 带次要说明（第二行小字）的提示。
+    /// 带次要说明（第二行小字）的提示 —— **立即创建**（对齐 zed `Tooltip::with_meta`）。
+    ///
+    /// 签名为 `(title, action, meta, cx)`：`action` 有值时会把它的快捷键
+    /// 一并显示出来（等价于 zed 的 `key_binding` 字段）。
+    ///
+    /// 用法与 zed 同形：
+    /// ```ignore
+    /// ButtonLike::new("swatch").tooltip(move |_window, cx| {
+    ///     Tooltip::with_meta("Sunset", None, "#ff8800", cx)
+    /// })
+    /// ```
     pub fn with_meta(
         title: impl Into<SharedString>,
+        action: Option<&dyn gpui::Action>,
         meta: impl Into<SharedString>,
-    ) -> impl Fn(&mut Window, &mut App) -> Entity<Tooltip> {
-        let title = title.into();
-        let meta = meta.into();
-        move |_window: &mut Window, cx: &mut App| {
-            cx.new(|cx| Tooltip {
-                title: title.clone(),
-                meta: Some(meta.clone()),
-                key_binding: None,
-                focus_handle: cx.focus_handle(),
-            })
-        }
+        cx: &mut App,
+    ) -> AnyView {
+        let key_binding = action.map(|action| crate::KeyBinding::for_action(action, cx));
+        let (title, meta) = (title.into(), meta.into());
+        cx.new(|cx| Tooltip {
+            title,
+            meta: Some(meta),
+            key_binding,
+            focus_handle: cx.focus_handle(),
+        })
+        .into()
+    }
+
+    /// 同 [`Self::with_meta`]，但快捷键按 `focus_handle` 的上下文匹配
+    /// （对齐 zed `Tooltip::with_meta_in`）。
+    pub fn with_meta_in(
+        title: impl Into<SharedString>,
+        action: Option<&dyn gpui::Action>,
+        meta: impl Into<SharedString>,
+        focus_handle: &FocusHandle,
+        cx: &mut App,
+    ) -> AnyView {
+        let key_binding =
+            action.map(|action| crate::KeyBinding::for_action_in(action, focus_handle, cx));
+        let (title, meta) = (title.into(), meta.into());
+        cx.new(|cx| Tooltip {
+            title,
+            meta: Some(meta),
+            key_binding,
+            focus_handle: cx.focus_handle(),
+        })
+        .into()
     }
 }
 
@@ -113,13 +163,8 @@ impl Render for Tooltip {
 
         let mut row = div().flex().flex_row().items_center().gap_4();
 
-        row = if let Some(key_binding) = self.key_binding.as_ref() {
-            row.justify_between().child(title).child(
-                div()
-                    .text_sm()
-                    .text_color(colors.text_muted)
-                    .child(key_binding.clone()),
-            )
+        row = if let Some(key_binding) = self.key_binding.clone() {
+            row.justify_between().child(title).child(key_binding)
         } else {
             row.child(title)
         };
@@ -159,8 +204,12 @@ pub struct TooltipHost {
     id: ElementId,
     /// trigger 子元素构建（首次 request_layout 消费一次）。
     child_builder: Option<Box<dyn FnOnce(bool, &mut Window, &mut App) -> AnyElement + 'static>>,
-    /// hover 延迟结束后现场创建提示实体。
-    tooltip_builder: Option<Rc<dyn Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static>>,
+    /// hover 延迟结束后现场创建提示视图。
+    ///
+    /// 与 zed 一致收 `AnyView`（不是 `Entity<Tooltip>`）—— 这样
+    /// `Tooltip::text(..)` / `Tooltip::with_meta(.., cx)` / 任意自定义视图
+    /// 都能直接塞进来。
+    tooltip_builder: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
     /// 悬停多久后显示提示。
     hover_delay: Duration,
     /// 提示哪一角对齐锚点（默认 `Anchor::TopLeft`）。
@@ -189,10 +238,7 @@ impl TooltipHost {
     }
 
     /// 设定提示工厂（`Tooltip::text(...)` 等）。
-    pub fn tooltip(
-        mut self,
-        f: impl Fn(&mut Window, &mut App) -> Entity<Tooltip> + 'static,
-    ) -> Self {
+    pub fn tooltip(mut self, f: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip_builder = Some(Rc::new(f));
         self
     }
@@ -246,7 +292,7 @@ pub fn tooltip_host(id: impl Into<ElementId>) -> TooltipHost {
 
 /// 每个宿主元素实例的运行时状态：当前显示的提示、定位点、hover/计时标志。
 pub struct TooltipHandleElementState {
-    tip: Rc<RefCell<Option<Entity<Tooltip>>>>,
+    tip: Rc<RefCell<Option<AnyView>>>,
     position: Rc<RefCell<Point<Pixels>>>,
     hover: Rc<Cell<bool>>,
     timer_active: Rc<Cell<bool>>,
