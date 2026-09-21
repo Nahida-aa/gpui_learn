@@ -1,0 +1,19 @@
+[package]
+name = "aa_clock"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "逻辑时钟（Lamport / 版本向量）与可注入的系统时钟；零 gpui 依赖（对齐 zed crates/clock 的自研版）"
+
+[features]
+# 打开后导出 FakeSystemClock（可 set_now / advance 的假时钟），供集成测试使用。
+test-support = ["dep:parking_lot"]
+
+[dependencies]
+parking_lot = { workspace = true, optional = true }
+serde = { version = "1", features = ["derive"] }
+smallvec.workspace = true
+
+[lints]
+workspace = true

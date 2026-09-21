@@ -256,6 +256,15 @@ name = "_45_tree"
 version = "0.1.0"
 
 [[package]]
+name = "aa_clock"
+version = "0.1.0"
+dependencies = [
+ "parking_lot",
+ "serde",
+ "smallvec",
+]
+
+[[package]]
 name = "aa_gpui_base"
 version = "0.1.0"
 dependencies = [
