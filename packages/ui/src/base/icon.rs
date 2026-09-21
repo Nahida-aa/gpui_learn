@@ -7,10 +7,50 @@
 //! 渲染时通过 `IconName::path()` 拿到 RustEmbed 路径。
 
 use gpui::{
-    Hsla, IntoElement, Pixels, Radians, RenderOnce, Transformation, Window, prelude::*, px, svg,
+    Hsla, IntoElement, Pixels, Radians, Rems, RenderOnce, Transformation, Window, prelude::*, px,
+    svg,
 };
 
 pub use aa_gpui_kit_assets::IconName;
+
+use crate::styles::units::rems_from_px;
+
+/// 图标尺寸的语义档位（对齐 zed `crates/ui/src/components/icon.rs:54`）。
+///
+/// `KeyIcon`（`KeyBinding` 的图标键）用它取默认尺寸；`Custom(Rems)` 让调用方
+/// 传入任意 rem 值。
+///
+/// 与 zed 的差异：zed 另有 `square_components()` / `square()` 算「含 padding 的
+/// 正方形边长」，依赖 `ui_density(cx)`。我们没有设置系统（密度需显式传参），
+/// 且目前没有调用方需要它，故先不移植 —— 需要时再补。
+#[derive(Default, PartialEq, Copy, Clone)]
+pub enum IconSize {
+    /// 10px
+    Indicator,
+    /// 12px
+    XSmall,
+    /// 14px
+    Small,
+    #[default]
+    /// 16px
+    Medium,
+    /// 48px
+    XLarge,
+    Custom(Rems),
+}
+
+impl IconSize {
+    pub fn rems(self) -> Rems {
+        match self {
+            IconSize::Indicator => rems_from_px(10_f32),
+            IconSize::XSmall => rems_from_px(12_f32),
+            IconSize::Small => rems_from_px(14_f32),
+            IconSize::Medium => rems_from_px(16_f32),
+            IconSize::XLarge => rems_from_px(48_f32),
+            IconSize::Custom(size) => size,
+        }
+    }
+}
 
 /// 图标控件：渲染一个内嵌 SVG。
 #[derive(Clone, IntoElement)]

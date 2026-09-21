@@ -16,6 +16,7 @@
 pub mod button;
 pub mod context_menu;
 pub mod divider;
+pub mod keybinding;
 pub mod label;
 pub mod popover_menu;
 pub mod stack;
@@ -24,6 +25,10 @@ pub mod tooltip;
 pub use button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu};
 pub use divider::{Divider, DividerColor, DividerDirection};
+pub use keybinding::{
+    Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,
+    text_for_action, text_for_keystroke, text_for_keystrokes, text_for_keybinding_keystrokes,
+};
 pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle};
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use stack::{h_flex, v_flex};

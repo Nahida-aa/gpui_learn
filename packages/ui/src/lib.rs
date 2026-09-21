@@ -53,6 +53,10 @@ pub use components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
 };
 pub use components::divider::{Divider, DividerColor, DividerDirection};
+pub use components::keybinding::{
+    Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,
+    text_for_action, text_for_keystroke, text_for_keystrokes, text_for_keybinding_keystrokes,
+};
 pub use components::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use traits::{

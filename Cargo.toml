@@ -121,6 +121,9 @@ syn = { version = "2", features = ["full"] }
 
 # 组件示例库（packages/component）的依赖：inventory 做链接期静态注册。
 smallvec = "1"
+# KeyBinding 用 itertools::intersperse / Itertools::join 拼按键提示。
+# 版本与 zed workspace 对齐（0.14 线）。
+itertools = "0.14"
 inventory = "0.3"
 parking_lot = "0.12"
 strum = { version = "0.27", features = ["derive"] }

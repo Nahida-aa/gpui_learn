@@ -15,10 +15,10 @@
 
 pub use gpui::prelude::*;
 pub use gpui::{
-    Anchor, AnyElement, App, BoxShadow, ClickEvent, Context, CursorStyle, DismissEvent, Div,
-    Element, ElementId, Entity, Hsla, InteractiveElement, IntoElement, ManagedView, ParentElement,
-    Pixels, Point, RenderOnce, SharedString, Stateful, Styled, Window, div, hsla, percentage, px,
-    rgb, rgba,
+    AbsoluteLength, Anchor, AnyElement, App, BoxShadow, ClickEvent, Context, CursorStyle,
+    DefiniteLength, DismissEvent, Div, Element, ElementId, Entity, Hsla, InteractiveElement,
+    IntoElement, ManagedView, ParentElement, Pixels, Point, RenderOnce, SharedString, Stateful,
+    Styled, Window, div, hsla, percentage, px, rgb, rgba,
 };
 
 pub use crate::traits::animation_ext::*;
@@ -36,6 +36,7 @@ pub use crate::components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu, right_click_menu,
 };
 pub use crate::components::divider::{Divider, DividerColor, DividerDirection};
+pub use crate::components::keybinding::{Key, KeyBinding, KeyBindingStyle, KeyIcon};
 pub use crate::components::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use crate::components::stack::{h_flex, v_flex};
 pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
