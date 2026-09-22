@@ -44,4 +44,19 @@ impl SyntaxTheme {
     pub fn names(&self) -> impl Iterator<Item = &str> {
         self.capture_name_map.keys().map(String::as_str)
     }
+
+    /// 按 capture 名取其在 `highlights` 中的索引(对齐 zed `SyntaxTheme::highlight_id`)。
+    ///
+    /// 返回 `None` 表示该主题未定义此 capture 的高亮样式。`language_core` 的
+    /// `HighlightId::new` 直接消费这个值,从而让 `HighlightId` 的内部值等于
+    /// `highlights` 的索引(与 zed 语义一致)。
+    pub fn highlight_id(&self, capture: &str) -> Option<u32> {
+        self.capture_name_map.get(capture).map(|&ix| ix as u32)
+    }
+
+    /// 按索引取高亮样式(对齐 zed `SyntaxTheme::get(HighlightId)`,
+    /// 其中 `HighlightId` 的内部值即此索引)。
+    pub fn highlight(&self, id: usize) -> Option<&HighlightStyle> {
+        self.highlights.get(id)
+    }
 }
