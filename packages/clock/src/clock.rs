@@ -1,9 +1,13 @@
 //! 逻辑时钟：`ReplicaId` / `Lamport` / `Global`（版本向量）。
 //!
-//! 与 zed `crates/clock/src/clock.rs` 同构，但去掉了 zed 协同协议特有的副本常量
-//! （`REMOTE_SERVER` / `AGENT` / `LOCAL_BRANCH` / `FIRST_COLLAB_ID` 与 `is_remote`）——
-//! 它们是 zed collab 服务端的语义，我们目前只有本地副本。将来真做协同时再按自己的
-//! 协议加回来，别照抄。
+//! 与 zed `crates/clock/src/clock.rs` 同构：**连副本 ID 的语义也保持一致**
+//! （[`ReplicaId::LOCAL`] / `REMOTE_SERVER` / `AGENT` / `LOCAL_BRANCH` /
+//! `FIRST_COLLAB_ID` 与 [`ReplicaId::is_remote`]，取值同 zed）。这样将来若要和
+//! zed 的 collab 协议互通，或者照搬依赖副本编号的 zed 代码，语义都不会撞车 ——
+//! 编号是**线上协议的一部分**，一旦写进序列化数据再改就晚了。
+//!
+//! 注意目前我们还没有协同实现，这些常量只是把语义位占住；`ReplicaId::LOCAL`
+//! 之外的值在纯本地场景不会出现。
 
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -14,13 +18,21 @@ use std::{
 
 /// A unique identifier for each replica that can produce edits.
 ///
-/// 我们目前只有一个本地副本，所以只定义 [`ReplicaId::LOCAL`]。
+/// 常量取值与 zed `crates/clock/src/clock.rs` 完全一致（见模块文档说明）。
 #[derive(Clone, Copy, Default, Eq, Hash, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
 pub struct ReplicaId(u16);
 
 impl ReplicaId {
     /// The local replica.
     pub const LOCAL: ReplicaId = ReplicaId(0);
+    /// The remote replica of the connected remote server.
+    pub const REMOTE_SERVER: ReplicaId = ReplicaId(1);
+    /// The agent's unique identifier.
+    pub const AGENT: ReplicaId = ReplicaId(2);
+    /// A local branch.
+    pub const LOCAL_BRANCH: ReplicaId = ReplicaId(3);
+    /// The first collaborative replica ID, any replica equal or greater than this is a collaborative replica.
+    pub const FIRST_COLLAB_ID: ReplicaId = ReplicaId(8);
 
     pub fn new(id: u16) -> Self {
         ReplicaId(id)
@@ -29,12 +41,25 @@ impl ReplicaId {
     pub fn as_u16(&self) -> u16 {
         self.0
     }
+
+    /// 是不是「远端」副本：直达的远端服务器，或任意协作副本（id ≥ `FIRST_COLLAB_ID`）。
+    ///
+    /// `AGENT` / `LOCAL_BRANCH` 都不算远端 —— 它们和 `LOCAL` 一样跑在本机。
+    pub fn is_remote(self) -> bool {
+        self == ReplicaId::REMOTE_SERVER || self >= ReplicaId::FIRST_COLLAB_ID
+    }
 }
 
 impl fmt::Debug for ReplicaId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if *self == ReplicaId::LOCAL {
             write!(f, "<local>")
+        } else if *self == ReplicaId::REMOTE_SERVER {
+            write!(f, "<remote>")
+        } else if *self == ReplicaId::AGENT {
+            write!(f, "<agent>")
+        } else if *self == ReplicaId::LOCAL_BRANCH {
+            write!(f, "<branch>")
         } else {
             write!(f, "{}", self.0)
         }
@@ -399,8 +424,44 @@ mod tests {
     #[test]
     fn test_debug() {
         let global: Global = [lamport(0, 2), lamport(1, 9)].into_iter().collect();
-        assert_eq!(format!("{global:?}"), "Global {<local>: 2, 1: 9}");
+        // replica_id 1 现在是 REMOTE_SERVER，所以 Debug 打印名字而不是数字。
+        assert_eq!(format!("{global:?}"), "Global {<local>: 2, <remote>: 9}");
         assert_eq!(format!("{:?}", Lamport::MAX), "Lamport {MAX}");
         assert_eq!(format!("{:?}", ReplicaId::LOCAL), "<local>");
+    }
+
+    #[test]
+    fn test_replica_id_constants_match_zed() {
+        // 取值是协议语义的一部分，改动会破坏与 zed collab 的兼容性。
+        assert_eq!(ReplicaId::LOCAL.as_u16(), 0);
+        assert_eq!(ReplicaId::REMOTE_SERVER.as_u16(), 1);
+        assert_eq!(ReplicaId::AGENT.as_u16(), 2);
+        assert_eq!(ReplicaId::LOCAL_BRANCH.as_u16(), 3);
+        assert_eq!(ReplicaId::FIRST_COLLAB_ID.as_u16(), 8);
+
+        // 默认值就是本地副本，`Global::default()` 与光标起点依赖这一点。
+        assert_eq!(ReplicaId::default(), ReplicaId::LOCAL);
+    }
+
+    #[test]
+    fn test_is_remote() {
+        assert!(!ReplicaId::LOCAL.is_remote());
+        assert!(!ReplicaId::AGENT.is_remote(), "agent 与 local 一样跑在本机");
+        assert!(!ReplicaId::LOCAL_BRANCH.is_remote(), "本地分支不算远端");
+        assert!(ReplicaId::REMOTE_SERVER.is_remote());
+
+        // 8 是协作副本的起点，7 还留在本机编号段内。
+        assert!(!ReplicaId::new(7).is_remote());
+        assert!(ReplicaId::new(8).is_remote());
+        assert!(ReplicaId::new(99).is_remote());
+    }
+
+    #[test]
+    fn test_replica_id_debug_names() {
+        assert_eq!(format!("{:?}", ReplicaId::LOCAL), "<local>");
+        assert_eq!(format!("{:?}", ReplicaId::REMOTE_SERVER), "<remote>");
+        assert_eq!(format!("{:?}", ReplicaId::AGENT), "<agent>");
+        assert_eq!(format!("{:?}", ReplicaId::LOCAL_BRANCH), "<branch>");
+        assert_eq!(format!("{:?}", ReplicaId::new(8)), "8");
     }
 }
