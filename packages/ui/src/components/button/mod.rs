@@ -27,15 +27,18 @@ use gpui::{
     SharedString, Window, prelude::*, px,
 };
 
-use aa_gpui_base::IconName;
+use aa_gpui_base::{IconName, IconSize};
 use crate::traits::{Clickable, Disableable, Toggleable};
+use crate::Color;
 use aa_gpui_kit_theme::ActiveTheme;
 pub mod button;
 pub mod button_like;
+pub mod copy_button;
 pub mod split_button;
 
 pub use button::Button;
 pub use button_like::{ButtonCommon, ButtonLike, ButtonSize};
+pub use copy_button::CopyButton;
 
 /// 点击回调（`ButtonLike` / `IconButton` 的内部存储类型）。
 pub type ClickHandler = Box<dyn Fn(&ClickEvent, &mut Window, &mut App)>;
@@ -87,7 +90,7 @@ pub enum ButtonRadius {
 /// ```ignore
 /// IconButton::new("app-menu", IconName::Menu)
 ///     .style(ButtonStyle::Subtle)
-///     .icon_size(px(14.))
+///     .icon_size(IconSize::Small)
 ///     .on_click(|_, window, cx| { /* ... */ })
 /// ```
 #[derive(IntoElement)]
@@ -95,9 +98,10 @@ pub struct IconButton {
     id: ElementId,
     style: ButtonStyle,
     icon: IconName,
-    icon_size: Pixels,
-    /// 图标颜色；`None` 时跟随样式 `fg`（disabled/selected 有更高优先级）。
-    icon_color: Option<Hsla>,
+    /// 图标边长档位（对齐 zed：`IconButton::icon_size` 收 `IconSize`）。
+    icon_size: IconSize,
+    /// 图标颜色（对齐 zed：收语义色 `Color`，渲染时经 `cx.theme()` 解析）。
+    icon_color: Color,
     /// 容器边长（默认 24px，适配标题栏/状态栏）。
     size: Pixels,
     radius: ButtonRadius,
@@ -113,6 +117,8 @@ pub struct IconButton {
     tooltip_attach: Option<Anchor>,
     /// 悬停时的光标样式；`None` 时可点状态用 pointer（trait [`Clickable`] 设置）。
     cursor_style: Option<CursorStyle>,
+    /// 只在指定 group 被 hover 时显示（转发给 [`ButtonLike`]）。
+    visible_on_hover: Option<SharedString>,
 }
 
 impl IconButton {
@@ -122,8 +128,8 @@ impl IconButton {
             id: id.into(),
             style: ButtonStyle::Subtle,
             icon,
-            icon_size: px(14.0),
-            icon_color: None,
+            icon_size: IconSize::default(),
+            icon_color: Color::Default,
             size: px(24.0),
             radius: ButtonRadius::Medium,
             selected: false,
@@ -134,6 +140,7 @@ impl IconButton {
             tooltip_anchor: None,
             tooltip_attach: None,
             cursor_style: None,
+            visible_on_hover: None,
         }
     }
 
@@ -143,15 +150,15 @@ impl IconButton {
         self
     }
 
-    /// 图标边长。
-    pub fn icon_size(mut self, size: impl Into<Pixels>) -> Self {
-        self.icon_size = size.into();
+    /// 图标边长（对齐 zed：收 `IconSize` 档位）。
+    pub fn icon_size(mut self, size: IconSize) -> Self {
+        self.icon_size = size;
         self
     }
 
-    /// 指定图标颜色（默认取样式的 `fg`）。
-    pub fn icon_color(mut self, color: impl Into<Hsla>) -> Self {
-        self.icon_color = Some(color.into());
+    /// 图标颜色（对齐 zed：收语义色 [`Color`]）。
+    pub fn icon_color(mut self, color: Color) -> Self {
+        self.icon_color = color;
         self
     }
 
@@ -211,32 +218,43 @@ impl IconButton {
         self.tooltip_attach = Some(attach);
         self
     }
+
+    /// 只在指定 group 被 hover 时显示（转发给 `ButtonLike`）。
+    pub fn visible_on_hover(mut self, group: impl Into<SharedString>) -> Self {
+        self.visible_on_hover = Some(group.into());
+        self
+    }
 }
 
 impl RenderOnce for IconButton {
     #[allow(refining_impl_trait)]
-    fn render(self, _window: &mut Window, cx: &mut App) -> ButtonLike {
+    fn render(self, window: &mut Window, cx: &mut App) -> ButtonLike {
         let theme = cx.theme().clone();
         let colors = theme.colors();
         let style_colors = button_like::button_like_colors(self.style, &theme);
         let disabled = self.disabled;
         let selected = self.selected;
 
+        // 图标边长：`IconSize` 档位 → px（与 Button 内图标同一换算方式）。
+        let icon_size = self.icon_size.rems() * window.rem_size();
+
         // 图标前景：disabled → 置灰；selected → accent；
-        // 显式 icon_color → 取之；否则样式 fg。
+        // 否则取语义色（默认档位回落样式的 fg）。
         let icon_color = if disabled {
             colors.icon_disabled
         } else if selected {
             colors.icon_accent
+        } else if self.icon_color == Color::Default {
+            style_colors.fg
         } else {
-            self.icon_color.unwrap_or(style_colors.fg)
+            self.icon_color.color(cx)
         };
 
         let mut like = ButtonLike::new(self.id)
             .style(self.style)
             .icon(self.icon)
             .icon_color(Some(icon_color))
-            .icon_size(self.icon_size)
+            .icon_size(icon_size)
             .box_size(self.size)
             .radius(self.radius)
             .selected(selected)
@@ -261,6 +279,9 @@ impl RenderOnce for IconButton {
         }
         if let Some(attach) = self.tooltip_attach {
             like = like.tooltip_attach(attach);
+        }
+        if let Some(group) = self.visible_on_hover {
+            like = like.visible_on_hover(group);
         }
         like
     }

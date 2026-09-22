@@ -233,8 +233,8 @@ impl Render for InputField {
                                     IconName::EyeOff
                                 },
                             )
-                            .icon_size(icon_size)
-                            .icon_color(Color::Muted.color(cx))
+                            .icon_size(IconSize::Small)
+                            .icon_color(Color::Muted)
                             .tooltip(Tooltip::text(if is_masked { "Show" } else { "Hide" }))
                             .on_click(cx.listener(|this, _, window, cx| {
                                 if let Some(ref mut masked) = this.masked {

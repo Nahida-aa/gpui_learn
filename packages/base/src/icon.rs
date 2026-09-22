@@ -56,6 +56,15 @@ impl IconSize {
     }
 }
 
+/// 让 `IconSize` 档位能直接传给收 `impl Into<Pixels>` 的地方（对齐 zed：
+/// zed 的 `Icon::size` 收的就是 `IconSize`）。
+///
+/// 换算用 gpui 的默认 rem（16px）；若调用方已经拿到了 `Window`，更精确的写法
+/// 是 `size.rems() * window.rem_size()`。
+impl From<IconSize> for Pixels {
+    fn from(size: IconSize) -> Self { px(16.0) * size.rems().0 }
+}
+
 /// 图标控件：渲染一个内嵌 SVG。
 #[derive(Clone, IntoElement)]
 pub struct Icon {

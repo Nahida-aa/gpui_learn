@@ -83,7 +83,6 @@ anyhow = "1.0"
 # rev 与下方 [patch.crates-io] 的 gpui 保持一致，cargo 会把同一 rev 的仓库
 # 去重成一次 clone，且 gpui 内部的 sum_tree 与我们引用的是同一个包实例。
 sum_tree = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f" }
-
 # refineable：zed 的「部分覆盖」机制（publish = false，故走 git 源）。
 # 主题需要它——主题 JSON 只写想覆盖的字段，其余落回默认值；
 # `#[derive(Refineable)]` 会生成 `XxxRefinement`（每字段 Option 化）+ `refine()`。
@@ -95,7 +94,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 
 rust-embed = { version = "8.11", features = ["include-exclude"] }
-
+serde = { version = "1.0.221", features = ["derive", "rc"] }
+strum = { version = "0.28", features = ["derive"] }
 # 模糊匹配（packages/gpui_fuzzy）：字符串 / 路径的打分与高亮，对齐 zed
 # crates/fuzzy_nucleo（底层用 crates.io 的 nucleo，MPL-2.0）。依赖 gpui 是因为
 # 需要 BackgroundExecutor（并行分段 + 可取消）与 SharedString。
@@ -155,7 +155,7 @@ smallvec = "1"
 itertools = "0.14"
 inventory = "0.3"
 parking_lot = "0.12"
-strum = { version = "0.27", features = ["derive"] }
+# 注意：`strum` 在上方 [workspace.dependencies] 已声明（0.28），这里不能重复。
 documented = "0.10"
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
 # 这是 Rust 官方的依赖覆盖机制——只要版本号匹配（这里都是 0.2.2），

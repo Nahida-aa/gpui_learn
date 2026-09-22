@@ -25,6 +25,7 @@ pub mod keybinding;
 pub mod keybinding_hint;
 pub mod label;
 pub mod popover_menu;
+pub mod scrollbar;
 pub mod stack;
 pub mod toggle;
 pub mod tooltip;
@@ -47,6 +48,10 @@ pub use keybinding::{
 pub use keybinding_hint::KeybindingHint;
 pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle};
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
+pub use scrollbar::{
+    EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
+    Scrollbars, ShowBehavior, WithScrollbar,
+};
 pub use stack::{h_flex, v_flex};
 pub use toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,

@@ -128,6 +128,8 @@ pub struct ButtonLike {
         gpui::accesskit::Action,
         Box<dyn FnMut(Option<&gpui::accesskit::ActionData>, &mut Window, &mut App) + 'static>,
     )>,
+    /// 只在指定 group 被 hover 时显示（对齐 zed `ButtonLike::visible_on_hover`）。
+    visible_on_hover: Option<SharedString>,
 }
 
 impl ButtonLike {
@@ -163,12 +165,19 @@ impl ButtonLike {
             aria_expanded: None,
             aria_keyshortcuts: None,
             on_a11y_action: None,
+            visible_on_hover: None,
         }
     }
 
     /// 应用 [`ButtonStyle`]。
     pub fn style(mut self, style: ButtonStyle) -> Self {
         self.style = style;
+        self
+    }
+
+    /// 只在 `group` 被 hover 时显示（否则 `invisible`）。
+    pub fn visible_on_hover(mut self, group: impl Into<SharedString>) -> Self {
+        self.visible_on_hover = Some(group.into());
         self
     }
 
@@ -511,6 +520,11 @@ impl RenderOnce for ButtonLike {
         // `ButtonLike` 的场景用的。我们保留那套字段，同时接受 children ——
         // 壳走 children，直接使用者走字段。
         button = button.children(self.children);
+
+        // 只在 group 被 hover 时显示（对齐 zed `ButtonLike::visible_on_hover`）。
+        if let Some(group) = self.visible_on_hover.clone() {
+            button = button.invisible().group_hover(group, |el| el.visible());
+        }
 
         if disabled {
             button = button.bg(colors.ghost_element_disabled);

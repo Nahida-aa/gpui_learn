@@ -49,9 +49,13 @@ pub use styles::*;
 // 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
 // 「主题不隶属控件库」这件事在代码里应当可见。
 pub use components::button::{
-    ButtonCommon, ButtonLike, ButtonRadius, ButtonSize, ButtonStyle, IconButton,
+    ButtonCommon, ButtonLike, ButtonRadius, ButtonSize, ButtonStyle, CopyButton, IconButton,
     KeybindingPosition,
     SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
+};
+pub use components::scrollbar::{
+    EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
+    Scrollbars, ShowBehavior, WithScrollbar,
 };
 pub use components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, IconPosition, RightClickMenu,
@@ -78,6 +82,7 @@ pub use components::toggle::{
 };
 pub use traits::{
     Clickable, CommonAnimationExt, Disableable, StyledExt, ToggleState, Toggleable, Transformable,
+    VisibleOnHover,
 };
 
 /// 复用 gpui 的轴方向类型，方便调用方设置 `SliderState::axis`。

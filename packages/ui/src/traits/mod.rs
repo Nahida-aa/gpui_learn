@@ -25,6 +25,7 @@ pub mod selectable_button;
 pub mod styled_ext;
 pub mod toggleable;
 pub mod transformable;
+pub mod visible_on_hover;
 
 pub use animation_ext::CommonAnimationExt;
 pub use clickable::Clickable;
@@ -34,3 +35,4 @@ pub use selectable_button::SelectableButton;
 pub use styled_ext::StyledExt;
 pub use toggleable::{ToggleState, Toggleable};
 pub use transformable::Transformable;
+pub use visible_on_hover::VisibleOnHover;

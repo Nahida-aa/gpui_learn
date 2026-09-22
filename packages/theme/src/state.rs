@@ -21,6 +21,9 @@ pub enum Appearance {
 }
 
 impl Appearance {
+    /// 是否为亮色形态(对齐 zed `theme::Appearance::is_light`)。
+    pub fn is_light(self) -> bool { matches!(self, Appearance::Light) }
+
     /// 映射到 gpui 的窗口外观(供 `set_window_appearance` 用)。
     pub fn to_window_appearance(self) -> WindowAppearance {
         match self {
