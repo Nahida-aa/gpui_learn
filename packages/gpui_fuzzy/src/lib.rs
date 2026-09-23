@@ -10,8 +10,8 @@
 //!    **扣分而不是淘汰**（每个不符字符乘 [`SMART_CASE_PENALTY_PER_MISMATCH`]）；
 //! 3. 路径专用打分（文件名加分 + 长度惩罚 + 相对距离排序）。
 //!
-//! 与 zed 的**唯一 API 差异**：路径类型用 `std::path::Path` 而不是 zed 的
-//! `path::RelPath`（我们没有那个 crate，因此 `PathStyle` 也自给了最小实现）。
+//! API 与 zed 完全一致：路径类型就是 zed `path` crate 的 `RelPath`，
+//! `PathStyle` 也直接复用同一个类型（不再自备一份），因此调用方不需要做转换。
 //!
 //! 典型用法：
 //!
@@ -45,8 +45,10 @@ mod paths;
 mod strings;
 
 pub use char_bag::CharBag;
+// `PathStyle` 就是 `path::PathStyle`，这里转出去是为了让调用方只依赖本 crate。
+pub use path::PathStyle;
 pub use paths::{
-    PathMatch, PathMatchCandidate, PathMatchCandidateSet, PathSet, PathStyle, match_fixed_path_set,
+    PathMatch, PathMatchCandidate, PathMatchCandidateSet, PathSet, match_fixed_path_set,
     match_path_sets,
 };
 pub use strings::{StringMatch, StringMatchCandidate, match_strings, match_strings_async};

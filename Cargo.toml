@@ -89,6 +89,13 @@ sum_tree = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afec
 # rev 与 gpui 的 [patch.crates-io] 保持一致。
 refineable = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f" }
 
+# path：zed 的路径类型（RelPath / AbsPath / PathStyle）。**Apache-2.0**，
+# 是 zed 仓库里少见的宽松许可 crate，所以引它不会把 GPL 传染进来。
+# aa_gpui_fuzzy 用它做候选路径类型——对齐 zed crates/fuzzy_nucleo 的签名，
+# 这样 `PathMatchCandidateSet::path_style()` 等处不会出现「两套 PathStyle」。
+# rev 与 gpui 的 [patch.crates-io] 保持一致。
+path = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f" }
+
 # 调试/结构化日志(仓库约定见 AGENTS.md)
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }

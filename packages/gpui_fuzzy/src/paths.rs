@@ -1,11 +1,8 @@
 //! 文件路径模糊匹配：文件查找器、git 文件选择器等用它。
 //!
-//! 与 zed `crates/fuzzy_nucleo/src/paths.rs` 同 API，只有两点差异：
-//!
-//! 1. 路径类型是 `std::path::Path` / `PathBuf`，不是 zed 的 `path::RelPath`
-//!    （我们没有那个 crate，也不想为了它再拉一个 GPL git 依赖）；
-//! 2. 因此 [`PathStyle`] 是自给的最小实现（只有分隔符与「是否 Windows」），
-//!    zed 的那套还带 collab 的远程路径语义。
+//! API 与 zed `crates/fuzzy_nucleo/src/paths.rs` 一致：候选路径是
+//! [`RelPath`]（不是 `std::path::Path`），[`PathStyle`] 也直接用 `path` crate 的
+//! ——这样调用方（file_finder / project）不必在两套路径类型之间转换。
 //!
 //! 打分在字符串版之上多了三件事：文件名单独匹配加分、长度惩罚、
 //! 与「相对当前文件的距离」排序（离得近的优先）。
@@ -13,9 +10,9 @@
 use gpui::BackgroundExecutor;
 use nucleo::Utf32Str;
 use nucleo::pattern::Pattern;
+use path::{PathStyle, rel_path::RelPath, rel_path::RelPathBuf};
 use std::{
     cmp::Ordering,
-    path::{Path, PathBuf},
     sync::{
         Arc,
         atomic::{self, AtomicBool},
@@ -27,62 +24,31 @@ use crate::{
     Cancelled, Case, CharBag, Query, case_penalty, count_case_mismatches, positions_from_sorted,
 };
 
-/// 路径分隔符风格。zed 的 `path::PathStyle` 还有远程/collab 语义，我们只留
-/// 匹配真正需要的部分。
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq)]
-pub enum PathStyle {
-    #[default]
-    Unix,
-    Windows,
-}
-
-impl PathStyle {
-    pub fn is_windows(self) -> bool {
-        matches!(self, Self::Windows)
-    }
-
-    pub fn primary_separator(self) -> char {
-        match self {
-            Self::Unix => '/',
-            Self::Windows => '\\',
-        }
-    }
-
-    /// 按编译目标选，测试里也可以显式指定来覆盖 Windows 行为。
-    pub fn current_platform() -> Self {
-        if cfg!(windows) {
-            Self::Windows
-        } else {
-            Self::Unix
-        }
-    }
-}
-
 /// 一个待匹配的路径。
 #[derive(Clone, Debug)]
 pub struct PathMatchCandidate<'a> {
     pub is_dir: bool,
-    pub path: &'a Path,
+    pub path: &'a RelPath,
     pub char_bag: CharBag,
 }
 
 impl<'a> PathMatchCandidate<'a> {
     /// Build a candidate whose prefilter bag covers both the worktree prefix and the path.
     /// Pass `None` when matching against paths that have no worktree prefix.
-    pub fn new(path: &'a Path, is_dir: bool, path_prefix: Option<&Path>) -> Self {
+    pub fn new(path: &'a RelPath, is_dir: bool, path_prefix: Option<&RelPath>) -> Self {
         let mut char_bag = CharBag::default();
         if let Some(prefix) = path_prefix
-            && !prefix.as_os_str().is_empty()
+            && !prefix.is_empty()
         {
             char_bag.extend(
                 prefix
-                    .to_string_lossy()
+                    .as_unix_str()
                     .chars()
                     .map(|c| c.to_ascii_lowercase()),
             );
         }
         char_bag.extend(
-            path.to_string_lossy()
+            path.as_unix_str()
                 .chars()
                 .map(|c| c.to_ascii_lowercase()),
         );
@@ -100,8 +66,8 @@ pub struct PathMatch {
     pub score: f64,
     pub positions: Vec<usize>,
     pub worktree_id: usize,
-    pub path: Arc<Path>,
-    pub path_prefix: Arc<Path>,
+    pub path: Arc<RelPath>,
+    pub path_prefix: Arc<RelPath>,
     pub is_dir: bool,
     /// Number of steps removed from a shared parent with the relative path
     /// Used to order closer paths first in the search list
@@ -116,7 +82,7 @@ pub trait PathMatchCandidateSet<'a>: Send + Sync {
         self.len() == 0
     }
     fn root_is_file(&self) -> bool;
-    fn prefix(&self) -> Arc<Path>;
+    fn prefix(&self) -> Arc<RelPath>;
     fn candidates(&'a self, start: usize) -> Self::Candidates;
     fn path_style(&self) -> PathStyle;
 }
@@ -138,7 +104,8 @@ impl PartialOrd for PathMatch {
 impl Ord for PathMatch {
     fn cmp(&self, other: &Self) -> Ordering {
         self.score
-            .total_cmp(&other.score)
+            .partial_cmp(&other.score)
+            .unwrap_or(Ordering::Equal)
             .then_with(|| self.worktree_id.cmp(&other.worktree_id))
             .then_with(|| {
                 other
@@ -150,7 +117,7 @@ impl Ord for PathMatch {
 }
 
 /// 两个路径相距几「步」：从共同祖先往下各数一层，加 1。
-pub(crate) fn distance_between_paths(path: &Path, relative_to: &Path) -> usize {
+pub(crate) fn distance_between_paths(path: &RelPath, relative_to: &RelPath) -> usize {
     let mut path_components = path.components();
     let mut relative_components = relative_to.components();
 
@@ -171,7 +138,8 @@ fn get_filename_match_bonus(
     pattern: &Pattern,
     matcher: &mut nucleo::Matcher,
 ) -> f64 {
-    let Some(filename) = Path::new(candidate_buf)
+    // 这里作用在**拼接后的展示串**上，所以用 std 的 Path 剥文件名（zed 同）。
+    let Some(filename) = std::path::Path::new(candidate_buf)
         .file_name()
         .and_then(|f| f.to_str())
         .filter(|f| !f.is_empty())
@@ -196,15 +164,15 @@ fn path_match_helper<'a>(
     candidates: impl Iterator<Item = PathMatchCandidate<'a>>,
     results: &mut Vec<PathMatch>,
     worktree_id: usize,
-    path_prefix: &Arc<Path>,
+    path_prefix: &Arc<RelPath>,
     root_is_file: bool,
-    relative_to: &Option<Arc<Path>>,
+    relative_to: &Option<Arc<RelPath>>,
     path_style: PathStyle,
     cancel_flag: &AtomicBool,
 ) -> Result<(), Cancelled> {
-    let mut candidate_buf = if !path_prefix.as_os_str().is_empty() && !root_is_file {
-        let mut s = path_prefix.to_string_lossy().to_string();
-        s.push(path_style.primary_separator());
+    let mut candidate_buf = if !path_prefix.is_empty() && !root_is_file {
+        let mut s = path_prefix.display(path_style).to_string();
+        s.push_str(path_style.primary_separator());
         s
     } else {
         String::new()
@@ -226,9 +194,9 @@ fn path_match_helper<'a>(
 
         candidate_buf.truncate(path_prefix_len);
         if root_is_file {
-            candidate_buf.push_str(&path_prefix.to_string_lossy());
+            candidate_buf.push_str(path_prefix.as_unix_str());
         } else {
-            candidate_buf.push_str(&candidate.path.to_string_lossy());
+            candidate_buf.push_str(candidate.path.as_unix_str());
         }
 
         let haystack = Utf32Str::new(&candidate_buf, &mut buf);
@@ -260,10 +228,10 @@ fn path_match_helper<'a>(
             path: if root_is_file {
                 Arc::clone(path_prefix)
             } else {
-                Arc::from(candidate.path)
+                candidate.path.into()
             },
             path_prefix: if root_is_file {
-                Arc::from(Path::new(""))
+                RelPath::empty_arc()
             } else {
                 Arc::clone(path_prefix)
             },
@@ -280,7 +248,7 @@ fn path_match_helper<'a>(
 pub fn match_fixed_path_set(
     candidates: Vec<PathMatchCandidate>,
     worktree_id: usize,
-    worktree_root_name: Option<Arc<Path>>,
+    worktree_root_name: Option<Arc<RelPath>>,
     query: &str,
     case: Case,
     max_results: usize,
@@ -294,10 +262,9 @@ pub fn match_fixed_path_set(
     config.set_match_paths();
     let mut matcher = matcher::get_matcher(config);
 
-    let root_is_file =
-        worktree_root_name.is_some() && candidates.iter().all(|c| c.path.as_os_str().is_empty());
+    let root_is_file = worktree_root_name.is_some() && candidates.iter().all(|c| c.path.is_empty());
 
-    let path_prefix = worktree_root_name.unwrap_or_else(|| Arc::from(Path::new("")));
+    let path_prefix = worktree_root_name.unwrap_or_else(|| RelPath::empty_arc());
 
     let mut results = Vec::new();
 
@@ -323,7 +290,7 @@ pub fn match_fixed_path_set(
 pub async fn match_path_sets<'a, Set: PathMatchCandidateSet<'a>>(
     candidate_sets: &'a [Set],
     query: &str,
-    relative_to: &Option<Arc<Path>>,
+    relative_to: &Option<Arc<RelPath>>,
     case: Case,
     max_results: usize,
     cancel_flag: &AtomicBool,
@@ -414,13 +381,13 @@ pub async fn match_path_sets<'a, Set: PathMatchCandidateSet<'a>>(
     results
 }
 
-/// 一个最朴素的候选集实现：直接抱着 `Vec<PathBuf>`。
+/// 一个最朴素的候选集实现：直接抱着 `Vec<RelPathBuf>`。
 ///
 /// 真实场景里通常由 worktree / 项目自己实现 [`PathMatchCandidateSet`]，
 /// 这个实现主要给测试和简单调用方用。
 #[derive(Default)]
 pub struct PathSet {
-    paths: Vec<(PathBuf, bool)>,
+    paths: Vec<(RelPathBuf, bool)>,
 }
 
 impl PathSet {
@@ -428,7 +395,7 @@ impl PathSet {
         Self::default()
     }
 
-    pub fn push(&mut self, path: impl Into<PathBuf>, is_dir: bool) {
+    pub fn push(&mut self, path: impl Into<RelPathBuf>, is_dir: bool) {
         self.paths.push((path.into(), is_dir));
     }
 }
@@ -448,12 +415,12 @@ impl<'a> PathMatchCandidateSet<'a> for PathSet {
         false
     }
 
-    fn prefix(&self) -> Arc<Path> {
-        Arc::from(Path::new(""))
+    fn prefix(&self) -> Arc<RelPath> {
+        RelPath::empty_arc()
     }
 
     fn candidates(&'a self, start: usize) -> Self::Candidates {
-        let empty = Path::new("");
+        let empty = RelPath::empty();
         self.paths[start..]
             .iter()
             .map(|(path, is_dir)| PathMatchCandidate::new(path, *is_dir, Some(empty)))
@@ -462,7 +429,7 @@ impl<'a> PathMatchCandidateSet<'a> for PathSet {
     }
 
     fn path_style(&self) -> PathStyle {
-        PathStyle::current_platform()
+        PathStyle::local()
     }
 }
 
@@ -470,13 +437,22 @@ impl<'a> PathMatchCandidateSet<'a> for PathSet {
 mod tests {
     use super::*;
 
+    /// 测试里造一个 `&'static RelPath`：`RelPath` 内部是 String，
+    /// 泄漏一次即可拿到 `'static` 引用（测试进程无所谓）。
+    fn rel(path: &str) -> &'static RelPath {
+        Box::leak(rel_path_buf(path).into())
+    }
+
+    fn rel_path_buf(path: &str) -> RelPathBuf {
+        RelPath::new(std::path::Path::new(path), PathStyle::Unix)
+            .expect("test path should be relative")
+            .into_owned()
+    }
+
     fn candidates(paths: &[&str]) -> Vec<PathMatchCandidate<'static>> {
         paths
             .iter()
-            .map(|p| {
-                let path: &'static Path = Box::leak(Path::new(p).to_path_buf().into_boxed_path());
-                PathMatchCandidate::new(path, false, None)
-            })
+            .map(|p| PathMatchCandidate::new(rel(p), false, None))
             .collect()
     }
 
@@ -487,7 +463,7 @@ mod tests {
             match_fixed_path_set(cs, 0, None, "parser", Case::Ignore, 10, PathStyle::Unix);
         let matched: Vec<String> = results
             .iter()
-            .map(|m| m.path.to_string_lossy().to_string())
+            .map(|m| m.path.as_unix_str().to_string())
             .collect();
         assert_eq!(matched, vec!["src/lib/parser.rs"]);
     }
@@ -498,15 +474,15 @@ mod tests {
         let results = match_fixed_path_set(
             cs,
             0,
-            Some(Arc::from(Path::new("myproject"))),
+            Some(rel("myproject").into()),
             "mai",
             Case::Ignore,
             10,
             PathStyle::Unix,
         );
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].path.to_string_lossy(), "lib/main.rs");
-        assert_eq!(results[0].path_prefix.to_string_lossy(), "myproject");
+        assert_eq!(results[0].path.as_unix_str(), "lib/main.rs");
+        assert_eq!(results[0].path_prefix.as_unix_str(), "myproject");
         // 位置是相对「前缀 + 分隔符 + 路径」拼出来的串，所以 'm' 落在前缀之后。
         assert!(results[0].positions.iter().all(|p| *p > "myproject/".len()));
     }
@@ -516,21 +492,21 @@ mod tests {
         let cs = candidates(&["parser.rs", "src/deep/nested/parser_helper.txt"]);
         let results =
             match_fixed_path_set(cs, 0, None, "parser", Case::Ignore, 10, PathStyle::Unix);
-        assert_eq!(results[0].path.to_string_lossy(), "parser.rs");
+        assert_eq!(results[0].path.as_unix_str(), "parser.rs");
     }
 
     #[test]
     fn test_is_dir_and_worktree_id_are_carried() {
         let cs = vec![
-            PathMatchCandidate::new(Path::new("src"), true, None),
-            PathMatchCandidate::new(Path::new("src/main.rs"), false, None),
+            PathMatchCandidate::new(rel("src"), true, None),
+            PathMatchCandidate::new(rel("src/main.rs"), false, None),
         ];
         let results = match_fixed_path_set(cs, 7, None, "src", Case::Ignore, 10, PathStyle::Unix);
         assert!(results.iter().all(|m| m.worktree_id == 7));
         assert!(
             results
                 .iter()
-                .any(|m| m.is_dir && m.path.as_ref() == Path::new("src"))
+                .any(|m| m.is_dir && m.path.as_ref() == rel("src"))
         );
     }
 
@@ -552,25 +528,16 @@ mod tests {
     #[test]
     fn test_distance_between_paths() {
         // 同一目录下的两个文件：共同前缀走完后两边都没剩余 → 1。
-        assert_eq!(
-            distance_between_paths(Path::new("a/b/c.rs"), Path::new("a/b/d.rs")),
-            1
-        );
-        assert_eq!(
-            distance_between_paths(Path::new("a/b.rs"), Path::new("a/b.rs")),
-            1
-        );
+        assert_eq!(distance_between_paths(rel("a/b/c.rs"), rel("a/b/d.rs")), 1);
+        assert_eq!(distance_between_paths(rel("a/b.rs"), rel("a/b.rs")), 1);
         // 只有第一段就分叉：两边各剩 1 层 → 1 + 1 + 1 = 3。
-        assert_eq!(
-            distance_between_paths(Path::new("x/y.rs"), Path::new("p/q.rs")),
-            3
-        );
+        assert_eq!(distance_between_paths(rel("x/y.rs"), rel("p/q.rs")), 3);
     }
 
     #[test]
     fn test_path_style() {
-        assert_eq!(PathStyle::Unix.primary_separator(), '/');
-        assert_eq!(PathStyle::Windows.primary_separator(), '\\');
+        assert_eq!(PathStyle::Unix.primary_separator(), "/");
+        assert_eq!(PathStyle::Windows.primary_separator(), "\\");
         assert!(PathStyle::Windows.is_windows());
         assert!(!PathStyle::Unix.is_windows());
     }
@@ -578,11 +545,11 @@ mod tests {
     #[gpui::test]
     async fn test_match_path_sets(executor: BackgroundExecutor) {
         let mut set = PathSet::new();
-        set.push("src/lib/parser.rs", false);
-        set.push("src/bin/main.rs", false);
-        set.push("tests/parser_test.rs", false);
+        set.push(rel_path_buf("src/lib/parser.rs"), false);
+        set.push(rel_path_buf("src/bin/main.rs"), false);
+        set.push(rel_path_buf("tests/parser_test.rs"), false);
 
-        let relative_to: Option<Arc<Path>> = Some(Arc::from(Path::new("src/bin")));
+        let relative_to: Option<Arc<RelPath>> = Some(rel("src/bin").into());
         let results = match_path_sets(
             &[set],
             "parser",
@@ -596,7 +563,7 @@ mod tests {
 
         let matched: Vec<String> = results
             .iter()
-            .map(|m| m.path.to_string_lossy().to_string())
+            .map(|m| m.path.as_unix_str().to_string())
             .collect();
         assert_eq!(matched.len(), 2);
         // 离 relative_to 更近的排在前面。
@@ -607,7 +574,7 @@ mod tests {
     #[gpui::test]
     async fn test_match_path_sets_cancelled(executor: BackgroundExecutor) {
         let mut set = PathSet::new();
-        set.push("src/lib/parser.rs", false);
+        set.push(rel_path_buf("src/lib/parser.rs"), false);
         let results = match_path_sets(
             &[set],
             "parser",
@@ -625,7 +592,7 @@ mod tests {
     async fn test_match_path_sets_windows_query(executor: BackgroundExecutor) {
         // Windows 风格下查询里的 '\' 会被换成 '/'，所以 "src\main" 也能命中。
         let mut set = PathSet::new();
-        set.push("src/main.rs", false);
+        set.push(rel_path_buf("src/main.rs"), false);
 
         struct WinSet(PathSet);
         impl<'a> PathMatchCandidateSet<'a> for WinSet {
@@ -639,7 +606,7 @@ mod tests {
             fn root_is_file(&self) -> bool {
                 self.0.root_is_file()
             }
-            fn prefix(&self) -> Arc<Path> {
+            fn prefix(&self) -> Arc<RelPath> {
                 self.0.prefix()
             }
             fn candidates(&'a self, start: usize) -> Self::Candidates {
@@ -661,6 +628,6 @@ mod tests {
         )
         .await;
         assert_eq!(results.len(), 1);
-        assert_eq!(results[0].path.to_string_lossy(), "src/main.rs");
+        assert_eq!(results[0].path.as_unix_str(), "src/main.rs");
     }
 }
