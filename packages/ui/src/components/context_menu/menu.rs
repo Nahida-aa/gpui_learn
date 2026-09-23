@@ -232,34 +232,40 @@ impl ContextMenu {
     }
 
     /// 加一个可切换条目（对齐 zed `ContextMenu::toggleable_entry`）。
+    ///
+    /// 六个参数与 zed 同形，注意顺序：`toggled` 在 `position` 之前，
+    /// `action` 是 `Option`（可以只给 `handler`），`position` 决定勾选标记
+    /// 画在文字哪一侧。
     pub fn toggleable_entry(
         self,
         label: impl Into<SharedString>,
-        action: Box<dyn Action>,
         toggled: bool,
+        position: IconPosition,
+        action: Option<Box<dyn Action>>,
+        handler: impl Fn(&mut Window, &mut App) + 'static,
     ) -> Self {
-        self.item(
-            ContextMenuEntry::new(label)
-                .action(action)
-                .toggleable(IconPosition::Start, toggled),
-        )
+        self.toggleable_entry_disabled_when(label, toggled, false, position, action, handler)
     }
 
-    /// 加一个可切换条目，`disabled_when` 为真时禁用（对齐 zed
-    /// `ContextMenu::toggleable_entry_disabled_when`）。
+    /// 同 [`Self::toggleable_entry`]，但 `disabled` 为真时条目置灰、回调不触发
+    /// （对齐 zed `ContextMenu::toggleable_entry_disabled_when`）。
     pub fn toggleable_entry_disabled_when(
         self,
         label: impl Into<SharedString>,
-        action: Box<dyn Action>,
         toggled: bool,
-        disabled_when: bool,
+        disabled: bool,
+        position: IconPosition,
+        action: Option<Box<dyn Action>>,
+        handler: impl Fn(&mut Window, &mut App) + 'static,
     ) -> Self {
-        self.item(
-            ContextMenuEntry::new(label)
-                .action(action)
-                .toggleable(IconPosition::Start, toggled)
-                .disabled(disabled_when),
-        )
+        let mut entry = ContextMenuEntry::new(label)
+            .toggleable(position, toggled)
+            .disabled(disabled)
+            .on_click(handler);
+        if let Some(action) = action {
+            entry = entry.action(action);
+        }
+        self.item(entry)
     }
 
     /// 点击某条目：执行回调并关闭（`DismissEvent`）。
