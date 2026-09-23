@@ -181,6 +181,37 @@ pub enum LoadThemes {
     All(Box<dyn gpui::AssetSource>),
 }
 
+/// 只把主题系统装到「可用」的最小程度(对齐 zed `theme::init`)。
+///
+/// 做四件事:建 [`SystemAppearance`]、建 [`ThemeRegistry`](crate::ThemeRegistry)、
+/// 建 [`FontFamilyCache`](crate::FontFamilyCache)、把 `GlobalTheme` 设成
+/// 默认深色主题 + 默认图标主题。
+///
+/// **不**装载资产里的主题 JSON、**不**接设置 —— 那是 `theme-settings::init`
+/// 的活(它在内部先调本函数,再叠加设置与用户主题)。测试里够用就用这个,
+/// 省一次资产源。
+pub fn init(themes_to_load: LoadThemes, cx: &mut App) {
+    SystemAppearance::init(cx);
+    let assets = match themes_to_load {
+        LoadThemes::JustBase => Box::new(()) as Box<dyn gpui::AssetSource>,
+        LoadThemes::All(assets) => assets,
+    };
+    crate::ThemeRegistry::set_global(assets, cx);
+    crate::FontFamilyCache::init_global(cx);
+
+    let themes = crate::ThemeRegistry::default_global(cx);
+    let theme = themes.get(crate::DEFAULT_DARK_THEME).unwrap_or_else(|_| {
+        themes
+            .list()
+            .into_iter()
+            .next()
+            .map(|m| themes.get(&m.name).unwrap())
+            .unwrap()
+    });
+    let icon_theme = themes.default_icon_theme().unwrap();
+    cx.set_global(GlobalTheme { theme, icon_theme });
+}
+
 /// 全局当前主题(gpui `Global`,对齐 zed:theme + icon_theme 成对)。
 #[derive(Clone)]
 pub struct GlobalTheme {
@@ -192,6 +223,21 @@ impl GlobalTheme {
     /// 由主题与图标主题构造。
     pub fn new(theme: Arc<Theme>, icon_theme: Arc<crate::icon_theme::IconTheme>) -> Self {
         Self { theme, icon_theme }
+    }
+
+    /// 当前主题(对齐 zed `GlobalTheme::theme`)。
+    ///
+    /// 未 [`init`] 时会 panic —— 与 zed 一致。想要不 panic 的读取走
+    /// [`ActiveTheme::theme`](crate::ActiveTheme::theme)，它兜底到内置深色主题。
+    pub fn theme(cx: &App) -> &Arc<Theme> {
+        &cx.global::<Self>().theme
+    }
+
+    /// 当前图标主题(对齐 zed `GlobalTheme::icon_theme`)。
+    ///
+    /// 同样要求先 [`init`]。zed 的 `file_icons` 全靠这个取图标路径。
+    pub fn icon_theme(cx: &App) -> &Arc<crate::icon_theme::IconTheme> {
+        &cx.global::<Self>().icon_theme
     }
 }
 

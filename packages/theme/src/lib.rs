@@ -78,7 +78,7 @@ pub use ui_density::UiDensity;
 // （JSON 的 schema 与装载流程在那边，依赖方向 theme-settings → theme）。
 pub use state::{
     ActiveTheme, Appearance, GlobalTheme, LoadThemes, SystemAppearance, Theme, ThemeFamily,
-    ThemeStyles, set_theme,
+    ThemeStyles, init, set_theme,
 };
 pub use styles::{
     AccentColors, DiagnosticColors, PlayerColor, PlayerColors, StatusColors,

@@ -7,7 +7,7 @@ use aa_gpui_kit_theme::{
     AccentColors, Appearance, AppearanceContent, DEFAULT_DARK_THEME, DEFAULT_ICON_THEME_NAME,
     GlobalTheme, LoadThemes, PlayerColor, PlayerColors, StatusColors, SyntaxTheme,
     SystemAppearance, SystemColors, Theme, ThemeColors, ThemeFamily, ThemeRegistry,
-    ThemeSettingsProvider, ThemeStyles, default_color_scales, try_parse_color,
+    ThemeSettingsProvider, ThemeStyles, default_color_scales, init, try_parse_color,
 };
 
 #[test]
@@ -16,4 +16,9 @@ fn zed_public_api_surface_is_covered() {
     let _ = DEFAULT_DARK_THEME;
     let _ = DEFAULT_ICON_THEME_NAME;
     let _: Appearance = SystemAppearance::default().0;
+    // zed 的 `theme::init` / `GlobalTheme::{theme, icon_theme}`:
+    // file_icons 之类「只依赖 theme、不依赖 theme_settings」的 crate 要用它们。
+    let _: fn(LoadThemes, &mut gpui::App) = init;
+    let _: fn(&gpui::App) -> &std::sync::Arc<Theme> = GlobalTheme::theme;
+    let _: fn(&gpui::App) -> &std::sync::Arc<aa_gpui_kit_theme::IconTheme> = GlobalTheme::icon_theme;
 }
