@@ -28,6 +28,12 @@ pub mod components;
 pub mod prelude;
 pub mod utils;
 
+// 对齐 zed `crates/ui/src/ui.rs`：crate 根 glob 导出 `components` / `prelude`
+// （`styles` 在下面已有）。少了这两行，`ui::App` / `ui::px` / `ui::Window` /
+// `ui::ContextMenu` 这类「裸名」路径就不成立 —— 而照搬 zed 的代码里到处都是。
+pub use components::*;
+pub use prelude::*;
+
 // 布局 helper 与 rem 换算（typography/color 等模块经 crate:: 根路径引用）。
 pub use components::stack::{h_flex, v_flex};
 pub use components::label::{Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle};
