@@ -195,12 +195,6 @@ impl IconButton {
         self
     }
 
-    /// 容器边长（默认 24px）。
-    pub fn size(mut self, size: impl Into<Pixels>) -> Self {
-        self.size = size.into();
-        self
-    }
-
     /// 形状（对齐 zed：Square 定宽方形 / Wide 跟随内容宽度）。
     pub fn shape(mut self, shape: IconButtonShape) -> Self {
         self.shape = shape;
@@ -301,9 +295,12 @@ impl RenderOnce for IconButton {
             .icon_color(Some(icon_color))
             .icon_size(icon_size)
             // 对齐 zed：Square 定宽成方形；Wide 跟随内容宽度（不给 box_size）。
-            .when(self.shape == IconButtonShape::Square, |this| {
-                this.box_size(self.size)
-            })
+            // 给了 `ButtonCommon::size` 档位时以档位为准 —— 否则默认的 24px
+            // 会把档位盖掉（`ButtonSize::None` 该是 16px 的紧凑按钮）。
+            .when(
+                self.shape == IconButtonShape::Square && self.button_size.is_none(),
+                |this| this.box_size(self.size),
+            )
             .radius(self.radius)
             .selected(selected)
             .disabled(disabled)
@@ -374,10 +371,12 @@ impl ButtonCommon for IconButton {
         self
     }
 
-    /// 注意：本类型的**固有** `size` 收的是方形边长 `Pixels`（我们自有的参数），
-    /// 这个 trait 方法收 `ButtonSize` 档位。两者不冲突，但调用点写
-    /// `.size(ButtonSize::Medium)` 时会命中固有方法 —— zed 里没人这么写
-    /// （`ButtonSize` 只用在 `Button` / `ButtonLike` 上），这里保持一致。
+    /// 尺寸档位（对齐 zed `ButtonCommon::size`）。
+    ///
+    /// zed 的 IconButton **没有**固有 `size`，所以 `.size(ButtonSize::None)`
+    /// 走的是这里。我们原先有个收 `Pixels` 的固有 `size`，会把它挡住
+    /// （固有方法优先，报 `Pixels: From<ButtonSize>`）——已删，方形边长
+    /// 改用 [`ButtonSize`] 档位表达。
     fn size(mut self, size: ButtonSize) -> Self {
         self.button_size = Some(size);
         self
