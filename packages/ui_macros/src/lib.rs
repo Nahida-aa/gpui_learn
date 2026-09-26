@@ -43,7 +43,19 @@ pub fn derive_dynamic_spacing(input: TokenStream) -> TokenStream {
 ///
 /// 要求被标注类型实现 `aa_gpui_kit_component::Component`（宏内做编译期
 /// 断言）。对齐 zed `ui_macros::RegisterComponent`。
-#[proc_macro_derive(RegisterComponent)]
+///
+/// 生成代码里的路径默认写 crate 真名 `aa_gpui_kit_component`。若消费方把这个
+/// crate 起了 Cargo 别名（proc 宏看不见别名），用属性显式指过来：
+///
+/// ```ignore
+/// #[derive(RegisterComponent)]
+/// #[register_component(crate = "component")]
+/// struct MyThing;
+/// ```
+///
+/// 值可以是任何路径（`component` / `::component` / `crate::reexport`）。
+/// 不写就是真名 —— 用不用别名是消费方的选择，不强制。
+#[proc_macro_derive(RegisterComponent, attributes(register_component))]
 pub fn derive_register_component(input: TokenStream) -> TokenStream {
     derive_register_component::expand(input)
 }
