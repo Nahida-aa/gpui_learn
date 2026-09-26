@@ -137,6 +137,14 @@ pub struct IconButton {
     cursor_style: Option<CursorStyle>,
     /// 只在指定 group 被 hover 时显示（转发给 [`ButtonLike`]）。
     visible_on_hover: Option<SharedString>,
+    /// 选中态下换用的图标（对齐 zed `IconButton::selected_icon`）。
+    ///
+    /// zed 的用法：`.toggle_state(zoomed).selected_icon(IconName::Minimize)`
+    /// —— 同一个按钮在开/关两种状态下显示不同图标（最大化/还原）。
+    selected_icon: Option<IconName>,
+    /// 选中态下的图标色；`None` 时用 [`colors.icon_accent`] 那套默认
+    /// （对齐 zed `IconButton::selected_icon_color`，zed 默认 `Color::Selected`）。
+    selected_icon_color: Option<Color>,
     // ---- 以下四项由 [`ButtonCommon`] 设置，渲染时转发给 [`ButtonLike`] ----
     /// Tab 键导航序号（`ButtonCommon::tab_index`）。
     tab_index: Option<isize>,
@@ -170,6 +178,8 @@ impl IconButton {
             tooltip_attach: None,
             cursor_style: None,
             visible_on_hover: None,
+            selected_icon: None,
+            selected_icon_color: None,
             tab_index: None,
             button_size: None,
             layer: None,
@@ -263,6 +273,20 @@ impl IconButton {
         self.visible_on_hover = Some(group.into());
         self
     }
+
+    /// 选中态下换用的图标（对齐 zed `IconButton::selected_icon`）。
+    ///
+    /// 只在 `selected(true)`（或 `Toggleable::toggle_state(true)`）时生效。
+    pub fn selected_icon(mut self, icon: impl Into<Option<IconName>>) -> Self {
+        self.selected_icon = icon.into();
+        self
+    }
+
+    /// 选中态下的图标色（对齐 zed `IconButton::selected_icon_color`）。
+    pub fn selected_icon_color(mut self, color: impl Into<Option<Color>>) -> Self {
+        self.selected_icon_color = color.into();
+        self
+    }
 }
 
 impl RenderOnce for IconButton {
@@ -282,16 +306,28 @@ impl RenderOnce for IconButton {
         let icon_color = if disabled {
             colors.icon_disabled
         } else if selected {
-            colors.icon_accent
+            // 与 zed 同：显式给了 `selected_icon_color` 就用它，否则回落默认强调色
+            // （zed 回落 `Color::Selected`，我们回落 `colors.icon_accent`）。
+            match self.selected_icon_color {
+                Some(color) => color.color(cx),
+                None => colors.icon_accent,
+            }
         } else if self.icon_color == Color::Default {
             style_colors.fg
         } else {
             self.icon_color.color(cx)
         };
 
+        // 选中态换图标（zed `selected_icon`）。
+        let icon = if selected {
+            self.selected_icon.unwrap_or(self.icon)
+        } else {
+            self.icon
+        };
+
         let mut like = ButtonLike::new(self.id)
             .style(self.style)
-            .icon(self.icon)
+            .icon(icon)
             .icon_color(Some(icon_color))
             .icon_size(icon_size)
             // 对齐 zed：Square 定宽成方形；Wide 跟随内容宽度（不给 box_size）。
