@@ -1,4 +1,5 @@
 use crate::{Label, LabelCommon, component_prelude::*, v_flex};
+use aa_gpui_base::ResolveColor;
 use aa_gpui_kit_theme::ActiveTheme;
 use documented::{DocumentedFields, DocumentedVariants};
 use gpui::{App, Hsla, IntoElement, ParentElement, Styled};
@@ -115,6 +116,16 @@ impl Color {
             Color::Warning => cx.theme().status().warning,
             Color::Custom(color) => *color,
         }
+    }
+}
+
+/// 让语义色能直接喂给 `base::Icon::color`（对齐 zed：`Icon::color(Color)`）。
+///
+/// `base` 不依赖主题包，解析规则只能由本包（`ui`，同时看得见 `Color` 与
+/// `ActiveTheme`）来接上。
+impl ResolveColor for Color {
+    fn resolve_color(&self, cx: &App) -> Hsla {
+        self.color(cx)
     }
 }
 
@@ -238,5 +249,23 @@ impl Component for Color {
                 ),
             ])
             .into_any_element()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui::TestAppContext;
+
+    /// `Icon::color(Color::Muted)` 能拿到主题实色 —— 这条链断了 zed 的图标
+    /// 代码就搬不进来。
+    #[gpui::test]
+    fn semantic_color_resolves_via_resolve_color(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            assert_eq!(
+                Color::Muted.resolve_color(cx),
+                cx.theme().colors().text_muted
+            );
+        });
     }
 }

@@ -6,12 +6,34 @@
 //! `Icon` 是一次渲染控件，持有 `IconName` + 尺寸 + 颜色 + 旋转，
 //! 渲染时通过 `IconName::path()` 拿到 RustEmbed 路径。
 
+use std::rc::Rc;
+
 use gpui::{
-    Hsla, IntoElement, Pixels, Radians, Rems, RenderOnce, Transformation, Window, prelude::*, px,
-    rems, svg,
+    App, Hsla, IntoElement, Pixels, Radians, Rems, RenderOnce, Transformation, Window, prelude::*,
+    px, rems, svg,
 };
 
 pub use aa_gpui_kit_assets::IconName;
+
+/// 前景色的抽象：既可以是已解析的实色 [`Hsla`]，也可以是「语义色」。
+///
+/// 与 zed 的差异：zed 的 `Color` 与 `Icon` 同在 `crates/ui` 里，`Icon::color`
+/// 直接收 `Color`，渲染时 `cx.theme()` 解析（`icon.rs`）。我们的 `Icon` 在
+/// `aa_gpui_base`（刻意不依赖主题包），所以把「解析成实色」这一步留出来：
+/// 谁定义语义色，谁就 `impl ResolveColor`。
+///
+/// 这样 zed 的 `Icon::new(icon).color(Color::Muted)` 可以原样照搬。
+pub trait ResolveColor {
+    /// 借 `cx`（读当前主题）把自身解析成实色。
+    fn resolve_color(&self, cx: &App) -> Hsla;
+}
+
+/// 实色不需要解析。
+impl ResolveColor for Hsla {
+    fn resolve_color(&self, _cx: &App) -> Hsla {
+        *self
+    }
+}
 
 /// 1rem = 16px 的换算（原在 `ui::styles::units`，除本文件外无其他调用方，
 /// 拆包时一并搬来，避免 base 反向依赖 ui）。
@@ -70,7 +92,9 @@ impl From<IconSize> for Pixels {
 pub struct Icon {
     name: IconName,
     size: Pixels,
-    color: Option<Hsla>,
+    /// 存 `Rc<dyn ..>`（而不是 `Hsla`）是为了让语义色也能进来，同时保住
+    /// `Icon: Clone` —— `Rc` 可克隆，`Box<dyn ..>` 不行。
+    color: Option<Rc<dyn ResolveColor>>,
     /// 完整变换（对齐 zed：zed 的 Icon 也存 `Transformation` 而非单个角度，
     /// 这样 `Transformable::transform` 与旋转动画都能接上）。
     transformation: Transformation,
@@ -94,8 +118,11 @@ impl Icon {
     }
 
     /// 指定颜色；不指定则取当前 `text_style().color`。
-    pub fn color(mut self, color: impl Into<Hsla>) -> Self {
-        self.color = Some(color.into());
+    ///
+    /// 收 [`ResolveColor`]：实色 `Hsla` 与上层的语义色 `Color` 都能传
+    /// （对齐 zed：`Icon::color(Color)`）。
+    pub fn color(mut self, color: impl ResolveColor + 'static) -> Self {
+        self.color = Some(Rc::new(color));
         self
     }
 
@@ -137,8 +164,12 @@ impl From<IconName> for Icon {
 }
 
 impl RenderOnce for Icon {
-    fn render(self, window: &mut Window, _cx: &mut gpui::App) -> impl IntoElement {
-        let color = self.color.unwrap_or_else(|| window.text_style().color);
+    fn render(self, window: &mut Window, cx: &mut gpui::App) -> impl IntoElement {
+        let color = self
+            .color
+            .as_ref()
+            .map(|color| color.resolve_color(cx))
+            .unwrap_or_else(|| window.text_style().color);
         svg()
             .path(self.name.path())
             .size(self.size)
