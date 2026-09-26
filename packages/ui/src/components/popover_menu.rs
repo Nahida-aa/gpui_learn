@@ -195,8 +195,15 @@ impl<M: ManagedView> PopoverMenu<M> {
 
     /// 设定菜单创建器（`Entity<M>` 需实现 `ManagedView`，如
     /// [`ContextMenu`](crate::ContextMenu)）。
-    pub fn menu(mut self, f: impl Fn(&mut Window, &mut App) -> Entity<M> + 'static) -> Self {
-        self.menu_builder = Some(Rc::new(move |window, cx| Some(f(window, cx))));
+    // 与 zed 同形（`popover_menu.rs:169`）：收 **`Option<Entity<M>>`**，
+    // 因为打开的菜单常常是"有时才建"（比如没选中项就不建）。注意别和
+    // `right_click_menu::RightClickMenu::menu` 搞混 —— 那个收非 Option 的
+    // `Entity<M>`（另有 `maybe_menu` 收 Option）。
+    pub fn menu(
+        mut self,
+        f: impl Fn(&mut Window, &mut App) -> Option<Entity<M>> + 'static,
+    ) -> Self {
+        self.menu_builder = Some(Rc::new(f));
         self
     }
 
@@ -549,7 +556,7 @@ mod tests {
 
             let popover = PopoverMenu::new("test-popover")
                 .menu(|window, cx| {
-                    crate::ContextMenu::build(window, cx, |menu, _window, _cx| menu)
+                    Some(crate::ContextMenu::build(window, cx, |menu, _window, _cx| menu))
                 })
                 .with_handle(handle.clone())
                 .anchor(Anchor::BottomLeft)

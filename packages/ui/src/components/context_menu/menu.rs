@@ -46,6 +46,8 @@ pub struct ContextMenu {
     min_width: Option<f32>,
     /// 构建闭包（`build_persistent` 保存下来以便 `rebuild`）。
     builder: Option<std::rc::Rc<dyn Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu>>,
+    /// 快捷键反查的焦点上下文（`context()` 设入，对齐 zed `action_context`）。
+    action_context: Option<FocusHandle>,
 }
 
 impl ContextMenu {
@@ -63,6 +65,7 @@ impl ContextMenu {
             focus_handle: cx.focus_handle(),
             min_width: None,
             builder: None,
+            action_context: None,
         };
         let _ = f;
         this
@@ -87,6 +90,7 @@ impl ContextMenu {
                 focus_handle: cx.focus_handle(),
                 min_width: None,
                 builder: None,
+                action_context: None,
             };
             f(menu, window, cx)
         })
@@ -110,6 +114,7 @@ impl ContextMenu {
                 focus_handle: cx.focus_handle(),
                 min_width: None,
                 builder: Some(builder.clone()),
+                action_context: None,
             };
             builder(menu, window, cx)
         })
@@ -129,6 +134,9 @@ impl ContextMenu {
             focus_handle: self.focus_handle.clone(),
             min_width: self.min_width,
             builder: Some(builder.clone()),
+            // 与 zed 同：fresh 里不继承（`rebuild` 只把 `items` 搬回来，
+            // 所以 `self.action_context` 仍保持原值）。
+            action_context: None,
         };
         let rebuilt = builder(fresh, window, cx);
         self.items = rebuilt.items;
@@ -165,6 +173,15 @@ impl ContextMenu {
     /// 批量追加（对齐 zed `extend`）。
     pub fn extend<I: Into<ContextMenuItem>>(mut self, items: impl IntoIterator<Item = I>) -> Self {
         self.items.extend(items.into_iter().map(Into::into));
+        self
+    }
+
+    /// 快捷键的反查上下文（对齐 zed `ContextMenu::context`）。
+    ///
+    /// 设了它之后，条目若只给了 `action`、没给 `key_binding`，渲染时按**这个
+    /// 焦点句柄**所在区域解析绑定（同一 action 在不同区域可能绑不同键）。
+    pub fn context(mut self, focus: FocusHandle) -> Self {
+        self.action_context = Some(focus);
         self
     }
 
@@ -321,10 +338,15 @@ impl ContextMenu {
         // 快捷键提示：优先用调用方显式给的；否则从 keymap 反查 action 的绑定
         // （对齐 zed —— zed 的条目只存 action，快捷键是渲染时查出来的）。
         let resolved_key_binding = entry.key_binding.clone().or_else(|| {
-            entry
-                .action
-                .as_ref()
-                .map(|action| KeyBinding::for_action(action.as_ref(), cx))
+            entry.action.as_ref().map(|action| {
+                // 设过 `context()` 就按那个焦点上下文解析（同一 action 在不同
+                // 焦点区域可能绑不同键），否则用全局绑定。对齐 zed 的
+                // `action_context`（context_menu.rs:974 / 1030）。
+                match self.action_context.as_ref() {
+                    Some(context) => KeyBinding::for_action_in(action.as_ref(), context, cx),
+                    None => KeyBinding::for_action(action.as_ref(), cx),
+                }
+            })
         });
         let keybinding = resolved_key_binding
             .map(|kb| {
