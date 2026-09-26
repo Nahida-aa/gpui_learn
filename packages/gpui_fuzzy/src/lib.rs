@@ -39,12 +39,18 @@
 //! }
 //! ```
 
-mod char_bag;
 mod matcher;
 mod paths;
 mod strings;
 
-pub use char_bag::CharBag;
+// 同 zed crates/fuzzy_nucleo：CharBag 复用旧包 `fuzzy` 的实现，原样转出，
+// 于是「旧 fuzzy」与「nucleo 侧」是同一个类型，两侧互不转换。
+//
+// 语义：把字符串压成一个 u64 位集合——小写字母各占 2 位存「出现次数」的饱和
+// 计数（0/1/2/3+），数字 0..=9 各占 1 位（第 52 位起），`-` 占第 62 位，其余
+// 字符（含非 ASCII）忽略。所以它是**必要不充分**的预筛器：通过不代表一定匹配，
+// 不通过一定不匹配。
+pub use fuzzy::CharBag;
 // `PathStyle` 就是 `path::PathStyle`，这里转出去是为了让调用方只依赖本 crate。
 pub use path::PathStyle;
 pub use paths::{
@@ -189,4 +195,45 @@ pub(crate) fn positions_from_sorted(s: &str, sorted_char_indices: &[u32]) -> Vec
         }
     }
     out
+}
+
+#[cfg(test)]
+mod char_bag_tests {
+    use super::*;
+
+    #[test]
+    fn is_superset() {
+        let query = CharBag::from("abc");
+        assert!(CharBag::from("abcdef").is_superset(query));
+        assert!(CharBag::from("aabbcc").is_superset(query));
+        assert!(!CharBag::from("abd").is_superset(query));
+    }
+
+    #[test]
+    fn counts_repetitions_up_to_three() {
+        let (one, two, three, four) = (
+            CharBag::from("a"),
+            CharBag::from("aa"),
+            CharBag::from("aaa"),
+            CharBag::from("aaaa"),
+        );
+        assert!(!one.is_superset(two));
+        assert!(two.is_superset(one));
+        assert!(three.is_superset(two));
+        assert_eq!(three, four, "计数在 3 处饱和");
+    }
+
+    #[test]
+    fn ignores_case_and_non_ascii() {
+        assert_eq!(CharBag::from("ABC"), CharBag::from("abc"));
+        // 非 ASCII 字符直接忽略，所以中文候选的 bag 是「空」的——任何查询都能过预筛。
+        assert_eq!(CharBag::from("中文"), CharBag::default());
+    }
+
+    #[test]
+    fn tracks_digits_and_dash() {
+        assert!(CharBag::from("file-1").is_superset(CharBag::from("1")));
+        assert!(CharBag::from("file-1").is_superset(CharBag::from("-")));
+        assert!(!CharBag::from("file1").is_superset(CharBag::from("-")));
+    }
 }

@@ -7,6 +7,10 @@ publish.workspace = true
 description = "模糊匹配：字符串与文件路径的打分/高亮（对齐 zed crates/fuzzy_nucleo，底层用 nucleo）"
 
 [dependencies]
+# CharBag（候选预筛的 u64 位集合）。zed 的 fuzzy_nucleo 也是依赖旧包 `fuzzy`
+# 来拿它的；直接复用让「旧 fuzzy」与「nucleo 侧」共享同一个类型，worktree 与
+# project 之间不用做转换。
+fuzzy.workspace = true
 # BackgroundExecutor（并行分段 + 可取消）与 SharedString（候选字符串零拷贝）。
 gpui.workspace = true
 # truncate_to_bottom_n_sorted_by：只保留得分最高的 N 个。
