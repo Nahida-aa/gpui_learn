@@ -23,7 +23,7 @@ pub enum KeybindingPosition {
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, Hsla, IntoElement, Pixels,
+    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, IntoElement, Pixels,
     SharedString, Window, prelude::*, px,
 };
 
@@ -33,11 +33,13 @@ use crate::Color;
 use aa_gpui_kit_theme::ActiveTheme;
 pub mod button;
 pub mod button_like;
+pub mod button_link;
 pub mod copy_button;
 pub mod split_button;
 
 pub use button::Button;
 pub use button_like::{ButtonCommon, ButtonLike, ButtonSize};
+pub use button_link::ButtonLink;
 pub use copy_button::CopyButton;
 
 /// 点击回调（`ButtonLike` / `IconButton` 的内部存储类型）。
@@ -84,6 +86,17 @@ pub enum ButtonRadius {
     Square,
 }
 
+/// The shape of an [`IconButton`]（对齐 zed `components/button/icon_button.rs:12`）。
+///
+/// 与 [`ButtonRadius`] 是两套东西：`ButtonRadius` 是我们渲染 `Button` 时用的
+/// 圆角档位；`IconButtonShape` 是 zed `IconButton` 的对外形状参数，
+/// workspace 照搬 zed 代码时会直接写 `IconButtonShape::Square` / `::Wide`。
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+pub enum IconButtonShape {
+    Square,
+    Wide,
+}
+
 /// 图标按钮：不可变、一次性渲染的方形图标按钮。
 ///
 /// 用法（与 zed 的 `IconButton` 同构）：
@@ -102,12 +115,16 @@ pub struct IconButton {
     icon_size: IconSize,
     /// 图标颜色（对齐 zed：收语义色 `Color`，渲染时经 `cx.theme()` 解析）。
     icon_color: Color,
-    /// 容器边长（默认 24px，适配标题栏/状态栏）。
+    /// 容器边长（默认 24px，适配标题栏/状态栏）。仅 [`IconButtonShape::Square`] 生效。
     size: Pixels,
+    /// 形状（对齐 zed：Square 定宽方形 / Wide 跟随内容）。
+    shape: IconButtonShape,
     radius: ButtonRadius,
     selected: bool,
     disabled: bool,
     aria_label: Option<SharedString>,
+    /// 弹出层展开态（dropdown / disclosure 触发器用，转发给 [`ButtonLike`]）。
+    aria_expanded: Option<bool>,
     on_click: Option<ClickHandler>,
     /// 悬停提示（[`Tooltip::text`] 等工厂现场建实体）。
     tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
@@ -131,10 +148,12 @@ impl IconButton {
             icon_size: IconSize::default(),
             icon_color: Color::Default,
             size: px(24.0),
+            shape: IconButtonShape::Square,
             radius: ButtonRadius::Medium,
             selected: false,
             disabled: false,
             aria_label: None,
+            aria_expanded: None,
             on_click: None,
             tooltip: None,
             tooltip_anchor: None,
@@ -168,6 +187,12 @@ impl IconButton {
         self
     }
 
+    /// 形状（对齐 zed：Square 定宽方形 / Wide 跟随内容宽度）。
+    pub fn shape(mut self, shape: IconButtonShape) -> Self {
+        self.shape = shape;
+        self
+    }
+
     /// 圆角形态（默认 [`ButtonRadius::Medium`]）。
     pub fn radius(mut self, radius: ButtonRadius) -> Self {
         self.radius = radius;
@@ -183,6 +208,12 @@ impl IconButton {
     /// 无障标签（纯图标按钮建议设置）。
     pub fn aria_label(mut self, label: impl Into<SharedString>) -> Self {
         self.aria_label = Some(label.into());
+        self
+    }
+
+    /// 弹出层展开态（对齐 zed：disclosure / dropdown 触发器设置）。
+    pub fn aria_expanded(mut self, expanded: bool) -> Self {
+        self.aria_expanded = Some(expanded);
         self
     }
 
@@ -255,7 +286,10 @@ impl RenderOnce for IconButton {
             .icon(self.icon)
             .icon_color(Some(icon_color))
             .icon_size(icon_size)
-            .box_size(self.size)
+            // 对齐 zed：Square 定宽成方形；Wide 跟随内容宽度（不给 box_size）。
+            .when(self.shape == IconButtonShape::Square, |this| {
+                this.box_size(self.size)
+            })
             .radius(self.radius)
             .selected(selected)
             .disabled(disabled)
@@ -263,6 +297,9 @@ impl RenderOnce for IconButton {
 
         if let Some(aria_label) = self.aria_label {
             like = like.aria_label(aria_label);
+        }
+        if let Some(expanded) = self.aria_expanded {
+            like = like.aria_expanded(expanded);
         }
         // on_click：ButtonLike 内部已处理 disabled 短路，这里只转发回调。
         let handler = self.on_click;

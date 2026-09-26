@@ -18,7 +18,7 @@ pub use gpui::{
     AbsoluteLength, Anchor, AnyElement, App, BoxShadow, ClickEvent, Context, CursorStyle,
     DefiniteLength, DismissEvent, Div, Element, ElementId, Entity, Hsla, InteractiveElement,
     IntoElement, ManagedView, ParentElement, Pixels, Point, RenderOnce, SharedString, Stateful,
-    Styled, Window, div, hsla, percentage, px, rgb, rgba,
+    Styled, Window, div, hsla, percentage, px, rems, relative, rgb, rgba,
 };
 
 pub use crate::animation::{AnimationDirection, AnimationDuration, DefaultAnimations};
@@ -30,13 +30,17 @@ pub use crate::traits::selectable_button::*;
 pub use crate::traits::styled_ext::*;
 pub use crate::traits::toggleable::*;
 pub use crate::traits::transformable::*;
+// zed 的 prelude 里有 `VisibleOnHover`（`.visible_on_hover("")`），
+// 列表项 / 表格行的"hover 才出现"按钮都靠它。
+pub use crate::traits::visible_on_hover::*;
 
 pub use crate::components::avatar::{
     AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
     CollaboratorAvailability,
 };
 pub use crate::components::button::{
-    ButtonCommon, ButtonLike, ButtonRadius, ButtonSize, ButtonStyle, IconButton,
+    ButtonCommon, ButtonLike, ButtonLink, ButtonRadius, ButtonSize, ButtonStyle, IconButton,
+    IconButtonShape,
     KeybindingPosition,
     SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
@@ -63,6 +67,10 @@ pub use crate::{
 pub use crate::styles::{
     Color, DynamicSpacing, Headline, HeadlineSize, StyledTypography, TextSize, UiDensity,
 };
+// 对齐 zed `crates/ui/src/prelude.rs`：vh / vw / rems_from_px 也在 prelude 里，
+// 这样 `use ui::prelude::*;` 就能直接用 `vh()`、`rems_from_px()`。
+// （zed 的同一行还有 PlatformStyle / Severity，本地 styles 里没有，先不补。）
+pub use crate::styles::units::{rems_from_px, vh, vw};
 
 pub use crate::component_prelude::*;
 

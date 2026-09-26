@@ -16,6 +16,8 @@
 pub mod avatar;
 pub mod button;
 pub mod context_menu;
+pub mod count_badge;
+pub mod disclosure;
 pub mod divider;
 pub mod facepile;
 pub mod icon;
@@ -24,6 +26,8 @@ pub mod indicator;
 pub mod keybinding;
 pub mod keybinding_hint;
 pub mod label;
+pub mod list;
+pub mod notification;
 pub mod popover_menu;
 pub mod scrollbar;
 pub mod stack;
@@ -35,8 +39,10 @@ pub use avatar::{
     AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
     CollaboratorAvailability,
 };
-pub use button::{ButtonRadius, ButtonStyle, IconButton, TintColor};
+pub use button::{ButtonRadius, ButtonStyle, IconButton, IconButtonShape, TintColor};
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu};
+pub use count_badge::CountBadge;
+pub use disclosure::Disclosure;
 pub use divider::{Divider, DividerColor, DividerDirection};
 pub use facepile::{EXAMPLE_FACES, Facepile};
 pub use icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
@@ -48,6 +54,9 @@ pub use keybinding::{
 };
 pub use keybinding_hint::KeybindingHint;
 pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle};
+pub use list::list_bullet_item::ListBulletItem;
+pub use list::list_item::{ListItem, ListItemSpacing};
+pub use notification::alert_modal::AlertModal;
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
