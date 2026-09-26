@@ -32,6 +32,7 @@ pub mod popover_menu;
 pub mod scrollbar;
 pub mod stack;
 pub mod tab;
+pub mod tab_bar;
 pub mod toggle;
 pub mod tooltip;
 
@@ -64,6 +65,7 @@ pub use scrollbar::{
 };
 pub use stack::{h_flex, v_flex};
 pub use tab::{Tab, TabCloseSide, TabPosition};
+pub use tab_bar::TabBar;
 pub use toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };
