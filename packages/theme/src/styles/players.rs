@@ -98,6 +98,19 @@ impl PlayerColors {
         self.0.first().copied().unwrap_or_default()
     }
 
+    /// AI agent 的颜色（最后一个，对齐 zed `PlayerColors::agent`）。
+    ///
+    /// zed 把它放在**末尾**而不是某个固定索引：前面 7 个是协作者轮转色，
+    /// agent 单独占最后一位，这样它不会跟任何协作者撞色。
+    pub fn agent(&self) -> PlayerColor {
+        self.0.last().copied().unwrap_or_default()
+    }
+
+    /// 已离开的参与者的颜色（对齐 zed `PlayerColors::absent`，同样取末尾）。
+    pub fn absent(&self) -> PlayerColor {
+        self.0.last().copied().unwrap_or_default()
+    }
+
     /// 颜色总数。
     pub fn len(&self) -> usize {
         self.0.len()

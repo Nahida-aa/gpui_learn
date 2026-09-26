@@ -13,8 +13,7 @@
 //! - **可编程**：[`PopoverMenuHandle`] 允许在任意代码里 show / hide / toggle
 //!   （比如工具栏按钮与键盘快捷键共用同一个菜单）。
 //!
-//! 与 zed 的差异：未实现 `full_width` 与 `trigger_with_tooltip`
-//! （后者依赖 `ButtonCommon::tooltip` 挂载点，我们尚未有该 trait）。
+//! 与 zed 的差异：未实现 `full_width`。
 //!
 //! 用法（与 zed 同构）：
 //! ```ignore
@@ -29,12 +28,14 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gpui::{
-    Anchor, AnyElement, App, Bounds, DismissEvent, DispatchPhase, Element, ElementId, Entity,
-    Focusable as _, GlobalElementId, HitboxBehavior, HitboxId, InteractiveElement, IntoElement,
+    Anchor, AnyElement, AnyView, App, Bounds, DismissEvent, DispatchPhase, Element, ElementId,
+    Entity, Focusable as _, GlobalElementId, HitboxBehavior, HitboxId, InteractiveElement,
+    IntoElement,
     LayoutId, ManagedView, MouseDownEvent, ParentElement, Pixels, Point, Style, Window, anchored,
     deferred, div, point, prelude::FluentBuilder, px, rems,
 };
 
+use crate::ButtonCommon;
 use crate::traits::{Clickable, Toggleable};
 
 /// 任何能当 popover 触发器的元素：可点击（挂开/关回调）、可切换
@@ -223,6 +224,44 @@ impl<M: ManagedView> PopoverMenu<M> {
                                 on_open(window, cx);
                             }
                         }
+                    })
+                })
+                .into_any_element()
+        }));
+        self
+    }
+
+    /// 同 [`Self::trigger`]，但**菜单打开时不再显示 trigger 的 tooltip**
+    /// （对齐 zed `PopoverMenu::trigger_with_tooltip`）。
+    ///
+    /// 为什么要单独一个方法：菜单展开后 tooltip 会压在菜单上，zed 的做法是
+    /// 只在关闭态挂 tooltip（下面那个 `.when(!open, ...)`）。
+    ///
+    /// 约束比 `trigger` 多一个 [`ButtonCommon`] —— 因为 `.tooltip()` 是
+    /// `ButtonCommon` 的方法，`PopoverTrigger` 本身不保证有 tooltip。
+    pub fn trigger_with_tooltip<T: PopoverTrigger + ButtonCommon>(
+        mut self,
+        t: T,
+        tooltip_builder: impl Fn(&mut Window, &mut App) -> AnyView + 'static,
+    ) -> Self {
+        let on_open = self.on_open.clone();
+        self.child_builder = Some(Box::new(move |menu, builder| {
+            let open = menu.borrow().is_some();
+            t.toggle_state(open)
+                .when_some(builder, |el, builder| {
+                    el.on_click(move |_event, window, cx| {
+                        if menu.borrow().as_ref().is_some() {
+                            // 已打开：本次点击交给 paint 阶段的关闭监听处理
+                            // （那里会 emit Dismiss），这里不再重复打开。
+                        } else {
+                            show_menu(&builder, &menu, window, cx);
+                            if let Some(on_open) = on_open.as_ref() {
+                                on_open(window, cx);
+                            }
+                        }
+                    })
+                    .when(!open, |el| {
+                        el.tooltip(move |window, cx| tooltip_builder(window, cx))
                     })
                 })
                 .into_any_element()

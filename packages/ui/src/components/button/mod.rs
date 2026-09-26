@@ -23,11 +23,12 @@ pub enum KeybindingPosition {
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, IntoElement, Pixels,
+    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, FocusHandle, IntoElement, Pixels,
     SharedString, Window, prelude::*, px,
 };
 
 use aa_gpui_base::{IconName, IconSize};
+use crate::styles::ElevationIndex;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use crate::Color;
 use aa_gpui_kit_theme::ActiveTheme;
@@ -136,6 +137,15 @@ pub struct IconButton {
     cursor_style: Option<CursorStyle>,
     /// 只在指定 group 被 hover 时显示（转发给 [`ButtonLike`]）。
     visible_on_hover: Option<SharedString>,
+    // ---- 以下四项由 [`ButtonCommon`] 设置，渲染时转发给 [`ButtonLike`] ----
+    /// Tab 键导航序号（`ButtonCommon::tab_index`）。
+    tab_index: Option<isize>,
+    /// 尺寸档位（`ButtonCommon::size`）。`None` 时用上面的 `size`（方形边长）。
+    button_size: Option<ButtonSize>,
+    /// 视觉层级（`ButtonCommon::layer`）。
+    layer: Option<ElevationIndex>,
+    /// 焦点跟踪（`ButtonCommon::track_focus`）。
+    focus_handle: Option<FocusHandle>,
 }
 
 impl IconButton {
@@ -160,6 +170,10 @@ impl IconButton {
             tooltip_attach: None,
             cursor_style: None,
             visible_on_hover: None,
+            tab_index: None,
+            button_size: None,
+            layer: None,
+            focus_handle: None,
         }
     }
 
@@ -320,7 +334,68 @@ impl RenderOnce for IconButton {
         if let Some(group) = self.visible_on_hover {
             like = like.visible_on_hover(group);
         }
+        // ButtonCommon 那四项
+        if let Some(tab_index) = self.tab_index {
+            like = like.tab_index(tab_index);
+        }
+        if let Some(button_size) = self.button_size {
+            like = like.size(button_size);
+        }
+        if let Some(layer) = self.layer {
+            like = like.layer(layer);
+        }
+        if let Some(focus_handle) = self.focus_handle {
+            like = like.track_focus(&focus_handle);
+        }
         like
+    }
+}
+
+// zed 的 IconButton 有这个 impl（`icon_button.rs:195`），它是靠它对外提供
+// `tab_index` / `size` / `layer` / `track_focus` 的；缺了它不仅 `.tab_index()`
+// 调不到，`PopoverMenu::trigger_with_tooltip`（约束 `T: PopoverTrigger +
+// ButtonCommon`）也没法拿 IconButton 当触发器。
+//
+// 与 zed 的差异：zed 的 IconButton 持有一个 `ButtonLike` 字段，trait 方法直接
+// 转发给它；我们是在 `render` 时才建 `ButtonLike`，所以这里只记状态，
+// 渲染阶段再转发。
+impl ButtonCommon for IconButton {
+    fn id(&self) -> &ElementId {
+        &self.id
+    }
+
+    fn style(mut self, style: ButtonStyle) -> Self {
+        self.style = style;
+        self
+    }
+
+    fn tab_index(mut self, tab_index: impl Into<isize>) -> Self {
+        self.tab_index = Some(tab_index.into());
+        self
+    }
+
+    /// 注意：本类型的**固有** `size` 收的是方形边长 `Pixels`（我们自有的参数），
+    /// 这个 trait 方法收 `ButtonSize` 档位。两者不冲突，但调用点写
+    /// `.size(ButtonSize::Medium)` 时会命中固有方法 —— zed 里没人这么写
+    /// （`ButtonSize` 只用在 `Button` / `ButtonLike` 上），这里保持一致。
+    fn size(mut self, size: ButtonSize) -> Self {
+        self.button_size = Some(size);
+        self
+    }
+
+    fn layer(mut self, layer: ElevationIndex) -> Self {
+        self.layer = Some(layer);
+        self
+    }
+
+    fn track_focus(mut self, focus_handle: &FocusHandle) -> Self {
+        self.focus_handle = Some(focus_handle.clone());
+        self
+    }
+
+    fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
+        self.tooltip = Some(Rc::new(tooltip));
+        self
     }
 }
 

@@ -76,6 +76,47 @@ impl Tooltip {
         }
     }
 
+    /// 带「该 action 的快捷键」的提示，**立即创建**（对齐 zed `Tooltip::for_action`）。
+    ///
+    /// 与 [`Self::text`] 的区别同 [`Self::simple`]：这个当场建实体，直接返回
+    /// `AnyView`，所以能写成 zed 那种一行传参：
+    /// ```ignore
+    /// IconButton::new("close", IconName::Close)
+    ///     .tooltip(Tooltip::for_action("Close", &menu::Cancel, cx))
+    /// ```
+    /// （`ButtonCommon::tooltip` 收的是**闭包**，那种场景用 [`Self::text`]。）
+    pub fn for_action(
+        title: impl Into<SharedString>,
+        action: &dyn gpui::Action,
+        cx: &mut App,
+    ) -> AnyView {
+        cx.new(|cx| Tooltip {
+            title: title.into(),
+            meta: None,
+            key_binding: Some(crate::KeyBinding::for_action(action, cx)),
+            focus_handle: cx.focus_handle(),
+        })
+        .into()
+    }
+
+    /// 同 [`Self::for_action`]，但快捷键按 `focus_handle` 所在的上下文解析
+    /// （同一个 action 在不同焦点区域可能绑不同键）。对齐 zed `Tooltip::for_action_in`。
+    pub fn for_action_in(
+        title: impl Into<SharedString>,
+        action: &dyn gpui::Action,
+        focus_handle: &FocusHandle,
+        cx: &mut App,
+    ) -> AnyView {
+        let focus_handle = focus_handle.clone();
+        cx.new(|cx| Tooltip {
+            title: title.into(),
+            meta: None,
+            key_binding: Some(crate::KeyBinding::for_action_in(action, &focus_handle, cx)),
+            focus_handle: cx.focus_handle(),
+        })
+        .into()
+    }
+
     /// 带快捷键提示的提示（工厂形式）。`key_binding` 是 ui 的 [`KeyBinding`]
     /// 组件（可用 `KeyBinding::for_action(action, cx)` 得到）。
     pub fn with_key_binding(
