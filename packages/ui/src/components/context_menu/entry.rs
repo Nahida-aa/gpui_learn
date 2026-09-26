@@ -8,6 +8,7 @@
 
 use std::rc::Rc;
 
+use gpui::prelude::FluentBuilder;
 use gpui::{Action, App, SharedString, Window};
 
 use aa_gpui_base::{Icon, IconName, IconSize};
@@ -225,6 +226,11 @@ pub enum ContextMenuItem {
     /// 纯文本（muted 色，不可交互）。
     Label(SharedString),
 }
+
+// zed: `impl FluentBuilder for ContextMenuEntry {}`（context_menu.rs:205）。
+// gpui 只给 `T: IntoElement`  blanket impl 了 `FluentBuilder`，而菜单条目不是
+// 元素，所以要显式补一条，才能写 `.when(...)` / `.when_some(...)`。
+impl FluentBuilder for ContextMenuEntry {}
 
 impl From<ContextMenuEntry> for ContextMenuItem {
     fn from(entry: ContextMenuEntry) -> Self {

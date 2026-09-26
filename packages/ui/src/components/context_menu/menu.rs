@@ -385,6 +385,11 @@ impl Focusable for ContextMenu {
 
 impl EventEmitter<DismissEvent> for ContextMenu {}
 
+// zed: `impl FluentBuilder for ContextMenu {}`（context_menu.rs:271）。
+// 同上：菜单本体是 `Entity`（不是元素），拿不到 gpui 的 blanket impl，
+// 显式补一条，`|menu, _, _| menu.separator().when_some(...)` 这类链式写法才成立。
+impl FluentBuilder for ContextMenu {}
+
 impl Render for ContextMenu {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors().clone();
