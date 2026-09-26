@@ -4,6 +4,20 @@ pub mod control_characters;
 pub use color_contrast::*;
 pub use control_characters::*;
 
+/// 返回「在文件管理器中显示」这一动作的本地化文案（对齐 zed
+/// `crates/ui/src/utils.rs:45`）。
+///
+/// 远程项目下没有 Finder / Explorer 可显示，一律退回通用文案。
+pub fn reveal_in_file_manager_label(is_remote: bool) -> &'static str {
+    if cfg!(target_os = "macos") && !is_remote {
+        "Reveal in Finder"
+    } else if cfg!(target_os = "windows") && !is_remote {
+        "Reveal in File Explorer"
+    } else {
+        "Reveal in File Manager"
+    }
+}
+
 /// 把首字符改成大写，其余原样保留（对齐 zed `crates/ui/src/utils.rs:69`）。
 ///
 /// 注意它不是「首字母大写 + 其余小写」：`capitalize("WORLD") == "WORLD"`。
