@@ -60,7 +60,9 @@ pub use crate::{
     Button, Icon, IconName, IconSize, Slider, SliderEvent, SliderState,
 };
 
-pub use crate::styles::{Color, DynamicSpacing, StyledTypography, TextSize, UiDensity};
+pub use crate::styles::{
+    Color, DynamicSpacing, Headline, HeadlineSize, StyledTypography, TextSize, UiDensity,
+};
 
 pub use crate::component_prelude::*;
 
