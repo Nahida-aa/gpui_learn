@@ -32,6 +32,8 @@ use aa_gpui_kit_theme::ActiveTheme;
 use crate::components::button::ClickHandler;
 use aa_gpui_base::{Icon, IconName};
 use crate::components::button::{ButtonRadius, ButtonStyle};
+use crate::components::icon::IconWithIndicator;
+use crate::components::indicator::Indicator;
 use crate::styles::{DynamicSpacing, ElevationIndex};
 use crate::components::tooltip::TooltipHost;
 use crate::traits::{Clickable, Disableable, Toggleable};
@@ -77,6 +79,11 @@ pub struct ButtonLike {
     icon_color: Option<Hsla>,
     /// 图标边长（icon-only 时同时决定容器边长）。
     icon_size: Pixels,
+    /// 图标右下角的徽标（对齐 zed `IconButton::indicator`，经
+    /// [`IconWithIndicator`] 落到按钮上）。
+    indicator: Option<Indicator>,
+    /// 徽标外圈描边色；`None` 时取主题 `elevated_surface_background`。
+    indicator_border_color: Option<Hsla>,
     /// 容器边长（icon-only 时的方形边长）；`None` 时按内容自适应。
     box_size: Option<Pixels>,
     /// 宽度覆盖（`FixedWidth::width` / `full_width` 设入）；`None` 时按内容自适应。
@@ -142,6 +149,8 @@ impl ButtonLike {
             icon: None,
             icon_color: None,
             icon_size: px(14.0),
+            indicator: None,
+            indicator_border_color: None,
             box_size: None,
             width: None,
             tab_index: None,
@@ -202,6 +211,18 @@ impl ButtonLike {
     /// 图标边长（icon-only 时同时决定容器边长）。
     pub fn icon_size(mut self, size: impl Into<Pixels>) -> Self {
         self.icon_size = size.into();
+        self
+    }
+
+    /// 图标右下角的徽标（对齐 zed `IconButton::indicator`）。
+    pub fn indicator(mut self, indicator: Indicator) -> Self {
+        self.indicator = Some(indicator);
+        self
+    }
+
+    /// 徽标外圈描边色（`None` 时取主题 `elevated_surface_background`）。
+    pub fn indicator_border_color(mut self, color: Option<Hsla>) -> Self {
+        self.indicator_border_color = color;
         self
     }
 
@@ -508,7 +529,17 @@ impl RenderOnce for ButtonLike {
         };
 
         if let Some(icon) = self.icon {
-            button = button.child(Icon::new(icon).size(self.icon_size).color(fg));
+            let icon_element = Icon::new(icon).size(self.icon_size).color(fg);
+            // 与 zed 的差异：zed 的 `IconButton` 自己拼
+            // `IconWithIndicator::new(icon_element, Some(indicator))`（icon_button.rs:264）；
+            // 我们的 `IconButton` 到渲染时才建 `ButtonLike`，所以这一步下移到这里。
+            button = button.child(if self.indicator.is_some() {
+                IconWithIndicator::new(icon_element, self.indicator)
+                    .indicator_border_color(self.indicator_border_color)
+                    .into_any_element()
+            } else {
+                icon_element.into_any_element()
+            });
         }
         if let Some(label) = self.label {
             button = button.child(div().text_color(fg).child(label));

@@ -50,7 +50,9 @@ pub use crate::components::context_menu::{
 };
 pub use crate::components::divider::{Divider, DividerColor, DividerDirection};
 pub use crate::components::facepile::Facepile;
-pub use crate::components::icon::{DecoratedIcon, IconDecoration, IconDecorationKind};
+pub use crate::components::icon::{
+    DecoratedIcon, IconDecoration, IconDecorationKind, IconWithIndicator,
+};
 pub use crate::components::image::{Vector, VectorName};
 pub use crate::components::indicator::Indicator;
 pub use crate::components::keybinding::{Key, KeyBinding, KeyBindingStyle, KeyIcon};

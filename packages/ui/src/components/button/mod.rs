@@ -23,14 +23,14 @@ pub enum KeybindingPosition {
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, FocusHandle, IntoElement, Pixels,
-    SharedString, Window, prelude::*, px,
+    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, FocusHandle, Hsla, IntoElement,
+    Pixels, SharedString, Window, prelude::*, px,
 };
 
 use aa_gpui_base::{IconName, IconSize};
 use crate::styles::ElevationIndex;
 use crate::traits::{Clickable, Disableable, Toggleable};
-use crate::Color;
+use crate::{Color, Indicator};
 use aa_gpui_kit_theme::ActiveTheme;
 pub mod button;
 pub mod button_like;
@@ -145,6 +145,12 @@ pub struct IconButton {
     /// 选中态下的图标色；`None` 时用 [`colors.icon_accent`] 那套默认
     /// （对齐 zed `IconButton::selected_icon_color`，zed 默认 `Color::Selected`）。
     selected_icon_color: Option<Color>,
+    /// 图标右下角的徽标（对齐 zed `IconButton::indicator`）。
+    indicator: Option<Indicator>,
+    /// 徽标外圈描边色（对齐 zed `IconButton::indicator_border_color`）。
+    ///
+    /// zed 收 `Option<Hsla>`（已经是解析后的实色，不是语义色）。
+    indicator_border_color: Option<Hsla>,
     // ---- 以下四项由 [`ButtonCommon`] 设置，渲染时转发给 [`ButtonLike`] ----
     /// Tab 键导航序号（`ButtonCommon::tab_index`）。
     tab_index: Option<isize>,
@@ -180,6 +186,8 @@ impl IconButton {
             visible_on_hover: None,
             selected_icon: None,
             selected_icon_color: None,
+            indicator: None,
+            indicator_border_color: None,
             tab_index: None,
             button_size: None,
             layer: None,
@@ -287,6 +295,20 @@ impl IconButton {
         self.selected_icon_color = color.into();
         self
     }
+
+    /// 图标右下角挂一个徽标（对齐 zed `IconButton::indicator`）。
+    pub fn indicator(mut self, indicator: Indicator) -> Self {
+        self.indicator = Some(indicator);
+        self
+    }
+
+    /// 徽标外圈描边色（对齐 zed `IconButton::indicator_border_color`）。
+    ///
+    /// 常见用法是传按钮所在容器的背景色，让徽标看起来是"挖空"的。
+    pub fn indicator_border_color(mut self, color: Option<Hsla>) -> Self {
+        self.indicator_border_color = color;
+        self
+    }
 }
 
 impl RenderOnce for IconButton {
@@ -366,6 +388,12 @@ impl RenderOnce for IconButton {
         }
         if let Some(group) = self.visible_on_hover {
             like = like.visible_on_hover(group);
+        }
+        if let Some(indicator) = self.indicator {
+            like = like.indicator(indicator);
+        }
+        if let Some(color) = self.indicator_border_color {
+            like = like.indicator_border_color(Some(color));
         }
         // ButtonCommon 那四项
         if let Some(tab_index) = self.tab_index {
@@ -480,5 +508,17 @@ mod tests {
         );
         assert!(button.selected, "Toggleable::toggle_state 应生效");
         assert!(!button.disabled, "Disableable::disabled(false) 应生效");
+    }
+
+    /// 徽标（对齐 zed `IconButton::indicator`）：字段被设置，颜色能读回。
+    #[test]
+    fn icon_button_stores_indicator() {
+        let button = IconButton::new("test", IconName::Bell)
+            .indicator(Indicator::dot().color(Color::Accent))
+            .indicator_border_color(Some(gpui::hsla(0., 0., 0., 1.)));
+
+        let indicator = button.indicator.expect("indicator 应被设置");
+        assert_eq!(indicator.color, Color::Accent);
+        assert!(button.indicator_border_color.is_some());
     }
 }

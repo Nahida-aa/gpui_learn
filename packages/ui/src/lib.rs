@@ -73,7 +73,9 @@ pub use components::avatar::{
 };
 pub use components::divider::{Divider, DividerColor, DividerDirection};
 pub use components::facepile::{EXAMPLE_FACES, Facepile};
-pub use components::icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
+pub use components::icon::{
+    DecoratedIcon, IconDecoration, IconDecorationKind, IconWithIndicator, KnockoutIconName,
+};
 pub use components::image::{Vector, VectorName};
 pub use components::indicator::Indicator;
 pub use components::keybinding::{
