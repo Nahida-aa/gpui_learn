@@ -54,7 +54,7 @@ pub use scrollbar::{
     Scrollbars, ShowBehavior, WithScrollbar,
 };
 pub use stack::{h_flex, v_flex};
-pub use tab::TabCloseSide;
+pub use tab::{Tab, TabCloseSide, TabPosition};
 pub use toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };
