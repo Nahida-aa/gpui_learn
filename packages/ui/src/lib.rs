@@ -36,7 +36,9 @@ pub use prelude::*;
 
 // 布局 helper 与 rem 换算（typography/color 等模块经 crate:: 根路径引用）。
 pub use components::stack::{h_flex, v_flex};
-pub use components::label::{Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle};
+pub use components::label::{
+    HighlightedLabel, Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle,
+};
 pub use styles::units::{vh, vw, BASE_REM_SIZE_IN_PX, rems_from_px};
 mod styles;
 pub mod traits;
