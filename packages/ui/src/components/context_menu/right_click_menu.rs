@@ -43,6 +43,16 @@ impl<M: ManagedView> RightClickMenu<M> {
         self
     }
 
+    /// 同 [`Self::menu`]，但允许某些情况下不建菜单
+    /// （对齐 zed `RightClickMenu::maybe_menu`）。
+    pub fn maybe_menu(
+        mut self,
+        f: impl Fn(&mut Window, &mut App) -> Option<Entity<M>> + 'static,
+    ) -> Self {
+        self.menu_builder = Some(Rc::new(f));
+        self
+    }
+
     /// 设定 trigger（右击时高亮可用 `is_active` 改变外观）。
     pub fn trigger<F, E>(mut self, e: F) -> Self
     where

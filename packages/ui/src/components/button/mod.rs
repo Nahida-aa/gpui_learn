@@ -163,6 +163,9 @@ pub struct IconButton {
     /// 选中态下的图标色；`None` 时用 [`colors.icon_accent`] 那套默认
     /// （对齐 zed `IconButton::selected_icon_color`，zed 默认 `Color::Selected`）。
     selected_icon_color: Option<Color>,
+    /// 整体不透明度系数（对齐 zed `IconButton::alpha`，仅作用于普通态图标色；
+    /// 动画里做呼吸闪烁用）。
+    alpha: Option<f32>,
     /// 图标右下角的徽标（对齐 zed `IconButton::indicator`）。
     indicator: Option<Indicator>,
     /// 徽标外圈描边色（对齐 zed `IconButton::indicator_border_color`）。
@@ -208,6 +211,7 @@ impl IconButton {
             visible_on_hover: None,
             selected_icon: None,
             selected_icon_color: None,
+            alpha: None,
             indicator: None,
             indicator_border_color: None,
             tab_index: None,
@@ -232,6 +236,13 @@ impl IconButton {
     /// 图标颜色（对齐 zed：收语义色 [`Color`]）。
     pub fn icon_color(mut self, color: Color) -> Self {
         self.icon_color = color;
+        self
+    }
+
+    /// 图标色的不透明度系数（对齐 zed `IconButton::alpha`；只作用于普通态，
+    /// disabled / selected 态不受影响）。
+    pub fn alpha(mut self, alpha: f32) -> Self {
+        self.alpha = Some(alpha);
         self
     }
 
@@ -379,9 +390,9 @@ impl RenderOnce for IconButton {
                 None => colors.icon_accent,
             }
         } else if self.icon_color == Color::Default {
-            style_colors.fg
+            style_colors.fg.opacity(self.alpha.unwrap_or(1.0))
         } else {
-            self.icon_color.color(cx)
+            self.icon_color.color(cx).opacity(self.alpha.unwrap_or(1.0))
         };
 
         // 选中态换图标（zed `selected_icon`）。

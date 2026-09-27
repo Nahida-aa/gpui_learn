@@ -47,6 +47,27 @@ pub trait PopoverTrigger: IntoElement + Clickable + Toggleable + 'static {}
 
 impl<T: IntoElement + Clickable + Toggleable + 'static> PopoverTrigger for T {}
 
+// 对齐 zed `popover_menu.rs:16-39`：让 `with_animation` 包出来的元素也能当
+// trigger（zeta 转圈时的呼吸按钮就是「动画包 IconButton 再进 popover」）。
+impl<T: Clickable + 'static> Clickable for gpui::AnimationElement<T> {
+    fn on_click(
+        self,
+        handler: impl Fn(&gpui::ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.map_element(|e| e.on_click(handler))
+    }
+
+    fn cursor_style(self, cursor_style: gpui::CursorStyle) -> Self {
+        self.map_element(|e| e.cursor_style(cursor_style))
+    }
+}
+
+impl<T: Toggleable + 'static> Toggleable for gpui::AnimationElement<T> {
+    fn toggle_state(self, selected: bool) -> Self {
+        self.map_element(|e| e.toggle_state(selected))
+    }
+}
+
 type MenuBuilder<M> = Rc<dyn Fn(&mut Window, &mut App) -> Option<Entity<M>> + 'static>;
 
 /// 编程式控制一个 [`PopoverMenu`] 的开合。
