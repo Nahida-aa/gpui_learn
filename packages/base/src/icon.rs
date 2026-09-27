@@ -1,7 +1,8 @@
 //! icon：通用图标控件（aa_gpui_base）。
 //!
-//! `IconName` 枚举由 `aa_gpui_kit_assets` crate 的 build.rs 自动生成
-//! （扫描 assets/icons/*.svg）。加图标 = 扔 SVG 文件即可，零手动维护。
+//! `IconName` 枚举来自 `aa_icons`（zed crates/icons 原样移植）：手写枚举 +
+//! `IntoStaticStr` snake_case 序列化，`path()` 据此拼出 `assets/icons/` 下的
+//! SVG 路径，并由 `aa_icons` 里的两个测试保证「枚举 ↔ SVG 文件」双向不缺。
 //!
 //! `Icon` 是一次渲染控件，持有 `IconName` + 尺寸 + 颜色 + 旋转，
 //! 渲染时通过 `IconName::path()` 拿到 RustEmbed 路径。
@@ -13,7 +14,7 @@ use gpui::{
     px, rems, svg,
 };
 
-pub use aa_gpui_kit_assets::IconName;
+pub use aa_icons::IconName;
 
 /// 前景色的抽象：既可以是已解析的实色 [`Hsla`]，也可以是「语义色」。
 ///

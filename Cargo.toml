@@ -115,6 +115,11 @@ strum = { version = "0.28", features = ["derive"] }
 # 需要 BackgroundExecutor（并行分段 + 可取消）与 SharedString。
 aa_gpui_fuzzy = { path = "packages/gpui_fuzzy" }
 
+# 图标名枚举（packages/icons，zed crates/icons 原样）。全仓库唯一的 IconName：
+# base::Icon、ui、AAgent 的 `icons` 别名用的都是它，靠 snake_case 序列化拼出
+# assets/icons/ 下的 SVG 路径（`path()` + 双向测试也在这个包里）。
+aa_icons = { path = "packages/icons" }
+
 # 时钟（packages/clock）：逻辑时钟（Lamport / 版本向量）+ 可注入的系统时钟。
 # **零 gpui 依赖**（对齐 zed crates/clock 的自研版，见 docs/zed/clock-analysis.md），
 # 所以任何层都可以引用它而不会把 gpui 拖进依赖图。

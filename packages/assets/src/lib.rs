@@ -4,9 +4,8 @@ use anyhow::Context as _;
 use gpui::{App, AssetSource, Result, SharedString};
 use rust_embed::RustEmbed;
 
-// Auto-generated IconName enum from assets/icons/*.svg (build.rs).
-// One-shot: drop SVG, rebuild done. No manual enum maintenance.
-include!(concat!(env!("OUT_DIR"), "/icon_name.rs"));
+// IconName 不在这里：全仓库唯一的枚举在 `aa_icons`（zed crates/icons 原样），
+// 由它的 `path()` + 双向测试负责「枚举 ↔ SVG 文件」的对应关系。
 
 #[derive(RustEmbed)]
 #[folder = "../../assets"]
