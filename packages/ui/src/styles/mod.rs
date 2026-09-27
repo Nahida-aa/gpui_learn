@@ -8,4 +8,6 @@ mod typography;
 pub use typography::*;
 mod color;
 pub use color::*;
+mod appearance;
+pub use appearance::*;
 pub mod units;

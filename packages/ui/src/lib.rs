@@ -61,7 +61,7 @@ pub use components::button::{
 };
 pub use components::scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
-    Scrollbars, ShowBehavior, WithScrollbar,
+    Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
 };
 pub use components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, IconPosition, RightClickMenu,
@@ -84,7 +84,7 @@ pub use components::keybinding::{
 };
 pub use components::keybinding_hint::KeybindingHint;
 pub use components::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
-pub use components::tooltip::{Tooltip, TooltipHost, tooltip_host};
+pub use components::tooltip::{Tooltip, TooltipHost, tooltip_container, tooltip_host};
 pub use components::toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };

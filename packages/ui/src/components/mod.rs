@@ -28,6 +28,7 @@ pub mod keybinding_hint;
 pub mod label;
 pub mod list;
 pub mod notification;
+pub mod popover;
 pub mod popover_menu;
 pub mod scrollbar;
 pub mod stack;
@@ -57,11 +58,13 @@ pub use keybinding_hint::KeybindingHint;
 pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle};
 pub use list::list_bullet_item::ListBulletItem;
 pub use list::list_item::{ListItem, ListItemSpacing};
+pub use list::list_sub_header::ListSubHeader;
 pub use notification::alert_modal::AlertModal;
+pub use popover::{POPOVER_Y_PADDING, Popover};
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
-    Scrollbars, ShowBehavior, WithScrollbar,
+    Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
 };
 pub use stack::{h_flex, v_flex};
 pub use tab::{Tab, TabCloseSide, TabPosition};
@@ -69,4 +72,4 @@ pub use tab_bar::TabBar;
 pub use toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };
-pub use tooltip::{Tooltip, TooltipHost, tooltip_host};
+pub use tooltip::{Tooltip, TooltipHost, tooltip_container, tooltip_host};

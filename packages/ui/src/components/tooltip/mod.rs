@@ -25,7 +25,7 @@ use std::{
 };
 
 use gpui::{
-    Anchor, AnyElement, AnyView, App, AppContext, AsyncWindowContext, Bounds, Context,
+    Anchor, AnyElement, AnyView, App, AppContext, AsyncWindowContext, Bounds, Context, Div,
     DismissEvent, Element, ElementId, EventEmitter, FocusHandle, Focusable,
     GlobalElementId, Hitbox, HitboxBehavior, InteractiveElement, IntoElement, LayoutId,
     MouseDownEvent, MouseExitEvent, MouseMoveEvent, ParentElement, Pixels, Point, Render,
@@ -33,6 +33,11 @@ use gpui::{
 };
 
 use aa_gpui_kit_theme::ActiveTheme;
+
+// `elevation_2` / `text_ui` 来自 crate 自己的 StyledExt / StyledTypography trait，
+// 这里是按需引入（本文件顶部用的是 gpui 的 prelude，不含它们）。
+use crate::traits::styled_ext::StyledExt as _;
+use crate::styles::StyledTypography as _;
 
 /// 独立的工具提示视图（ManagedView）。由 [`TooltipHost`] 弹出。
 pub struct Tooltip {
@@ -594,4 +599,33 @@ impl IntoElement for TooltipHost {
     fn into_element(self) -> Self::Element {
         self
     }
+}
+
+/// tooltip 的外层容器（对齐 zed `crates/ui/src/components/tooltip.rs:216`）。
+///
+/// 负责三件事：给卡片留出「不贴着鼠标」的左上内边距、套上 elevation 阴影与
+/// UI 字体，然后把内部的 `Div` 交给 `f` 继续拼装。
+pub fn tooltip_container<C>(cx: &mut C, f: impl FnOnce(Div, &mut C) -> Div) -> impl IntoElement
+where
+    // 注意 `Borrow` 只能在这里限定，**不要** `use std::borrow::Borrow;`：本文件
+    // 大量 `Rc<RefCell<..>>` 依赖 `RefCell::borrow()` 这个固有方法，一旦把 trait
+    // 引进作用域，`x.borrow()` 会优先解析到 `Borrow::borrow` 而报 E0277。
+    C: AppContext + std::borrow::Borrow<App>,
+{
+    // zed 这里写 `theme::theme_settings(app).ui_font(app)`；我们 theme 已经有
+    // `ui_font` 便捷函数（未注册设置时回退默认实现，不 panic）。
+    let app = std::borrow::Borrow::borrow(&*cx);
+    let ui_font = aa_gpui_kit_theme::ui_font(app);
+
+    // padding to avoid tooltip appearing right below the mouse cursor
+    div().pl_2().pt_2p5().child(
+        crate::v_flex()
+            .elevation_2(app)
+            .font(ui_font)
+            .text_ui(app)
+            .text_color(app.theme().colors().text)
+            .py_1()
+            .px_2()
+            .map(|el| f(el, cx)),
+    )
 }
