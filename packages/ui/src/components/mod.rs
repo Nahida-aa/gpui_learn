@@ -66,7 +66,7 @@ pub use popover::{POPOVER_Y_PADDING, Popover};
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
-    Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
+    ScrollableHandle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
 };
 pub use stack::{h_flex, v_flex};
 pub use tab::{Tab, TabCloseSide, TabPosition};

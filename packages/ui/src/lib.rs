@@ -61,7 +61,7 @@ pub use components::button::{
 };
 pub use components::scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
-    Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
+    ScrollableHandle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
 };
 pub use components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, IconPosition, RightClickMenu,
