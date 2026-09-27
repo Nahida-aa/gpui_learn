@@ -17,6 +17,7 @@ pub mod ai;
 pub mod avatar;
 pub mod banner;
 pub mod button;
+pub mod callout;
 pub mod chip;
 pub mod circular_progress;
 pub mod context_menu;
@@ -63,6 +64,7 @@ pub use button::{
     ToggleButtonGroup, ToggleButtonGroupSize, ToggleButtonGroupStyle, ToggleButtonSimple,
     ToggleButtonWithIcon,
 };
+pub use callout::{Callout, CalloutBorderPosition};
 pub use chip::Chip;
 pub use circular_progress::CircularProgress;
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide, RightClickMenu};
