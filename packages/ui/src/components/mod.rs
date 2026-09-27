@@ -54,6 +54,7 @@ pub mod tab_bar;
 pub mod toggle;
 pub mod update_button;
 pub mod tooltip;
+pub mod tree_view_item;
 
 pub use ai::*;
 pub use banner::Banner;
@@ -123,3 +124,4 @@ pub use toggle::{
 };
 pub use update_button::UpdateButton;
 pub use tooltip::{LinkPreview, Tooltip, TooltipHost, tooltip_container, tooltip_host};
+pub use tree_view_item::TreeViewItem;
