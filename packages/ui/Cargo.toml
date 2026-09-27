@@ -15,6 +15,8 @@ aa_icons.workspace = true
 gpui.workspace = true
 gpui_macros.workspace = true
 tracing.workspace = true
+# DiffStat 的行数千分位显示（`1,234`），与 zed ui 同款依赖。
+num-format.workspace = true
 # 复用工作区共享的 assets crate（packages/assets）：图标等资源内嵌在仓库根
 # assets/ 下，由该 crate 的 RustEmbed 统一加载。本包不自带资源。
 # 位置在 workspace 根的 [workspace.dependencies] 统一声明，这里继承。

@@ -107,6 +107,9 @@ path = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c2
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 
+# 数字千分位格式化（DiffStat 的 `1,234` 行数显示，与 zed ui 同款）。
+num-format = "0.4.4"
+
 rust-embed = { version = "8.11", features = ["include-exclude"] }
 serde = { version = "1.0.221", features = ["derive", "rc"] }
 strum = { version = "0.28", features = ["derive"] }

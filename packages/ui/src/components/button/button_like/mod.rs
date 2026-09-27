@@ -410,6 +410,8 @@ impl ButtonLike {
         self
     }
 
+
+
     /// 悬停提示（`Tooltip::text("...")` 等）。
     pub fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
@@ -469,6 +471,11 @@ impl RenderOnce for ButtonLike {
             // 图标与文字的间距由下面的 `.gap(DynamicSpacing::Base04..)` 统一负责
             // （对齐 zed：zed 的 ButtonLike 也只设一处 gap）。
             .aria_label(self.aria_label.clone().unwrap_or_default());
+
+        // 固定宽（对齐 zed：`FixedWidth for ButtonLike`，header 的折叠按钮用）。
+        if let Some(width) = self.width {
+            button = button.w(width);
+        }
 
         // 无障碍属性（对齐 zed ButtonLike 的 aria_* 系列）。
         if let Some(description) = self.aria_description.clone() {

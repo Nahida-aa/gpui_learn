@@ -104,6 +104,52 @@ impl Tooltip {
         }
     }
 
+    /// 带「该 action 的快捷键」的提示，**延迟创建**（对齐 zed
+    /// `Tooltip::for_action_title`）。与 [`Self::for_action`] 的区别：不收
+    /// `cx`，action 先 `boxed_clone`，快捷键推迟到工厂闭包执行时才解析 ——
+    /// 这是 zed 新代码偏好的形式。
+    pub fn for_action_title<T: Into<SharedString>>(
+        title: T,
+        action: &dyn gpui::Action,
+    ) -> impl Fn(&mut Window, &mut App) -> AnyView {
+        let title = title.into();
+        let action = action.boxed_clone();
+        move |_, cx: &mut App| {
+            cx.new(|cx| Self {
+                title: Title::Str(title.clone()),
+                meta: None,
+                key_binding: Some(crate::KeyBinding::for_action(action.as_ref(), cx)),
+                focus_handle: cx.focus_handle(),
+            })
+            .into()
+        }
+    }
+
+    /// 同 [`Self::for_action_title`]，但快捷键按 `focus_handle` 的上下文匹配
+    /// （对齐 zed `Tooltip::for_action_title_in`）。
+    pub fn for_action_title_in<Str: Into<SharedString>>(
+        title: Str,
+        action: &dyn gpui::Action,
+        focus_handle: &FocusHandle,
+    ) -> impl Fn(&mut Window, &mut App) -> AnyView {
+        let title = title.into();
+        let action = action.boxed_clone();
+        let focus_handle = focus_handle.clone();
+        move |_, cx: &mut App| {
+            cx.new(|cx| Self {
+                title: Title::Str(title.clone()),
+                meta: None,
+                key_binding: Some(crate::KeyBinding::for_action_in(
+                    action.as_ref(),
+                    &focus_handle,
+                    cx,
+                )),
+                focus_handle: cx.focus_handle(),
+            })
+            .into()
+        }
+    }
+
     /// 标题由回调**现场生成元素**的提示（对齐 zed `Tooltip::element`）。
     ///
     /// 纯 `SharedString` 标题表达不了的富内容（比如带样式的富文本）走这里；

@@ -147,6 +147,12 @@ impl Theme {
         &self.styles.system
     }
 
+    /// 窗口背景外观（对齐 zed `Theme::window_background_appearance`：
+    /// 平台层据此决定透明 / 模糊合成）。
+    pub fn window_background_appearance(&self) -> WindowBackgroundAppearance {
+        self.styles.window_background_appearance
+    }
+
     pub fn status(&self) -> &StatusColors {
         &self.styles.status
     }

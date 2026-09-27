@@ -21,7 +21,7 @@
 use crate::{Icon, IconName};
 use gpui::{
     Action, App, Context, DismissEvent, Div, Empty, Entity, EventEmitter, FocusHandle, Focusable,
-    KeyDownEvent, MouseDownEvent, SharedString, Window, div, prelude::*, px,
+    KeyDownEvent, MouseDownEvent, SharedString, Subscription, Window, div, prelude::*, px,
 };
 
 
@@ -48,9 +48,21 @@ pub struct ContextMenu {
     builder: Option<std::rc::Rc<dyn Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu>>,
     /// 快捷键反查的焦点上下文（`context()` 设入，对齐 zed `action_context`）。
     action_context: Option<FocusHandle>,
+    /// 失焦订阅（对齐 zed `_on_blur_subscription`：占位持有，防止宿主把
+    /// 「菜单失焦即关闭」的 Subscription 提前释放）。
+    _on_blur_subscription: Subscription,
 }
 
 impl ContextMenu {
+    /// 保存一条失焦订阅（对齐 zed `ContextMenu::on_blur_subscription`）。
+    ///
+    /// 宿主用「菜单失焦即关闭」的订阅换取持有权：把它塞进菜单，菜单在
+    /// 展示期间替宿主养着它，销毁时一并释放。
+    pub fn on_blur_subscription(mut self, new_subscription: Subscription) -> Self {
+        self._on_blur_subscription = new_subscription;
+        self
+    }
+
     /// 创建并装配一个菜单（对齐 zed `ContextMenu::new`）。
     ///
     /// 闭包签名与 zed 同形：`FnOnce(Self, &mut Window, &mut Context<Self>) -> Self`。
@@ -66,6 +78,7 @@ impl ContextMenu {
             min_width: None,
             builder: None,
             action_context: None,
+            _on_blur_subscription: Subscription::new(|| {}),
         };
         let _ = f;
         this
@@ -91,6 +104,7 @@ impl ContextMenu {
                 min_width: None,
                 builder: None,
                 action_context: None,
+                _on_blur_subscription: Subscription::new(|| {}),
             };
             f(menu, window, cx)
         })
@@ -115,6 +129,7 @@ impl ContextMenu {
                 min_width: None,
                 builder: Some(builder.clone()),
                 action_context: None,
+                _on_blur_subscription: Subscription::new(|| {}),
             };
             builder(menu, window, cx)
         })
@@ -137,6 +152,7 @@ impl ContextMenu {
             // 与 zed 同：fresh 里不继承（`rebuild` 只把 `items` 搬回来，
             // 所以 `self.action_context` 仍保持原值）。
             action_context: None,
+            _on_blur_subscription: Subscription::new(|| {}),
         };
         let rebuilt = builder(fresh, window, cx);
         self.items = rebuilt.items;

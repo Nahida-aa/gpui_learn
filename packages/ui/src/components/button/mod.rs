@@ -24,12 +24,12 @@ use crate::{IconName, IconSize};
 use std::rc::Rc;
 
 use gpui::{
-    Anchor, AnyView, App, ClickEvent, CursorStyle, ElementId, FocusHandle, Hsla, IntoElement,
-    Pixels, SharedString, Window, prelude::*, px,
+    Anchor, AnyView, App, ClickEvent, CursorStyle, DefiniteLength, ElementId, FocusHandle, Hsla,
+    IntoElement, Pixels, SharedString, Window, prelude::*, px,
 };
 
 use crate::styles::ElevationIndex;
-use crate::traits::{Clickable, Disableable, Toggleable};
+use crate::traits::{Clickable, Disableable, FixedWidth, Toggleable};
 use crate::{Color, Indicator};
 use aa_gpui_kit_theme::ActiveTheme;
 pub mod button;
@@ -56,6 +56,9 @@ pub enum ButtonStyle {
     Outlined,
     /// 透明背景 + 边框，比 Outlined 更弱。
     OutlinedGhost,
+    /// 边框色由调用方指定（对齐 zed `ButtonStyle::OutlinedCustom(Hsla)`，
+    /// editor 标题栏的自定义强调按钮用）。
+    OutlinedCustom(Hsla),
     /// 默认：透明背景，hover/active 浮现 ghost 背景。
     #[default]
     Subtle,
@@ -129,6 +132,8 @@ pub struct IconButton {
     on_click: Option<ClickHandler>,
     /// 右键点击（转发给 [`ButtonLike::on_right_click`]，对齐 zed `IconButton::on_right_click`）。
     on_right_click: Option<ClickHandler>,
+    /// 固定宽（对齐 zed `FixedWidth for IconButton`，标题栏的折叠按钮用）。
+    width: Option<DefiniteLength>,
     /// 悬停提示（[`Tooltip::text`] 等工厂现场建实体）。
     tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
     /// 提示锚点（默认 `Anchor::TopLeft`）。
@@ -182,6 +187,7 @@ impl IconButton {
             aria_expanded: None,
             on_click: None,
             on_right_click: None,
+            width: None,
             tooltip: None,
             tooltip_anchor: None,
             tooltip_attach: None,
@@ -394,6 +400,9 @@ impl RenderOnce for IconButton {
                 (on_right_click)(event, window, cx);
             });
         }
+        if let Some(width) = self.width {
+            like = like.width(width);
+        }
         if let Some(tooltip) = self.tooltip {
             like = like.tooltip_rc(tooltip);
         }
@@ -537,5 +546,17 @@ mod tests {
         let indicator = button.indicator.expect("indicator 应被设置");
         assert_eq!(indicator.color, Color::Accent);
         assert!(button.indicator_border_color.is_some());
+    }
+}
+
+impl FixedWidth for IconButton {
+    fn width(mut self, width: impl Into<DefiniteLength>) -> Self {
+        self.width = Some(width.into());
+        self
+    }
+
+    fn full_width(mut self) -> Self {
+        self.width = Some(DefiniteLength::Fraction(1.0));
+        self
     }
 }

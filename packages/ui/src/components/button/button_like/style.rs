@@ -63,6 +63,17 @@ pub fn button_like_colors(style: ButtonStyle, theme: &Theme) -> ButtonLikeColors
             border: colors.border_variant,
             fg: text,
         },
+        // 对齐 zed：边框用调用方给的颜色，三个状态下边框都不变，
+        // 背景分别取 transparent / ghost_element_hover / element_active。
+        ButtonStyle::OutlinedCustom(border_color) => ButtonLikeColors {
+            bg: [
+                transparent,
+                colors.ghost_element_hover,
+                colors.element_active,
+            ],
+            border: border_color,
+            fg: text,
+        },
         ButtonStyle::Subtle => ButtonLikeColors {
             bg: [
                 transparent,
