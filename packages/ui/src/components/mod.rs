@@ -47,7 +47,9 @@ pub use avatar::{
     AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
     CollaboratorAvailability,
 };
-pub use button::{ButtonRadius, ButtonStyle, IconButton, IconButtonShape, TintColor};
+pub use button::{
+    ButtonCommon, ButtonRadius, ButtonStyle, IconButton, IconButtonShape, IconPosition, TintColor,
+};
 pub use chip::Chip;
 pub use circular_progress::CircularProgress;
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide, RightClickMenu};
@@ -64,6 +66,7 @@ pub use keybinding::{
 };
 pub use keybinding_hint::KeybindingHint;
 pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle};
+pub use list::list::{EmptyMessage, List};
 pub use list::list_bullet_item::ListBulletItem;
 pub use list::list_item::{ListItem, ListItemSpacing};
 pub use list::list_separator::ListSeparator;

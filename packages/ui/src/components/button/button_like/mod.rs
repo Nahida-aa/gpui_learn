@@ -40,6 +40,17 @@ use crate::components::tooltip::TooltipHost;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use crate::styles::units::rems_from_px;
 
+/// 图标在按钮 / 菜单条目里的哪一侧（对齐 zed `IconPosition`，
+/// zed `button_like.rs:49`）。
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Default)]
+pub enum IconPosition {
+    /// 图标在文字之前（默认）。
+    #[default]
+    Start,
+    /// 图标在文字之后。
+    End,
+}
+
 /// 按钮尺寸档位（对齐 zed `ButtonSize`）。
 ///
 /// `rems()` 给的是**容器高度**；宽度由左右内边距与内容决定（见渲染里的 px 分档）。
@@ -71,7 +82,7 @@ pub use style::{ButtonLikeColors, button_like_colors};
 /// 角级圆角（对齐 zed `ButtonLikeRounding`）：可只圆某几个角，用来把相邻按钮
 /// 拼成一条（如标题栏的左右分段按钮）。
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
-pub(crate) struct ButtonLikeRounding {
+pub struct ButtonLikeRounding {
     /// Top-left corner rounding
     pub top_left: bool,
     /// Top-right corner rounding
@@ -513,7 +524,6 @@ impl ButtonLike {
 
 impl RenderOnce for ButtonLike {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let rem_size = _window.rem_size();
         let theme = cx.theme().clone();
         let colors = theme.colors();
         // 对齐 zed：选中时优先用 selected_style，未设置则仍是 self.style。

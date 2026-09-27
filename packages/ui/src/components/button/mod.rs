@@ -39,7 +39,7 @@ pub mod copy_button;
 pub mod split_button;
 
 pub use button::Button;
-pub use button_like::{ButtonCommon, ButtonLike, ButtonSize};
+pub use button_like::{ButtonCommon, ButtonLike, ButtonSize, IconPosition};
 pub use button_link::ButtonLink;
 pub use copy_button::CopyButton;
 

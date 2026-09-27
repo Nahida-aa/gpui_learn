@@ -12,7 +12,10 @@ use gpui::{AnyView, Hsla, IntoElement, ParentElement, Pixels, RenderOnce, Styled
 ///
 /// # Usage Example
 ///
-/// ```
+/// zed 的例子（`ui` 是它自己那个 crate 的名字；我们这边叫 `aa_gpui_kit_ui`，
+/// 所以标 `ignore`，只作说明不参与 doctest）：
+///
+/// ```ignore
 /// use ui::Chip;
 ///
 /// let chip = Chip::new("This Chip");
