@@ -96,7 +96,7 @@ pub use keybinding::{
     text_for_action, text_for_keystroke, text_for_keystrokes, text_for_keybinding_keystrokes,
 };
 pub use keybinding_hint::KeybindingHint;
-pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle};
+pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle, SpinnerLabel, SpinnerVariant};
 pub use list::list::{EmptyMessage, List};
 pub use list::list_bullet_item::ListBulletItem;
 pub use list::list_item::{ListItem, ListItemSpacing};
