@@ -37,6 +37,7 @@ pub mod button_like;
 pub mod button_link;
 pub mod copy_button;
 pub mod split_button;
+pub mod toggle_button;
 
 pub use button::Button;
 pub use button_like::{ButtonCommon, ButtonLike, ButtonSize, IconPosition};
@@ -46,6 +47,10 @@ pub use copy_button::CopyButton;
 /// 点击回调（`ButtonLike` / `IconButton` 的内部存储类型）。
 pub type ClickHandler = Box<dyn Fn(&ClickEvent, &mut Window, &mut App)>;
 pub use split_button::{SplitButton, SplitButtonKind, SplitButtonStyle};
+pub use toggle_button::{
+    ButtonBuilder, ButtonConfiguration, ToggleButtonGroup, ToggleButtonGroupSize, ToggleButtonGroupStyle,
+    ToggleButtonPosition, ToggleButtonSimple, ToggleButtonWithIcon,
+};
 
 /// 按钮视觉语义（对齐 zed `ButtonStyle`，去掉需主题扩展的部分）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

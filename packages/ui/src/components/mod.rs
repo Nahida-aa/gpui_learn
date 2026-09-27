@@ -25,6 +25,7 @@ pub mod divider;
 pub mod facepile;
 pub mod icon;
 pub mod image;
+pub mod indent_guides;
 pub mod indicator;
 pub mod keybinding;
 pub mod keybinding_hint;
@@ -34,6 +35,7 @@ pub mod modal;
 pub mod navigable;
 pub mod notification;
 pub mod popover;
+pub mod project_empty_state;
 pub mod popover_menu;
 pub mod scrollbar;
 pub mod diff_stat;
@@ -51,6 +53,8 @@ pub use avatar::{
 };
 pub use button::{
     ButtonCommon, ButtonRadius, ButtonStyle, IconButton, IconButtonShape, IconPosition, TintColor,
+    ToggleButtonGroup, ToggleButtonGroupSize, ToggleButtonGroupStyle, ToggleButtonSimple,
+    ToggleButtonWithIcon,
 };
 pub use chip::Chip;
 pub use circular_progress::CircularProgress;
@@ -61,6 +65,7 @@ pub use divider::{Divider, DividerColor, DividerDirection};
 pub use facepile::{EXAMPLE_FACES, Facepile};
 pub use icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
 pub use image::{Vector, VectorName};
+pub use indent_guides::IndentGuideColors;
 pub use indicator::Indicator;
 pub use keybinding::{
     Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,
@@ -78,6 +83,7 @@ pub use modal::{Modal, ModalFooter, ModalHeader, Section, SectionHeader};
 pub use navigable::{Navigable, NavigableEntry};
 pub use notification::alert_modal::AlertModal;
 pub use popover::{POPOVER_Y_PADDING, Popover};
+pub use project_empty_state::ProjectEmptyState;
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
