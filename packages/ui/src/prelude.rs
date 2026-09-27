@@ -72,15 +72,15 @@ pub use crate::{
 };
 
 pub use crate::styles::{
-    Color, DynamicSpacing, Headline, HeadlineSize, PlatformStyle, StyledTypography, TextSize,
-    UiDensity,
+    Color, DynamicSpacing, Headline, HeadlineSize, PlatformStyle, Severity, StyledTypography,
+    TextSize, UiDensity,
 };
 // 对齐 zed `crates/ui/src/prelude.rs`：vh / vw / rems_from_px 也在 prelude 里，
 // 这样 `use ui::prelude::*;` 就能直接用 `vh()`、`rems_from_px()`。
 // `PlatformStyle` 同理——zed 的 editor/scroll.rs 等处直接写
 // `PlatformStyle::platform()` 而不 import，靠的就是 prelude；不补这一项的话
 // 照搬过去的文件会报 E0433「cannot find type PlatformStyle in this scope」。
-// （zed 同一行还有 `Severity`，我们 styles 里没有，等用到再补。）
+// `Severity` 同理（`Banner` 等按级别换配色的组件要用，zed 也放在 prelude）。
 pub use crate::styles::units::{rems_from_px, vh, vw};
 
 pub use crate::component_prelude::*;

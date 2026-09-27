@@ -14,6 +14,7 @@
 //!   [`PopoverMenuHandle`]，对齐 zed `PopoverMenu`）。
 
 pub mod avatar;
+pub mod banner;
 pub mod button;
 pub mod chip;
 pub mod circular_progress;
@@ -43,6 +44,7 @@ pub mod toggle;
 pub mod update_button;
 pub mod tooltip;
 
+pub use banner::Banner;
 pub use avatar::{
     AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
     CollaboratorAvailability,

@@ -10,4 +10,6 @@ mod color;
 pub use color::*;
 mod appearance;
 pub use appearance::*;
+mod severity;
+pub use severity::*;
 pub mod units;
