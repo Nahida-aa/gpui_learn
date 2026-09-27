@@ -64,7 +64,7 @@ pub use list::list_item::{ListItem, ListItemSpacing};
 pub use list::list_separator::ListSeparator;
 pub use list::list_sub_header::ListSubHeader;
 pub use diff_stat::DiffStat;
-pub use modal::ModalHeader;
+pub use modal::{Modal, ModalFooter, ModalHeader, Section, SectionHeader};
 pub use navigable::{Navigable, NavigableEntry};
 pub use notification::alert_modal::AlertModal;
 pub use popover::{POPOVER_Y_PADDING, Popover};

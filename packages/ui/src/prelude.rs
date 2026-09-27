@@ -63,7 +63,10 @@ pub use crate::components::popover_menu::{PopoverMenu, PopoverMenuHandle, Popove
 pub use crate::components::stack::{h_flex, v_flex};
 pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use crate::components::toggle::{Checkbox, Switch, SwitchColor, SwitchLabelPosition};
-pub use crate::components::label::{Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle};
+// 与 zed prelude 同：LoadingLabel 也在里面（recent_projects 一类地方直接用）。
+pub use crate::components::label::{
+    HighlightedLabel, Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle, LoadingLabel,
+};
 pub use crate::{
     Button, Slider, SliderEvent, SliderState,
 };
