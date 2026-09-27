@@ -264,6 +264,22 @@ impl ContextMenu {
         )
     }
 
+    /// 加一个按条件置灰的 action 条目（对齐 zed
+    /// `ContextMenu::action_disabled_when`：`disabled` 为真时条目置灰、
+    /// 快捷键与 action 仍挂上但不响应）。
+    pub fn action_disabled_when(
+        mut self,
+        disabled: bool,
+        label: impl Into<SharedString>,
+        action: Box<dyn Action>,
+    ) -> Self {
+        self.item(
+            ContextMenuEntry::new(label)
+                .action(action)
+                .disabled(disabled),
+        )
+    }
+
     /// 加一个可切换条目（对齐 zed `ContextMenu::toggleable_entry`）。
     ///
     /// 六个参数与 zed 同形，注意顺序：`toggled` 在 `position` 之前，

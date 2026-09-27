@@ -94,7 +94,7 @@ pub struct ButtonLike {
     /// 尺寸档位（`ButtonCommon::size`）。
     button_size: ButtonSize,
     /// 高度覆盖；`None` 时取 `button_size.rems()`。
-    height: Option<Pixels>,
+    height: Option<DefiniteLength>,
     /// 视觉层级（`ButtonCommon::layer`），影响取色。
     layer: Option<ElevationIndex>,
     /// 焦点跟踪（`ButtonCommon::track_focus`）。
@@ -339,8 +339,8 @@ impl ButtonLike {
     }
 
     /// 高度覆盖（高于 `size` 的默认高度）。
-    pub fn height(mut self, height: impl Into<Pixels>) -> Self {
-        self.height = Some(height.into());
+    pub fn height(mut self, height: DefiniteLength) -> Self {
+        self.height = Some(height);
         self
     }
 
@@ -516,7 +516,7 @@ impl RenderOnce for ButtonLike {
         //
         // `gap` 也按 zed 取 `Base04`。
         button = button
-            .h(self.height.unwrap_or_else(|| self.button_size.rems() * rem_size))
+            .h(self.height.unwrap_or_else(|| self.button_size.rems().into()))
             .gap(DynamicSpacing::Base04.rems(cx))
             .map(|this| match self.button_size {
                 ButtonSize::Large | ButtonSize::Medium => {

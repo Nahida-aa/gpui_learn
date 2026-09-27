@@ -111,7 +111,7 @@ impl Tooltip {
     pub fn for_action_title<T: Into<SharedString>>(
         title: T,
         action: &dyn gpui::Action,
-    ) -> impl Fn(&mut Window, &mut App) -> AnyView {
+    ) -> impl Fn(&mut Window, &mut App) -> AnyView + use<T> {
         let title = title.into();
         let action = action.boxed_clone();
         move |_, cx: &mut App| {
@@ -131,7 +131,7 @@ impl Tooltip {
         title: Str,
         action: &dyn gpui::Action,
         focus_handle: &FocusHandle,
-    ) -> impl Fn(&mut Window, &mut App) -> AnyView {
+    ) -> impl Fn(&mut Window, &mut App) -> AnyView + use<Str> {
         let title = title.into();
         let action = action.boxed_clone();
         let focus_handle = focus_handle.clone();
