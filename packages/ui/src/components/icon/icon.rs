@@ -157,7 +157,12 @@ enum IconSource {
     ExternalSvg(SharedString),
 }
 
-#[derive(IntoElement, RegisterComponent)]
+/// 图标控件。
+///
+/// 与 zed 同形派生 `Clone`：`Icon` 常以 `Option<Icon>` 存在（组件字段 / 复用
+/// 同一实例），`when_some(self.icon.clone(), ..)` 这类写法依赖它。
+/// 不能派生 `Copy` —— [`IconSource::Embedded`] 里的 `SharedString` 不是 Copy。
+#[derive(Clone, IntoElement, RegisterComponent)]
 pub struct Icon {
     source: IconSource,
     color: Color,
