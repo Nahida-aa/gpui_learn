@@ -21,7 +21,8 @@
 use crate::{Icon, IconName};
 use gpui::{
     Action, App, Context, DismissEvent, Div, Empty, Entity, EventEmitter, FocusHandle, Focusable,
-    KeyDownEvent, MouseDownEvent, SharedString, Subscription, Window, div, prelude::*, px,
+    AnyElement, KeyDownEvent, MouseDownEvent, SharedString, Subscription, Window, div,
+    prelude::*, px,
 };
 
 
@@ -51,6 +52,27 @@ pub struct ContextMenu {
     /// 失焦订阅（对齐 zed `_on_blur_subscription`：占位持有，防止宿主把
     /// 「菜单失焦即关闭」的 Subscription 提前释放）。
     _on_blur_subscription: Subscription,
+}
+
+/// 文档侧栏出现在菜单的哪一侧（对齐 zed `DocumentationSide`）。
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum DocumentationSide {
+    Left,
+    Right,
+}
+
+/// 菜单条目旁的文档侧栏（对齐 zed `DocumentationAside`）：`render` 回调
+/// 现场生成侧栏内容，由菜单渲染时决定摆放在 [`DocumentationSide`] 一侧。
+#[derive(Clone)]
+pub struct DocumentationAside {
+    pub side: DocumentationSide,
+    pub render: std::rc::Rc<dyn Fn(&mut App) -> AnyElement>,
+}
+
+impl DocumentationAside {
+    pub fn new(side: DocumentationSide, render: std::rc::Rc<dyn Fn(&mut App) -> AnyElement>) -> Self {
+        Self { side, render }
+    }
 }
 
 impl ContextMenu {

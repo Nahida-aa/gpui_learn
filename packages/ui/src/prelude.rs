@@ -45,7 +45,8 @@ pub use crate::components::button::{
     SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
 pub use crate::components::context_menu::{
-    ContextMenu, ContextMenuEntry, ContextMenuItem, IconPosition, RightClickMenu,
+    ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide,
+    IconPosition, RightClickMenu,
     right_click_menu,
 };
 pub use crate::components::divider::{Divider, DividerColor, DividerDirection};

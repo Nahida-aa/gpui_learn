@@ -13,7 +13,7 @@
 
 use aa_gpui_kit_theme::ActiveTheme;
 
-use gpui::{App, Hsla, IntoElement, Styled, Window, div, prelude::*};
+use gpui::{App, Hsla, IntoElement, StyleRefinement, Styled, Window, div, prelude::*};
 
 /// zed `DividerColor`：`Border`（默认）/ `BorderVariant`，映射主题 `border` / `border_variant`。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -41,6 +41,9 @@ pub struct Divider {
     color: DividerColor,
     direction: DividerDirection,
     inset: bool,
+    /// 调用方经 `Styled` 叠加的 refinement（如 `.mx_1()`），渲染时并入
+    /// （对齐 zed `Divider.style` + `impl Styled`）。
+    style: StyleRefinement,
 }
 
 impl Divider {
@@ -50,6 +53,7 @@ impl Divider {
             color: DividerColor::default(),
             direction: DividerDirection::Horizontal,
             inset: false,
+            style: StyleRefinement::default(),
         }
     }
 
@@ -59,6 +63,7 @@ impl Divider {
             color: DividerColor::default(),
             direction: DividerDirection::Vertical,
             inset: false,
+            style: StyleRefinement::default(),
         }
     }
 
@@ -83,11 +88,17 @@ impl Divider {
     }
 }
 
+impl Styled for Divider {
+    fn style(&mut self) -> &mut StyleRefinement {
+        &mut self.style
+    }
+}
+
 impl RenderOnce for Divider {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         let colors = cx.theme().colors().clone();
 
-        let base = div()
+        let mut base = div()
             .min_w_0()
             .when_else(
                 self.direction == DividerDirection::Horizontal,
@@ -99,6 +110,9 @@ impl RenderOnce for Divider {
                 DividerDirection::Vertical => el.my_1p5(),
             })
             .bg(self.color_hsla(&colors));
+
+        // 调用方经 `Styled` 叠加的 refinement（对齐 zed：`base.style().refine(..)`）。
+        base.style().refine(&self.style);
 
         base.flex_shrink_0().into_any_element()
     }

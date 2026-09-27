@@ -43,7 +43,7 @@ pub use avatar::{
     CollaboratorAvailability,
 };
 pub use button::{ButtonRadius, ButtonStyle, IconButton, IconButtonShape, TintColor};
-pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, RightClickMenu};
+pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide, RightClickMenu};
 pub use count_badge::CountBadge;
 pub use disclosure::Disclosure;
 pub use divider::{Divider, DividerColor, DividerDirection};

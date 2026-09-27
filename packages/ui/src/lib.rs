@@ -64,7 +64,8 @@ pub use components::scrollbar::{
     ScrollableHandle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
 };
 pub use components::context_menu::{
-    ContextMenu, ContextMenuEntry, ContextMenuItem, IconPosition, RightClickMenu,
+    ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide,
+    IconPosition, RightClickMenu,
     right_click_menu,
 };
 pub use components::avatar::{

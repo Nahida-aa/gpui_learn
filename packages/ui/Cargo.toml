@@ -14,6 +14,10 @@ workspace = true
 aa_icons.workspace = true
 gpui.workspace = true
 gpui_macros.workspace = true
+# HighlightedLabel 的 debug_panic!（非 release 才 panic 的调试断言宏）。
+gpui_util.workspace = true
+# debug_panic! 的 release 分支走 log::error!。
+log.workspace = true
 tracing.workspace = true
 # DiffStat 的行数千分位显示（`1,234`），与 zed ui 同款依赖。
 num-format.workspace = true

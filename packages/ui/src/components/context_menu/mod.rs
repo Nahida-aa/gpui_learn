@@ -30,5 +30,5 @@ pub mod menu;
 pub mod right_click_menu;
 
 pub use entry::{ContextMenuEntry, ContextMenuItem, IconPosition};
-pub use menu::ContextMenu;
+pub use menu::{ContextMenu, DocumentationAside, DocumentationSide};
 pub use right_click_menu::{RightClickMenu, right_click_menu};

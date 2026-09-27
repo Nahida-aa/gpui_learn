@@ -106,6 +106,8 @@ path = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c2
 # 调试/结构化日志(仓库约定见 AGENTS.md)
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+# gpui_util 的 debug_panic! 宏在 release 分支展开为 log::error!。
+log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
 
 # 数字千分位格式化（DiffStat 的 `1,234` 行数显示，与 zed ui 同款）。
 num-format = "0.4.4"
