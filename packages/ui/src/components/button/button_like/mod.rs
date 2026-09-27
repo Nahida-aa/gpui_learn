@@ -19,6 +19,7 @@
 mod common;
 mod style;
 
+use crate::{Icon, IconName};
 use std::rc::Rc;
 
 use gpui::{
@@ -30,7 +31,6 @@ use gpui::{
 use aa_gpui_kit_theme::ActiveTheme;
 
 use crate::components::button::ClickHandler;
-use aa_gpui_base::{Icon, IconName};
 use crate::components::button::{ButtonRadius, ButtonStyle};
 use crate::components::icon::IconWithIndicator;
 use crate::components::indicator::Indicator;
@@ -529,7 +529,7 @@ impl RenderOnce for ButtonLike {
         };
 
         if let Some(icon) = self.icon {
-            let icon_element = Icon::new(icon).size(self.icon_size).color(fg);
+            let icon_element = Icon::new(icon).size(self.icon_size).color(fg.into());
             // 与 zed 的差异：zed 的 `IconButton` 自己拼
             // `IconWithIndicator::new(icon_element, Some(indicator))`（icon_button.rs:264）；
             // 我们的 `IconButton` 到渲染时才建 `ButtonLike`，所以这一步下移到这里。

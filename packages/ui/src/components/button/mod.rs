@@ -20,6 +20,7 @@ pub enum KeybindingPosition {
     End,
 }
 
+use crate::{IconName, IconSize};
 use std::rc::Rc;
 
 use gpui::{
@@ -27,7 +28,6 @@ use gpui::{
     Pixels, SharedString, Window, prelude::*, px,
 };
 
-use aa_gpui_base::{IconName, IconSize};
 use crate::styles::ElevationIndex;
 use crate::traits::{Clickable, Disableable, Toggleable};
 use crate::{Color, Indicator};

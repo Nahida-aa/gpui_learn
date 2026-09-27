@@ -213,14 +213,14 @@ impl RenderOnce for Checkbox {
                     Some(
                         Icon::new(IconName::Check)
                             .size(icon_size)
-                            .color(color.color(cx)),
+                            .color(color),
                     )
                 }
             }
             ToggleState::Indeterminate => Some(
                 Icon::new(IconName::Dash)
                     .size(icon_size)
-                    .color(color.color(cx)),
+                    .color(color),
             ),
             ToggleState::Unselected => None,
         };

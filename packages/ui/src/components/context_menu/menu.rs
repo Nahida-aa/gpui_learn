@@ -18,12 +18,12 @@
 //! `custom_row` / `custom_entry` / `documentation_aside`、
 //! `entry_with_end_slot` 系列。
 
+use crate::{Icon, IconName};
 use gpui::{
     Action, App, Context, DismissEvent, Div, Empty, Entity, EventEmitter, FocusHandle, Focusable,
     KeyDownEvent, MouseDownEvent, SharedString, Window, div, prelude::*, px,
 };
 
-use aa_gpui_base::{Icon, IconName};
 
 use super::entry::{ContextMenuEntry, ContextMenuItem, IconPosition};
 use crate::KeyBinding;
@@ -324,7 +324,7 @@ impl ContextMenu {
         let check = if checked {
             Icon::new(IconName::Check)
                 .size(font_size)
-                .color(colors.text_accent)
+                .color(colors.text_accent.into())
                 .into_any_element()
         } else {
             Empty.into_any_element()

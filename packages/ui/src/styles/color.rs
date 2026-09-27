@@ -1,5 +1,4 @@
 use crate::{Label, LabelCommon, component_prelude::*, v_flex};
-use aa_gpui_base::ResolveColor;
 use aa_gpui_kit_theme::ActiveTheme;
 use documented::{DocumentedFields, DocumentedVariants};
 use gpui::{App, Hsla, IntoElement, ParentElement, Styled};
@@ -119,16 +118,11 @@ impl Color {
     }
 }
 
-/// 让语义色能直接喂给 `base::Icon::color`（对齐 zed：`Icon::color(Color)`）。
+/// 让裸 `Hsla` 能转成语义色（`Color::Custom` 兜底，对齐 zed 的同名 impl）。
 ///
-/// `base` 不依赖主题包，解析规则只能由本包（`ui`，同时看得见 `Color` 与
-/// `ActiveTheme`）来接上。
-impl ResolveColor for Color {
-    fn resolve_color(&self, cx: &App) -> Hsla {
-        self.color(cx)
-    }
-}
-
+/// zed 的 `Icon::color(Color)` 靠它支撑 `.color(cx.theme().status().error.into())`
+/// 这类调用点；`Icon` 归位到 `ui` 后走的就是这个具体类型，不再需要
+/// `ResolveColor` trait 桥接。
 impl From<Hsla> for Color {
     fn from(color: Hsla) -> Self {
         Color::Custom(color)
@@ -258,12 +252,12 @@ mod tests {
     use gpui::TestAppContext;
 
     /// `Icon::color(Color::Muted)` 能拿到主题实色 —— 这条链断了 zed 的图标
-    /// 代码就搬不进来。
+    /// 代码就搬不进来。（Icon 归位到 ui 后走 `Color::color(cx)`，语义不变。）
     #[gpui::test]
-    fn semantic_color_resolves_via_resolve_color(cx: &mut TestAppContext) {
+    fn semantic_color_resolves_for_icon(cx: &mut TestAppContext) {
         cx.update(|cx| {
             assert_eq!(
-                Color::Muted.resolve_color(cx),
+                Color::Muted.color(cx),
                 cx.theme().colors().text_muted
             );
         });

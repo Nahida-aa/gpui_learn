@@ -46,8 +46,8 @@ pub use aa_gpui_kit_assets::Assets;
 
 // ---- 基础控件层：来自 aa_gpui_base（原 packages/ui/src/base，2026-09 拆出）----
 pub use aa_gpui_base::{
-    DragSlider, Icon, IconName, IconSize, Scale, Slider, SliderEvent, SliderState, SliderValue,
-    ThumbMode, position_to_value, quantize, value_to_percentage,
+    DragSlider, Scale, Slider, SliderEvent, SliderState, SliderValue, ThumbMode,
+    position_to_value, quantize, value_to_percentage,
 };
 pub use components::button::Button;
 pub use styles::*;
@@ -74,7 +74,8 @@ pub use components::avatar::{
 pub use components::divider::{Divider, DividerColor, DividerDirection};
 pub use components::facepile::{EXAMPLE_FACES, Facepile};
 pub use components::icon::{
-    DecoratedIcon, IconDecoration, IconDecorationKind, IconWithIndicator, KnockoutIconName,
+    AnyIcon, DecoratedIcon, Icon, IconDecoration, IconName, IconSize, IconWithIndicator,
+    KnockoutIconName, git_hosting_provider_icon,
 };
 pub use components::image::{Vector, VectorName};
 pub use components::indicator::Indicator;

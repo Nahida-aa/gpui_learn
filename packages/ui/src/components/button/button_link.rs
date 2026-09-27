@@ -67,7 +67,7 @@ impl RenderOnce for ButtonLink {
                         this.child(
                             Icon::new(IconName::ArrowUpRight)
                                 .size(IconSize::Small)
-                                .color(Color::Muted.color(cx)),
+                                .color(Color::Muted),
                         )
                     }),
             )

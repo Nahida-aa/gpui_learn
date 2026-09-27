@@ -45,7 +45,7 @@ impl RenderOnce for ListBulletItem {
                         h_flex().h(line_height).justify_center().child(
                             Icon::new(IconName::Dash)
                                 .size(IconSize::XSmall)
-                                .color(Color::Hidden.color(cx)),
+                                .color(Color::Hidden),
                         ),
                     )
                     .map(|this| {

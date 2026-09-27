@@ -343,8 +343,6 @@ impl RenderOnce for Button {
         let gap = DynamicSpacing::Base04.rems(cx);
         let label_gap = DynamicSpacing::Base06.rems(cx);
 
-        let icon_color = |color: Color| color.color(cx);
-
         let start: Option<AnyElement> = if self.loading {
             // 对齐 zed：loading 时用 keyed 旋转动画的 spinner，替代 start_icon。
             // id 取按钮自己的 id + "loading"，避免同页多个按钮互相干扰动画状态。
@@ -352,7 +350,7 @@ impl RenderOnce for Button {
             Some(
                 Icon::new(IconName::LoadCircle)
                     .size(start_icon_size)
-                    .color(icon_color(Color::Muted))
+                    .color(Color::Muted)
                     // 2 秒转一圈（与 zed 的 `loading_icon_id, 2` 一致）。
                     .with_keyed_rotate_animation(loading_icon_id, 2)
                     .into_any_element(),
@@ -360,7 +358,7 @@ impl RenderOnce for Button {
         } else {
             self.start_icon.map(|icon| {
                 if is_disabled {
-                    icon.color(icon_color(Color::Disabled))
+                    icon.color(Color::Disabled)
                 } else {
                     icon
                 }
@@ -370,7 +368,7 @@ impl RenderOnce for Button {
 
         let end: Option<AnyElement> = self.end_icon.map(|icon| {
             if is_disabled {
-                icon.color(icon_color(Color::Disabled))
+                icon.color(Color::Disabled)
             } else {
                 icon
             }

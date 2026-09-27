@@ -87,11 +87,6 @@ impl RenderOnce for Avatar {
         let image_size = self.size.unwrap_or_else(|| rems(1.).into());
         let container_size = image_size.to_pixels(window.rem_size()) + border_width * 2.;
 
-        // 图标取色需要 `cx`，但 `with_fallback` 的闭包不接收 `cx`，
-        // 所以在进入闭包前先算好（与 zed 的差异：zed 用 `Color` 枚举 +
-        // `.color(cx)`；我们的 `Icon::color` 收 `Hsla`，得提前展开）。
-        let fallback_icon_color = Color::Muted.color(cx);
-
         div()
             .size(container_size)
             .rounded_full()
@@ -109,7 +104,7 @@ impl RenderOnce for Avatar {
                             .justify_center()
                             .child(
                                 Icon::new(IconName::Person)
-                                    .color(fallback_icon_color)
+                                    .color(Color::Muted)
                                     .size(Self::fallback_icon_size()),
                             )
                             .into_any_element()
@@ -180,7 +175,7 @@ impl RenderOnce for AvatarAudioStatusIndicator {
                             AudioStatus::Deafened => IconName::AudioOff,
                         })
                         .size(icon_px)
-                        .color(Color::Error.color(cx)),
+                        .color(Color::Error),
                     )
                     .when_some(self.tooltip, |this, tooltip| {
                         this.tooltip(move |window, cx| tooltip(window, cx))

@@ -13,10 +13,10 @@
 //! ## 依赖方向
 //!
 //! ```text
-//!   aa_gpui_base          ← 本包：geometry / icon / slider（只依赖 gpui + assets）
+//!   aa_gpui_base          ← 本包：geometry / slider（只依赖 gpui）
 //!        ▲
 //!        │
-//!   aa_gpui_kit_ui        ← 复合件；用本包的 Icon / IconSize / Slider
+//!   aa_gpui_kit_ui        ← 复合件；用本包的 Slider / geometry
 //! ```
 //!
 //! **单向**：本包不依赖 `ui`，也不依赖 `theme`（slider 的颜色是调用方传入或
@@ -24,20 +24,19 @@
 //! `ui::traits::{Clickable, Disableable}`，说明它是复合件而非基础件，
 //! 且定位与 `ui::ButtonLike` 重叠，留在 `ui` 里。
 //!
+//! `Icon` / `IconName` / `IconSize` / `Transformable` 原先也在这里，2026-09
+//! 归位到 `ui`（对齐 zed：`Icon` 与 `Transformable` 都在 `crates/ui`，且
+//! `Icon::color` 收 ui 的语义 `Color`）。
+//!
 //! ## 目录
 //!
 //! - [`geometry`]：刻度换算 / 像素↔值 / step 取整等纯数学，不绑定具体控件
-//! - [`icon`]：图标控件（[`Icon`] + [`IconName`] + [`IconSize`]），渲染内嵌 SVG
 //! - [`slider`]：滑块（单值 / Range 双 thumb，[`SliderState`] + [`Slider`]）
 
 pub mod geometry;
-pub mod icon;
 pub mod slider;
-pub mod transformable;
 
 pub use geometry::{Scale, position_to_value, quantize, value_to_percentage};
-pub use icon::{Icon, IconName, IconSize, ResolveColor};
 pub use slider::element::{DragSlider, Slider, SliderEvent};
 pub use slider::slider_state::{SliderState, ThumbMode};
 pub use slider::slider_value::SliderValue;
-pub use transformable::Transformable;

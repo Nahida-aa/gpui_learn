@@ -6,6 +6,7 @@
 //! 出处：zed `crates/ui/src/components/keybinding.rs`（GPL-3.0-or-later）。
 //! 为功能对齐整体移植，适配点见文件内的 `// 与 zed 的差异` 注释。
 
+use crate::IconSize;
 use std::rc::Rc;
 
 use gpui::{
@@ -14,7 +15,6 @@ use gpui::{
 };
 use itertools::Itertools;
 
-use aa_gpui_base::IconSize;
 use crate::styles::{Color, DynamicSpacing, PlatformStyle, TextSize};
 use crate::utils::capitalize;
 use crate::{Icon, IconName, h_flex, prelude::*, v_flex};
@@ -633,12 +633,12 @@ impl RenderOnce for KeyIcon {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let size = self.size.unwrap_or(IconSize::Small.rems().into());
 
-        // 与 zed 的差异：zed 的 `Icon::size` 收 `IconSize`、`.color()` 收语义 `Color`；
-        // 我们的 `Icon::size` 收 `Pixels`、`.color()` 收 `Hsla`（见 base/icon.rs），
-        // 所以这里在渲染期换算：`AbsoluteLength -> Pixels`，`Color -> Hsla`。
+        // 与 zed 的差异：zed 的 `Icon::size` 收 `IconSize`；
+        // 我们的 `Icon::size` 收 `Pixels`，所以这里在渲染期换算
+        // `AbsoluteLength -> Pixels`。
         Icon::new(self.icon)
             .size(size.to_pixels(window.rem_size()))
-            .color(self.color.unwrap_or(Color::Muted).color(cx))
+            .color(self.color.unwrap_or(Color::Muted))
     }
 }
 

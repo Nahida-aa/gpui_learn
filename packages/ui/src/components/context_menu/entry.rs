@@ -6,12 +6,12 @@
 //! 出处：zed `crates/ui/src/components/context_menu.rs`
 //! （GPL-3.0-or-later）。与 zed 的差异在注释里逐条标出。
 
+use crate::{Icon, IconName, IconSize};
 use std::rc::Rc;
 
 use gpui::prelude::FluentBuilder;
 use gpui::{Action, App, SharedString, Window};
 
-use aa_gpui_base::{Icon, IconName, IconSize};
 use crate::{Color, KeyBinding};
 
 /// 图标在条目的哪一侧（对齐 zed `IconPosition`）。
@@ -212,7 +212,7 @@ impl ContextMenuEntry {
         Some(
             Icon::new(icon)
                 .size(self.icon_size.rems() * window.rem_size())
-                .color(color.color(cx)),
+                .color(color),
         )
     }
 }

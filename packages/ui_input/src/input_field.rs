@@ -219,7 +219,7 @@ impl Render for InputField {
                         this.gap_1().child(
                             Icon::new(icon)
                                 .size(icon_size)
-                                .color(Color::Muted.color(cx)),
+                                .color(Color::Muted),
                         )
                     })
                     .child(self.editor.render(window, cx))

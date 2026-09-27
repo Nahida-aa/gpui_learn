@@ -8,11 +8,6 @@ description = "自研基础控件层（zed ui 没有对应物；aa_gpui_kit_ui �
 
 [dependencies]
 gpui.workspace = true
-# IconName 枚举（zed crates/icons 原样）：path() 用 snake_case 序列化拼出
-# assets/icons/ 下的 SVG 路径。这是全仓库唯一的 IconName，ui 与 AAgent 的
-# `icons` 别名最终都落到这里——保证 editor 里 `Icon::new(icons.down)` 这类
-# 「枚举来自 icons、控件来自 ui」的写法只有一个类型可对。
-aa_icons.workspace = true
 
 [lints]
 workspace = true
