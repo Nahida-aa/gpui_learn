@@ -127,6 +127,8 @@ pub struct IconButton {
     /// 弹出层展开态（dropdown / disclosure 触发器用，转发给 [`ButtonLike`]）。
     aria_expanded: Option<bool>,
     on_click: Option<ClickHandler>,
+    /// 右键点击（转发给 [`ButtonLike::on_right_click`]，对齐 zed `IconButton::on_right_click`）。
+    on_right_click: Option<ClickHandler>,
     /// 悬停提示（[`Tooltip::text`] 等工厂现场建实体）。
     tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
     /// 提示锚点（默认 `Anchor::TopLeft`）。
@@ -179,6 +181,7 @@ impl IconButton {
             aria_label: None,
             aria_expanded: None,
             on_click: None,
+            on_right_click: None,
             tooltip: None,
             tooltip_anchor: None,
             tooltip_attach: None,
@@ -255,6 +258,15 @@ impl IconButton {
         handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
     ) -> Self {
         self.on_click = Some(Box::new(handler));
+        self
+    }
+
+    /// 右键点击回调（对齐 zed `IconButton::on_right_click`）。禁用时不会触发。
+    pub fn on_right_click(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_right_click = Some(Box::new(handler));
         self
     }
 
@@ -377,6 +389,11 @@ impl RenderOnce for IconButton {
                 handler(event, window, cx);
             }
         });
+        if let Some(on_right_click) = self.on_right_click {
+            like = like.on_right_click(move |event, window, cx| {
+                (on_right_click)(event, window, cx);
+            });
+        }
         if let Some(tooltip) = self.tooltip {
             like = like.tooltip_rc(tooltip);
         }

@@ -142,6 +142,11 @@ impl Theme {
         &self.styles.colors
     }
 
+    /// 系统色（对齐 zed `Theme::system`：窗口 / 控件在系统层的底色等）。
+    pub fn system(&self) -> &SystemColors {
+        &self.styles.system
+    }
+
     pub fn status(&self) -> &StatusColors {
         &self.styles.status
     }

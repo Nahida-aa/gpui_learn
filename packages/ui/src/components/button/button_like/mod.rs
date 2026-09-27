@@ -24,8 +24,9 @@ use std::rc::Rc;
 
 use gpui::{
     Anchor, AnyElement, AnyView, App, ClickEvent, CursorStyle, DefiniteLength, ElementId,
-    FocusHandle, Hsla, InteractiveElement, IntoElement, ParentElement, Pixels, Rems, RenderOnce,
-    SharedString, Styled, Window, div, prelude::*, px,
+    FocusHandle, Hsla, InteractiveElement, IntoElement, MouseButton, MouseClickEvent,
+    MouseDownEvent, MouseUpEvent, ParentElement, Pixels, Rems, RenderOnce, SharedString, Styled,
+    Window, div, prelude::*, px,
 };
 
 use aa_gpui_kit_theme::ActiveTheme;
@@ -104,6 +105,9 @@ pub struct ButtonLike {
     aria_label: Option<SharedString>,
     cursor_style: CursorStyle,
     on_click: Option<ClickHandler>,
+    /// 右键点击（对齐 zed `ButtonLike::on_right_click`：手动拼 Right 键的
+    /// `ClickEvent`，在 mouse_up 时触发）。editor 的 runnables 右键菜单用它。
+    on_right_click: Option<ClickHandler>,
     /// 悬停提示（工厂现场建视图）。
     ///
     /// 与 zed 一致收 `AnyView`（不是 `Entity<Tooltip>`）—— 这样
@@ -164,6 +168,7 @@ impl ButtonLike {
             aria_label: None,
             cursor_style: CursorStyle::PointingHand,
             on_click: None,
+            on_right_click: None,
             tooltip: None,
             tooltip_anchor: None,
             tooltip_attach: None,
@@ -396,6 +401,15 @@ impl ButtonLike {
         self
     }
 
+    /// 右键点击回调（对齐 zed `ButtonLike::on_right_click`）。禁用时不会触发。
+    pub fn on_right_click(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.on_right_click = Some(Box::new(handler));
+        self
+    }
+
     /// 悬停提示（`Tooltip::text("...")` 等）。
     pub fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
@@ -579,6 +593,41 @@ impl RenderOnce for ButtonLike {
                 handler(event, window, cx);
             }
         });
+
+        // 右键：gpui 的 on_click 只认左键，所以照 zed 手动拦 Right 键的
+        // mouse_down / mouse_up，在 mouse_up 时拼一个 ClickEvent 触发回调。
+        // 禁用时不挂（对齐 zed 的 filter(|_| !self.disabled)）。
+        if !disabled && self.on_right_click.is_some() {
+            button = button
+                .on_mouse_down(MouseButton::Right, |_, window, cx| {
+                    window.prevent_default();
+                    cx.stop_propagation();
+                })
+                .on_mouse_up(
+                    MouseButton::Right,
+                    move |event, window, cx| {
+                        cx.stop_propagation();
+                        if let Some(handler) = self.on_right_click.as_ref() {
+                            let click_event = ClickEvent::Mouse(MouseClickEvent {
+                                down: MouseDownEvent {
+                                    button: MouseButton::Right,
+                                    position: event.position,
+                                    modifiers: event.modifiers,
+                                    click_count: 1,
+                                    first_mouse: false,
+                                },
+                                up: MouseUpEvent {
+                                    button: MouseButton::Right,
+                                    position: event.position,
+                                    modifiers: event.modifiers,
+                                    click_count: 1,
+                                },
+                            });
+                            handler(&click_event, window, cx);
+                        }
+                    },
+                );
+        }
 
         // 有悬停提示时包进 TooltipHost（host 与按钮各用自己的 ElementId）。
         match self.tooltip {

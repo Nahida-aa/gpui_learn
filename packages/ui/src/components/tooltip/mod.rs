@@ -39,9 +39,32 @@ use aa_gpui_kit_theme::ActiveTheme;
 use crate::traits::styled_ext::StyledExt as _;
 use crate::styles::StyledTypography as _;
 
+/// 提示标题的两种来源（对齐 zed `Title`）：纯字符串，或回调现场生成元素
+/// （`Tooltip::element` 用，比如标题里塞带样式的富文本）。
+#[derive(Clone)]
+enum Title {
+    Str(SharedString),
+    Callback(Rc<dyn Fn(&mut Window, &mut App) -> AnyElement>),
+}
+
+impl From<SharedString> for Title {
+    fn from(value: SharedString) -> Self {
+        Title::Str(value)
+    }
+}
+
+impl RenderOnce for Title {
+    fn render(self, window: &mut Window, cx: &mut App) -> impl gpui::IntoElement {
+        match self {
+            Title::Str(title) => title.into_any_element(),
+            Title::Callback(element) => element(window, cx),
+        }
+    }
+}
+
 /// 独立的工具提示视图（ManagedView）。由 [`TooltipHost`] 弹出。
 pub struct Tooltip {
-    title: SharedString,
+    title: Title,
     meta: Option<SharedString>,
     /// 快捷键提示（对齐 zed：存的是 ui 的 [`KeyBinding`] 组件，不是字符串，
     /// 这样能跟随平台显示 `⌘S` / `Ctrl+S`）。
@@ -58,7 +81,7 @@ impl Tooltip {
     pub fn simple(title: impl Into<SharedString>, cx: &mut App) -> AnyView {
         let title = title.into();
         cx.new(|cx| Tooltip {
-            title,
+            title: title.into(),
             meta: None,
             key_binding: None,
             focus_handle: cx.focus_handle(),
@@ -72,7 +95,27 @@ impl Tooltip {
         let title = title.into();
         move |_window: &mut Window, cx: &mut App| {
             cx.new(|cx| Tooltip {
-                title: title.clone(),
+                title: title.clone().into(),
+                meta: None,
+                key_binding: None,
+                focus_handle: cx.focus_handle(),
+            })
+            .into()
+        }
+    }
+
+    /// 标题由回调**现场生成元素**的提示（对齐 zed `Tooltip::element`）。
+    ///
+    /// 纯 `SharedString` 标题表达不了的富内容（比如带样式的富文本）走这里；
+    /// 返回形式与 [`Self::text`] 相同：工厂闭包。
+    pub fn element(
+        title: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
+    ) -> impl Fn(&mut Window, &mut App) -> AnyView {
+        let title = Title::Callback(Rc::new(title));
+        move |_, cx: &mut App| {
+            let title = title.clone();
+            cx.new(|cx| Self {
+                title,
                 meta: None,
                 key_binding: None,
                 focus_handle: cx.focus_handle(),
@@ -96,7 +139,7 @@ impl Tooltip {
         cx: &mut App,
     ) -> AnyView {
         cx.new(|cx| Tooltip {
-            title: title.into(),
+            title: Title::Str(title.into()),
             meta: None,
             key_binding: Some(crate::KeyBinding::for_action(action, cx)),
             focus_handle: cx.focus_handle(),
@@ -114,7 +157,7 @@ impl Tooltip {
     ) -> AnyView {
         let focus_handle = focus_handle.clone();
         cx.new(|cx| Tooltip {
-            title: title.into(),
+            title: Title::Str(title.into()),
             meta: None,
             key_binding: Some(crate::KeyBinding::for_action_in(action, &focus_handle, cx)),
             focus_handle: cx.focus_handle(),
@@ -131,7 +174,7 @@ impl Tooltip {
         let title = title.into();
         move |_window: &mut Window, cx: &mut App| {
             cx.new(|cx| Tooltip {
-                title: title.clone(),
+                title: title.clone().into(),
                 meta: None,
                 key_binding: Some(key_binding.clone()),
                 focus_handle: cx.focus_handle(),
@@ -160,7 +203,7 @@ impl Tooltip {
         let key_binding = action.map(|action| crate::KeyBinding::for_action(action, cx));
         let (title, meta) = (title.into(), meta.into());
         cx.new(|cx| Tooltip {
-            title,
+            title: title.into(),
             meta: Some(meta),
             key_binding,
             focus_handle: cx.focus_handle(),
@@ -181,7 +224,7 @@ impl Tooltip {
             action.map(|action| crate::KeyBinding::for_action_in(action, focus_handle, cx));
         let (title, meta) = (title.into(), meta.into());
         cx.new(|cx| Tooltip {
-            title,
+            title: title.into(),
             meta: Some(meta),
             key_binding,
             focus_handle: cx.focus_handle(),
@@ -199,12 +242,12 @@ impl Focusable for Tooltip {
 impl EventEmitter<DismissEvent> for Tooltip {}
 
 impl Render for Tooltip {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let colors = cx.theme().colors().clone();
 
         let title = div()
             .max_w(px(288.0))
-            .child(self.title.clone())
+            .child(self.title.clone().render(window, cx))
             .into_any_element();
 
         let mut row = div().flex().flex_row().items_center().gap_4();
