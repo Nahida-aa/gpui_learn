@@ -120,7 +120,7 @@ pub use sticky_items::{StickyCandidate, StickyItems, StickyItemsDecoration, stic
 pub use tab::{Tab, TabCloseSide, TabPosition};
 pub use tab_bar::TabBar;
 pub use toggle::{
-    Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
+    Checkbox, Switch, SwitchColor, SwitchField, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };
 pub use update_button::UpdateButton;
 pub use tooltip::{LinkPreview, Tooltip, TooltipHost, tooltip_container, tooltip_host};
