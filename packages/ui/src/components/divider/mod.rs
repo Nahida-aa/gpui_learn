@@ -1,11 +1,11 @@
 //! 分割线组件：对齐 zed `crates/ui/src/components/divider.rs`。
 //!
-//! zed 渲染（divider.rs:139-150）——就 Spacing + 一条 `bg`，颜色来自
-//! [`DividerColor`]，默认 `Border` → `colors.border`：
+//! zed 渲染（divider.rs:137-160）——Spacing + 实线 `bg` / 虚线 canvas，
+//! 颜色来自 [`DividerColor`]，默认 `BorderVariant`：
 //!
 //! ```text
-//! horizontal:  min_w_0().h_px().max_w_0().w_full()   [inset → mx_1p5()]
-//! vertical:    min_w_0().w_px().h_4()               [inset → my_1p5()]
+//! horizontal:  min_w_0().h_px().max_h_px().w_full()   [inset → mx_1p5()]
+//! vertical:    min_w_0().w_px().h_4()                 [inset → my_1p5()]
 //! ```
 //!
 //! 本实现与 zed 同构：实线走 `bg`，虚线走 `canvas` + `PathBuilder::stroke`
@@ -19,20 +19,12 @@ use gpui::{
 };
 
 /// zed `DividerColor`：映射主题 `border` / `border_variant` / `border.opacity(0.6)`。
-///
-/// 与 zed 的一处差异：zed 的 `#[default]` 是 `BorderVariant`，我们这边历史上
-/// 一直是 `Border`（改默认会动到已有调用方的观感），保持不动。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum DividerColor {
     Border,
     BorderFaded,
+    #[default]
     BorderVariant,
-}
-
-impl Default for DividerColor {
-    fn default() -> Self {
-        Self::Border
-    }
 }
 
 /// zed `Divider` 的方向。
@@ -172,28 +164,23 @@ impl Styled for Divider {
 }
 
 impl RenderOnce for Divider {
-    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let colors = cx.theme().colors().clone();
-
-        let mut base = div()
-            .min_w_0()
-            .when_else(
-                self.direction == DividerDirection::Horizontal,
-                |el| el.h_px().max_w_0().w_full(),
-                |el| el.w_px().h_4(),
-            )
-            .when(self.inset, |el| match self.direction {
-                DividerDirection::Horizontal => el.mx_1p5(),
-                DividerDirection::Vertical => el.my_1p5(),
-            })
-            .bg(self.color_hsla(&colors));
+    fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
+        let mut base = match self.direction {
+            DividerDirection::Horizontal => div()
+                .min_w_0()
+                .h_px()
+                .max_h_px()
+                .w_full()
+                .when(self.inset, |this| this.mx_1p5()),
+            DividerDirection::Vertical => div()
+                .min_w_0()
+                .w_px()
+                .h_4()
+                .when(self.inset, |this| this.my_1p5()),
+        };
 
         // 调用方经 `Styled` 叠加的 refinement（对齐 zed：`base.style().refine(..)`）。
         base.style().refine(&self.style);
-
-        // 本仓库历史行为：分割线在 flex 行里不参与伸缩（zed 未加，保留以免
-        // 影响既有调用方的布局）。
-        let base = base.flex_shrink_0();
 
         match self.line_style {
             DividerStyle::Solid => self.render_solid(base, cx).into_any_element(),

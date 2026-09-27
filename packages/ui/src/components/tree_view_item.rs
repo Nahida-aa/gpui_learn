@@ -13,7 +13,7 @@
 
 use std::sync::Arc;
 
-use gpui::{AnyElement, AnyView, ClickEvent, MouseButton, MouseDownEvent, Role};
+use gpui::{AnyView, ClickEvent, MouseButton, MouseDownEvent, Role};
 
 use crate::{Disclosure, prelude::*};
 

@@ -13,9 +13,6 @@
 //! - **可编程**：[`PopoverMenuHandle`] 允许在任意代码里 show / hide / toggle
 //!   （比如工具栏按钮与键盘快捷键共用同一个菜单）。
 //!
-//! 与 zed 的差异：zed 的 `PopoverMenuHandle` 还带 `on_open` 状态字段
-//! （handle 触发 show 时也会回调），我们只在 trigger 点击路径上回调。
-//!
 //! 用法（与 zed 同构）：
 //! ```ignore
 //! let handle = PopoverMenuHandle::default();
@@ -81,6 +78,8 @@ pub struct PopoverMenuHandle<M>(Rc<RefCell<Option<PopoverMenuHandleState<M>>>>);
 struct PopoverMenuHandleState<M> {
     menu_builder: MenuBuilder<M>,
     menu: Rc<RefCell<Option<Entity<M>>>>,
+    /// handle 触发 show 时也会回调（对齐 zed `PopoverMenuHandleState`）。
+    on_open: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
 }
 
 impl<M> Clone for PopoverMenuHandle<M> {
@@ -98,6 +97,7 @@ impl<M> Default for PopoverMenuHandle<M> {
 fn show_menu<M: ManagedView>(
     builder: &MenuBuilder<M>,
     menu: &Rc<RefCell<Option<Entity<M>>>>,
+    on_open: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
     window: &mut Window,
     cx: &mut App,
 ) {
@@ -129,6 +129,10 @@ fn show_menu<M: ManagedView>(
     });
     *menu.borrow_mut() = Some(new_menu);
     window.refresh();
+
+    if let Some(on_open) = on_open {
+        on_open(window, cx);
+    }
 }
 
 impl<M: ManagedView> PopoverMenuHandle<M> {
@@ -137,7 +141,13 @@ impl<M: ManagedView> PopoverMenuHandle<M> {
         if let Some(state) = self.0.borrow().as_ref()
             && state.menu.borrow().as_ref().is_none()
         {
-            show_menu(&state.menu_builder, &state.menu, window, cx);
+            show_menu(
+                &state.menu_builder,
+                &state.menu,
+                state.on_open.clone(),
+                window,
+                cx,
+            );
         }
     }
 
@@ -258,15 +268,7 @@ impl<M: ManagedView> PopoverMenu<M> {
             t.toggle_state(open)
                 .when_some(builder, |el, builder| {
                     el.on_click(move |_event, window, cx| {
-                        if menu.borrow().as_ref().is_some() {
-                            // 已打开：本次点击交给 paint 阶段的关闭监听处理
-                            // （那里会 emit Dismiss），这里不再重复打开。
-                        } else {
-                            show_menu(&builder, &menu, window, cx);
-                            if let Some(on_open) = on_open.as_ref() {
-                                on_open(window, cx);
-                            }
-                        }
+                        show_menu(&builder, &menu, on_open.clone(), window, cx)
                     })
                 })
                 .into_any_element()
@@ -292,16 +294,8 @@ impl<M: ManagedView> PopoverMenu<M> {
             let open = menu.borrow().is_some();
             t.toggle_state(open)
                 .when_some(builder, |el, builder| {
-                    el.on_click(move |_event, window, cx| {
-                        if menu.borrow().as_ref().is_some() {
-                            // 已打开：本次点击交给 paint 阶段的关闭监听处理
-                            // （那里会 emit Dismiss），这里不再重复打开。
-                        } else {
-                            show_menu(&builder, &menu, window, cx);
-                            if let Some(on_open) = on_open.as_ref() {
-                                on_open(window, cx);
-                            }
-                        }
+                    el.on_click(move |_, window, cx| {
+                        show_menu(&builder, &menu, on_open.clone(), window, cx)
                     })
                     .when(!open, |el| {
                         el.tooltip(move |window, cx| tooltip_builder(window, cx))
@@ -460,6 +454,7 @@ impl<M: ManagedView> Element for PopoverMenu<M> {
                     *trigger_handle.0.borrow_mut() = Some(PopoverMenuHandleState {
                         menu_builder,
                         menu: element_state.menu.clone(),
+                        on_open: self.on_open.clone(),
                     });
                 }
 

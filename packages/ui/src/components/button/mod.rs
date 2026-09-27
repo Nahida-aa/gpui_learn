@@ -369,28 +369,21 @@ impl IconButton {
 impl RenderOnce for IconButton {
     #[allow(refining_impl_trait)]
     fn render(self, window: &mut Window, cx: &mut App) -> ButtonLike {
-        let theme = cx.theme().clone();
-        let colors = theme.colors();
-        let style_colors = button_like::button_like_colors(self.style, &theme);
         let disabled = self.disabled;
         let selected = self.selected;
 
         // 图标边长：`IconSize` 档位 → px（与 Button 内图标同一换算方式）。
         let icon_size = self.icon_size.rems() * window.rem_size();
 
-        // 图标前景：disabled → 置灰；selected → accent；
-        // 否则取语义色（默认档位回落样式的 fg）。
+        // 图标前景（对齐 zed icon_button.rs:243-252）：disabled → Disabled；
+        // selected → 显式 `selected_icon_color`，否则 `Color::Selected`；
+        // 普通态取语义色并乘 `alpha`。
         let icon_color = if disabled {
-            colors.icon_disabled
+            Color::Disabled.color(cx)
         } else if selected {
-            // 与 zed 同：显式给了 `selected_icon_color` 就用它，否则回落默认强调色
-            // （zed 回落 `Color::Selected`，我们回落 `colors.icon_accent`）。
-            match self.selected_icon_color {
-                Some(color) => color.color(cx),
-                None => colors.icon_accent,
-            }
-        } else if self.icon_color == Color::Default {
-            style_colors.fg.opacity(self.alpha.unwrap_or(1.0))
+            self.selected_icon_color
+                .unwrap_or(Color::Selected)
+                .color(cx)
         } else {
             self.icon_color.color(cx).opacity(self.alpha.unwrap_or(1.0))
         };
