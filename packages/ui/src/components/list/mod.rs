@@ -8,8 +8,10 @@
 
 pub mod list_bullet_item;
 pub mod list_item;
+pub mod list_separator;
 pub mod list_sub_header;
 
 pub use list_bullet_item::*;
+pub use list_separator::*;
 pub use list_item::*;
 pub use list_sub_header::*;

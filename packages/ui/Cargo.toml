@@ -14,6 +14,9 @@ workspace = true
 aa_icons.workspace = true
 gpui.workspace = true
 gpui_macros.workspace = true
+# ModalHeader / Navigable 挂的是 zed menu crate 的 action（Cancel /
+# SelectNext / SelectPrevious），必须与 AAgent 引用同一份。
+menu.workspace = true
 # HighlightedLabel 的 debug_panic!（非 release 才 panic 的调试断言宏）。
 gpui_util.workspace = true
 # debug_panic! 的 release 分支走 log::error!。

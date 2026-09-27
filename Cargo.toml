@@ -83,6 +83,11 @@ anyhow = "1.0"
 # rev 与下方 [patch.crates-io] 的 gpui 保持一致，cargo 会把同一 rev 的仓库
 # 去重成一次 clone，且 gpui 内部的 sum_tree 与我们引用的是同一个包实例。
 sum_tree = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f" }
+# menu：zed 的通用 action 集合（`Cancel` / `SelectNext` / `SelectPrevious` …，
+# publish = false 故走 git 源，rev 同上）。ui 的 ModalHeader / Navigable 挂
+# 的就是这些 action —— 必须与 AAgent 引用的是同一个 crate，否则同一个
+# `SelectNext` 会分裂成两个类型（同 §13）。
+menu = { git = "https://github.com/zed-industries/zed", rev = "f6838a7c4afecd7c212c43c70165588b92a5a11f" }
 # refineable：zed 的「部分覆盖」机制（publish = false，故走 git 源）。
 # 主题需要它——主题 JSON 只写想覆盖的字段，其余落回默认值；
 # `#[derive(Refineable)]` 会生成 `XxxRefinement`（每字段 Option 化）+ `refine()`。
