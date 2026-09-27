@@ -38,6 +38,9 @@ use aa_gpui_kit_theme::ActiveTheme;
 // 这里是按需引入（本文件顶部用的是 gpui 的 prelude，不含它们）。
 use crate::traits::styled_ext::StyledExt as _;
 use crate::styles::StyledTypography as _;
+// `Label::size` / `Label::color` 来自 `LabelCommon`（zed 的 prelude 里就有，
+// 本文件顶部用的是 gpui 的 prelude，所以单独引入）。
+use crate::LabelCommon as _;
 
 /// 提示标题的两种来源（对齐 zed `Title`）：纯字符串，或回调现场生成元素
 /// （`Tooltip::element` 用，比如标题里塞带样式的富文本）。
@@ -717,4 +720,46 @@ where
             .px_2()
             .map(|el| f(el, cx)),
     )
+}
+
+/// 长链接预览（照搬 zed `crates/ui/src/components/tooltip.rs:236`，GPL-3.0-or-later）。
+///
+/// 悬停在一个链接上时显示它指向的完整 URL：每 100 字符插一个换行、超过 500
+/// 字符截断为 `…`，避免一个超长 URL 把 tooltip 撑成一条。
+///
+/// 与 zed 无差异（zed 也只给 `Tooltip` 实现了 `Component`，`LinkPreview` 没有）。
+pub struct LinkPreview {
+    link: SharedString,
+}
+
+impl LinkPreview {
+    pub fn new(url: &str, cx: &mut App) -> AnyView {
+        let mut wrapped_url = String::new();
+        for (i, ch) in url.chars().enumerate() {
+            if i == 500 {
+                wrapped_url.push('…');
+                break;
+            }
+            if i % 100 == 0 && i != 0 {
+                wrapped_url.push('\n');
+            }
+            wrapped_url.push(ch);
+        }
+        cx.new(|_| LinkPreview {
+            link: wrapped_url.into(),
+        })
+        .into()
+    }
+}
+
+impl Render for LinkPreview {
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        tooltip_container(cx, |el, _| {
+            el.child(
+                crate::Label::new(self.link.clone())
+                    .size(crate::LabelSize::XSmall)
+                    .color(crate::Color::Muted),
+            )
+        })
+    }
 }

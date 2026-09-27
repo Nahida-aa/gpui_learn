@@ -24,6 +24,7 @@ pub mod count_badge;
 pub mod data_table;
 pub mod disclosure;
 pub mod divider;
+pub mod dropdown_menu;
 pub mod facepile;
 pub mod group;
 pub mod icon;
@@ -40,6 +41,7 @@ pub mod notification;
 pub mod popover;
 pub mod project_empty_state;
 pub mod popover_menu;
+pub mod progress_bar;
 pub mod redistributable_columns;
 pub mod scrollbar;
 pub mod diff_stat;
@@ -70,6 +72,7 @@ pub use count_badge::CountBadge;
 // `crate::table_row` 这条 glob 转出的路径，改成逐项导出会断。
 pub use data_table::*;
 pub use disclosure::Disclosure;
+pub use dropdown_menu::{DropdownMenu, DropdownStyle};
 pub use divider::{Divider, DividerColor, DividerDirection};
 pub use facepile::{EXAMPLE_FACES, Facepile};
 pub use group::{h_group, h_group_lg, h_group_sm, h_group_xl, v_group, v_group_lg, v_group_sm, v_group_xl};
@@ -100,6 +103,7 @@ pub use notification::alert_modal::AlertModal;
 pub use popover::{POPOVER_Y_PADDING, Popover};
 pub use project_empty_state::ProjectEmptyState;
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
+pub use progress_bar::ProgressBar;
 pub use redistributable_columns::*;
 pub use scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
@@ -112,4 +116,4 @@ pub use toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };
 pub use update_button::UpdateButton;
-pub use tooltip::{Tooltip, TooltipHost, tooltip_container, tooltip_host};
+pub use tooltip::{LinkPreview, Tooltip, TooltipHost, tooltip_container, tooltip_host};

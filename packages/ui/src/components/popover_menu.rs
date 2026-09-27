@@ -13,7 +13,8 @@
 //! - **可编程**：[`PopoverMenuHandle`] 允许在任意代码里 show / hide / toggle
 //!   （比如工具栏按钮与键盘快捷键共用同一个菜单）。
 //!
-//! 与 zed 的差异：未实现 `full_width`。
+//! 与 zed 的差异：zed 的 `PopoverMenuHandle` 还带 `on_open` 状态字段
+//! （handle 触发 show 时也会回调），我们只在 trigger 点击路径上回调。
 //!
 //! 用法（与 zed 同构）：
 //! ```ignore
@@ -31,8 +32,8 @@ use gpui::{
     Anchor, AnyElement, AnyView, App, Bounds, DismissEvent, DispatchPhase, Element, ElementId,
     Entity, Focusable as _, GlobalElementId, HitboxBehavior, HitboxId, InteractiveElement,
     IntoElement,
-    LayoutId, ManagedView, MouseDownEvent, ParentElement, Pixels, Point, Style, Window, anchored,
-    deferred, div, point, prelude::FluentBuilder, px, rems,
+    LayoutId, Length, ManagedView, MouseDownEvent, ParentElement, Pixels, Point, Style, Window,
+    anchored, deferred, div, point, prelude::FluentBuilder, px, rems, relative, size,
 };
 
 use crate::ButtonCommon;
@@ -176,6 +177,13 @@ pub struct PopoverMenu<M: ManagedView> {
     trigger_handle: Option<PopoverMenuHandle<M>>,
     /// 菜单打开时的回调。
     on_open: Option<Rc<dyn Fn(&mut Window, &mut App)>>,
+    /// trigger 容器是否撑满父容器宽度（对齐 zed `full_width`）。
+    ///
+    /// 默认 `false`：容器按 trigger 内容自适应。设为 `true` 时容器宽度取
+    /// `relative(1.)`，于是内部 trigger（常见是 `.full_width()` 的
+    /// `Button`）也跟着撑满 —— [`DropdownMenu`](crate::DropdownMenu) 的
+    /// `full_width` 就是靠这个实现的。
+    full_width: bool,
 }
 
 impl<M: ManagedView> PopoverMenu<M> {
@@ -190,7 +198,14 @@ impl<M: ManagedView> PopoverMenu<M> {
             offset: None,
             trigger_handle: None,
             on_open: None,
+            full_width: false,
         }
+    }
+
+    /// trigger 容器撑满父容器宽度（对齐 zed `PopoverMenu::full_width`）。
+    pub fn full_width(mut self, full_width: bool) -> Self {
+        self.full_width = full_width;
+        self
     }
 
     /// 设定菜单创建器（`Entity<M>` 需实现 `ManagedView`，如
@@ -294,12 +309,9 @@ impl<M: ManagedView> PopoverMenu<M> {
         self
     }
 
-    /// 菜单打开时回调。
-    pub fn on_open(
-        mut self,
-        on_open: impl Fn(&mut Window, &mut App) + 'static,
-    ) -> Self {
-        self.on_open = Some(Rc::new(on_open));
+    /// 菜单打开时回调（与 zed 同形，收 `Rc<dyn Fn>`）。
+    pub fn on_open(mut self, on_open: Rc<dyn Fn(&mut Window, &mut App)>) -> Self {
+        self.on_open = Some(on_open);
         self
     }
 
@@ -434,10 +446,13 @@ impl<M: ManagedView> Element for PopoverMenu<M> {
                     .as_mut()
                     .map(|child_element| child_element.request_layout(window, cx));
 
-                // zed 有 full_width 选项时才把宽度设为 relative(1.)；我们
-                // 未提供该选项，trigger 容器按内容自适应。
+                let mut style = Style::default();
+                if self.full_width {
+                    style.size = size(relative(1.).into(), Length::Auto);
+                }
+
                 let layout_id = window.request_layout(
-                    Style::default(),
+                    style,
                     menu_layout_id.into_iter().chain(child_layout_id),
                     cx,
                 );
