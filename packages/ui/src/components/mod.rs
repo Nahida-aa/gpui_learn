@@ -15,6 +15,8 @@
 
 pub mod avatar;
 pub mod button;
+pub mod chip;
+pub mod circular_progress;
 pub mod context_menu;
 pub mod count_badge;
 pub mod disclosure;
@@ -38,6 +40,7 @@ pub mod stack;
 pub mod tab;
 pub mod tab_bar;
 pub mod toggle;
+pub mod update_button;
 pub mod tooltip;
 
 pub use avatar::{
@@ -45,6 +48,8 @@ pub use avatar::{
     CollaboratorAvailability,
 };
 pub use button::{ButtonRadius, ButtonStyle, IconButton, IconButtonShape, TintColor};
+pub use chip::Chip;
+pub use circular_progress::CircularProgress;
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide, RightClickMenu};
 pub use count_badge::CountBadge;
 pub use disclosure::Disclosure;
@@ -79,4 +84,5 @@ pub use tab_bar::TabBar;
 pub use toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };
+pub use update_button::UpdateButton;
 pub use tooltip::{Tooltip, TooltipHost, tooltip_container, tooltip_host};

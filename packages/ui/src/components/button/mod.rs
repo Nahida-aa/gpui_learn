@@ -29,7 +29,7 @@ use gpui::{
 };
 
 use crate::styles::ElevationIndex;
-use crate::traits::{Clickable, Disableable, FixedWidth, Toggleable};
+use crate::traits::{Clickable, Disableable, FixedWidth, SelectableButton, Toggleable};
 use crate::{Color, Indicator};
 use aa_gpui_kit_theme::ActiveTheme;
 pub mod button;
@@ -125,6 +125,9 @@ pub struct IconButton {
     shape: IconButtonShape,
     radius: ButtonRadius,
     selected: bool,
+    /// 选中态换用的样式（对齐 zed `IconButton::selected_style`，由
+    /// [`SelectableButton`] 设入）。渲染时转发给 [`ButtonLike::selected_style`]。
+    selected_style: Option<ButtonStyle>,
     disabled: bool,
     aria_label: Option<SharedString>,
     /// 弹出层展开态（dropdown / disclosure 触发器用，转发给 [`ButtonLike`]）。
@@ -182,6 +185,7 @@ impl IconButton {
             shape: IconButtonShape::Square,
             radius: ButtonRadius::Medium,
             selected: false,
+            selected_style: None,
             disabled: false,
             aria_label: None,
             aria_expanded: None,
@@ -379,6 +383,9 @@ impl RenderOnce for IconButton {
             )
             .radius(self.radius)
             .selected(selected)
+            // zed：`IconButton::selected_style` 同时喂给 base（zed icon_button.rs:157）
+            // 和自己的 `selected_style` 字段；我们只有一个下游，直接转发。
+            .when_some(self.selected_style, |this, style| this.selected_style(style))
             .disabled(disabled)
             .cursor_style(self.cursor_style.unwrap_or(CursorStyle::PointingHand));
 
@@ -510,6 +517,13 @@ impl Disableable for IconButton {
 impl Toggleable for IconButton {
     fn toggle_state(mut self, selected: bool) -> Self {
         self.selected = selected;
+        self
+    }
+}
+
+impl SelectableButton for IconButton {
+    fn selected_style(mut self, style: ButtonStyle) -> Self {
+        self.selected_style = Some(style);
         self
     }
 }

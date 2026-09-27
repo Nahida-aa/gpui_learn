@@ -10,8 +10,9 @@ use crate::{Icon, IconName, IconSize};
 use std::rc::Rc;
 
 use gpui::prelude::FluentBuilder;
-use gpui::{Action, App, SharedString, Window};
+use gpui::{Action, AnyElement, App, Context, FocusHandle, SharedString, Window};
 
+use super::menu::{ContextMenu, DocumentationAside};
 use crate::{Color, KeyBinding};
 
 /// 图标在条目的哪一侧（对齐 zed `IconPosition`）。
@@ -225,6 +226,72 @@ pub enum ContextMenuItem {
     Separator,
     /// 纯文本（muted 色，不可交互）。
     Label(SharedString),
+    /// 完全自定义的条目（对齐 zed `ContextMenuItem::CustomEntry`）。
+    ///
+    /// 结构化的 [`ContextMenuEntry`] 画不出来的东西走这里：整行由
+    /// `entry_render` 现场生成，命中时跑 `handler`。
+    ///
+    /// - `selectable`：能否被键盘选中（zed 渲染 `false` 的行不可 highlight）；
+    /// - `documentation_aside`：hover / 选中时弹出的文档侧栏。
+    ///
+    /// 出处：zed `context_menu.rs:55-66`。与 zed 的差异：zed 的变体体在这里是
+    /// 全部搬齐的，渲染侧的 `documentation_aside` 实现比 zed 简（我们没搬
+    /// `aside_trigger_bounds` 那套 canvas 定位）。
+    CustomEntry {
+        /// 整行的渲染回调。
+        entry_render: Box<dyn Fn(&mut Window, &mut App) -> AnyElement>,
+        /// 命中回调。第一个参数是菜单自己的 `action_context`
+        /// （[`ContextMenu::context`](super::menu::ContextMenu::context) 设的焦点句柄）。
+        handler: Rc<dyn Fn(Option<&FocusHandle>, &mut Window, &mut App)>,
+        /// 是否能被键盘选中。
+        selectable: bool,
+        /// hover / 选中时的文档侧栏。
+        documentation_aside: Option<DocumentationAside>,
+    },
+    /// 子菜单（对齐 zed `ContextMenuItem::Submenu`，zed `context_menu.rs:61`）。
+    ///
+    /// 命中时**不关闭**当前菜单，而是用 `builder` 现场建一个子菜单实体并展示。
+    Submenu {
+        /// 子菜单条目的标题。
+        label: SharedString,
+        /// 标题前的图标。
+        icon: Option<IconName>,
+        /// 图标颜色。
+        icon_color: Option<Color>,
+        /// 子菜单内容装配闭包（点击命中时现场跑，对齐 zed `Submenu::builder`）。
+        builder: Rc<dyn Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu>,
+    },
+}
+
+impl ContextMenuItem {
+    /// 造一个可选中的自定义条目（对齐 zed `ContextMenuItem::custom_entry`，
+    /// zed `context_menu.rs:70`）。
+    ///
+    /// `handler` 是 `Fn(&mut Window, &mut App)`，比结构体里那层多包一层
+    /// （丢掉 `FocusHandle` 参数）——与 zed 完全同形。
+    pub fn custom_entry(
+        entry_render: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
+        handler: impl Fn(&mut Window, &mut App) + 'static,
+        documentation_aside: Option<DocumentationAside>,
+    ) -> Self {
+        Self::CustomEntry {
+            entry_render: Box::new(entry_render),
+            handler: Rc::new(move |_, window, cx| handler(window, cx)),
+            selectable: true,
+            documentation_aside,
+        }
+    }
+
+    /// 能否被键盘选中（对齐 zed `ContextMenuItem::is_selectable`，
+    /// zed `context_menu.rs:2177`）。
+    pub fn is_selectable(&self) -> bool {
+        match self {
+            ContextMenuItem::Separator | ContextMenuItem::Label(_) => false,
+            ContextMenuItem::Entry(entry) => !entry.disabled,
+            ContextMenuItem::CustomEntry { selectable, .. } => *selectable,
+            ContextMenuItem::Submenu { .. } => true,
+        }
+    }
 }
 
 // zed: `impl FluentBuilder for ContextMenuEntry {}`（context_menu.rs:205）。

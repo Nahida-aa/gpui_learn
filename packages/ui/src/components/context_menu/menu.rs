@@ -15,14 +15,15 @@
 //! 出处：zed `crates/ui/src/components/context_menu.rs`（GPL-3.0-or-later）。
 //!
 //! **未对齐的部分**（见文件末尾「与 zed 的差距」）：子菜单（`SubmenuState`）、
-//! `custom_row` / `custom_entry` / `documentation_aside`、
 //! `entry_with_end_slot` 系列。
 
-use crate::{Icon, IconName};
+use crate::{h_flex, Color, Icon, IconName, IconSize};
+use std::rc::Rc;
+
 use gpui::{
-    Action, App, Context, DismissEvent, Div, Empty, Entity, EventEmitter, FocusHandle, Focusable,
-    AnyElement, KeyDownEvent, MouseDownEvent, SharedString, Subscription, Window, div,
-    prelude::*, px,
+    Action, Anchor, AnyElement, App, Context, DismissEvent, Div, Empty, Entity, EventEmitter,
+    FocusHandle, Focusable, KeyDownEvent, MouseDownEvent, SharedString, Subscription, Window,
+    anchored, deferred, div, prelude::*, px,
 };
 
 
@@ -52,6 +53,28 @@ pub struct ContextMenu {
     /// 失焦订阅（对齐 zed `_on_blur_subscription`：占位持有，防止宿主把
     /// 「菜单失焦即关闭」的 Subscription 提前释放）。
     _on_blur_subscription: Subscription,
+    /// 当前打开的子菜单（对齐 zed `submenu_state`，zed `context_menu.rs:232`）。
+    submenu_state: SubmenuState,
+}
+
+/// 子菜单的开关状态（对齐 zed `SubmenuState`，zed `context_menu.rs:34`）。
+///
+/// 与 zed 的差异：zed 的 `OpenSubmenu` 还带 `trigger_bounds` / `offset` /
+/// `flip_left`，用来把子菜单钉到父菜单某一行的**侧边**（一套 canvas 观测量 +
+/// 贴边翻转的逻辑）；我们把子菜单直接 `anchored()` 到它自己的行上，位置交给
+/// gpui 算，所以这些都不需要。
+enum SubmenuState {
+    Closed,
+    Open(OpenSubmenu),
+}
+
+/// 一个已打开的子菜单（对齐 zed `OpenSubmenu`）。
+struct OpenSubmenu {
+    item_index: usize,
+    entity: Entity<ContextMenu>,
+    /// 子菜单 emit `DismissEvent` 时收拢自己；与 zed 同型（zed 里是
+    /// `create_submenu` 返回的第二个数）。
+    _dismiss_subscription: Subscription,
 }
 
 /// 文档侧栏出现在菜单的哪一侧（对齐 zed `DocumentationSide`）。
@@ -101,6 +124,7 @@ impl ContextMenu {
             builder: None,
             action_context: None,
             _on_blur_subscription: Subscription::new(|| {}),
+            submenu_state: SubmenuState::Closed,
         };
         let _ = f;
         this
@@ -127,6 +151,7 @@ impl ContextMenu {
                 builder: None,
                 action_context: None,
                 _on_blur_subscription: Subscription::new(|| {}),
+            submenu_state: SubmenuState::Closed,
             };
             f(menu, window, cx)
         })
@@ -152,6 +177,7 @@ impl ContextMenu {
                 builder: Some(builder.clone()),
                 action_context: None,
                 _on_blur_subscription: Subscription::new(|| {}),
+            submenu_state: SubmenuState::Closed,
             };
             builder(menu, window, cx)
         })
@@ -175,6 +201,7 @@ impl ContextMenu {
             // 所以 `self.action_context` 仍保持原值）。
             action_context: None,
             _on_blur_subscription: Subscription::new(|| {}),
+            submenu_state: SubmenuState::Closed,
         };
         let rebuilt = builder(fresh, window, cx);
         self.items = rebuilt.items;
@@ -211,6 +238,123 @@ impl ContextMenu {
     /// 批量追加（对齐 zed `extend`）。
     pub fn extend<I: Into<ContextMenuItem>>(mut self, items: impl IntoIterator<Item = I>) -> Self {
         self.items.extend(items.into_iter().map(Into::into));
+        self
+    }
+
+    /// 不可选中的自定义条目（对齐 zed `ContextMenu::custom_row`，
+    /// zed `context_menu.rs:689`）：只渲染、不响应键盘选中，handler 是空实现。
+    pub fn custom_row(
+        mut self,
+        entry_render: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
+    ) -> Self {
+        self.items.push(ContextMenuItem::CustomEntry {
+            entry_render: Box::new(entry_render),
+            handler: std::rc::Rc::new(|_, _, _| {}),
+            selectable: false,
+            documentation_aside: None,
+        });
+        self
+    }
+
+    /// 可选中的自定义条目（对齐 zed `ContextMenu::custom_entry`，
+    /// zed `context_menu.rs:702`）。整行交给 `entry_render`，命中跑 `handler`。
+    pub fn custom_entry(
+        mut self,
+        entry_render: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
+        handler: impl Fn(&mut Window, &mut App) + 'static,
+    ) -> Self {
+        self.items.push(ContextMenuItem::CustomEntry {
+            entry_render: Box::new(entry_render),
+            handler: std::rc::Rc::new(move |_, window, cx| handler(window, cx)),
+            selectable: true,
+            documentation_aside: None,
+        });
+        self
+    }
+
+    /// 同 [`Self::custom_entry`]，额外带文档侧栏（对齐 zed
+    /// `ContextMenu::custom_entry_with_docs`，zed `context_menu.rs:715`）。
+    pub fn custom_entry_with_docs(
+        mut self,
+        entry_render: impl Fn(&mut Window, &mut App) -> AnyElement + 'static,
+        handler: impl Fn(&mut Window, &mut App) + 'static,
+        documentation_aside: Option<DocumentationAside>,
+    ) -> Self {
+        self.items.push(ContextMenuItem::CustomEntry {
+            entry_render: Box::new(entry_render),
+            handler: std::rc::Rc::new(move |_, window, cx| handler(window, cx)),
+            selectable: true,
+            documentation_aside,
+        });
+        self
+    }
+
+    /// 加一个子菜单（对齐 zed `ContextMenu::submenu`，zed `context_menu.rs:866`）。
+    ///
+    /// `builder` 在**点击命中时**才跑（子菜单每次打开都重建，和 zed 一致）。
+    pub fn submenu(
+        mut self,
+        label: impl Into<SharedString>,
+        builder: impl Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu + 'static,
+    ) -> Self {
+        self.items.push(ContextMenuItem::Submenu {
+            label: label.into(),
+            icon: None,
+            icon_color: None,
+            builder: Rc::new(builder),
+        });
+        self
+    }
+
+    /// 同 [`Self::submenu`]，标题前带图标（对齐 zed
+    /// `ContextMenu::submenu_with_icon`，zed `context_menu.rs:880`）。
+    pub fn submenu_with_icon(
+        self,
+        label: impl Into<SharedString>,
+        icon: IconName,
+        builder: impl Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu + 'static,
+    ) -> Self {
+        self.push_submenu(label, Some(icon), None, Rc::new(builder))
+    }
+
+    /// 同 [`Self::submenu_with_icon`]，图标可指定颜色（对齐 zed
+    /// `ContextMenu::submenu_with_colored_icon`，zed `context_menu.rs:895`）。
+    pub fn submenu_with_colored_icon(
+        self,
+        label: impl Into<SharedString>,
+        icon: IconName,
+        icon_color: Color,
+        builder: impl Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu + 'static,
+    ) -> Self {
+        self.push_submenu(label, Some(icon), Some(icon_color), Rc::new(builder))
+    }
+
+    fn push_submenu(
+        mut self,
+        label: impl Into<SharedString>,
+        icon: Option<IconName>,
+        icon_color: Option<Color>,
+        builder: Rc<dyn Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu>,
+    ) -> Self {
+        self.items.push(ContextMenuItem::Submenu {
+            label: label.into(),
+            icon,
+            icon_color,
+            builder,
+        });
+        self
+    }
+
+    /// 改最后一项能否被键盘选中（对齐 zed `ContextMenu::selectable`，
+    /// zed `context_menu.rs:731`）；只对 `CustomEntry` 生效。
+    pub fn selectable(mut self, selectable: bool) -> Self {
+        if let Some(ContextMenuItem::CustomEntry {
+            selectable: entry_selectable,
+            ..
+        }) = self.items.last_mut()
+        {
+            *entry_selectable = selectable;
+        }
         self
     }
 
@@ -341,18 +485,83 @@ impl ContextMenu {
 
     /// 点击某条目：执行回调并关闭（`DismissEvent`）。
     fn activate(&mut self, index: usize, window: &mut Window, cx: &mut Context<Self>) {
-        let ContextMenuItem::Entry(entry) = &self.items[index] else {
-            return;
-        };
-        // 与 zed 的差异：zed 会先判断这一项是不是 submenu（打开子菜单而非关闭），
-        // 我们没有子菜单，所以一律"执行 + 关闭"。
-        entry.activate(window, cx);
+        match &self.items[index] {
+            ContextMenuItem::Entry(entry) => entry.activate(window, cx),
+            // 子菜单：命中即打开（**不**关闭父菜单），对齐 zed
+            // `context_menu.rs:1018` 那一处处理。
+            ContextMenuItem::Submenu { builder, .. } => {
+                let builder = builder.clone();
+                self.open_submenu(index, builder, window, cx);
+                return;
+            }
+            // zed: `context_menu.rs:1044` 的 CustomEntry 分支，`handler` 拿到的
+            // 第一个参数是菜单的 `action_context`（可能为空）。
+            ContextMenuItem::CustomEntry { handler, .. } => {
+                let handler = handler.clone();
+                let context = self.action_context.clone();
+                handler(context.as_ref(), window, cx);
+            }
+            ContextMenuItem::Separator | ContextMenuItem::Label(_) => return,
+        }
+        // 走到这里说明跑完了 Entry / CustomEntry 的回调：一律「执行 + 关闭」。
+        // 与 zed 的差异：zed 还有 `keep_open_on_confirm`，我们没搬。
         cx.emit(DismissEvent);
     }
 
     /// 关闭菜单（点击条目外部 / Esc）。
     fn dismiss(&mut self, cx: &mut Context<Self>) {
         cx.emit(DismissEvent);
+    }
+
+    // ---- 子菜单（对齐 zed `create_submenu` / `open_submenu` / `close_submenu`）----
+
+    /// 建一个子菜单实体并订阅它的关闭事件（对齐 zed `ContextMenu::create_submenu`，
+    /// zed `context_menu.rs:1279`）。
+    fn create_submenu(
+        builder: Rc<dyn Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> (Entity<ContextMenu>, Subscription) {
+        let submenu = ContextMenu::build(window, cx, |menu, window, cx| {
+            builder(menu, window, cx)
+        });
+        let dismiss_subscription =
+            cx.subscribe(&submenu, |this, _submenu, _: &DismissEvent, cx| {
+                this.close_submenu(cx);
+            });
+        (submenu, dismiss_subscription)
+    }
+
+    /// 关闭子菜单（对齐 zed `ContextMenu::close_submenu`，zed `context_menu.rs:1346`）。
+    fn close_submenu(&mut self, cx: &mut Context<Self>) {
+        self.submenu_state = SubmenuState::Closed;
+        cx.notify();
+    }
+
+    /// 打开某一项的子菜单（对齐 zed `ContextMenu::open_submenu`，
+    /// zed `context_menu.rs:1360`）。已经开着就不重建——与 zed 同。
+    fn open_submenu(
+        &mut self,
+        item_index: usize,
+        builder: Rc<dyn Fn(ContextMenu, &mut Window, &mut Context<ContextMenu>) -> ContextMenu>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if matches!(
+            &self.submenu_state,
+            SubmenuState::Open(open_submenu) if open_submenu.item_index == item_index
+        ) {
+            return;
+        }
+
+        let (submenu, dismiss_subscription) = Self::create_submenu(builder, window, cx);
+
+        self.submenu_state = SubmenuState::Open(OpenSubmenu {
+            item_index,
+            entity: submenu,
+            _dismiss_subscription: dismiss_subscription,
+        });
+        cx.notify();
     }
 
     /// 渲染一行的公共外壳（勾选列、图标、快捷键的布局）。
@@ -451,6 +660,77 @@ impl ContextMenu {
             }))
             .into_any_element()
     }
+
+    /// 子菜单的行（对齐 zed `render_menu_entry` 里的 Submenu 分支，
+    /// zed `context_menu.rs:1650` 附近）。
+    ///
+    /// 与 zed 的差异：zed 把子菜单浮层挂在**整个菜单**上（canvas 量行 bounds →
+    /// 算 `offset` → 绝对定位 + 贴边翻转）；我们直接把浮层 `anchored()` 到这一行
+    /// 右侧的一个零尺寸定位点上，位置交给 gpui 算，于是 zed 的
+    /// `main_menu_observed_bounds` / `flip_left` 整套都不需要。
+    fn render_submenu_row(
+        &self,
+        ix: usize,
+        label: SharedString,
+        icon: Option<IconName>,
+        icon_color: Option<Color>,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
+        let colors = cx.theme().colors().clone();
+        let font_size = px(12.0);
+        let min_width = self.min_width.map(px);
+
+        let open_submenu = match &self.submenu_state {
+            SubmenuState::Open(open_submenu) if open_submenu.item_index == ix => {
+                Some(open_submenu.entity.clone())
+            }
+            _ => None,
+        };
+
+        div()
+            .id(("context-menu-submenu", ix))
+            .relative()
+            .flex()
+            .flex_row()
+            .items_center()
+            .justify_between()
+            .gap_1()
+            .px_1p5()
+            .py_1()
+            .text_size(font_size)
+            .when_some(min_width, |this, w| this.min_w(w))
+            .hover(|style| style.bg(colors.ghost_element_hover))
+            .on_click(cx.listener(move |this: &mut ContextMenu, _, window, cx| {
+                this.activate(ix, window, cx);
+            }))
+            .child(
+                h_flex()
+                    .flex_1()
+                    .gap_1()
+                    .children(icon.map(|icon| {
+                        Icon::new(icon)
+                            .size(IconSize::Small)
+                            .when_some(icon_color, |this, color| this.color(color))
+                    }))
+                    .child(div().text_color(colors.text).child(label)),
+            )
+            .child(
+                Icon::new(IconName::ChevronRight)
+                    .size(IconSize::XSmall)
+                    .color(Color::Muted),
+            )
+            .when_some(open_submenu, |this, submenu| {
+                this.child(
+                    div().absolute().top_0().right_0().child(deferred(
+                        anchored()
+                            .anchor(Anchor::TopLeft)
+                            .snap_to_window_with_margin(px(8.0))
+                            .child(div().occlude().child(submenu)),
+                    )),
+                )
+            })
+    }
 }
 
 impl Focusable for ContextMenu {
@@ -499,6 +779,29 @@ impl Render for ContextMenu {
                     .mx_1()
                     .bg(colors.border_variant)
                     .into_any_element(),
+                // zed: `context_menu.rs:1505` 的 CustomEntry 分支。行内容交给
+                // `entry_render`，菜单负责套壳 + 挂命中回调（与 zed 同：回调不在
+                // `entry_render` 里挂）。简化点：zed 外面还额外铺了一层 canvas
+                // 给文档侧栏量位置，我们没有 `aside_trigger_bounds`，略过。
+                ContextMenuItem::CustomEntry { entry_render, .. } => {
+                    let rendered = entry_render(window, cx);
+                    div()
+                        .id(("context-menu-child", ix))
+                        .child(rendered)
+                        .on_click(cx.listener(move |this: &mut ContextMenu, _, window, cx| {
+                            this.activate(ix, window, cx);
+                        }))
+                        .into_any_element()
+                }
+                // 子菜单的行（对齐 zed `render_menu_entry` 的 Submenu 分支，
+                // zed `context_menu.rs:1600` 附近）：label + 可选图标 + 行尾
+                // 箭头；打开时把子菜单 `anchored()` 挂在这一行右侧（zed 是挂在
+                // 整个菜单上的绝对定位，我们用 anchored，省掉 bounds 观测）。
+                ContextMenuItem::Submenu {
+                    label, icon, icon_color, ..
+                } => self
+                    .render_submenu_row(ix, label.clone(), *icon, *icon_color, window, cx)
+                    .into_any_element(),
             })
             .collect::<Vec<_>>();
 
@@ -543,11 +846,9 @@ impl Render for ContextMenu {
 
 // ---- 与 zed 的差距（未对齐项，等有真实需求再补）----
 //
-// | zed 的 API | 说明 |
-// |---|---|
-// | `submenu(...)` + `SubmenuState` | 子菜单状态机（打开/关闭/键盘导航），zed 里占几百行 |
-// | `custom_row` / `custom_entry` / `custom_entry_with_docs` | 调用方自绘行内容 |
-// | `documentation_aside` / `DocumentationSide` | 条目下方的说明侧栏 |
-// | `entry_with_end_slot` / `entry_with_end_slot_on_hover` | 行尾自定义槽位 |
-// | `context(FocusHandle)` | 用外部焦点句柄代替自建的 |
-// | `selectable` 的完整键盘导航 | zed 支持上下键选择 + Enter 触发 |
+// | zed 的 API | 说明 | 差距 |
+// |---|---|---|
+// | `submenu(...)` / `submenu_with_icon` / `submenu_with_colored_icon` | 子菜单 | 已搬最小版：点击命中时现建实体 + `anchored()` 到本行右侧；zed 那套 bounds 观测偏移 / 贴边翻转 / hover 切换 / 键盘进入子菜单没搬 |
+// | `custom_row` / `custom_entry` / `custom_entry_with_docs` / `selectable` | 调用方自绘行内容 | 已搬；`documentation_aside` 只落了数据链路，zed 那套 canvas 定位的侧栏渲染没搬 |
+// | `entry_with_end_slot` / `entry_with_end_slot_on_hover` | 行尾自定义槽位 | 未搬 |
+// | 键盘导航 | `is_selectable()` 已搬，但没有 zed 的 `selected_index` 上下键选择 + Enter 触发 | 部分 |

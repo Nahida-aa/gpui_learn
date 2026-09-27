@@ -68,6 +68,41 @@ impl ButtonSize {
 pub use common::ButtonCommon;
 pub use style::{ButtonLikeColors, button_like_colors};
 
+/// 角级圆角（对齐 zed `ButtonLikeRounding`）：可只圆某几个角，用来把相邻按钮
+/// 拼成一条（如标题栏的左右分段按钮）。
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
+pub(crate) struct ButtonLikeRounding {
+    /// Top-left corner rounding
+    pub top_left: bool,
+    /// Top-right corner rounding
+    pub top_right: bool,
+    /// Bottom-right corner rounding
+    pub bottom_right: bool,
+    /// Bottom-left corner rounding
+    pub bottom_left: bool,
+}
+
+impl ButtonLikeRounding {
+    pub const ALL: Self = Self {
+        top_left: true,
+        top_right: true,
+        bottom_right: true,
+        bottom_left: true,
+    };
+    pub const LEFT: Self = Self {
+        top_left: true,
+        top_right: false,
+        bottom_right: false,
+        bottom_left: true,
+    };
+    pub const RIGHT: Self = Self {
+        top_left: false,
+        top_right: true,
+        bottom_right: true,
+        bottom_left: false,
+    };
+}
+
 /// 通用按钮：可选图标 + 可选文字，统一的主题化样式与交互装配。
 #[derive(IntoElement)]
 pub struct ButtonLike {
@@ -100,8 +135,14 @@ pub struct ButtonLike {
     /// 焦点跟踪（`ButtonCommon::track_focus`）。
     focus_handle: Option<FocusHandle>,
     radius: ButtonRadius,
+    /// 角级圆角覆盖（对齐 zed `ButtonLike.rounding`）；设了就以它为准，
+    /// 否则退回 [`Self::radius`] 的整体档位。
+    rounding: Option<ButtonLikeRounding>,
     disabled: bool,
     selected: bool,
+    /// 选中态下改用这套样式（对齐 zed `ButtonLike.selected_style`）：
+    /// 未设置时选中与否都是 [`Self::style`]。
+    selected_style: Option<ButtonStyle>,
     aria_label: Option<SharedString>,
     cursor_style: CursorStyle,
     on_click: Option<ClickHandler>,
@@ -163,8 +204,10 @@ impl ButtonLike {
             layer: None,
             focus_handle: None,
             radius: ButtonRadius::Medium,
+            rounding: None,
             disabled: false,
             selected: false,
+            selected_style: None,
             aria_label: None,
             cursor_style: CursorStyle::PointingHand,
             on_click: None,
@@ -246,9 +289,36 @@ impl ButtonLike {
         self
     }
 
+    /// 只圆右侧两角（对齐 zed `ButtonLike::new_rounded_right`）。
+    pub fn new_rounded_right(id: impl Into<ElementId>) -> Self {
+        Self::new(id).rounding(ButtonLikeRounding::RIGHT)
+    }
+
+    /// 只圆左侧两角（对齐 zed，与 [`Self::new_rounded_right`] 成对）。
+    pub fn new_rounded_left(id: impl Into<ElementId>) -> Self {
+        Self::new(id).rounding(ButtonLikeRounding::LEFT)
+    }
+
+    /// 四角都圆（对齐 zed `ButtonLike::new_rounded_all`）。
+    pub fn new_rounded_all(id: impl Into<ElementId>) -> Self {
+        Self::new(id).rounding(ButtonLikeRounding::ALL)
+    }
+
+    /// 角级圆角（对齐 zed `ButtonLike::rounding`）。
+    pub fn rounding(mut self, rounding: impl Into<Option<ButtonLikeRounding>>) -> Self {
+        self.rounding = rounding.into();
+        self
+    }
+
     /// 选中态（前景用 accent 色，背景不变）。
     pub fn selected(mut self, selected: bool) -> Self {
         self.selected = selected;
+        self
+    }
+
+    /// 选中态使用的样式（对齐 zed `ButtonLike::selected_style`）。
+    pub fn selected_style(mut self, style: ButtonStyle) -> Self {
+        self.selected_style = Some(style);
         self
     }
 
@@ -446,7 +516,12 @@ impl RenderOnce for ButtonLike {
         let rem_size = _window.rem_size();
         let theme = cx.theme().clone();
         let colors = theme.colors();
-        let style_colors = button_like_colors(self.style, &theme);
+        // 对齐 zed：选中时优先用 selected_style，未设置则仍是 self.style。
+        let style = self
+            .selected_style
+            .filter(|_| self.selected)
+            .unwrap_or(self.style);
+        let style_colors = button_like_colors(style, &theme);
 
         let disabled = self.disabled;
         let selected = self.selected;
@@ -543,10 +618,17 @@ impl RenderOnce for ButtonLike {
             button = button.tab_index(tab_index);
         }
 
-        button = match self.radius {
-            ButtonRadius::Medium => button.rounded_md(),
-            ButtonRadius::Full => button.rounded_full(),
-            ButtonRadius::Square => button.rounded_none(),
+        button = match self.rounding {
+            Some(rounding) => button
+                .when(rounding.top_left, |this| this.rounded_tl_md())
+                .when(rounding.top_right, |this| this.rounded_tr_md())
+                .when(rounding.bottom_right, |this| this.rounded_br_md())
+                .when(rounding.bottom_left, |this| this.rounded_bl_md()),
+            None => match self.radius {
+                ButtonRadius::Medium => button.rounded_md(),
+                ButtonRadius::Full => button.rounded_full(),
+                ButtonRadius::Square => button.rounded_none(),
+            },
         };
 
         if let Some(icon) = self.icon {
