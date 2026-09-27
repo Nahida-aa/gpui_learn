@@ -27,6 +27,7 @@ pub mod disclosure;
 pub mod divider;
 pub mod dropdown_menu;
 pub mod facepile;
+pub mod gradient_fade;
 pub mod group;
 pub mod icon;
 pub mod image;
@@ -47,6 +48,7 @@ pub mod redistributable_columns;
 pub mod scrollbar;
 pub mod diff_stat;
 pub mod stack;
+pub mod sticky_items;
 pub mod tab;
 pub mod tab_bar;
 pub mod toggle;
@@ -77,6 +79,7 @@ pub use disclosure::Disclosure;
 pub use dropdown_menu::{DropdownMenu, DropdownStyle};
 pub use divider::{Divider, DividerColor, DividerDirection};
 pub use facepile::{EXAMPLE_FACES, Facepile};
+pub use gradient_fade::GradientFade;
 pub use group::{h_group, h_group_lg, h_group_sm, h_group_xl, v_group, v_group_lg, v_group_sm, v_group_xl};
 pub use icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
 pub use image::{Vector, VectorName};
@@ -112,6 +115,7 @@ pub use scrollbar::{
     ScrollableHandle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
 };
 pub use stack::{h_flex, v_flex};
+pub use sticky_items::{StickyCandidate, StickyItems, StickyItemsDecoration, sticky_items};
 pub use tab::{Tab, TabCloseSide, TabPosition};
 pub use tab_bar::TabBar;
 pub use toggle::{

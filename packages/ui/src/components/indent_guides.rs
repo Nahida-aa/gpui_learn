@@ -259,6 +259,28 @@ mod uniform_list {
     }
 }
 
+/// Implements the necessary functionality for rendering indent guides inside a sticky items.
+mod sticky_items {
+    use crate::StickyItemsDecoration;
+
+    use super::*;
+
+    impl StickyItemsDecoration for IndentGuides {
+        fn compute(
+            &self,
+            indents: &SmallVec<[usize; 8]>,
+            bounds: Bounds<Pixels>,
+            _scroll_offset: Point<Pixels>,
+            item_height: Pixels,
+            window: &mut Window,
+            cx: &mut App,
+        ) -> AnyElement {
+            let indent_guides = compute_indent_guides(indents, 0, false);
+            self.render_from_layout(indent_guides, bounds, item_height, window, cx)
+        }
+    }
+}
+
 
 struct IndentGuidesElement {
     colors: IndentGuideColors,
