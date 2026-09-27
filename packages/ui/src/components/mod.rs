@@ -13,6 +13,7 @@
 //! - [`popover_menu`]：点击触发的锚定浮层菜单（[`PopoverMenu`] +
 //!   [`PopoverMenuHandle`]，对齐 zed `PopoverMenu`）。
 
+pub mod ai;
 pub mod avatar;
 pub mod banner;
 pub mod button;
@@ -49,6 +50,7 @@ pub mod toggle;
 pub mod update_button;
 pub mod tooltip;
 
+pub use ai::*;
 pub use banner::Banner;
 pub use avatar::{
     AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
