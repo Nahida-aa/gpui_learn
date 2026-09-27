@@ -20,6 +20,7 @@ pub mod chip;
 pub mod circular_progress;
 pub mod context_menu;
 pub mod count_badge;
+pub mod data_table;
 pub mod disclosure;
 pub mod divider;
 pub mod facepile;
@@ -37,6 +38,7 @@ pub mod notification;
 pub mod popover;
 pub mod project_empty_state;
 pub mod popover_menu;
+pub mod redistributable_columns;
 pub mod scrollbar;
 pub mod diff_stat;
 pub mod stack;
@@ -60,12 +62,21 @@ pub use chip::Chip;
 pub use circular_progress::CircularProgress;
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide, RightClickMenu};
 pub use count_badge::CountBadge;
+// zed 的 `components.rs` 写的是 `pub use data_table::*;` / `pub use redistributable_columns::*;`。
+// 这里同样用 glob：`data_table.rs` 顶部的 `use crate::{... table_row::{...}}` 依赖
+// `crate::table_row` 这条 glob 转出的路径，改成逐项导出会断。
+pub use data_table::*;
 pub use disclosure::Disclosure;
 pub use divider::{Divider, DividerColor, DividerDirection};
 pub use facepile::{EXAMPLE_FACES, Facepile};
 pub use icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
 pub use image::{Vector, VectorName};
-pub use indent_guides::IndentGuideColors;
+// 同名模块 + 同名函数共存：glob 把 `indent_guides()` 提到 crate 根，调用方写
+// `ui::indent_guides(...)`；`ui::indent_guides::IndentGuides` 仍是模块路径。
+pub use indent_guides::{
+    IndentGuideColors, IndentGuideLayout, IndentGuides, RenderIndentGuideParams,
+    RenderedIndentGuide, LIST_ITEM_INDENT_GUIDE_LEFT_OFFSET, indent_guides,
+};
 pub use indicator::Indicator;
 pub use keybinding::{
     Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,
@@ -85,6 +96,7 @@ pub use notification::alert_modal::AlertModal;
 pub use popover::{POPOVER_Y_PADDING, Popover};
 pub use project_empty_state::ProjectEmptyState;
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
+pub use redistributable_columns::*;
 pub use scrollbar::{
     EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
     ScrollableHandle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,

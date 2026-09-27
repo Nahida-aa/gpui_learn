@@ -17,8 +17,8 @@ pub use gpui::prelude::*;
 pub use gpui::{
     AbsoluteLength, Anchor, AnyElement, App, BoxShadow, ClickEvent, Context, CursorStyle,
     DefiniteLength, DismissEvent, Div, Element, ElementId, Entity, Hsla, InteractiveElement,
-    IntoElement, ManagedView, ParentElement, Pixels, Point, RenderOnce, SharedString, Stateful,
-    Styled, Window, div, hsla, percentage, px, rems, relative, rgb, rgba,
+    IntoElement, ManagedView, ParentElement, Pixels, Point, RenderOnce, Rems, SharedString,
+    Stateful, Styled, Window, div, hsla, percentage, px, rems, relative, rgb, rgba,
 };
 
 pub use crate::animation::{AnimationDirection, AnimationDuration, DefaultAnimations};
