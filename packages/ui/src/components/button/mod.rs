@@ -31,7 +31,7 @@ use gpui::{
 use crate::styles::ElevationIndex;
 use crate::traits::{Clickable, Disableable, FixedWidth, SelectableButton, Toggleable};
 use crate::{Color, Indicator};
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_gpui_kit_theme::ActiveTheme as _;
 pub mod button;
 pub mod button_like;
 pub mod button_link;
