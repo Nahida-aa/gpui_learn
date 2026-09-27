@@ -144,6 +144,9 @@ pub struct IconButton {
     width: Option<DefiniteLength>,
     /// 悬停提示（[`Tooltip::text`] 等工厂现场建实体）。
     tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
+    /// 可悬浮提示（转发给 [`ButtonLike::hoverable_tooltip`]，对齐 zed
+    /// `IconButton::hoverable_tooltip`）。
+    hoverable_tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
     /// 提示锚点（默认 `Anchor::TopLeft`）。
     tooltip_anchor: Option<Anchor>,
     /// 提示 attachment（默认 `Anchor::BottomLeft`，即提示在元素下方）。
@@ -198,6 +201,7 @@ impl IconButton {
             on_right_click: None,
             width: None,
             tooltip: None,
+            hoverable_tooltip: None,
             tooltip_anchor: None,
             tooltip_attach: None,
             cursor_style: None,
@@ -288,6 +292,19 @@ impl IconButton {
     /// 悬停提示（`Tooltip::text("...")` 等）。
     pub fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
+        self
+    }
+
+    /// 可悬浮的提示：鼠标移进提示本身时它不会消失，因此里面可以放链接 / 按钮。
+    ///
+    /// 对齐 zed `IconButton::hoverable_tooltip`（icon_button.rs:131）——zed 同样
+    /// 只是把闭包转给 `ButtonLike`，最终落到 gpui 的
+    /// `Stateful<Div>::hoverable_tooltip`。
+    pub fn hoverable_tooltip(
+        mut self,
+        tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static,
+    ) -> Self {
+        self.hoverable_tooltip = Some(Rc::new(tooltip));
         self
     }
 
@@ -417,6 +434,9 @@ impl RenderOnce for IconButton {
         }
         if let Some(tooltip) = self.tooltip {
             like = like.tooltip_rc(tooltip);
+        }
+        if let Some(hoverable_tooltip) = self.hoverable_tooltip {
+            like = like.hoverable_tooltip_rc(hoverable_tooltip);
         }
         if let Some(anchor) = self.tooltip_anchor {
             like = like.tooltip_anchor(anchor);

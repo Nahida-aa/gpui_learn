@@ -66,6 +66,9 @@ strum.workspace = true
 # 主题加载器：解析 zed 主题扩展 JSON（v0.2.0 扁平格式）进 ThemeRegistry。
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# `scrollbars::ShowScrollbar` 等设置项枚举要能被放进调用方的
+# `#[derive(JsonSchema)]` 设置结构里（AAgent 的 git_panel_settings 就是这么用的）。
+schemars.workspace = true
 
 documented.workspace = true
 

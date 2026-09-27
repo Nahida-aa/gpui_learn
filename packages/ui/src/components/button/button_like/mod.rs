@@ -166,6 +166,12 @@ pub struct ButtonLike {
     /// `Tooltip::text(..)` / `Tooltip::with_meta(.., cx)` / 任意自定义视图
     /// 都能直接传。
     tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
+    /// **可悬浮**的提示（鼠标移进提示本身时它不消失，所以里面能放链接 / 按钮）。
+    ///
+    /// 与 zed 一致：zed 的 `ButtonLike::hoverable_tooltip` 只是把闭包存下来，
+    /// render 时转发给 gpui 的 `Stateful<Div>::hoverable_tooltip`；我们同样
+    /// 转给 gpui，不复用上面的 `TooltipHost`（那个 host 移进提示就会收起）。
+    hoverable_tooltip: Option<Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>>,
     /// 提示锚点（默认 `Anchor::TopLeft`）。
     tooltip_anchor: Option<Anchor>,
     /// 提示 attachment（默认 `Anchor::BottomLeft`，即提示在元素下方）。
@@ -224,6 +230,7 @@ impl ButtonLike {
             on_click: None,
             on_right_click: None,
             tooltip: None,
+            hoverable_tooltip: None,
             tooltip_anchor: None,
             tooltip_attach: None,
             children: Vec::new(),
@@ -509,6 +516,28 @@ impl ButtonLike {
         self
     }
 
+    /// 可悬浮的提示（对齐 zed `ButtonLike::hoverable_tooltip`）。
+    ///
+    /// 与 [`tooltip`](Self::tooltip) 的区别：提示自身可 hover，鼠标移进去不会消失，
+    /// 因此里面能放可交互内容。
+    pub fn hoverable_tooltip(
+        mut self,
+        tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static,
+    ) -> Self {
+        self.hoverable_tooltip = Some(Rc::new(tooltip));
+        self
+    }
+
+    /// 同 [`hoverable_tooltip`](Self::hoverable_tooltip)，接收已打包的 `Rc` 工厂
+    /// （`IconButton` 等薄壳内部持有 `Rc`，直接转发用）。
+    pub fn hoverable_tooltip_rc(
+        mut self,
+        tooltip: Rc<dyn Fn(&mut Window, &mut App) -> AnyView + 'static>,
+    ) -> Self {
+        self.hoverable_tooltip = Some(tooltip);
+        self
+    }
+
     /// tooltip 锚点对齐到 trigger 的哪个角（覆盖默认 `Anchor::TopLeft`）。
     pub fn tooltip_anchor(mut self, anchor: Anchor) -> Self {
         self.tooltip_anchor = Some(anchor);
@@ -726,6 +755,12 @@ impl RenderOnce for ButtonLike {
                         }
                     },
                 );
+        }
+
+        // 可悬浮提示：直接交给 gpui（zed 也是转发给
+        // `Stateful<Div>::hoverable_tooltip`，见 button_like.rs:876）。
+        if let Some(hoverable_tooltip) = self.hoverable_tooltip.clone() {
+            button = button.hoverable_tooltip(move |window, cx| (hoverable_tooltip)(window, cx));
         }
 
         // 有悬停提示时包进 TooltipHost（host 与按钮各用自己的 ElementId）。

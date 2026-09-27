@@ -50,6 +50,10 @@ pub use crate::components::context_menu::{
     right_click_menu,
 };
 pub use crate::components::divider::{Divider, DividerColor, DividerDirection};
+// 与 zed prelude 同：`h_group*` / `v_group*` 也在里面（`ui::prelude::*` 直接写裸名）。
+pub use crate::components::group::{
+    h_group, h_group_lg, h_group_sm, h_group_xl, v_group, v_group_lg, v_group_sm, v_group_xl,
+};
 pub use crate::components::facepile::Facepile;
 pub use crate::components::icon::{
     AnyIcon, DecoratedIcon, Icon, IconDecoration, IconName, IconSize, IconWithIndicator,

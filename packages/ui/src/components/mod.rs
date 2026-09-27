@@ -24,6 +24,7 @@ pub mod data_table;
 pub mod disclosure;
 pub mod divider;
 pub mod facepile;
+pub mod group;
 pub mod icon;
 pub mod image;
 pub mod indent_guides;
@@ -69,6 +70,7 @@ pub use data_table::*;
 pub use disclosure::Disclosure;
 pub use divider::{Divider, DividerColor, DividerDirection};
 pub use facepile::{EXAMPLE_FACES, Facepile};
+pub use group::{h_group, h_group_lg, h_group_sm, h_group_xl, v_group, v_group_lg, v_group_sm, v_group_xl};
 pub use icon::{DecoratedIcon, IconDecoration, IconDecorationKind, KnockoutIconName};
 pub use image::{Vector, VectorName};
 // 同名模块 + 同名函数共存：glob 把 `indent_guides()` 提到 crate 根，调用方写

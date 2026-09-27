@@ -15,10 +15,14 @@ use aa_gpui_kit_theme::ActiveTheme;
 
 use gpui::{App, Hsla, IntoElement, StyleRefinement, Styled, Window, div, prelude::*};
 
-/// zed `DividerColor`：`Border`（默认）/ `BorderVariant`，映射主题 `border` / `border_variant`。
+/// zed `DividerColor`：映射主题 `border` / `border_variant` / `border.opacity(0.6)`。
+///
+/// 与 zed 的一处差异：zed 的 `#[default]` 是 `BorderVariant`，我们这边历史上
+/// 一直是 `Border`（改默认会动到已有调用方的观感），保持不动。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DividerColor {
     Border,
+    BorderFaded,
     BorderVariant,
 }
 
@@ -83,6 +87,7 @@ impl Divider {
     fn color_hsla(&self, colors: &aa_gpui_kit_theme::ThemeColors) -> Hsla {
         match self.color {
             DividerColor::Border => colors.border,
+            DividerColor::BorderFaded => colors.border.opacity(0.6),
             DividerColor::BorderVariant => colors.border_variant,
         }
     }
