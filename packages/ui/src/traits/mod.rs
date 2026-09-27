@@ -12,10 +12,6 @@
 //! | [`Transformable`] | transform | 同名 |
 //! | [`CommonAnimationExt`] | 常用动画(旋转等) | 同名 |
 //! | [`SelectableButton`] | selected_style | 同名 |
-//!
-//! 与 zed 的差异:zed 的 `ButtonCommon` 还要求 `size` / `tab_index` /
-//! `layer` / `track_focus`,那些依赖我们尚未建立的按钮尺寸档位(`ButtonSize`)
-//! 与浮层体系,待其就位后补齐。
 
 pub mod animation_ext;
 pub mod clickable;
