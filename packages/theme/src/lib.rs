@@ -89,7 +89,7 @@ pub use styles::{
 use gpui::{Pixels, Styled, Tiling, px};
 
 /// The name of the default dark theme.
-pub const DEFAULT_DARK_THEME_STR: &str = "One Dark";
+pub const DEFAULT_DARK_THEME_STR: &str = "Catppuccin Macchiato";
 
 /// Defines window border radius for platforms that use client side decorations.
 pub const CLIENT_SIDE_DECORATION_ROUNDING: Pixels = px(10.0);
