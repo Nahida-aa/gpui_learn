@@ -20,6 +20,7 @@ pub mod button;
 pub mod callout;
 pub mod chip;
 pub mod circular_progress;
+pub mod collab_notification;
 pub mod context_menu;
 pub mod count_badge;
 pub mod data_table;
@@ -70,6 +71,7 @@ pub use button::{
 pub use callout::{Callout, CalloutBorderPosition};
 pub use chip::Chip;
 pub use circular_progress::CircularProgress;
+pub use collab_notification::CollabNotification;
 pub use context_menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide, RightClickMenu};
 pub use count_badge::CountBadge;
 // zed 的 `components.rs` 写的是 `pub use data_table::*;` / `pub use redistributable_columns::*;`。
@@ -99,7 +101,8 @@ pub use keybinding_hint::KeybindingHint;
 pub use label::{Label, LabelCommon, LabelSize, LineHeightStyle, SpinnerLabel, SpinnerVariant};
 pub use list::list::{EmptyMessage, List};
 pub use list::list_bullet_item::ListBulletItem;
-pub use list::list_item::{ListItem, ListItemSpacing};
+pub use list::list_header::ListHeader;
+pub use list::list_item::{DockSide, ListItem, ListItemSpacing};
 pub use list::list_separator::ListSeparator;
 pub use list::list_sub_header::ListSubHeader;
 pub use diff_stat::DiffStat;
