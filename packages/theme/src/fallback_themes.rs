@@ -148,13 +148,18 @@ mod tests {
     fn fallback_theme_is_the_builtin_catppuccin_dark() {
         let theme = ctp_default_dark();
         assert_eq!(theme.id, "ui-gpui-default-dark");
-        assert_eq!(theme.name, "ui-gpui Dark");
+        assert_eq!(theme.name, DEFAULT_DARK_THEME);
     }
 
     #[test]
-    fn fallback_family_contains_exactly_the_fallback_theme() {
+    fn fallback_family_contains_all_builtin_catppuccin_themes() {
         let family = default_theme_family();
-        assert_eq!(family.themes.len(), 1);
+        let names: Vec<_> = family.themes.iter().map(|t| t.name.as_ref()).collect();
+        assert_eq!(
+            names,
+            ["Catppuccin Mocha", "Catppuccin Macchiato", "Catppuccin Latte"],
+            "兜底家族要带上全部内置 Catppuccin 主题，用户才能直接切换"
+        );
         assert_eq!(family.themes[0].id, ctp_default_dark().id);
     }
 
