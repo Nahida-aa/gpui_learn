@@ -578,8 +578,12 @@ pub const FALLBACK_ICON_THEME_NAME: &str = "ui-gpui (Default)";
 const CATPPUCCIN_ICONS_JSON: &str =
     include_str!("../../../../assets/icon_themes/catppuccin-icons.json");
 
-/// 内置 Catppuccin 图标主题家族:8 个 variant(Latte / Frappé / Macchiato /
-/// Mocha × 彩色 / 单色),每个 1810 条后缀、400 个图标。
+/// 内置 Catppuccin 图标主题家族:Macchiato(暗)+ Latte(浅)两个 variant,
+/// 每个 1810 条后缀、400 个图标、10 条完整文件名。
+///
+/// 上游(catppuccin/zed-icons v1.24.0)还有 Frappé / Mocha 及各自的单色版,
+/// 为控制仓库体积只留了默认会用到的这两套;要补的话把 `icons/<variant>/`
+/// 复制进来、并在 JSON 里加回对应 theme 即可。
 pub fn catppuccin_icon_theme_family() -> IconThemeFamilyContent {
     serde_json::from_str(CATPPUCCIN_ICONS_JSON).expect("内置 CTP 图标主题 JSON 应能解析")
 }
@@ -758,17 +762,31 @@ mod tests {
     #[test]
     fn builtin_catppuccin_icon_themes_are_registered() {
         let registry = ThemeRegistry::default();
-        for name in [
-            "Catppuccin Latte",
-            "Catppuccin Frappé",
-            "Catppuccin Macchiato",
-            "Catppuccin Mocha",
-            "Catppuccin Latte Monochrome",
-            "Catppuccin Frappé Monochrome",
-            "Catppuccin Macchiato Monochrome",
-            "Catppuccin Mocha Monochrome",
-        ] {
+        for name in [DEFAULT_LIGHT_ICON_THEME_NAME, DEFAULT_ICON_THEME_NAME] {
             assert!(registry.get_icon_theme(name).is_ok(), "应注册 {name}");
+        }
+    }
+
+    #[test]
+    fn every_builtin_icon_path_exists_in_assets() {
+        // 表里每个路径都必须能在 assets 下找到,否则文件树会拿到空白图标
+        // (上游还有 Frappé / Mocha 等 variant,补齐时这条测试就是守门的)。
+        let assets = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        for theme in catppuccin_icon_theme_family().themes {
+            let paths = theme
+                .file_icons
+                .values()
+                .map(|icon| icon.path.as_ref())
+                .chain(theme.directory_icons.collapsed.iter().map(|p| p.as_ref()))
+                .chain(theme.directory_icons.expanded.iter().map(|p| p.as_ref()));
+            for path in paths {
+                let relative = path.trim_start_matches("./");
+                assert!(
+                    assets.join(relative).exists(),
+                    "{} 引用了不存在的图标: {relative}",
+                    theme.name
+                );
+            }
         }
     }
 
