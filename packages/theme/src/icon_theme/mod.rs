@@ -12,9 +12,9 @@
 //! 查到的都是**图标 key**(如 `rust`),再用 [`IconTheme::file_icons`]
 //! 取到真实资源路径(`icons/rust.svg`)——这层间接让多扩展名复用同一图标。
 //!
-//! **当前只到数据层**:还没有文件树组件(也就没有消费方),因此这里只做
-//! 结构与查找逻辑,不接渲染。默认主题也**不含**文件类型映射表
-//! (zed 有 400 余行 `FILE_SUFFIXES_BY_ICON_KEY`),等真做文件树时按需补。
+//! **当前只到数据层**:gpui_learn 自己没有文件树组件,消费方在 AAgent
+//! (`file_icons` 包),这里只做结构与查找逻辑,不接渲染。
+//! 默认主题**包含** zed 原样的文件类型映射表(见 [`default_icon_theme`])。
 //!
 //! 与 zed 的差异:zed 用 `collections::HashMap`(它的 hashbrown 包装,
 //! 便于以后换哈希算法),我们直接用 `std::collections::HashMap`。
@@ -201,13 +201,369 @@ pub fn parse_icon_theme_family(
     })
 }
 
+
+const FILE_STEMS_BY_ICON_KEY: &[(&str, &[&str])] = &[
+    ("docker", &["Containerfile", "Dockerfile", ".dockerignore"]),
+    ("ruby", &["Podfile"]),
+    ("heroku", &["Procfile"]),
+];
+
+const FILE_SUFFIXES_BY_ICON_KEY: &[(&str, &[&str])] = &[
+    ("astro", &["astro"]),
+    (
+        "audio",
+        &[
+            "aac", "flac", "m4a", "mka", "mp3", "ogg", "opus", "wav", "wma", "wv",
+        ],
+    ),
+    ("backup", &["bak"]),
+    ("ballerina", &["bal"]),
+    ("bicep", &["bicep"]),
+    ("bun", &["lockb"]),
+    ("c", &["c", "h"]),
+    ("cairo", &["cairo"]),
+    ("code", &["handlebars", "metadata", "rkt", "scm"]),
+    ("coffeescript", &["coffee"]),
+    (
+        "cpp",
+        &[
+            "c++", "h++", "cc", "cpp", "cppm", "cxx", "hh", "hpp", "hxx", "inl", "ixx",
+        ],
+    ),
+    ("crystal", &["cr", "ecr"]),
+    ("csharp", &["cs"]),
+    ("csproj", &["csproj"]),
+    ("css", &["css", "pcss", "postcss"]),
+    ("cue", &["cue"]),
+    ("dart", &["dart"]),
+    ("diff", &["diff"]),
+    (
+        "docker",
+        &[
+            "docker-compose.yml",
+            "docker-compose.yaml",
+            "compose.yml",
+            "compose.yaml",
+        ],
+    ),
+    (
+        "document",
+        &[
+            "doc", "docx", "mdx", "odp", "ods", "odt", "pdf", "ppt", "pptx", "rtf", "txt", "xls",
+            "xlsx",
+        ],
+    ),
+    ("editorconfig", &["editorconfig"]),
+    ("elixir", &["eex", "ex", "exs", "heex", "leex", "neex"]),
+    ("elm", &["elm"]),
+    (
+        "erlang",
+        &[
+            "Emakefile",
+            "app.src",
+            "erl",
+            "escript",
+            "hrl",
+            "rebar.config",
+            "xrl",
+            "yrl",
+        ],
+    ),
+    (
+        "eslint",
+        &[
+            "eslint.config.cjs",
+            "eslint.config.cts",
+            "eslint.config.js",
+            "eslint.config.mjs",
+            "eslint.config.mts",
+            "eslint.config.ts",
+            "eslintrc",
+            "eslintrc.js",
+            "eslintrc.json",
+        ],
+    ),
+    ("font", &["otf", "ttf", "woff", "woff2"]),
+    ("fsharp", &["fs"]),
+    ("fsproj", &["fsproj"]),
+    ("gitlab", &["gitlab-ci.yml", "gitlab-ci.yaml"]),
+    ("gleam", &["gleam"]),
+    ("go", &["go", "mod", "work"]),
+    ("graphql", &["gql", "graphql", "graphqls"]),
+    ("haskell", &["hs"]),
+    ("hcl", &["hcl"]),
+    (
+        "helm",
+        &[
+            "helmfile.yaml",
+            "helmfile.yml",
+            "Chart.yaml",
+            "Chart.yml",
+            "Chart.lock",
+            "values.yaml",
+            "values.yml",
+            "requirements.yaml",
+            "requirements.yml",
+            "tpl",
+        ],
+    ),
+    ("html", &["htm", "html"]),
+    (
+        "image",
+        &[
+            "avif", "bmp", "gif", "heic", "heif", "ico", "j2k", "jfif", "jp2", "jpeg", "jpg",
+            "jxl", "png", "psd", "qoi", "svg", "tiff", "webp",
+        ],
+    ),
+    ("ipynb", &["ipynb"]),
+    ("java", &["java"]),
+    ("javascript", &["cjs", "js", "mjs"]),
+    ("json", &["json", "jsonc"]),
+    ("julia", &["jl"]),
+    ("kdl", &["kdl"]),
+    ("kotlin", &["kt"]),
+    ("lock", &["lock"]),
+    ("log", &["log"]),
+    ("lua", &["lua"]),
+    ("luau", &["luau"]),
+    ("markdown", &["markdown", "md"]),
+    ("metal", &["metal"]),
+    ("nim", &["nim", "nims", "nimble"]),
+    ("nix", &["nix"]),
+    ("ocaml", &["ml", "mli", "mlx"]),
+    ("odin", &["odin"]),
+    ("php", &["php"]),
+    (
+        "prettier",
+        &[
+            "prettier.config.cjs",
+            "prettier.config.js",
+            "prettier.config.mjs",
+            "prettierignore",
+            "prettierrc",
+            "prettierrc.cjs",
+            "prettierrc.js",
+            "prettierrc.json",
+            "prettierrc.json5",
+            "prettierrc.mjs",
+            "prettierrc.toml",
+            "prettierrc.yaml",
+            "prettierrc.yml",
+        ],
+    ),
+    ("prisma", &["prisma"]),
+    ("puppet", &["pp"]),
+    ("python", &["py"]),
+    ("r", &["r", "R"]),
+    ("react", &["cjsx", "ctsx", "jsx", "mjsx", "mtsx", "tsx"]),
+    ("roc", &["roc"]),
+    ("ruby", &["rb"]),
+    ("rust", &["rs"]),
+    ("sass", &["sass", "scss"]),
+    ("scala", &["scala", "sc"]),
+    ("settings", &["conf", "ini"]),
+    ("solidity", &["sol"]),
+    (
+        "storage",
+        &[
+            "accdb", "csv", "dat", "db", "dbf", "dll", "fmp", "fp7", "frm", "gdb", "ib", "ldf",
+            "mdb", "mdf", "myd", "myi", "pdb", "psv", "RData", "rdata", "sav", "sdf", "sql",
+            "sqlite", "ssv", "tsv",
+        ],
+    ),
+    (
+        "stylelint",
+        &[
+            "stylelint.config.cjs",
+            "stylelint.config.js",
+            "stylelint.config.mjs",
+            "stylelintignore",
+            "stylelintrc",
+            "stylelintrc.cjs",
+            "stylelintrc.js",
+            "stylelintrc.json",
+            "stylelintrc.mjs",
+            "stylelintrc.yaml",
+            "stylelintrc.yml",
+        ],
+    ),
+    ("surrealql", &["surql"]),
+    ("svelte", &["svelte"]),
+    ("swift", &["swift"]),
+    ("tcl", &["tcl"]),
+    ("template", &["hbs", "plist", "xml"]),
+    (
+        "terminal",
+        &[
+            "bash",
+            "bash_aliases",
+            "bash_login",
+            "bash_logout",
+            "bash_profile",
+            "bashrc",
+            "brushrc",
+            "fish",
+            "nu",
+            "profile",
+            "ps1",
+            "sh",
+            "zlogin",
+            "zlogout",
+            "zprofile",
+            "zsh",
+            "zsh_aliases",
+            "zsh_histfile",
+            "zsh_history",
+            "zshenv",
+            "zshrc",
+        ],
+    ),
+    ("terraform", &["tf", "tfvars"]),
+    ("toml", &["toml"]),
+    ("typescript", &["cts", "mts", "ts"]),
+    ("v", &["v", "vsh", "vv"]),
+    (
+        "vcs",
+        &[
+            "COMMIT_EDITMSG",
+            "EDIT_DESCRIPTION",
+            "MERGE_MSG",
+            "NOTES_EDITMSG",
+            "TAG_EDITMSG",
+            "gitattributes",
+            "gitignore",
+            "gitkeep",
+            "gitmodules",
+        ],
+    ),
+    ("vbproj", &["vbproj"]),
+    ("video", &["avi", "m4v", "mkv", "mov", "mp4", "webm", "wmv"]),
+    ("vs_sln", &["sln"]),
+    ("vs_suo", &["suo"]),
+    ("vue", &["vue"]),
+    ("vyper", &["vy", "vyi"]),
+    ("wgsl", &["wgsl"]),
+    ("yaml", &["yaml", "yml"]),
+    ("zig", &["zig"]),
+];
+
+/// A mapping of a file type identifier to its corresponding icon.
+const FILE_ICONS: &[(&str, &str)] = &[
+    ("astro", "icons/file_icons/astro.svg"),
+    ("audio", "icons/file_icons/audio.svg"),
+    ("ballerina", "icons/file_icons/ballerina.svg"),
+    ("bicep", "icons/file_icons/file.svg"),
+    ("bun", "icons/file_icons/bun.svg"),
+    ("c", "icons/file_icons/c.svg"),
+    ("cairo", "icons/file_icons/cairo.svg"),
+    ("code", "icons/file_icons/code.svg"),
+    ("coffeescript", "icons/file_icons/coffeescript.svg"),
+    ("cpp", "icons/file_icons/cpp.svg"),
+    ("crystal", "icons/file_icons/file.svg"),
+    ("csharp", "icons/file_icons/file.svg"),
+    ("csproj", "icons/file_icons/file.svg"),
+    ("css", "icons/file_icons/css.svg"),
+    ("cue", "icons/file_icons/file.svg"),
+    ("dart", "icons/file_icons/dart.svg"),
+    ("default", "icons/file_icons/file.svg"),
+    ("diff", "icons/file_icons/diff.svg"),
+    ("docker", "icons/file_icons/docker.svg"),
+    ("document", "icons/file_icons/book.svg"),
+    ("editorconfig", "icons/file_icons/editorconfig.svg"),
+    ("elixir", "icons/file_icons/elixir.svg"),
+    ("elm", "icons/file_icons/elm.svg"),
+    ("erlang", "icons/file_icons/erlang.svg"),
+    ("eslint", "icons/file_icons/eslint.svg"),
+    ("font", "icons/file_icons/font.svg"),
+    ("fsharp", "icons/file_icons/fsharp.svg"),
+    ("fsproj", "icons/file_icons/file.svg"),
+    ("gitlab", "icons/file_icons/gitlab.svg"),
+    ("gleam", "icons/file_icons/gleam.svg"),
+    ("go", "icons/file_icons/go.svg"),
+    ("graphql", "icons/file_icons/graphql.svg"),
+    ("haskell", "icons/file_icons/haskell.svg"),
+    ("hcl", "icons/file_icons/hcl.svg"),
+    ("helm", "icons/file_icons/helm.svg"),
+    ("heroku", "icons/file_icons/heroku.svg"),
+    ("html", "icons/file_icons/html.svg"),
+    ("image", "icons/file_icons/image.svg"),
+    ("ipynb", "icons/file_icons/jupyter.svg"),
+    ("java", "icons/file_icons/java.svg"),
+    ("javascript", "icons/file_icons/javascript.svg"),
+    ("json", "icons/file_icons/code.svg"),
+    ("julia", "icons/file_icons/julia.svg"),
+    ("kdl", "icons/file_icons/kdl.svg"),
+    ("kotlin", "icons/file_icons/kotlin.svg"),
+    ("lock", "icons/file_icons/lock.svg"),
+    ("log", "icons/file_icons/info.svg"),
+    ("lua", "icons/file_icons/lua.svg"),
+    ("luau", "icons/file_icons/luau.svg"),
+    ("markdown", "icons/file_icons/book.svg"),
+    ("metal", "icons/file_icons/metal.svg"),
+    ("nim", "icons/file_icons/nim.svg"),
+    ("nix", "icons/file_icons/nix.svg"),
+    ("ocaml", "icons/file_icons/ocaml.svg"),
+    ("odin", "icons/file_icons/odin.svg"),
+    ("phoenix", "icons/file_icons/phoenix.svg"),
+    ("php", "icons/file_icons/php.svg"),
+    ("prettier", "icons/file_icons/prettier.svg"),
+    ("prisma", "icons/file_icons/prisma.svg"),
+    ("puppet", "icons/file_icons/puppet.svg"),
+    ("python", "icons/file_icons/python.svg"),
+    ("r", "icons/file_icons/r.svg"),
+    ("react", "icons/file_icons/react.svg"),
+    ("roc", "icons/file_icons/roc.svg"),
+    ("ruby", "icons/file_icons/ruby.svg"),
+    ("rust", "icons/file_icons/rust.svg"),
+    ("sass", "icons/file_icons/sass.svg"),
+    ("scala", "icons/file_icons/scala.svg"),
+    ("settings", "icons/file_icons/settings.svg"),
+    ("solidity", "icons/file_icons/file.svg"),
+    ("storage", "icons/file_icons/database.svg"),
+    ("stylelint", "icons/file_icons/javascript.svg"),
+    ("surrealql", "icons/file_icons/surrealql.svg"),
+    ("svelte", "icons/file_icons/html.svg"),
+    ("swift", "icons/file_icons/swift.svg"),
+    ("tcl", "icons/file_icons/tcl.svg"),
+    ("template", "icons/file_icons/html.svg"),
+    ("terminal", "icons/file_icons/terminal.svg"),
+    ("terraform", "icons/file_icons/terraform.svg"),
+    ("toml", "icons/file_icons/toml.svg"),
+    ("typescript", "icons/file_icons/typescript.svg"),
+    ("v", "icons/file_icons/v.svg"),
+    ("vbproj", "icons/file_icons/file.svg"),
+    ("vcs", "icons/file_icons/git.svg"),
+    ("video", "icons/file_icons/video.svg"),
+    ("vs_sln", "icons/file_icons/file.svg"),
+    ("vs_suo", "icons/file_icons/file.svg"),
+    ("vue", "icons/file_icons/vue.svg"),
+    ("vyper", "icons/file_icons/vyper.svg"),
+    ("wgsl", "icons/file_icons/wgsl.svg"),
+    ("yaml", "icons/file_icons/yaml.svg"),
+    ("zig", "icons/file_icons/zig.svg"),
+];
+
+/// Returns a mapping of file associations to icon keys.
+fn icon_keys_by_association(
+    associations_by_icon_key: &[(&str, &[&str])],
+) -> HashMap<String, String> {
+    let mut icon_keys_by_association = HashMap::default();
+    for (icon_key, associations) in associations_by_icon_key {
+        for association in *associations {
+            icon_keys_by_association.insert(association.to_string(), icon_key.to_string());
+        }
+    }
+
+    icon_keys_by_association
+}
+
 /// 默认图标主题名。
 pub const DEFAULT_ICON_THEME_NAME: &str = "ui-gpui (Default)";
 
-/// 默认图标主题:只给出**目录与箭头**图标,不含文件类型映射。
+/// 默认图标主题:目录/箭头图标 + zed 原样的文件类型映射表。
 ///
-/// zed 的默认主题带 400 余行「扩展名 → 图标」表;我们没有那批 SVG 资源,
-/// 补一张查不到实物的表没有意义——等做文件树、真的接入图标资产时再补。
+/// 表(`FILE_STEMS_BY_ICON_KEY` / `FILE_SUFFIXES_BY_ICON_KEY` / `FILE_ICONS`)
+/// 与 zed 逐行一致,引用的 92 个 SVG 都在 `assets/icons/file_icons/` 下。
 static DEFAULT_ICON_THEME: LazyLock<Arc<IconTheme>> = LazyLock::new(|| {
     Arc::new(IconTheme {
         id: "ui-gpui-default".into(),
@@ -222,9 +578,16 @@ static DEFAULT_ICON_THEME: LazyLock<Arc<IconTheme>> = LazyLock::new(|| {
             collapsed: Some("icons/file_icons/chevron_right.svg".into()),
             expanded: Some("icons/file_icons/chevron_down.svg".into()),
         },
-        file_stems: HashMap::new(),
-        file_suffixes: HashMap::new(),
-        file_icons: HashMap::new(),
+        file_stems: icon_keys_by_association(FILE_STEMS_BY_ICON_KEY),
+        file_suffixes: icon_keys_by_association(FILE_SUFFIXES_BY_ICON_KEY),
+        file_icons: HashMap::from_iter(FILE_ICONS.iter().map(|(ty, path)| {
+            (
+                ty.to_string(),
+                IconDefinition {
+                    path: (*path).into(),
+                },
+            )
+        })),
     })
 });
 
@@ -342,9 +705,43 @@ mod tests {
         let theme = default_icon_theme();
         assert!(theme.icon_for_directory("src", false).is_some());
         assert!(theme.chevron_icon(true).is_some());
-        assert!(
-            theme.icon_for_file("main.rs").is_none(),
-            "默认主题不含文件类型映射(无图标资产),应返回 None"
+    }
+
+    #[test]
+    fn default_theme_resolves_file_types_like_zed() {
+        let theme = default_icon_theme();
+        assert_eq!(
+            theme.icon_for_file("main.rs").map(|s| s.to_string()),
+            Some("icons/file_icons/rust.svg".to_string())
         );
+        assert_eq!(
+            theme.icon_for_file("Cargo.toml").map(|s| s.to_string()),
+            Some("icons/file_icons/toml.svg".to_string())
+        );
+        assert_eq!(
+            theme.icon_for_file("Dockerfile").map(|s| s.to_string()),
+            Some("icons/file_icons/docker.svg".to_string()),
+            "完整文件名走 file_stems"
+        );
+        assert!(
+            theme.icon_for_file("mystery.xyz").is_none(),
+            "未收录的扩展名仍应返回 None"
+        );
+    }
+
+    #[test]
+    fn every_icon_theme_path_exists_in_assets() {
+        // 表里的路径必须能在 assets 下找到,否则文件树会拿到空白图标。
+        let missing: Vec<_> = FILE_ICONS
+            .iter()
+            .map(|(_, path)| *path)
+            .filter(|path| {
+                !std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("../../assets")
+                    .join(path)
+                    .exists()
+            })
+            .collect();
+        assert!(missing.is_empty(), "assets 里缺少这些图标: {missing:?}");
     }
 }
