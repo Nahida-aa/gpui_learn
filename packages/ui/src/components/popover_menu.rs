@@ -30,10 +30,11 @@ use gpui::{
     Entity, Focusable as _, GlobalElementId, HitboxBehavior, HitboxId, InteractiveElement,
     IntoElement,
     LayoutId, Length, ManagedView, MouseDownEvent, ParentElement, Pixels, Point, Style, Window,
-    anchored, deferred, div, point, prelude::FluentBuilder, px, rems, relative, size,
+    anchored, deferred, div, point, prelude::FluentBuilder, px, relative, size,
 };
 
 use crate::ButtonCommon;
+use crate::rems_from_px;
 use crate::traits::{Clickable, Toggleable};
 
 /// 任何能当 popover 触发器的元素：可点击（挂开/关回调）、可切换
@@ -346,14 +347,20 @@ impl<M: ManagedView> PopoverMenu<M> {
     }
 
     /// 偏移的解析：默认 5px（按 rem 缩放：4px 内边距 + 1px 边框），按 anchor 水平方向。
+    ///
+    /// 对齐 zed `popover_menu.rs:246-257`：用的是 **`rems_from_px(5)`（5 像素
+    /// 换算成 rem）**，不是 5rem；方向也是「往 anchor 那一侧外推」，即
+    /// TopRight / RightCenter 取 `+offset`，TopLeft / LeftCenter 取 `-offset`。
     fn resolved_offset(&self, window: &mut Window) -> Point<Pixels> {
         self.offset.unwrap_or_else(|| {
-            let offset = rems(5.) * window.rem_size();
+            let offset = rems_from_px(5_f32) * window.rem_size();
             match self.anchor {
                 Anchor::TopRight | Anchor::BottomRight | Anchor::RightCenter => {
+                    point(offset, px(0.))
+                }
+                Anchor::TopLeft | Anchor::BottomLeft | Anchor::LeftCenter => {
                     point(-offset, px(0.))
                 }
-                Anchor::TopLeft | Anchor::BottomLeft | Anchor::LeftCenter => point(offset, px(0.)),
                 Anchor::TopCenter | Anchor::BottomCenter => point(px(0.), px(0.)),
             }
         })
