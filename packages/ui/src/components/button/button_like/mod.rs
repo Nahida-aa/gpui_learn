@@ -565,10 +565,11 @@ impl RenderOnce for ButtonLike {
         let disabled = self.disabled;
         let selected = self.selected;
 
-        // 前景色：disabled → icon_disabled；selected → accent；
+        // 前景色：disabled → `Color::Disabled`（= `text_disabled`，与 zed
+        // `styles/color.rs:100` 同）；selected → accent；
         // 显式 icon_color → 取之；否则样式 fg（同时用于图标与文字）。
         let fg = if disabled {
-            colors.icon_disabled
+            colors.text_disabled
         } else if selected {
             colors.icon_accent
         } else {
@@ -699,18 +700,29 @@ impl RenderOnce for ButtonLike {
             button = button.invisible().group_hover(group, |el| el.visible());
         }
 
+        // 对齐 zed（button_like.rs:819-829）：背景/边框**只看样式**，disabled
+        // 不换底色 —— zed 的 `ButtonStyle::disabled()` 是死代码（标了
+        // `#[allow(unused)]`，全仓无人调用），禁用态只改前景色与光标。
+        // 旧实现给 disabled 一律刷 `ghost_element_disabled`，于是禁用的
+        // Subtle 图标按钮（如 tab bar 的前后导航）变成一整块纯色，且底色与
+        // `icon_disabled` 前景接近到看不出图标。
+        let (bg, hover_bg, active_bg) = (style_colors.bg[0], style_colors.bg[1], style_colors.bg[2]);
+        button = button
+            .bg(bg)
+            .border_1()
+            .border_color(style_colors.border);
         if disabled {
-            button = button.bg(colors.ghost_element_disabled);
+            // zed：默认光标是指手时改成 not-allowed，否则保留自定义光标。
+            button = if self.cursor_style == CursorStyle::PointingHand {
+                button.cursor_not_allowed()
+            } else {
+                button.cursor(self.cursor_style)
+            };
         } else {
-            let (bg, hover_bg, active_bg) =
-                (style_colors.bg[0], style_colors.bg[1], style_colors.bg[2]);
             button = button
-                .bg(bg)
-                .border_1()
-                .border_color(style_colors.border)
+                .cursor(self.cursor_style)
                 .hover(move |style| style.bg(hover_bg))
                 .active(move |style| style.bg(active_bg));
-            button = button.cursor(self.cursor_style);
         }
 
         button = button.on_click(move |event, window, cx| {
