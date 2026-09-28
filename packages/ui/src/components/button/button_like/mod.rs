@@ -758,28 +758,19 @@ impl RenderOnce for ButtonLike {
         }
 
         // 可悬浮提示：直接交给 gpui（zed 也是转发给
-        // `Stateful<Div>::hoverable_tooltip`，见 button_like.rs:876）。
+        // `Stateful<Div>::hoverable_tooltip`，见 button_like.rs:890）。
         if let Some(hoverable_tooltip) = self.hoverable_tooltip.clone() {
             button = button.hoverable_tooltip(move |window, cx| (hoverable_tooltip)(window, cx));
         }
 
-        // 有悬停提示时包进 TooltipHost（host 与按钮各用自己的 ElementId）。
-        match self.tooltip {
-            Some(tooltip) => {
-                let mut host =
-                    TooltipHost::new(ElementId::Name(format!("tip-{button_id:?}").into()))
-                        .tooltip(move |window, cx| (tooltip)(window, cx))
-                        .trigger(move |_, _window, _cx| button);
-                if let Some(anchor) = self.tooltip_anchor {
-                    host = host.anchor(anchor);
-                }
-                if let Some(attach) = self.tooltip_attach {
-                    host = host.attach(attach);
-                }
-                host.into_any_element()
-            }
-            None => button.into_any_element(),
+        // 普通悬停提示：直接转发给 gpui Div 的 .tooltip()，与 zed 原版 L887-888 对齐。
+        // 不走 TooltipHost——那是自定义 Element，相对按钮 corner 加了额外 gap=px(8)，
+        // 会和 tooltip_container 的 padding 叠加，导致 tooltip 位置偏差。
+        if let Some(tooltip) = self.tooltip.clone() {
+            button = button.tooltip(move |window, cx| tooltip(window, cx));
         }
+
+        button.into_any_element()
     }
 }
 
