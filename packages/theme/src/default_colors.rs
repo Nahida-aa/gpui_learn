@@ -3035,7 +3035,7 @@ pub fn theme_colors_latte() -> ThemeColors {
 pub fn catppuccin_mocha() -> Theme {
     Theme {
         id: "ui-gpui-default-dark".into(),
-        name: "ui-gpui Dark".into(),
+        name: "Catppuccin Mocha".into(),
         appearance: Appearance::Dark,
         styles: ThemeStyles {
             window_background_appearance: WindowBackgroundAppearance::Opaque,
@@ -3053,7 +3053,7 @@ pub fn catppuccin_mocha() -> Theme {
 pub fn catppuccin_latte() -> Theme {
     Theme {
         id: "ui-gpui-default-light".into(),
-        name: "ui-gpui Light".into(),
+        name: "Catppuccin Latte".into(),
         appearance: Appearance::Light,
         styles: ThemeStyles {
             window_background_appearance: WindowBackgroundAppearance::Opaque,
