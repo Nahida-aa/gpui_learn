@@ -38,13 +38,21 @@ pub fn ctp_default_dark() -> crate::Theme {
     crate::default_colors::catppuccin_mocha()
 }
 
-/// 兜底主题家族（Catppuccin Mocha 单主题）。
+/// 兜底主题家族（Catppuccin 三主题：Mocha + Macchiato + Latte）。
+///
+/// Zed 原版的 default_theme_family 只包含一个兜底主题（灰阶默认主题）。
+/// 我们这里改为注册全部三个内置 Catppuccin 主题，方便用户在
+/// ThemeSettings 里直接切换，不需要额外加载 theme JSON 扩展。
 pub fn default_theme_family() -> crate::ThemeFamily {
     crate::ThemeFamily {
         id: "ui-gpui-fallback".into(),
         name: "ui-gpui Fallback".into(),
         author: String::new(),
-        themes: vec![ctp_default_dark()],
+        themes: vec![
+            ctp_default_dark(),
+            crate::default_colors::catppuccin_macchiato(),
+            crate::default_colors::catppuccin_latte(),
+        ],
     }
 }
 
