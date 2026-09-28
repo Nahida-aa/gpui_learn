@@ -3049,6 +3049,35 @@ pub fn theme_colors_latte() -> ThemeColors {
 
 /// Catppuccin Mocha(深色)。
 pub fn catppuccin_mocha() -> Theme {
+    use crate::styles::{AccentColors, PlayerColor, PlayerColors};
+
+    // Zed JSON Mocha: accents + players
+    let accents = AccentColors(Arc::from([
+        h(0xcba6f7), // mauve
+        h(0xb4befe), // lavender
+        h(0x74c7ec), // sky
+        h(0xa6e3a1), // green
+        h(0xf9e2af), // yellow
+        h(0xfab387), // peach
+        h(0xf38ba8), // red
+        h(0xf5c2e7), // pink
+        h(0x94e2d5), // teal
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+    ]));
+    let players = PlayerColors(vec![
+        PlayerColor { cursor: h(0xf5e0dc), selection: ha(0x9399b2, 0.25), background: h(0xf5e0dc) },
+        PlayerColor { cursor: h(0xcba6f7), selection: ha(0xcba6f7, 0.25), background: h(0xcba6f7) },
+        PlayerColor { cursor: h(0xb4befe), selection: ha(0xb4befe, 0.25), background: h(0xb4befe) },
+        PlayerColor { cursor: h(0x74c7ec), selection: ha(0x74c7ec, 0.25), background: h(0x74c7ec) },
+        PlayerColor { cursor: h(0xa6e3a1), selection: ha(0xa6e3a1, 0.25), background: h(0xa6e3a1) },
+        PlayerColor { cursor: h(0xf9e2af), selection: ha(0xf9e2af, 0.25), background: h(0xf9e2af) },
+        PlayerColor { cursor: h(0xfab387), selection: ha(0xfab387, 0.25), background: h(0xfab387) },
+        PlayerColor { cursor: h(0xf38ba8), selection: ha(0xf38ba8, 0.25), background: h(0xf38ba8) },
+    ]);
+
     Theme {
         id: "ui-gpui-default-dark".into(),
         name: "Catppuccin Mocha".into(),
@@ -3056,8 +3085,8 @@ pub fn catppuccin_mocha() -> Theme {
         styles: ThemeStyles {
             window_background_appearance: WindowBackgroundAppearance::Opaque,
             system: SystemColors::default(),
-            accents: AccentColors::dark(),
-            players: PlayerColors::dark(),
+            accents,
+            players,
             syntax: Arc::new(syntax_mocha()),
             colors: theme_colors_mocha(),
             status: status_colors_mocha(),
@@ -3337,6 +3366,39 @@ pub fn theme_colors_macchiato() -> ThemeColors {
 
 /// Catppuccin Macchiato（次深暗色）。
 pub fn catppuccin_macchiato() -> Theme {
+    // 所有值取自 Zed Catppuccin 扩展 JSON:
+    // /home/aa/repos/ide_ls/learn_ls/zed/themes/catppuccin-mauve.json → "Catppuccin Macchiato" 段
+    use crate::styles::{AccentColors, PlayerColor, PlayerColors};
+
+    // Zed JSON "accents" — 7 个,我们扩到 9 个(AccentColors 固定 13 槽位, 多余留 transparent)
+    let accents = AccentColors(Arc::from([
+        h(0xc6a0f6), // mauve
+        h(0xb7bdf8), // lavender
+        h(0x7dc4e4), // sky
+        h(0xa6da95), // green
+        h(0xeed49f), // yellow
+        h(0xf5a97f), // peach
+        h(0xed8796), // red
+        h(0xf5bde6), // pink
+        h(0x8bd5ca), // teal
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+    ]));
+
+    // Zed JSON "players" — 8 个,第一个是本地玩家(cursor=rosewater)
+    let players = PlayerColors(vec![
+        PlayerColor { cursor: h(0xf4dbd6), selection: ha(0x939ab7, 0.25), background: h(0xf4dbd6) },
+        PlayerColor { cursor: h(0xc6a0f6), selection: ha(0xc6a0f6, 0.25), background: h(0xc6a0f6) },
+        PlayerColor { cursor: h(0xb7bdf8), selection: ha(0xb7bdf8, 0.25), background: h(0xb7bdf8) },
+        PlayerColor { cursor: h(0x7dc4e4), selection: ha(0x7dc4e4, 0.25), background: h(0x7dc4e4) },
+        PlayerColor { cursor: h(0xa6da95), selection: ha(0xa6da95, 0.25), background: h(0xa6da95) },
+        PlayerColor { cursor: h(0xeed49f), selection: ha(0xeed49f, 0.25), background: h(0xeed49f) },
+        PlayerColor { cursor: h(0xf5a97f), selection: ha(0xf5a97f, 0.25), background: h(0xf5a97f) },
+        PlayerColor { cursor: h(0xed8796), selection: ha(0xed8796, 0.25), background: h(0xed8796) },
+    ]);
+
     Theme {
         id: "ctp-macchiato".into(),
         name: "Catppuccin Macchiato".into(),
@@ -3344,8 +3406,8 @@ pub fn catppuccin_macchiato() -> Theme {
         styles: ThemeStyles {
             window_background_appearance: WindowBackgroundAppearance::Opaque,
             system: SystemColors::default(),
-            accents: AccentColors::dark(),
-            players: PlayerColors::dark(),
+            accents,
+            players,
             syntax: Arc::new(syntax_macchiato()),
             colors: theme_colors_macchiato(),
             status: status_colors_macchiato(),
