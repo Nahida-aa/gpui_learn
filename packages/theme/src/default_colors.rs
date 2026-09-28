@@ -2898,71 +2898,87 @@ pub fn status_colors_latte() -> StatusColors {
 }
 
 pub fn theme_colors_mocha() -> ThemeColors {
-    // 以 zed 默认值为基底（`default_colors.rs` 的灰阶配色）：下面只覆盖
-    // Catppuccin 有明确取值的字段，其余（终端 ANSI、minimap、panel 等
-    // 我们暂无消费方的 92 个色）继承默认，不必逐字段重复一遍。
     let mut colors = ThemeColors::dark();
     {
         // border
-        colors.border = h(0x45475a);
-        colors.border_variant = h(0x313244);
+        colors.border = h(0x313244);
+        colors.border_variant = h(0x28293c);
         colors.border_focused = h(0x89b4fa);
-        colors.border_selected = h(0x89b4fa);
-        colors.border_disabled = h(0x313244);
+        colors.border_selected = h(0xcba6f7);
+        colors.border_disabled = h(0x6c7086);
         colors.border_transparent = hsla(0., 0., 0., 0.);
         // background
-        colors.background = h(0x1e1e2e);
+        colors.background = h(0x27273b);            // Zed JSON "background" (不同于 editor.background!)
         colors.surface_background = h(0x181825);
         colors.elevated_surface_background = h(0x11111b);
-        colors.element_background = h(0x313244);
-        colors.element_hover = h(0x45475a);
-        colors.element_active = h(0x585b70);
-        colors.element_selected = h(0x45475a);
-        colors.element_disabled = h(0x313244);
+        colors.element_background = h(0x11111b);
+        colors.element_hover = h(0x313244);
+        colors.element_active = ha(0x585b70, 0.30);
+        colors.element_selected = ha(0x313244, 0.30);
+        colors.element_disabled = h(0x6c7086);
         colors.ghost_element_background = hsla(0., 0., 0., 0.);
-        colors.ghost_element_hover = h(0x313244);
-        colors.ghost_element_active = h(0x45475a);
-        colors.ghost_element_selected = h(0x45475a);
-        colors.ghost_element_disabled = hsla(0., 0., 0., 0.);
+        colors.ghost_element_hover = ha(0x313244, 0.30);
+        colors.ghost_element_active = ha(0x585b70, 0.60);
+        colors.ghost_element_selected = ha(0x7f849c, 0.40);
+        colors.ghost_element_disabled = h(0x6c7086);
         // text
         colors.text = h(0xcdd6f4);
-        colors.text_muted = h(0xa6adc8);
-        colors.text_placeholder = h(0x6c7086);
-        colors.text_disabled = h(0x7f849c);
-        colors.text_accent = h(0x89b4fa);
+        colors.text_muted = h(0xbac2de);
+        colors.text_placeholder = h(0x585b70);
+        colors.text_disabled = h(0x6c7086);
+        colors.text_accent = h(0xcba6f7);
         // icon
         colors.icon = h(0xcdd6f4);
         colors.icon_muted = h(0xa6adc8);
-        colors.icon_disabled = h(0x585b70);
-        colors.icon_accent = h(0x89b4fa);
+        colors.icon_disabled = h(0x6c7086);
+        colors.icon_placeholder = h(0x585b70);
+        colors.icon_accent = h(0xcba6f7);
+        // — Zed JSON 显式设置的状态/标题栏/Tab/toolbar（之前缺失！）——
+        colors.status_bar_background = h(0x11111b);        // crust
+        colors.title_bar_background = h(0x11111b);          // crust
+        colors.title_bar_inactive_background = h(0x171725);
+        colors.toolbar_background = h(0x1e1e2e);
+        colors.tab_bar_background = h(0x11111b);
+        colors.tab_inactive_background = h(0x0b0b11);
+        colors.tab_active_background = h(0x1e1e2e);
+        colors.panel_background = h(0x181825);
+        colors.panel_focused_border = h(0xcdd6f4);
+        colors.panel_indent_guide = ha(0x313244, 0.60);
+        colors.panel_indent_guide_active = h(0x585b70);
+        colors.panel_indent_guide_hover = h(0xcba6f7);
+        colors.panel_overlay_background = h(0x181825);
+        colors.pane_focused_border = h(0xcdd6f4);
+        colors.pane_group_border = h(0x313244);
+        colors.search_match_background = ha(0x94e2d5, 0.30);
+        colors.search_active_match_background = ha(0xf38ba8, 0.30);
+        colors.scrollbar_thumb_background = ha(0x585b70, 0.50);
+        colors.scrollbar_thumb_hover_background = h(0x6c7086);
+        colors.scrollbar_track_background = h(0x11111b);
+        colors.scrollbar_track_border = ha(0xcdd6f4, 0.07);
         // editor
         colors.editor_foreground = h(0xcdd6f4);
         colors.editor_background = h(0x1e1e2e);
         colors.editor_gutter_background = h(0x1e1e2e);
-        colors.editor_active_line_background = h(0x313244);
-        colors.editor_line_number = h(0x6c7086);
-        colors.editor_active_line_number = h(0xcdd6f4);
-        colors.editor_wrap_guide = h(0x313244);
-        colors.editor_indent_guide = h(0x313244);
-        colors.editor_indent_guide_active = h(0x45475a);
-        colors.editor_invisible = h(0x6c7086);
-        colors.selection_background = h(0x45475a);
+        colors.editor_subheader_background = h(0x181825);
+        colors.editor_active_line_background = ha(0xcdd6f4, 0.07);
+        colors.editor_line_number = h(0xa6adc8);
+        colors.editor_active_line_number = h(0xcba6f7);
+        colors.editor_wrap_guide = h(0x585b70);
+        colors.editor_indent_guide = ha(0x313244, 0.60);
+        colors.editor_indent_guide_active = h(0x585b70);
+        colors.editor_invisible = ha(0x6c7086, 0.40);
+        colors.editor_debugger_active_line_background = ha(0xfab387, 0.07);
+        colors.selection_background = ha(0x7f849c, 0.25);
         colors.editor_cursor = h(0xf5e0dc);
-        colors.editor_document_highlight_read_background = ha(0x89b4fa, 0.15);
-        colors.editor_document_highlight_write_background = ha(0x89b4fa, 0.25);
-        // 面板 / 杂项
-        colors.panel_background = h(0x181825);
-        colors.pane_focused_border = h(0x89b4fa);
-        colors.pane_group_border = h(0x45475a);
-        colors.search_match_background = h(0x45475a);
-        colors.search_active_match_background = h(0x585b70);
-        colors.scrollbar_thumb_background = h(0x585b70);
-        colors.scrollbar_thumb_hover_background = h(0x6c7086);
-        colors.scrollbar_thumb_active_background = h(0x89b4fa);
-        colors.scrollbar_thumb_border = hsla(0., 0., 0., 0.);
-        colors.scrollbar_track_background = h(0x181825);
-        colors.scrollbar_track_border = hsla(0., 0., 0., 0.);
-        colors.link = h(0x89b4fa);
+        colors.editor_document_highlight_read_background = ha(0xa6adc8, 0.16);
+        colors.editor_document_highlight_write_background = ha(0xa6adc8, 0.16);
+        colors.editor_document_highlight_bracket_background = ha(0xcba6f7, 0.09);
+        // terminal
+        colors.terminal_background = h(0x1e1e2e);
+        colors.terminal_foreground = h(0xcdd6f4);
+        colors.terminal_ansi_background = h(0x1e1e2e);
+        // 其他
+        colors.link = h(0x74c7ec);
 
         colors
     }
@@ -3228,60 +3244,92 @@ pub fn status_colors_macchiato() -> StatusColors {
 pub fn theme_colors_macchiato() -> ThemeColors {
     let mut colors = ThemeColors::dark();
     {
-        colors.border = h(0x494d64);           // surface1
-        colors.border_variant = h(0x363a4f);    // surface0
-        colors.border_focused = h(0x8aadf4);    // blue
-        colors.border_selected = h(0x8aadf4);
-        colors.border_disabled = h(0x363a4f);
+        colors.border = h(0x363a4f);               // surface0
+        colors.border_variant = h(0x313148);        // surface0-darker
+        colors.border_focused = h(0xb7bdf8);        // lavender
+        colors.border_selected = h(0xc6a0f6);       // mauve
+        colors.border_disabled = h(0x6e738d);       // overlay0
         colors.border_transparent = hsla(0., 0., 0., 0.);
-        colors.background = h(0x24273a);         // base
-        colors.surface_background = h(0x1e2030); // mantle
-        colors.elevated_surface_background = h(0x181926); // crust
-        colors.element_background = h(0x363a4f); // surface0
-        colors.element_hover = h(0x494d64);      // surface1
-        colors.element_active = h(0x5b6078);      // surface2
-        colors.element_selected = h(0x494d64);
-        colors.element_disabled = h(0x363a4f);
+        colors.background = h(0x2c2f46);            // base — Zed JSON "background"
+        colors.surface_background = h(0x1e2030);    // mantle
+        colors.elevated_surface_background = h(0x1e2030); // mantle (同 surface)
+        colors.element_background = h(0x181926);    // crust
+        colors.element_hover = ha(0x363a4f, 1.0);  // surface0
+        colors.element_active = ha(0x5b6078, 0.30); // surface2 @30%
+        colors.element_selected = ha(0x363a4f, 0.30); // surface0 @30%
+        colors.element_disabled = h(0x6e738d);
         colors.ghost_element_background = hsla(0., 0., 0., 0.);
-        colors.ghost_element_hover = h(0x363a4f);
-        colors.ghost_element_active = h(0x494d64);
-        colors.ghost_element_selected = h(0x494d64);
-        colors.ghost_element_disabled = hsla(0., 0., 0., 0.);
-        colors.text = h(0xcad3f5);               // text
-        colors.text_muted = h(0xa5adce);         // subtext0
-        colors.text_placeholder = h(0x6e738d);   // overlay0
-        colors.text_disabled = h(0x7f849c);       // overlay1 (同 mocha)
-        colors.text_accent = h(0x8aadf4);        // blue
+        colors.ghost_element_hover = ha(0x494d64, 0.30); // surface1 @30%
+        colors.ghost_element_active = ha(0x5b6078, 0.60); // surface2 @60%
+        colors.ghost_element_selected = ha(0x737995, 0.40); // overlay2 @40%
+        colors.ghost_element_disabled = h(0x6e738d);
+        colors.text = h(0xcad3f5);                  // text
+        colors.text_muted = h(0xb8c0e0);            // subtext0
+        colors.text_placeholder = h(0x5b6078);      // surface2
+        colors.text_disabled = h(0x6e738d);         // overlay0
+        colors.text_accent = h(0xc6a0f6);           // mauve
         colors.icon = h(0xcad3f5);
-        colors.icon_muted = h(0xa5adce);
-        colors.icon_disabled = h(0x5b6078);
-        colors.icon_accent = h(0x8aadf4);
+        colors.icon_muted = h(0x8087a2);            // overlay2
+        colors.icon_disabled = h(0x6e738d);
+        colors.icon_placeholder = h(0x5b6078);
+        colors.icon_accent = h(0xc6a0f6);
+
+        // — Zed JSON 显式设置的状态/标题栏/Tab/toolbar（之前缺失！）——
+        colors.status_bar_background = h(0x181926);        // crust
+        colors.title_bar_background = h(0x181926);          // crust
+        colors.title_bar_inactive_background = h(0x1e1f30); // mantle-darker
+        colors.toolbar_background = h(0x24273a);            // base (CTP base #24273a)
+        colors.tab_bar_background = h(0x181926);            // crust
+        colors.tab_inactive_background = h(0x12121c);       // base-darker
+        colors.tab_active_background = h(0x24273a);        // base
+        colors.search_match_background = ha(0x8bd5ca, 0.30);   // teal @30%
+        colors.search_active_match_background = ha(0xed8796, 0.30); // red @30%
+        colors.panel_background = h(0x1e2030);              // mantle
+        colors.panel_focused_border = h(0xcad3f5);          // text
+        colors.panel_indent_guide = ha(0x363a4f, 0.60);     // surface0 @60%
+        colors.panel_indent_guide_active = h(0x5b6078);     // surface2
+        colors.panel_indent_guide_hover = h(0xc6a0f6);      // mauve
+        colors.panel_overlay_background = h(0x1e2030);      // mantle
+        colors.pane_focused_border = h(0xcad3f5);           // text
+        colors.pane_group_border = h(0x363a4f);             // surface0
+        colors.scrollbar_thumb_background = ha(0x5b6078, 0.50);   // surface2 @50%
+        colors.scrollbar_thumb_hover_background = h(0x6e738d);   // overlay0
+        colors.scrollbar_track_background = h(0x181926);         // crust
+        colors.scrollbar_track_border = ha(0xcad3f5, 0.07);      // text @7%
+
         colors.editor_foreground = h(0xcad3f5);
-        colors.editor_background = h(0x24273a);
+        colors.editor_background = h(0x24273a);              // base
         colors.editor_gutter_background = h(0x24273a);
-        colors.editor_active_line_background = h(0x363a4f);
-        colors.editor_line_number = h(0x6e738d);
-        colors.editor_active_line_number = h(0xcad3f5);
-        colors.editor_wrap_guide = h(0x363a4f);
-        colors.editor_indent_guide = h(0x363a4f);
-        colors.editor_indent_guide_active = h(0x494d64);
-        colors.editor_invisible = h(0x6e738d);
-        colors.selection_background = h(0x494d64);
-        colors.editor_cursor = h(0xf4dbd6);        // rosewater
-        colors.editor_document_highlight_read_background = ha(0x8aadf4, 0.15);
-        colors.editor_document_highlight_write_background = ha(0x8aadf4, 0.25);
-        colors.panel_background = h(0x1e2030);    // mantle
-        colors.pane_focused_border = h(0x8aadf4);
-        colors.pane_group_border = h(0x494d64);
-        colors.search_match_background = h(0x494d64);
-        colors.search_active_match_background = h(0x5b6078);
-        colors.scrollbar_thumb_background = h(0x5b6078);
-        colors.scrollbar_thumb_hover_background = h(0x6e738d);
-        colors.scrollbar_thumb_active_background = h(0x8aadf4);
-        colors.scrollbar_thumb_border = hsla(0., 0., 0., 0.);
-        colors.scrollbar_track_background = h(0x1e2030);
-        colors.scrollbar_track_border = hsla(0., 0., 0., 0.);
-        colors.link = h(0x8aadf4);
+        colors.editor_subheader_background = h(0x1e2030);    // mantle
+        colors.editor_active_line_background = ha(0xcad3f5, 0.07); // text @7%
+        colors.editor_line_number = h(0x8087a2);            // overlay2
+        colors.editor_active_line_number = h(0xc6a0f6);     // mauve
+        colors.editor_wrap_guide = h(0x5b6078);             // surface2
+        colors.editor_indent_guide = ha(0x363a4f, 0.60);    // surface0 @60%
+        colors.editor_indent_guide_active = h(0x5b6078);    // surface2
+        colors.editor_invisible = ha(0x939ab7, 0.40);       // overlay1 @40%
+        colors.editor_debugger_active_line_background = ha(0xf5a97f, 0.07); // peach @7%
+        colors.selection_background = ha(0x939ab7, 0.25);   // overlay1 @25%
+        colors.editor_cursor = h(0xf4dbd6);                 // rosewater
+        colors.editor_document_highlight_read_background = ha(0xa5adcb, 0.16); // subtext1 @16%
+        colors.editor_document_highlight_write_background = ha(0xa5adcb, 0.16); // subtext1 @16%
+        colors.editor_document_highlight_bracket_background = ha(0xc6a0f6, 0.09); // mauve @9%
+
+        colors.terminal_background = h(0x24273a);
+        colors.terminal_foreground = h(0xcad3f5);
+        colors.terminal_dim_foreground = h(0x8087a2);
+        colors.terminal_bright_foreground = h(0xcad3f5);
+        colors.terminal_ansi_background = h(0x24273a);
+        colors.terminal_ansi_black = h(0x494d64);
+        colors.terminal_ansi_white = h(0xa5adcb);
+        colors.terminal_ansi_red = h(0xed8796);
+        colors.terminal_ansi_green = h(0xa6da95);
+        colors.terminal_ansi_yellow = h(0xeed49f);
+        colors.terminal_ansi_blue = h(0x8aadf4);
+        colors.terminal_ansi_magenta = h(0xf5bde6);
+        colors.terminal_ansi_cyan = h(0x8bd5ca);
+
+        colors.link = h(0x91d7e3);                 // teal-light
 
         colors
     }
