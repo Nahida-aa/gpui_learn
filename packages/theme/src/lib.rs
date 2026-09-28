@@ -57,8 +57,9 @@ pub use buffer_line_height::BufferLineHeight;
 pub use color_space::{Oklab, Oklch, hsla_to_oklab, hsla_to_oklch, oklch_to_hsla};
 pub use font_family_cache::FontFamilyCache;
 pub use icon_theme::{
-    ChevronIcons, DirectoryIcons, IconDefinition, IconTheme, IconThemeFamily, DEFAULT_ICON_THEME_NAME,
-    default_icon_theme, parse_icon_theme_family,
+    ChevronIcons, DirectoryIcons, IconDefinition, IconTheme, IconThemeFamily,
+    DEFAULT_ICON_THEME_NAME, DEFAULT_LIGHT_ICON_THEME_NAME, FALLBACK_ICON_THEME_NAME,
+    catppuccin_icon_theme_family, default_icon_theme, parse_icon_theme_family,
 };
 pub use icon_theme::schema::{
     ChevronIconsContent, DirectoryIconsContent, IconDefinitionContent, IconThemeContent,

@@ -122,6 +122,15 @@ impl ThemeRegistry {
             .icon_themes
             .insert(default_icon_theme.name.clone(), default_icon_theme);
 
+        // 内置 Catppuccin 图标主题(8 个 variant)。JSON 里的路径已经是
+        // `./icons/<variant>/xxx.svg`,故 icons_root 传 assets 根。
+        registry
+            .load_icon_theme(
+                crate::icon_theme::catppuccin_icon_theme_family(),
+                Path::new(""),
+            )
+            .expect("内置 CTP 图标主题应能注册");
+
         registry
     }
 
@@ -256,8 +265,11 @@ impl ThemeRegistry {
         icons_root_dir: &Path,
     ) -> Result<()> {
         let resolve_icon_path = |path: SharedString| {
+            // 图标主题 JSON 里的路径带 `./` 前缀(`./icons/mocha/3d.svg`),
+            // 而资源键是相对 assets 根的路径,故先去掉这层前缀。
+            let relative = path.as_ref().trim_start_matches("./");
             icons_root_dir
-                .join(path.as_ref())
+                .join(relative)
                 .to_string_lossy()
                 .to_string()
                 .into()
@@ -298,9 +310,20 @@ impl ThemeRegistry {
                     expanded: icon_theme.directory_icons.expanded.map(resolve_icon_path),
                 },
                 named_directory_icons,
+                // 与 zed 的差异:zed 的扩展图标主题都会自带 chevron,而
+                // Catppuccin 这类主题给的是 null。不兜底的话文件树会整片
+                // 没有折叠箭头,故缺哪个态就用兜底主题的补上。
                 chevron_icons: ChevronIcons {
-                    collapsed: icon_theme.chevron_icons.collapsed.map(resolve_icon_path),
-                    expanded: icon_theme.chevron_icons.expanded.map(resolve_icon_path),
+                    collapsed: icon_theme
+                        .chevron_icons
+                        .collapsed
+                        .map(resolve_icon_path)
+                        .or_else(|| default_icon_theme.chevron_icons.collapsed.clone()),
+                    expanded: icon_theme
+                        .chevron_icons
+                        .expanded
+                        .map(resolve_icon_path)
+                        .or_else(|| default_icon_theme.chevron_icons.expanded.clone()),
                 },
                 file_stems,
                 file_suffixes,

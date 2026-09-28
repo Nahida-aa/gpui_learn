@@ -557,17 +557,42 @@ fn icon_keys_by_association(
     icon_keys_by_association
 }
 
-/// 默认图标主题名。
-pub const DEFAULT_ICON_THEME_NAME: &str = "ui-gpui (Default)";
+/// 默认图标主题名(暗色):内置 Catppuccin 图标主题。
+///
+/// 浅色系统下用 [`DEFAULT_LIGHT_ICON_THEME_NAME`];两者都不在注册表里时,
+/// 由 [`IconTheme::default`] 退回 [`FALLBACK_ICON_THEME_NAME`]。
+pub const DEFAULT_ICON_THEME_NAME: &str = "Catppuccin Macchiato";
 
-/// 默认图标主题:目录/箭头图标 + zed 原样的文件类型映射表。
+/// 浅色系统下的默认图标主题名。
+pub const DEFAULT_LIGHT_ICON_THEME_NAME: &str = "Catppuccin Latte";
+
+/// 兜底图标主题名:zed 原样那张表(不含 CTP 图标)。
+pub const FALLBACK_ICON_THEME_NAME: &str = "ui-gpui (Default)";
+
+/// 内置 Catppuccin 图标主题家族的 JSON
+/// (`assets/icon_themes/catppuccin-icons.json`,来自 catppuccin/zed-icons)。
+///
+/// 走 `include_str!` 而不是资产加载:[`crate::ThemeRegistry::new`] 时就要注册
+/// 完,而 `LoadThemes::JustBase` 下注册表拿到的资产源是空的,读不到任何资产。
+/// JSON 只在这里用,故没有加进 assets crate 的嵌入列表(避免二进制里两份)。
+const CATPPUCCIN_ICONS_JSON: &str =
+    include_str!("../../../../assets/icon_themes/catppuccin-icons.json");
+
+/// 内置 Catppuccin 图标主题家族:8 个 variant(Latte / Frappé / Macchiato /
+/// Mocha × 彩色 / 单色),每个 1810 条后缀、400 个图标。
+pub fn catppuccin_icon_theme_family() -> IconThemeFamilyContent {
+    serde_json::from_str(CATPPUCCIN_ICONS_JSON).expect("内置 CTP 图标主题 JSON 应能解析")
+}
+
+/// 兜底图标主题:目录/箭头图标 + zed 原样的文件类型映射表。
 ///
 /// 表(`FILE_STEMS_BY_ICON_KEY` / `FILE_SUFFIXES_BY_ICON_KEY` / `FILE_ICONS`)
 /// 与 zed 逐行一致,引用的 92 个 SVG 都在 `assets/icons/file_icons/` 下。
+/// 同时它也是 [`crate::ThemeRegistry::load_icon_theme`] 的合并基底。
 static DEFAULT_ICON_THEME: LazyLock<Arc<IconTheme>> = LazyLock::new(|| {
     Arc::new(IconTheme {
         id: "ui-gpui-default".into(),
-        name: DEFAULT_ICON_THEME_NAME.into(),
+        name: FALLBACK_ICON_THEME_NAME.into(),
         appearance: Appearance::Dark,
         directory_icons: DirectoryIcons {
             collapsed: Some("icons/file_icons/folder.svg".into()),
@@ -599,6 +624,7 @@ pub fn default_icon_theme() -> Arc<IconTheme> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::registry::ThemeRegistry;
 
     fn theme_with_mappings() -> IconTheme {
         let content: IconThemeContent = serde_json::from_str(
@@ -726,6 +752,66 @@ mod tests {
         assert!(
             theme.icon_for_file("mystery.xyz").is_none(),
             "未收录的扩展名仍应返回 None"
+        );
+    }
+
+    #[test]
+    fn builtin_catppuccin_icon_themes_are_registered() {
+        let registry = ThemeRegistry::default();
+        for name in [
+            "Catppuccin Latte",
+            "Catppuccin Frappé",
+            "Catppuccin Macchiato",
+            "Catppuccin Mocha",
+            "Catppuccin Latte Monochrome",
+            "Catppuccin Frappé Monochrome",
+            "Catppuccin Macchiato Monochrome",
+            "Catppuccin Mocha Monochrome",
+        ] {
+            assert!(registry.get_icon_theme(name).is_ok(), "应注册 {name}");
+        }
+    }
+
+    #[test]
+    fn default_icon_theme_resolves_catppuccin_icons() {
+        let registry = ThemeRegistry::default();
+        let theme = registry
+            .get_icon_theme(DEFAULT_ICON_THEME_NAME)
+            .expect("默认图标主题应已注册");
+        assert_eq!(
+            theme.icon_for_file("main.rs").map(|s| s.to_string()),
+            Some("icons/macchiato/rust.svg".to_string()),
+            "路径应是相对 assets 根,不带 JSON 里的 ./ 前缀"
+        );
+        assert_eq!(
+            theme.icon_for_file("Cargo.toml").map(|s| s.to_string()),
+            Some("icons/macchiato/cargo.svg".to_string()),
+            "完整文件名走 file_stems(Cargo.toml → cargo)"
+        );
+        assert_eq!(
+            theme.icon_for_file("pyproject.toml").map(|s| s.to_string()),
+            Some("icons/macchiato/toml.svg".to_string()),
+            "普通 .toml 走 file_suffixes"
+        );
+        assert_eq!(
+            theme.icon_for_directory("anything", false).map(|s| s.to_string()),
+            Some("icons/macchiato/_folder.svg".to_string())
+        );
+        assert!(
+            theme.chevron_icon(false).is_some(),
+            "CTP 主题没有 chevron,应兜底到默认主题的箭头"
+        );
+    }
+
+    #[test]
+    fn light_default_icon_theme_uses_latte() {
+        let registry = ThemeRegistry::default();
+        let theme = registry
+            .get_icon_theme(DEFAULT_LIGHT_ICON_THEME_NAME)
+            .expect("浅色默认图标主题应已注册");
+        assert_eq!(
+            theme.icon_for_file("main.rs").map(|s| s.to_string()),
+            Some("icons/latte/rust.svg".to_string())
         );
     }
 
