@@ -124,9 +124,7 @@ pub struct IconButton {
     icon_size: IconSize,
     /// 图标颜色（对齐 zed：收语义色 `Color`，渲染时经 `cx.theme()` 解析）。
     icon_color: Color,
-    /// 容器边长（默认 24px，适配标题栏/状态栏）。仅 [`IconButtonShape::Square`] 生效。
-    size: Pixels,
-    /// 形状（对齐 zed：Square 定宽方形 / Wide 跟随内容）。
+    /// 形状（对齐 zed：Square 定宽方形 / Wide 跟随内容；zed 默认 `Wide`）。
     shape: IconButtonShape,
     radius: ButtonRadius,
     selected: bool,
@@ -192,8 +190,7 @@ impl IconButton {
             icon,
             icon_size: IconSize::default(),
             icon_color: Color::Default,
-            size: px(24.0),
-            shape: IconButtonShape::Square,
+            shape: IconButtonShape::Wide,
             radius: ButtonRadius::Medium,
             selected: false,
             selected_style: None,
@@ -400,13 +397,12 @@ impl RenderOnce for IconButton {
             .icon(icon)
             .icon_color(Some(icon_color))
             .icon_size(icon_size)
-            // 对齐 zed：Square 定宽成方形；Wide 跟随内容宽度（不给 box_size）。
-            // 给了 `ButtonCommon::size` 档位时以档位为准 —— 否则默认的 24px
-            // 会把档位盖掉（`ButtonSize::None` 该是 16px 的紧凑按钮）。
-            .when(
-                self.shape == IconButtonShape::Square && self.button_size.is_none(),
-                |this| this.box_size(self.size),
-            )
+            // 对齐 zed（icon_button.rs:268-275）：Square 用 `icon_size.square()`
+            // 同时定宽与高；Wide 不设宽度，跟随内容。
+            .map(|this| match self.shape {
+                IconButtonShape::Square => this.box_size(self.icon_size.square(window, cx)),
+                IconButtonShape::Wide => this,
+            })
             .radius(self.radius)
             .selected(selected)
             // zed：`IconButton::selected_style` 同时喂给 base（zed icon_button.rs:157）

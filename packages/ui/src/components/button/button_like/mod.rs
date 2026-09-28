@@ -575,21 +575,18 @@ impl RenderOnce for ButtonLike {
             self.icon_color.unwrap_or(style_colors.fg)
         };
 
-        let has_label = self.label.is_some();
         let button_id = self.id.clone();
         let mut button = div()
             .id(self.id)
             .flex()
             .items_center()
             .justify_center()
+            // 对齐 zed（button_like.rs:799）：按钮不参与父级 flex 的伸缩，
+            // 宽度由内容（或显式 `width` / `box_size`）决定。
+            .flex_none()
             // 图标与文字的间距由下面的 `.gap(DynamicSpacing::Base04..)` 统一负责
             // （对齐 zed：zed 的 ButtonLike 也只设一处 gap）。
             .aria_label(self.aria_label.clone().unwrap_or_default());
-
-        // 固定宽（对齐 zed：`FixedWidth for ButtonLike`，header 的折叠按钮用）。
-        if let Some(width) = self.width {
-            button = button.w(width);
-        }
 
         // 无障碍属性（对齐 zed ButtonLike 的 aria_* 系列）。
         if let Some(description) = self.aria_description.clone() {
@@ -643,15 +640,18 @@ impl RenderOnce for ButtonLike {
                 ButtonSize::None => this.px(px(1.)),
             });
 
-        // icon-only：容器是正方形，边长由 `box_size` 或图标尺寸推出。
-        if !has_label {
-            let side = self.box_size.unwrap_or(self.icon_size * 12. / 7.);
-            button = button.size(side);
+        // 正方形：只在显式给了 `box_size` 时才定死（对齐 zed —— zed 的
+        // `ButtonLike` 本身从不猜方形，方形由 `IconButton` 的
+        // `IconButtonShape::Square` 下发，见 icon_button.rs:268-275）。
+        // 没给 `box_size` 时宽度完全交给内容（文字按钮按文字伸缩）。
+        if let Some(box_size) = self.box_size {
+            button = button.w(box_size).h(box_size);
         }
 
         // 宽度覆盖（FixedWidth）与 tab 序号（ButtonCommon）。
+        // 对齐 zed（button_like.rs:801-803）：给了宽度就居中内容。
         if let Some(width) = self.width {
-            button = button.w(width);
+            button = button.w(width).justify_center().text_center();
         }
         if let Some(tab_index) = self.tab_index {
             button = button.tab_index(tab_index);

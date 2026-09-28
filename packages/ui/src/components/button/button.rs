@@ -218,7 +218,7 @@ impl Toggleable for Button {
 
 impl SelectableButton for Button {
     fn selected_style(mut self, style: ButtonStyle) -> Self {
-        self.base = self.base.style(style);
+        self.base = self.base.selected_style(style);
         self
     }
 }
