@@ -44,7 +44,7 @@ use crate::LabelCommon as _;
 
 /// 提示标题的两种来源（对齐 zed `Title`）：纯字符串，或回调现场生成元素
 /// （`Tooltip::element` 用，比如标题里塞带样式的富文本）。
-#[derive(Clone)]
+#[derive(Clone, gpui::IntoElement)]
 enum Title {
     Str(SharedString),
     Callback(Rc<dyn Fn(&mut Window, &mut App) -> AnyElement>),
@@ -304,49 +304,28 @@ impl Tooltip {
 }
 
 impl Render for Tooltip {
-    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let colors = cx.theme().colors().clone();
-
-        let title = div()
-            .max_w(px(288.0))
-            .child(self.title.clone().render(window, cx))
-            .into_any_element();
-
-        let mut row = div().flex().flex_row().items_center().gap_4();
-
-        row = if let Some(key_binding) = self.key_binding.clone() {
-            row.justify_between().child(title).child(key_binding)
-        } else {
-            row.child(title)
-        };
-
-        // meta 是独立第二行:小号 muted 文字(对齐 zed `Label::Small + Color::Muted`)。
-        let meta = self.meta.as_ref().map(|meta| {
-            div()
-                .max_w(px(288.0))
-                .text_sm()
-                .text_color(colors.text_muted)
-                .child(meta.clone())
-        });
-
-        // 卡片本体:字号 text_size(13) 对齐 zed text_ui(app)（UI 字号 ~12-13px）。
-        let card = div()
-            .py_1()
-            .px_2()
-            .flex()
-            .flex_col()
-            .bg(colors.elevated_surface_background)
-            .text_color(colors.text)
-            .text_size(px(13.0))
-            .child(row)
-            .when_some(meta, |this, meta| this.child(meta));
-
-        // 外层留白 `pl_2 pt_2p5`（8/10）：避免提示紧贴鼠标（对齐 zed tooltip_container）。
-        div().id("tooltip").pl_2().pt_2p5().child(
-            card.rounded_md()
-                .border_1()
-                .border_color(colors.border_variant),
-        )
+    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        tooltip_container(cx, |el, _| {
+            el.child(
+                crate::h_flex()
+                    .gap_4()
+                    .child(div().max_w_72().child(self.title.clone()))
+                    .when_some(self.key_binding.clone(), |this, key_binding| {
+                        this.justify_between().child(key_binding)
+                    }),
+            )
+            .when_some(self.meta.clone(), |this, meta| {
+                this.child(
+                    div()
+                        .max_w_72()
+                        .child(
+                            crate::Label::new(meta)
+                                .size(crate::LabelSize::Small)
+                                .color(crate::Color::Muted),
+                        ),
+                )
+            })
+        })
     }
 }
 
