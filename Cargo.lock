@@ -312,6 +312,7 @@ dependencies = [
  "palette",
  "parking_lot",
  "refineable 0.1.0 (git+https://github.com/zed-industries/zed?rev=d3ccd5719486b39b6c18cf37a06233ef9833d6d8)",
+ "schemars",
  "serde",
  "serde_json",
  "strum 0.27.2",
