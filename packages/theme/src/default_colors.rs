@@ -3066,3 +3066,241 @@ pub fn catppuccin_latte() -> Theme {
         },
     }
 }
+
+// ── Catppuccin Macchiato ──────────────────────────────────────────────────────
+// Macchiato = Mocha 的次深 variant (base #24273A vs Mocha #1E1E2E)。
+// 色值来源: https://github.com/catppuccin/palette (macchiato)
+
+fn syntax_macchiato() -> SyntaxTheme {
+    SyntaxTheme::new([
+        (
+            "comment".into(),
+            HighlightStyle {
+                color: Some(h(0x6e738d)),
+                font_style: Some(FontStyle::Italic),
+                ..Default::default()
+            },
+        ),
+        (
+            "keyword".into(),
+            HighlightStyle {
+                color: Some(h(0xc6a0f6)),
+                ..Default::default()
+            },
+        ),
+        (
+            "string".into(),
+            HighlightStyle {
+                color: Some(h(0xa6da95)),
+                ..Default::default()
+            },
+        ),
+        (
+            "number".into(),
+            HighlightStyle {
+                color: Some(h(0xf5deb3)),
+                ..Default::default()
+            },
+        ),
+        (
+            "function".into(),
+            HighlightStyle {
+                color: Some(h(0x8aadf4)),
+                ..Default::default()
+            },
+        ),
+        (
+            "type".into(),
+            HighlightStyle {
+                color: Some(h(0x91d7e3)),
+                ..Default::default()
+            },
+        ),
+        (
+            "constant".into(),
+            HighlightStyle {
+                color: Some(h(0xf5a97f)),
+                ..Default::default()
+            },
+        ),
+        (
+            "variable".into(),
+            HighlightStyle {
+                color: Some(h(0xcad3f5)),
+                ..Default::default()
+            },
+        ),
+        (
+            "operator".into(),
+            HighlightStyle {
+                color: Some(h(0x8bd5ca)),
+                ..Default::default()
+            },
+        ),
+        (
+            "punctuation".into(),
+            HighlightStyle {
+                color: Some(h(0x9198b0)),
+                ..Default::default()
+            },
+        ),
+        (
+            "tag".into(),
+            HighlightStyle {
+                color: Some(h(0xed8796)),
+                ..Default::default()
+            },
+        ),
+        (
+            "attribute".into(),
+            HighlightStyle {
+                color: Some(h(0xf5a97f)),
+                ..Default::default()
+            },
+        ),
+        (
+            "title".into(),
+            HighlightStyle {
+                color: Some(h(0x8aadf4)),
+                font_weight: Some(FontWeight::MEDIUM),
+                ..Default::default()
+            },
+        ),
+        (
+            "link".into(),
+            HighlightStyle {
+                color: Some(h(0x8aadf4)),
+                ..Default::default()
+            },
+        ),
+    ])
+}
+
+pub fn status_colors_macchiato() -> StatusColors {
+    let mut colors = StatusColors::dark();
+    let (fg, bg, border) = status(0xed8796); // red
+    colors.conflict = fg;
+    colors.conflict_background = bg;
+    colors.conflict_border = border;
+    let (fg, bg, border) = status(0xa6da95); // green
+    colors.created = fg;
+    colors.created_background = bg;
+    colors.created_border = border;
+    let (fg, bg, border) = status(0xed8796);
+    colors.deleted = fg;
+    colors.deleted_background = bg;
+    colors.deleted_border = border;
+    let (fg, bg, border) = status(0xed8796);
+    colors.error = fg;
+    colors.error_background = bg;
+    colors.error_border = border;
+    let (fg, bg, border) = status(0x6e738d); // overlay0 (muted)
+    colors.hidden = fg;
+    colors.hidden_background = bg;
+    colors.hidden_border = border;
+    let (fg, bg, border) = status(0x6e738d);
+    colors.ignored = fg;
+    colors.ignored_background = bg;
+    colors.ignored_border = border;
+    let (fg, bg, border) = status(0x91d7e3); // sky
+    colors.info = fg;
+    colors.info_background = bg;
+    colors.info_border = border;
+    let (fg, bg, border) = status(0xf5a97f); // peach
+    colors.modified = fg;
+    colors.modified_background = bg;
+    colors.modified_border = border;
+    let (fg, bg, border) = status(0x8aadf4); // blue
+    colors.renamed = fg;
+    colors.renamed_background = bg;
+    colors.renamed_border = border;
+    let (fg, bg, border) = status(0xa6da95); // green
+    colors.success = fg;
+    colors.success_background = bg;
+    colors.success_border = border;
+    let (fg, bg, border) = status(0xf5deb3); // yellow
+    colors.warning = fg;
+    colors.warning_background = bg;
+    colors.warning_border = border;
+    colors
+}
+
+pub fn theme_colors_macchiato() -> ThemeColors {
+    let mut colors = ThemeColors::dark();
+    {
+        colors.border = h(0x494d64);           // surface1
+        colors.border_variant = h(0x363a4f);    // surface0
+        colors.border_focused = h(0x8aadf4);    // blue
+        colors.border_selected = h(0x8aadf4);
+        colors.border_disabled = h(0x363a4f);
+        colors.border_transparent = hsla(0., 0., 0., 0.);
+        colors.background = h(0x24273a);         // base
+        colors.surface_background = h(0x1e2030); // mantle
+        colors.elevated_surface_background = h(0x181926); // crust
+        colors.element_background = h(0x363a4f); // surface0
+        colors.element_hover = h(0x494d64);      // surface1
+        colors.element_active = h(0x5b6078);      // surface2
+        colors.element_selected = h(0x494d64);
+        colors.element_disabled = h(0x363a4f);
+        colors.ghost_element_background = hsla(0., 0., 0., 0.);
+        colors.ghost_element_hover = h(0x363a4f);
+        colors.ghost_element_active = h(0x494d64);
+        colors.ghost_element_selected = h(0x494d64);
+        colors.ghost_element_disabled = hsla(0., 0., 0., 0.);
+        colors.text = h(0xcad3f5);               // text
+        colors.text_muted = h(0xa5adce);         // subtext0
+        colors.text_placeholder = h(0x6e738d);   // overlay0
+        colors.text_disabled = h(0x7f849c);       // overlay1 (同 mocha)
+        colors.text_accent = h(0x8aadf4);        // blue
+        colors.icon = h(0xcad3f5);
+        colors.icon_muted = h(0xa5adce);
+        colors.icon_disabled = h(0x5b6078);
+        colors.icon_accent = h(0x8aadf4);
+        colors.editor_foreground = h(0xcad3f5);
+        colors.editor_background = h(0x24273a);
+        colors.editor_gutter_background = h(0x24273a);
+        colors.editor_active_line_background = h(0x363a4f);
+        colors.editor_line_number = h(0x6e738d);
+        colors.editor_active_line_number = h(0xcad3f5);
+        colors.editor_wrap_guide = h(0x363a4f);
+        colors.editor_indent_guide = h(0x363a4f);
+        colors.editor_indent_guide_active = h(0x494d64);
+        colors.editor_invisible = h(0x6e738d);
+        colors.selection_background = h(0x494d64);
+        colors.editor_cursor = h(0xf4dbd6);        // rosewater
+        colors.editor_document_highlight_read_background = ha(0x8aadf4, 0.15);
+        colors.editor_document_highlight_write_background = ha(0x8aadf4, 0.25);
+        colors.panel_background = h(0x1e2030);    // mantle
+        colors.pane_focused_border = h(0x8aadf4);
+        colors.pane_group_border = h(0x494d64);
+        colors.search_match_background = h(0x494d64);
+        colors.search_active_match_background = h(0x5b6078);
+        colors.scrollbar_thumb_background = h(0x5b6078);
+        colors.scrollbar_thumb_hover_background = h(0x6e738d);
+        colors.scrollbar_thumb_active_background = h(0x8aadf4);
+        colors.scrollbar_thumb_border = hsla(0., 0., 0., 0.);
+        colors.scrollbar_track_background = h(0x1e2030);
+        colors.scrollbar_track_border = hsla(0., 0., 0., 0.);
+        colors.link = h(0x8aadf4);
+
+        colors
+    }
+}
+
+/// Catppuccin Macchiato（次深暗色）。
+pub fn catppuccin_macchiato() -> Theme {
+    Theme {
+        id: "ctp-macchiato".into(),
+        name: "Catppuccin Macchiato".into(),
+        appearance: Appearance::Dark,
+        styles: ThemeStyles {
+            window_background_appearance: WindowBackgroundAppearance::Opaque,
+            system: SystemColors::default(),
+            accents: AccentColors::dark(),
+            players: PlayerColors::dark(),
+            syntax: Arc::new(syntax_macchiato()),
+            colors: theme_colors_macchiato(),
+            status: status_colors_macchiato(),
+        },
+    }
+}
