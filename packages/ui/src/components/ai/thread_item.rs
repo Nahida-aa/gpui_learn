@@ -268,30 +268,25 @@ impl ThreadItem {
 impl RenderOnce for ThreadItem {
     fn render(self, _: &mut Window, cx: &mut App) -> impl IntoElement {
         let color = cx.theme().colors();
+        let raw_bg = self.base_bg.unwrap_or(color.surface_background);
         // The fade gradient paints a solid color over the title to blend it into
         // the row background, but a transparent window has no opaque surface to
         // fade into, so it renders as a visible patch; truncate the title instead.
-        let opaque_window =
-            cx.theme().window_background_appearance() == WindowBackgroundAppearance::Opaque;
-        let sidebar_base_bg = color
-            .title_bar_background
-            .blend(color.panel_background.opacity(0.25));
-
-        let raw_bg = self.base_bg.unwrap_or(sidebar_base_bg);
+        let opaque_window = cx.theme().window_background_appearance()
+            == WindowBackgroundAppearance::Opaque
+            && raw_bg.a >= 1.0;
         let apparent_bg = color.background.blend(raw_bg);
 
         let base_bg = if self.selected {
-            apparent_bg.blend(color.element_active)
+            apparent_bg.blend(color.ghost_element_selected)
         } else {
             apparent_bg
         };
 
-        let hover_color = color
-            .element_active
-            .blend(color.element_background.opacity(0.2));
-        let hover_bg = apparent_bg.blend(hover_color);
+        let hover_bg = apparent_bg.blend(color.ghost_element_hover);
+        let active_bg = apparent_bg.blend(color.ghost_element_active);
 
-        let gradient_overlay = GradientFade::new(base_bg, hover_bg, hover_bg)
+        let gradient_overlay = GradientFade::new(base_bg, hover_bg, active_bg)
             .width(px(64.0))
             .right(px(-10.0))
             .gradient_stop(0.7)
@@ -451,12 +446,14 @@ impl RenderOnce for ThreadItem {
             .w_full()
             .py_1()
             .px_1p5()
-            .when(self.selected, |s| s.bg(color.element_active))
+            .when(self.selected, |s| s.bg(color.ghost_element_selected))
             .border_1()
+            .border_r_2()
             .border_color(gpui::transparent_black())
-            .when(self.focused, |s| s.border_color(color.border_focused))
+            .when(self.focused, |s| s.border_color(color.panel_focused_border))
             .when(self.rounded, |s| s.rounded_sm())
-            .hover(|s| s.bg(hover_color))
+            .hover(|s| s.bg(color.ghost_element_hover))
+            .active(|s| s.bg(color.ghost_element_active))
             .on_hover(self.on_hover)
             .child(
                 h_flex()
@@ -482,20 +479,23 @@ impl RenderOnce for ThreadItem {
                             this.child(
                                 h_flex()
                                     .relative()
-                                    .pr_1p5()
                                     .when(opaque_window, |this| {
                                         this.child(
-                                            GradientFade::new(base_bg, hover_bg, hover_bg)
+                                            GradientFade::new(base_bg, hover_bg, active_bg)
                                                 .width(px(120.0))
                                                 .right(px(8.))
                                                 .gradient_stop(0.90)
                                                 .group_name("thread-item"),
                                         )
                                     })
-                                    .child(slot)
-                                    .on_mouse_down(MouseButton::Left, |_, _, cx| {
-                                        cx.stop_propagation()
-                                    }),
+                                    .child(
+                                        h_flex()
+                                            .pr_1p5()
+                                            .child(slot)
+                                            .on_mouse_down(MouseButton::Left, |_, _, cx| {
+                                                cx.stop_propagation()
+                                            }),
+                                    ),
                             )
                         })
                     }),

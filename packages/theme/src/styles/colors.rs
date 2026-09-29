@@ -529,6 +529,20 @@ pub enum ThemeColorField {
 }
 
 impl ThemeColors {
+    /// 浮层（popover / modal）叠在窗口背景之上的实际底色（对齐 zed
+    /// `ThemeColors::surface_overlay_background`）。
+    ///
+    /// 背景与 surface 任一不透明时，两者混合就是浮层的可见底色；两者都半透明
+    /// （主题用的是毛玻璃/透明窗口）时没法靠混合算，直接用主题给的
+    /// `panel_overlay_background`。
+    pub fn surface_overlay_background(&self) -> Hsla {
+        if self.background.a >= 1.0 || self.surface_background.a >= 1.0 {
+            self.background.blend(self.surface_background)
+        } else {
+            self.panel_overlay_background
+        }
+    }
+
     /// 按字段取色。
     ///
     /// 与 zed 一致：`Option<Hsla>` 的字段在 `None` 时回落到 `text_muted`。
@@ -713,7 +727,33 @@ pub fn all_theme_colors(cx: &mut App) -> Vec<(Hsla, SharedString)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gpui::Rgba;
     use strum::IntoEnumIterator;
+
+    /// 对齐 zed `styles/colors.rs::surface_overlay_background`：
+    /// 背景 / surface 任一不透明 → 两者混合；都半透明 → 用 panel_overlay。
+    #[test]
+    fn surface_overlay_background() {
+        let mut colors = ThemeColors::light();
+        colors.panel_overlay_background = Hsla::from(gpui::rgb(0xff0000));
+
+        for (surface, background, expected) in [
+            (0x58585a00, 0xdcdcddff, 0xdcdcddff),
+            (0x00000080, 0xdcdcddff, 0x6d6d6eff),
+            (0xebebecff, 0x24252900, 0xebebecff),
+            (0xebebec00, 0x24252900, 0xff0000ff),
+            (0xebebec00, 0x24252980, 0xff0000ff),
+            (0x24252980, 0x24252980, 0xff0000ff),
+        ] {
+            colors.surface_background = Hsla::from(gpui::rgba(surface));
+            colors.background = Hsla::from(gpui::rgba(background));
+            assert_eq!(
+                u32::from(Rgba::from(colors.surface_overlay_background())),
+                expected,
+                "surface {surface:#010x}, background {background:#010x}"
+            );
+        }
+    }
 
     /// 主题色字段总数。改 `ThemeColors` 的字段时这个数必须同步 ——
     /// 忘了同步 `ThemeColorField` 就会在这里挂掉（枚举少一个变体，

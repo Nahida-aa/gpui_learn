@@ -170,6 +170,12 @@ pub struct IconButton {
     ///
     /// zed 收 `Option<Hsla>`（已经是解析后的实色，不是语义色）。
     indicator_border_color: Option<Hsla>,
+    /// 按下态底色覆盖（对齐 zed `IconButton::active_background`），
+    /// 渲染时转发给 [`ButtonLike::active_background`]。
+    active_background: Option<Hsla>,
+    /// 悬停态底色覆盖（对齐 zed `IconButton::hover_background`），
+    /// 渲染时转发给 [`ButtonLike::hover_background`]。
+    hover_background: Option<Hsla>,
     // ---- 以下四项由 [`ButtonCommon`] 设置，渲染时转发给 [`ButtonLike`] ----
     /// Tab 键导航序号（`ButtonCommon::tab_index`）。
     tab_index: Option<isize>,
@@ -211,6 +217,8 @@ impl IconButton {
             alpha: None,
             indicator: None,
             indicator_border_color: None,
+            active_background: None,
+            hover_background: None,
             tab_index: None,
             button_size: None,
             layer: None,
@@ -233,6 +241,18 @@ impl IconButton {
     /// 图标颜色（对齐 zed：收语义色 [`Color`]）。
     pub fn icon_color(mut self, color: Color) -> Self {
         self.icon_color = color;
+        self
+    }
+
+    /// 按下态底色覆盖（对齐 zed `IconButton::active_background`）。
+    pub fn active_background(mut self, background: Hsla) -> Self {
+        self.active_background = Some(background);
+        self
+    }
+
+    /// 悬停态底色覆盖（对齐 zed `IconButton::hover_background`）。
+    pub fn hover_background(mut self, background: Hsla) -> Self {
+        self.hover_background = Some(background);
         self
     }
 
@@ -408,6 +428,14 @@ impl RenderOnce for IconButton {
             // zed：`IconButton::selected_style` 同时喂给 base（zed icon_button.rs:157）
             // 和自己的 `selected_style` 字段；我们只有一个下游，直接转发。
             .when_some(self.selected_style, |this, style| this.selected_style(style))
+            // 底色覆盖（对齐 zed icon_button.rs:88-97 直接写 base 的字段；
+            // 我们的 ButtonLike 在渲染时才建，这里用 when_some 转发）。
+            .when_some(self.hover_background, |this, background| {
+                this.hover_background(background)
+            })
+            .when_some(self.active_background, |this, background| {
+                this.active_background(background)
+            })
             .disabled(disabled)
             .cursor_style(self.cursor_style.unwrap_or(CursorStyle::PointingHand));
 

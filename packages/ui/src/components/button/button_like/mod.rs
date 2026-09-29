@@ -154,6 +154,12 @@ pub struct ButtonLike {
     /// 选中态下改用这套样式（对齐 zed `ButtonLike.selected_style`）：
     /// 未设置时选中与否都是 [`Self::style`]。
     selected_style: Option<ButtonStyle>,
+    /// 悬停底色覆盖（对齐 zed `ButtonLike.hover_background`）；
+    /// `None` 时用样式的悬停色。
+    hover_background: Option<Hsla>,
+    /// 按下底色覆盖（对齐 zed `ButtonLike.active_background`）；
+    /// `None` 时用样式的按下色。
+    active_background: Option<Hsla>,
     aria_label: Option<SharedString>,
     cursor_style: CursorStyle,
     on_click: Option<ClickHandler>,
@@ -225,6 +231,8 @@ impl ButtonLike {
             disabled: false,
             selected: false,
             selected_style: None,
+            hover_background: None,
+            active_background: None,
             aria_label: None,
             cursor_style: CursorStyle::PointingHand,
             on_click: None,
@@ -337,6 +345,19 @@ impl ButtonLike {
     /// 选中态使用的样式（对齐 zed `ButtonLike::selected_style`）。
     pub fn selected_style(mut self, style: ButtonStyle) -> Self {
         self.selected_style = Some(style);
+        self
+    }
+
+    /// 悬停底色覆盖（对齐 zed `ButtonLike` 的 `hover_background` 字段；
+    /// zed 的壳直接写字段，我们字段私有，经此转发）。
+    pub fn hover_background(mut self, background: Hsla) -> Self {
+        self.hover_background = Some(background);
+        self
+    }
+
+    /// 按下底色覆盖（对齐 zed `ButtonLike` 的 `active_background` 字段）。
+    pub fn active_background(mut self, background: Hsla) -> Self {
+        self.active_background = Some(background);
         self
     }
 
@@ -501,6 +522,7 @@ impl ButtonLike {
 
 
     /// 悬停提示（`Tooltip::text("...")` 等）。
+    #[inline(always)]
     pub fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
         self
@@ -655,7 +677,9 @@ impl RenderOnce for ButtonLike {
             button = button.w(width).justify_center().text_center();
         }
         if let Some(tab_index) = self.tab_index {
-            button = button.tab_index(tab_index);
+            // 对齐 zed（button_like.rs:788-792）：已聚焦的按钮被禁用时仍留在
+            // tab 序列里，焦点不会被挤到 view 外面。
+            button = button.tab_index(tab_index).tab_stop(!disabled);
         }
 
         button = match self.rounding {
@@ -707,6 +731,10 @@ impl RenderOnce for ButtonLike {
         // Subtle 图标按钮（如 tab bar 的前后导航）变成一整块纯色，且底色与
         // `icon_disabled` 前景接近到看不出图标。
         let (bg, hover_bg, active_bg) = (style_colors.bg[0], style_colors.bg[1], style_colors.bg[2]);
+        // 对齐 zed：壳可以显式指定悬停 / 按下底色（`IconButton::hover_background`
+        // / `active_background`），没指定才用样式本身的。
+        let hover_bg = self.hover_background.unwrap_or(hover_bg);
+        let active_bg = self.active_background.unwrap_or(active_bg);
         button = button
             .bg(bg)
             .border_1()
@@ -787,6 +815,7 @@ impl RenderOnce for ButtonLike {
 }
 
 impl Clickable for ButtonLike {
+    #[inline(always)]
     fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
         self.on_click = Some(Box::new(handler));
         self
