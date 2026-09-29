@@ -11,6 +11,9 @@ use rust_embed::RustEmbed;
 #[folder = "../../assets"]
 #[include = "fonts/**/*"]
 #[include = "icons/**/*"]
+// 图标主题的多彩 SVG。只收 `*.svg`：`catppuccin-icons.json` 由 theme crate
+// `include_str!` 引入，别在二进制里存两份。
+#[include = "icon_themes/**/*.svg"]
 #[include = "images/**/*"]
 #[include = "themes/**/*"]
 #[exclude = "themes/src/*"]

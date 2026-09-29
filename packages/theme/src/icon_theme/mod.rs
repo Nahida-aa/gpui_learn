@@ -798,22 +798,22 @@ mod tests {
             .expect("默认图标主题应已注册");
         assert_eq!(
             theme.icon_for_file("main.rs").map(|s| s.to_string()),
-            Some("icons/macchiato/rust.svg".to_string()),
+            Some("icon_themes/catppuccin/macchiato/rust.svg".to_string()),
             "路径应是相对 assets 根,不带 JSON 里的 ./ 前缀"
         );
         assert_eq!(
             theme.icon_for_file("Cargo.toml").map(|s| s.to_string()),
-            Some("icons/macchiato/cargo.svg".to_string()),
+            Some("icon_themes/catppuccin/macchiato/cargo.svg".to_string()),
             "完整文件名走 file_stems(Cargo.toml → cargo)"
         );
         assert_eq!(
             theme.icon_for_file("pyproject.toml").map(|s| s.to_string()),
-            Some("icons/macchiato/toml.svg".to_string()),
+            Some("icon_themes/catppuccin/macchiato/toml.svg".to_string()),
             "普通 .toml 走 file_suffixes"
         );
         assert_eq!(
             theme.icon_for_directory("anything", false).map(|s| s.to_string()),
-            Some("icons/macchiato/_folder.svg".to_string())
+            Some("icon_themes/catppuccin/macchiato/_folder.svg".to_string())
         );
         assert!(
             theme.chevron_icon(false).is_some(),
@@ -829,7 +829,7 @@ mod tests {
             .expect("浅色默认图标主题应已注册");
         assert_eq!(
             theme.icon_for_file("main.rs").map(|s| s.to_string()),
-            Some("icons/latte/rust.svg".to_string())
+            Some("icon_themes/catppuccin/latte/rust.svg".to_string())
         );
     }
 

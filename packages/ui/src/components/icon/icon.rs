@@ -147,11 +147,13 @@ pub fn git_hosting_provider_icon(provider_name: &str) -> IconName {
 enum IconSource {
     /// An SVG embedded in the Zed binary.
     Embedded(SharedString),
-    /// An image file located at the specified path.
+    /// 图标主题的多彩图标（与 zed 同款用 `img` 渲染：gpui 的 `svg()` 只能画
+    /// **单色** alpha mask，多彩 SVG 必须走 `img`）。
     ///
-    /// Currently our SVG renderer is missing support for rendering polychrome SVGs.
-    ///
-    /// In order to support icon themes, we render the icons as images instead.
+    /// 与 zed 的差异：zed 这里存的是磁盘绝对路径（扩展安装在
+    /// `~/.local/share/zed/extensions/...`），我们没有任何磁盘上的图标主题
+    /// ——所有资源都内嵌在二进制里，所以渲染时把路径交给 `img` 的
+    /// **内嵌资源**分支（`Resource::Embedded`）而不是文件系统分支。
     External(Arc<Path>),
     /// An SVG not embedded in the Zed binary.
     ExternalSvg(SharedString),
@@ -181,8 +183,12 @@ impl Icon {
     }
 
     /// Create an icon from a path. Uses a heuristic to determine if it's embedded or external:
-    /// - Paths starting with "icons/" are treated as embedded SVGs
-    /// - Other paths are treated as external raster images (from icon themes)
+    /// - Paths starting with "icons/" are treated as embedded SVGs（内置 UI 图标，
+    ///   单色、吃主题色——gpui 的 `svg()` 走 alpha mask 上色）
+    /// - Other paths are treated as icon-theme icons（多彩，走 `img`）
+    ///
+    /// 所以图标主题的资源**不能**放在 `assets/icons/` 下（那就是内置单色图标的位置），
+    /// 我们放在 `assets/icon_themes/`。
     pub fn from_path(path: impl Into<SharedString>) -> Self {
         let path = path.into();
         let source = if path.starts_with("icons/") {
@@ -262,7 +268,10 @@ impl RenderOnce for Icon {
                 .flex_none()
                 .text_color(self.color.color(cx))
                 .into_any_element(),
-            IconSource::External(path) => img(path)
+            // 图标主题：走 `img` 才能保住多彩 SVG 自己的颜色。
+            // `img(String)` → `ImageSource::Resource(Resource::Embedded(..))`，
+            // 从资产源取字节（见 IconSource::External 的注释）。
+            IconSource::External(path) => img(path.to_string_lossy().to_string())
                 .size(self.size)
                 .flex_none()
                 .text_color(self.color.color(cx))
