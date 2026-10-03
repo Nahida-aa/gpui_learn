@@ -46,6 +46,70 @@ gpui_learn/
     Android 平台层，在 Vulkan/wgpu 上**原生渲染**（不经过浏览器），对接本仓库自己的
     GPUI `82aef443`。维护方式见 `docs/maintain-gpui-android.md`。
 
+## 跟进 zed 版本（对齐 stable 发布）
+
+GPUI 没有独立发版，`crates/gpui` 随 zed 一起发，所以本仓库的「GPUI 版本」就是
+**根 `Cargo.toml` 里那些 git 依赖锁的 zed rev**（`gpui` / `gpui_macros` /
+`gpui_platform` / `gpui_wgpu` / `gpui_util` / `sum_tree` / `menu` / `refineable` /
+`fuzzy` / `path`，共 10 处，**必须同一个 rev**）。以根 `Cargo.toml` 为唯一权威，
+其它文档里出现的具体 rev 字符串可能已过期。
+
+### 查当前 stable 对应的 commit
+
+```bash
+# 最新 stable 的 tag + commit（一次 GraphQL 请求）
+# 注意：REST /releases 不返回 sha，必须走 GraphQL 的 tagCommit，否则要再解引用一次
+gh api graphql -f query='
+{ repository(owner:"zed-industries",name:"zed") {
+    releases(first:10, orderBy:{field:CREATED_AT,direction:DESC}) {
+      nodes { tagName publishedAt isPrerelease tagCommit { oid } }
+    } } }' \
+  --jq '.data.repository.releases.nodes[]
+    | select(.isPrerelease == false)
+    | "\(.tagName)\t\(.tagCommit.oid)"' | head -1
+```
+
+AAgent 仓库把这个查询做成了脚本 + just recipe：`bun tools/gh-releases.ts
+zed-industries/zed --latest`（见 `~/repos/ai_ls/AAgent/tools/gh-releases.ts`）。
+
+### 为什么对齐 stable 而不是 main
+
+stable 拿到的是**已发布、已验证**的代码，`rev` 可复现，别人 clone 下来编出来的
+行为一致。但有个必须知道的坑：
+
+> **zed 的 stable tag 不在 `main` 上**，它是一条只含 cherry-pick 的发布线（提交信息
+> 都带 `(cherry-pick to preview)`）。`v1.21.0` / `v1.22.0` 的 commit 都不是
+> `origin/main` 的祖先。
+>
+> 所以从 main 切到 stable **会丢掉 main 上尚未发布的提交**。例如本仓库当前 pin
+> `bd747337`（2026-09-28，main 线）与 `v1.22.0`（`76659a55`，发布线）的分叉点是
+> `bf89346c`：pin 领先分叉点 72 个提交，v1.22.0 领先 10 个。
+>
+> 取舍看需求：要**可复现的已发布版本**就用 stable tag；要 main 上的最新改动就继续
+> 留在 main。别指望两者兼得。
+
+### 更新步骤
+
+```bash
+# 1. 换掉根 Cargo.toml 里全部 10 处 rev
+OLD=bd747337d7be138834e20972b9e203c7b239cc47
+NEW=76659a55a8c10ed355a070f8764a0b1733e3c115
+sed -i "s/$OLD/$NEW/g" Cargo.toml
+grep -c "$NEW" Cargo.toml        # 应为 10
+
+# 2. 看 zed 那边到底变了什么
+git -C ~/repos/ide_ls/learn_ls/zed log --oneline $OLD..$NEW
+
+# 3. 编译，按报错逐个适配 API 变更
+cargo check --workspace
+
+# 4. vendored 的平台层要跟着改（它锁死了 gpui / gpui_wgpu 的 rev）
+#    见 docs/maintain-gpui-android.md
+
+# 5. 提交，沿用既有风格
+git commit -m "chore: 同步 zed rev ${OLD:0:10} → ${NEW:0:10}"
+```
+
 ## 常用命令
 
 ```bash
