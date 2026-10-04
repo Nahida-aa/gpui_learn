@@ -188,6 +188,26 @@ impl<M: ManagedView> PopoverMenuHandle<M> {
                 .is_some_and(|model| model.focus_handle(cx).is_focused(window))
         })
     }
+
+    /// 替换菜单内容的构建闭包；若菜单当前已打开则立即用新内容重绘。
+    /// 对齐 zed `PopoverMenuHandle::refresh_menu`。
+    pub fn refresh_menu(
+        &self,
+        window: &mut Window,
+        cx: &mut App,
+        new_menu_builder: MenuBuilder<M>,
+    ) {
+        let show_menu = if let Some(state) = self.0.borrow_mut().as_mut() {
+            state.menu_builder = new_menu_builder;
+            state.menu.borrow().is_some()
+        } else {
+            false
+        };
+
+        if show_menu {
+            self.show(window, cx);
+        }
+    }
 }
 
 /// 点击触发的锚定浮层菜单（对齐 zed `PopoverMenu`）。
