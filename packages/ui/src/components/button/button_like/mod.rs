@@ -735,9 +735,18 @@ impl RenderOnce for ButtonLike {
         // / `active_background`），没指定才用样式本身的。
         let hover_bg = self.hover_background.unwrap_or(hover_bg);
         let active_bg = self.active_background.unwrap_or(active_bg);
+        // 对齐 zed（button_like.rs:758-804）：只有 Outlined / OutlinedGhost /
+        // OutlinedCustom 这类「描边」样式才真的画 1px 边框；其余样式（含
+        // Tinted）的 border_color 只是占位，不渲染边框。否则 Tinted(Accent)
+        // 会多出一圈 info_border 高亮边，与 zed 不一致（如 ACP Registry 的
+        // Install 下载按钮）。
+        let is_outlined = matches!(
+            style,
+            ButtonStyle::Outlined | ButtonStyle::OutlinedGhost | ButtonStyle::OutlinedCustom(_)
+        );
         button = button
             .bg(bg)
-            .border_1()
+            .when(is_outlined, |this| this.border_1())
             .border_color(style_colors.border);
         if disabled {
             // zed：默认光标是指手时改成 not-allowed，否则保留自定义光标。
