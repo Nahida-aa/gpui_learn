@@ -119,7 +119,7 @@ crates.io 依赖 + `nix`/`mach2`/`windows`/`command-fds` 平台件 + 绑定 zed 
 **按「功能完整对齐是硬要求」这个前提，只有 (A) 成立。** 这需要用户确认，
 不是我能替你决定的 —— 而且它会影响整个仓库的 license 字段，不只是这一个包。
 
-## 现状：AAgent 已经建了壳，而且是断的
+## 现状：aacode 已经建了壳，而且是断的
 
 ```
 packages/settings_json/
@@ -130,7 +130,7 @@ packages/settings_json/
 - `packages/settings_content/src/project.rs:11` 已经写了
   `use settings_json::parse_json_with_comments;` —— **但 settings_json 里没有这个
   函数**，所以这条链现在是断的；
-- AAgent 根 `Cargo.toml` 只声明了 `util = { path = "packages/util" }`，
+- aacode 根 `Cargo.toml` 只声明了 `util = { path = "packages/util" }`，
   **没有** `tree-sitter` / `tree-sitter-json` / `serde_json_lenient` /
   `serde_path_to_error`，所以就算把 zed 源码填进去也编不过；
 - zed 那侧的消费者是 `crates/settings`（`pub use settings_json::*;`）+ `settings_content`
@@ -138,14 +138,14 @@ packages/settings_json/
 
 **最小止血**：先填 `parse_json_with_comments`（8 行）+ 加两个 registry 依赖
 （`serde_json_lenient` / `serde_path_to_error`）+ 去掉 `util` 依赖。
-不需要 tree-sitter，也不碰 editing。这一步能让 AAgent 那条链先通。
+不需要 tree-sitter，也不碰 editing。这一步能让 aacode 那条链先通。
 
 ## 决策表
 
 | 场景 | 怎么做 |
 |---|---|
 | 现在（gpui_learn 侧） | **不引入** —— gpui_learn 的 `theme-settings` 只吃纯 JSON，零需求 |
-| AAgent `settings_content` 等着用 | **先填 8 行的 `parse_json_with_comments`**（阶段 1） |
+| aacode `settings_content` 等着用 | **先填 8 行的 `parse_json_with_comments`**（阶段 1） |
 | 要做到 zed settings 的完整 API 面（`pub use settings_json::*`） | **完整抄 2703 行**（阶段 2），含 tree-sitter + 1942 行测试 |
 | 许可 | 拍板 (A)/(B)/(C)。前提「功能完整对齐」下只有 (A) |
 

@@ -73,13 +73,37 @@ impl SyntaxTheme {
     /// 返回 `None` 表示该主题未定义此 capture 的高亮样式。`language_core` 的
     /// `HighlightId::new` 直接消费这个值,从而让 `HighlightId` 的内部值等于
     /// `highlights` 的索引(与 zed 语义一致)。
-    pub fn highlight_id(&self, capture: &str) -> Option<u32> {
-        self.capture_name_map.get(capture).map(|&ix| ix as u32)
+    ///
+    /// **层级 fallback** (对齐 Zed `syntax_theme::SyntaxTheme::highlight_id`):
+    /// capture `function.definition` 找不到精确匹配时,降级到 `function`。
+    /// 这让主题只需定义顶层名 (`function`, `type`) 就能覆盖所有子级
+    /// (`function.definition`, `function.method`, `type.builtin`, ...)。
+    pub fn highlight_id(&self, capture_name: &str) -> Option<u32> {
+        use std::ops::Bound;
+        // BTreeMap.range 上界 = (start_prefix..=capture_name) 反向找最长可匹配前缀
+        // 例 capture = "function.definition" → range 从 "function" 开始到
+        // "function.definition"，反向 rfind 每个 prefix 检查：
+        //   "function.definition" → strip_prefix("function.definition") → "" ✓
+        //   "function" → strip_prefix("function") → ".definition" (以 . 开头) ✓
+        self.capture_name_map
+            .range::<str, _>((
+                capture_name
+                    .split('.')
+                    .next()
+                    .map_or(Bound::Included(capture_name), Bound::Included),
+                Bound::Included(capture_name),
+            ))
+            .rfind(|(prefix, _)| {
+                capture_name
+                    .strip_prefix(*prefix)
+                    .is_some_and(|remainder| remainder.is_empty() || remainder.starts_with('.'))
+            })
+            .map(|(_, index)| *index as u32)
     }
 
     /// 按索引取高亮样式:[`Self::get`] 的显式 `usize` 版。
     ///
-    /// AAgent 的 `language` 里有 `.highlight(usize::from(id))` 这样的调用点，保留
+    /// aacode 的 `language` 里有 `.highlight(usize::from(id))` 这样的调用点，保留
     /// 这个方法就不用去改它们。zed 侧这些位置用的是 `resolve_runs`，等那边照 zed
     /// 改成 `resolve_runs` 之后，这个别名就可以删掉。
     pub fn highlight(&self, id: usize) -> Option<&HighlightStyle> {

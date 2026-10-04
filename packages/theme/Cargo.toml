@@ -8,6 +8,11 @@ publish.workspace = true
 [lints]
 workspace = true
 
+# state.rs 的 SystemAppearance 等全局测试用 #[gpui::test]。
+[features]
+default = []
+test-support = ["gpui/test-support", "syntax_theme/test-support"]
+
 [dependencies]
 # 主题本质是 gpui 的全局状态(`Global`)与颜色类型(`Hsla`/`GlobalColors`),
 # 因此这个包不是纯数据包,必须依赖 gpui。物理上独立成 crate 的价值在
@@ -46,6 +51,4 @@ uuid = { version = "1", features = ["v4"] }
 # 让 147 个主题色字段能被遍历、并能取回 snake_case 字段名。
 strum = { version = "0.27", features = ["derive"] }
 
-# state.rs 的 SystemAppearance 等全局测试用 #[gpui::test]。
-[features]
-test-support = ["gpui/test-support"]
+syntax_theme.workspace = true

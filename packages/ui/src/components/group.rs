@@ -2,7 +2,7 @@
 //!
 //! 一组「横向/纵向 + 固定 gap」的一行函数，zed 的 prelude 里就有
 //! （`h_group_sm` / `h_group` / `h_group_lg` / `h_group_xl` 与 `v_*`），
-//! AAgent 的 project_diff / solo_diff_view 直接写裸名调用。
+//! aacode 的 project_diff / solo_diff_view 直接写裸名调用。
 
 use gpui::{Div, div, prelude::*};
 

@@ -15,7 +15,7 @@ aa_icons.workspace = true
 gpui.workspace = true
 gpui_macros.workspace = true
 # ModalHeader / Navigable 挂的是 zed menu crate 的 action（Cancel /
-# SelectNext / SelectPrevious），必须与 AAgent 引用同一份。
+# SelectNext / SelectPrevious），必须与 aacode 引用同一份。
 menu.workspace = true
 # HighlightedLabel 的 debug_panic!（非 release 才 panic 的调试断言宏）。
 gpui_util.workspace = true
@@ -67,7 +67,7 @@ strum.workspace = true
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # `scrollbars::ShowScrollbar` 等设置项枚举要能被放进调用方的
-# `#[derive(JsonSchema)]` 设置结构里（AAgent 的 git_panel_settings 就是这么用的）。
+# `#[derive(JsonSchema)]` 设置结构里（aacode 的 git_panel_settings 就是这么用的）。
 schemars.workspace = true
 
 documented.workspace = true
