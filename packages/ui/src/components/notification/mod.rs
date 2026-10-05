@@ -3,5 +3,7 @@
 //! 目前只有 `AlertModal`。zed 同目录还有 `announcement_toast`，未搬。
 
 pub mod alert_modal;
+pub mod announcement_toast;
 
 pub use alert_modal::*;
+pub use announcement_toast::*;

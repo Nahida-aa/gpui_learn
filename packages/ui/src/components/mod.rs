@@ -109,6 +109,7 @@ pub use diff_stat::DiffStat;
 pub use modal::{Modal, ModalFooter, ModalHeader, Section, SectionHeader};
 pub use navigable::{Navigable, NavigableEntry};
 pub use notification::alert_modal::AlertModal;
+pub use notification::announcement_toast::AnnouncementToast;
 pub use popover::{POPOVER_Y_PADDING, Popover};
 pub use project_empty_state::ProjectEmptyState;
 pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};

@@ -5,6 +5,7 @@ pub mod apca_contrast;
 pub mod color_contrast;
 pub mod constants;
 pub mod control_characters;
+pub mod corner_solver;
 pub mod search_input;
 pub mod with_rem_size;
 
@@ -12,6 +13,7 @@ pub use apca_contrast::*;
 pub use color_contrast::*;
 pub use constants::*;
 pub use control_characters::*;
+pub use corner_solver::*;
 pub use search_input::*;
 pub use with_rem_size::*;
 
