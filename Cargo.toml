@@ -125,7 +125,13 @@ num-format = "0.4.4"
 #   E0407: method `compressed` is not a member of trait `rust_embed::RustEmbed`
 #   E0425/E0422: cannot find type/struct `EmbeddedCompressedFile`
 # 锁到 8.11.x 可保证本仓库与 aacode 的 rust-embed 三件套版本一致。
-rust-embed = { version = "~8.11", features = ["include-exclude"] }
+#
+# features 也要与上游 zed（Cargo.toml L825）、aacode 三方一致，都开 compression：
+# 本仓库的 packages/assets 经 aacode 的 [patch] 以 path 依赖被引入，而 aacode 侧
+# 开了 compression；feature 在同一个编译单元内会被 cargo 合并（取并集），
+# 但若本仓库单独构建时不开，两边的编译产物就会不一致（同一 crate 在两个
+# workspace 链接到不同的 feature 组合）。
+rust-embed = { version = "~8.11", features = ["include-exclude", "compression"] }
 serde = { version = "1.0.221", features = ["derive", "rc"] }
 strum = { version = "0.28", features = ["derive"] }
 # JSON Schema（`schemars::JsonSchema`）：settings 包要把 ui 的枚举（如
