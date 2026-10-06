@@ -116,8 +116,9 @@ pub use popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use progress_bar::ProgressBar;
 pub use redistributable_columns::*;
 pub use scrollbar::{
-    EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
-    ScrollableHandle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
+    EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarElement, ScrollbarPrepaintState,
+    ScrollbarRevealPolicy, ScrollbarStyle, ScrollableHandle, Scrollbars, ShowBehavior,
+    WithScrollbar, on_new_scrollbars, scrollbars,
 };
 pub use stack::{h_flex, v_flex};
 pub use sticky_items::{StickyCandidate, StickyItems, StickyItemsDecoration, sticky_items};
