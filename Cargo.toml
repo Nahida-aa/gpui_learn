@@ -117,7 +117,15 @@ log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
 # 数字千分位格式化（DiffStat 的 `1,234` 行数显示，与 zed ui 同款）。
 num-format = "0.4.4"
 
-rust-embed = { version = "8.11", features = ["include-exclude"] }
+# 用 `~8.11` 而非 "8.11"：后者无上界（^8.11），rust-embed 对 impl/utils 的约束
+# 又是 ^8.9，于是三者会各自漂到当前最新的 8.12.x。而 `compressed()` /
+# `EmbeddedCompressedFile` 这套 API 只存在于 8.12、8.11 的 trait 里没有——
+# 一旦某个下游（如 aacode，它给 rust-embed 开了 compression）把 impl 解析到 8.12
+# 而 lib 停在 8.11，derive 展开就报：
+#   E0407: method `compressed` is not a member of trait `rust_embed::RustEmbed`
+#   E0425/E0422: cannot find type/struct `EmbeddedCompressedFile`
+# 锁到 8.11.x 可保证本仓库与 aacode 的 rust-embed 三件套版本一致。
+rust-embed = { version = "~8.11", features = ["include-exclude"] }
 serde = { version = "1.0.221", features = ["derive", "rc"] }
 strum = { version = "0.28", features = ["derive"] }
 # JSON Schema（`schemars::JsonSchema`）：settings 包要把 ui 的枚举（如
