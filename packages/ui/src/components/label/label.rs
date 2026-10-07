@@ -264,8 +264,13 @@ impl RenderOnce for Label {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         if self.render_code_spans {
             if let Some((stripped, code_ranges)) = parse_backtick_spans(&self.label) {
-                // 暂用平台 monospace（无字体设置系统；theme 字体配置后接入）。
-                let buffer_font_family = SharedString::from(BUFFER_FONT_FAMILY);
+                // 走 ThemeSettingsProvider 取 buffer 字体族 —— 对齐 zed
+                // `theme::theme_settings(cx).buffer_font(cx).family`。
+                // 原先硬编码 "monospace"（常量 BUFFER_FONT_FAMILY），绕过了
+                // provider，导致上层（如 aacode 的 theme_settings）覆盖 provider
+                // 后 Label 仍用旧硬编码值。provider 默认实现即返回 monospace，
+                // 故未配置时行为不回退。
+                let buffer_font_family = aa_gpui_kit_theme::buffer_font(cx).family;
                 let background_color = cx.theme().colors().element_background;
 
                 let highlights = code_ranges.iter().map(|range| {
@@ -439,7 +444,3 @@ impl Component for Label {
                 .into_any_element()
     }
 }
-
-/// buffer（等宽）字体族。无字体设置系统，暂取平台 monospace；
-/// theme 包建立字体配置后改为从主题读取。
-pub const BUFFER_FONT_FAMILY: &str = "monospace";
