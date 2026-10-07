@@ -12,7 +12,7 @@
 //! `libhello_android.so` 后，由 `android-activity` 胶水层调用我们导出的
 //! `android_main(app: AndroidApp)`。在那里：
 //!
-//! 1. `gpui_android::android::jni::init_platform(&app)` 把 `AndroidApp` 存成全局，
+//! 1. `aa_gpui_android::android::jni::init_platform(&app)` 把 `AndroidApp` 存成全局，
 //!    并创建 `AndroidPlatform`（实现 `gpui::Platform`）。
 //! 2. `shared_platform()` 取出它，交给 `Application::with_platform(..).run(..)`。
 //!    `run` 在 Android 上**阻塞**在事件循环里（见 `crates/gpui-android/src/android/platform.rs`），
@@ -112,10 +112,10 @@ mod imp {
         log::info!("android_main: entered");
 
         // 1) 创建并全局存储 AndroidPlatform。
-        let _platform = gpui_android::android::jni::init_platform(&app);
+        let _platform = aa_gpui_android::android::jni::init_platform(&app);
 
         // 2) 取出 SharedPlatform，交给 GPUI 作为本进程的平台实现。
-        let Some(shared_platform) = gpui_android::android::jni::shared_platform() else {
+        let Some(shared_platform) = aa_gpui_android::android::jni::shared_platform() else {
             log::error!("android_main: shared_platform() 返回 None，平台未初始化");
             return;
         };

@@ -115,8 +115,8 @@ mod android_entry {
         }));
         log::info!("android_main: entered (text_area_06 v{})", APP_VERSION);
 
-        let _platform = gpui_android::android::jni::init_platform(&app);
-        let Some(shared_platform) = gpui_android::android::jni::shared_platform() else {
+        let _platform = aa_gpui_android::android::jni::init_platform(&app);
+        let Some(shared_platform) = aa_gpui_android::android::jni::shared_platform() else {
             log::error!("android_main: shared_platform() 返回 None");
             return;
         };
@@ -133,17 +133,17 @@ mod android_entry {
 
                     // Android 没有物理键盘，获得焦点时主动弹软键盘。
                     let _ = window.on_focus_in(&ta_focus, cx, |_window, _cx| {
-                        gpui_android::android::jni::show_keyboard_android(
-                            gpui_android::KeyboardType::MultiLine,
+                        aa_gpui_android::android::jni::show_keyboard_android(
+                            aa_gpui_android::KeyboardType::MultiLine,
                         );
                     });
                     let _ = window.on_focus_out(&ta_focus, cx, |_event, _window, _cx| {
-                        gpui_android::android::jni::hide_keyboard_android();
+                        aa_gpui_android::android::jni::hide_keyboard_android();
                     });
 
                     // 兜底弹出一次（初始聚焦时 on_focus_in 未必触发）。
-                    gpui_android::android::jni::show_keyboard_android(
-                        gpui_android::KeyboardType::MultiLine,
+                    aa_gpui_android::android::jni::show_keyboard_android(
+                        aa_gpui_android::KeyboardType::MultiLine,
                     );
                 })
                 .unwrap();

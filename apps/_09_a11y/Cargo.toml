@@ -35,9 +35,9 @@ gpui_platform = { workspace = true }
 gpui_platform = { workspace = true }
 wasm-bindgen = "0.2.120"
 
-# Android：NativeActivity 加载 cdylib .so；gpui-android 走 packages/（自有后端）。
+# Android：NativeActivity 加载 cdylib .so；aa_gpui_android 走 packages/（自有后端）。
 [target.'cfg(target_os = "android")'.dependencies]
-gpui-android = { path = "../../packages/gpui-android" }
+aa_gpui_android = { path = "../../packages/gpui_android" }
 android-activity = { version = "0.6", features = ["native-activity"] }
 android_logger = "0.15"
 

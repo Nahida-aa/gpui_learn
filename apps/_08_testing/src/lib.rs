@@ -278,8 +278,8 @@ mod android_entry {
         }));
         log::info!("android_main: entered (testing_08)");
 
-        let _platform = gpui_android::android::jni::init_platform(&app);
-        let Some(shared_platform) = gpui_android::android::jni::shared_platform() else {
+        let _platform = aa_gpui_android::android::jni::init_platform(&app);
+        let Some(shared_platform) = aa_gpui_android::android::jni::shared_platform() else {
             log::error!("android_main: shared_platform() 返回 None");
             return;
         };

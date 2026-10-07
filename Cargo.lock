@@ -35,11 +35,11 @@ dependencies = [
 name = "_06_text_area"
 version = "0.1.5"
 dependencies = [
+ "aa_gpui_android",
  "android-activity",
  "android_logger",
  "env_logger",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
- "gpui-android",
  "gpui_platform",
  "log",
  "unicode-segmentation",
@@ -50,11 +50,11 @@ dependencies = [
 name = "_07_uniform_list"
 version = "0.1.0"
 dependencies = [
+ "aa_gpui_android",
  "android-activity",
  "android_logger",
  "env_logger",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
- "gpui-android",
  "gpui_platform",
  "log",
 ]
@@ -63,12 +63,12 @@ dependencies = [
 name = "_08_testing"
 version = "0.1.0"
 dependencies = [
+ "aa_gpui_android",
  "android-activity",
  "android_logger",
  "env_logger",
  "futures",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
- "gpui-android",
  "gpui_platform",
  "log",
  "rand 0.9.5",
@@ -79,10 +79,10 @@ dependencies = [
 name = "_09_a11y"
 version = "0.1.0"
 dependencies = [
+ "aa_gpui_android",
  "android-activity",
  "android_logger",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
- "gpui-android",
  "gpui_platform",
  "log",
  "tracing",
@@ -262,6 +262,31 @@ dependencies = [
  "parking_lot",
  "serde",
  "smallvec",
+]
+
+[[package]]
+name = "aa_gpui_android"
+version = "0.9.3"
+dependencies = [
+ "accesskit",
+ "android-activity",
+ "android_logger",
+ "anyhow",
+ "futures",
+ "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=d88f68217b370f7a66d0c4b4971db31c0dff6df7)",
+ "gpui_wgpu 0.1.0 (git+https://github.com/zed-industries/zed?rev=d88f68217b370f7a66d0c4b4971db31c0dff6df7)",
+ "jni",
+ "libc",
+ "log",
+ "ndk",
+ "ndk-context",
+ "ndk-sys",
+ "parking_lot",
+ "raw-window-handle",
+ "rustc-hash 2.1.3",
+ "serde_json",
+ "smallvec",
+ "uuid",
 ]
 
 [[package]]
@@ -2917,31 +2942,6 @@ dependencies = [
  "waker-fn",
  "web-time",
  "windows 0.61.3",
-]
-
-[[package]]
-name = "gpui-android"
-version = "0.9.3"
-dependencies = [
- "accesskit",
- "android-activity",
- "android_logger",
- "anyhow",
- "futures",
- "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=d88f68217b370f7a66d0c4b4971db31c0dff6df7)",
- "gpui_wgpu 0.1.0 (git+https://github.com/zed-industries/zed?rev=d88f68217b370f7a66d0c4b4971db31c0dff6df7)",
- "jni",
- "libc",
- "log",
- "ndk",
- "ndk-context",
- "ndk-sys",
- "parking_lot",
- "raw-window-handle",
- "rustc-hash 2.1.3",
- "serde_json",
- "smallvec",
- "uuid",
 ]
 
 [[package]]
@@ -7203,10 +7203,10 @@ dependencies = [
 name = "ug_01_hello_android"
 version = "0.1.0"
 dependencies = [
+ "aa_gpui_android",
  "android-activity",
  "android_logger",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
- "gpui-android",
  "log",
 ]
 
@@ -7214,10 +7214,10 @@ dependencies = [
 name = "ug_02_android_input"
 version = "0.1.2"
 dependencies = [
+ "aa_gpui_android",
  "android-activity",
  "android_logger",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
- "gpui-android",
  "log",
  "unicode-segmentation",
 ]

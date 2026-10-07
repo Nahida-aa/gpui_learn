@@ -5,7 +5,7 @@
 //! 这是 `04_input`（桌面文本输入）的 **Android 版**：同一套 `TextInput` 逻辑
 //! （光标 / 选区 / IME / 剪贴板 / 键盘布局），只是把入口换成 `android_main`，
 //! 并在输入框获得焦点时弹出**软键盘**（Android 没有物理键盘，必须主动调
-//! `gpui_android::android::jni::show_keyboard_android`）。
+//! `aa_gpui_android::android::jni::show_keyboard_android`）。
 //!
 //! 重点结论：**`gpui-android` 后端原生支持 input**——`handle_input` 是 `Window`
 //! 的方法、`text_system` / 剪贴板 / 键盘布局 / IME 合成都已实现，不需要给后端
@@ -751,8 +751,8 @@ mod imp_entry {
         );
 
         // 1) 创建并全局存储 AndroidPlatform；2) 取出交给 GPUI；3) 阻塞运行。
-        let _platform = gpui_android::android::jni::init_platform(&app);
-        let Some(shared_platform) = gpui_android::android::jni::shared_platform() else {
+        let _platform = aa_gpui_android::android::jni::init_platform(&app);
+        let Some(shared_platform) = aa_gpui_android::android::jni::shared_platform() else {
             log::error!("android_main: shared_platform() 返回 None");
             return;
         };
@@ -813,18 +813,18 @@ mod imp_entry {
                     // （IME）。借 GPUI 的 on_focus_in/on_focus_out 监听 TextInput
                     // 焦点变化：获得焦点 → 弹键盘；失去焦点 → 收键盘。
                     let _ = window.on_focus_in(&input_focus, cx, |_window, _cx| {
-                        gpui_android::android::jni::show_keyboard_android(
-                            gpui_android::KeyboardType::Default,
+                        aa_gpui_android::android::jni::show_keyboard_android(
+                            aa_gpui_android::KeyboardType::Default,
                         );
                     });
                     let _ = window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
-                        gpui_android::android::jni::hide_keyboard_android();
+                        aa_gpui_android::android::jni::hide_keyboard_android();
                     });
 
                     // 启动即聚焦输入框，直接弹出一次软键盘（on_focus_in 在初始聚焦时
                     // 未必触发，这里兜底确保键盘出现）。
-                    gpui_android::android::jni::show_keyboard_android(
-                        gpui_android::KeyboardType::Default,
+                    aa_gpui_android::android::jni::show_keyboard_android(
+                        aa_gpui_android::KeyboardType::Default,
                     );
                 })
                 .unwrap();

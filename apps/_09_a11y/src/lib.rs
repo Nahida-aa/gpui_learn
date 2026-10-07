@@ -345,10 +345,10 @@ mod android_entry {
 
         // 1) 创建并全局存储 AndroidPlatform（自带无障碍采集，见
         //    packages/gpui-android/src/accessibility.rs）。
-        let _platform = gpui_android::android::jni::init_platform(&app);
+        let _platform = aa_gpui_android::android::jni::init_platform(&app);
 
         // 2) 取出 SharedPlatform，交给 GPUI 作为本进程的平台实现。
-        let Some(shared_platform) = gpui_android::android::jni::shared_platform() else {
+        let Some(shared_platform) = aa_gpui_android::android::jni::shared_platform() else {
             log::error!("android_main: shared_platform() 返回 None");
             return;
         };

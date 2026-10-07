@@ -1,5 +1,5 @@
 [package]
-name = "gpui-android"
+name = "aa_gpui_android"
 version = "0.9.3"
 edition = "2024"
 description = "Android platform backend for GPUI (vendored into gpui_learn, pinned to zed d88f6821)"
