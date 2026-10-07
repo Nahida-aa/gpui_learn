@@ -37,7 +37,7 @@ use crate::components::icon::IconWithIndicator;
 use crate::components::indicator::Indicator;
 use crate::styles::{DynamicSpacing, ElevationIndex};
 use crate::components::tooltip::TooltipHost;
-use crate::traits::{Clickable, Disableable, Toggleable};
+use crate::traits::{Clickable, Disableable, StyledExt as _, Toggleable};
 use crate::styles::units::rems_from_px;
 
 /// 图标在按钮 / 菜单条目里的哪一侧（对齐 zed `IconPosition`，
@@ -599,16 +599,21 @@ impl RenderOnce for ButtonLike {
         };
 
         let button_id = self.id.clone();
+        // 对齐 zed button_like.rs:767 —— base 用 `self.base.h_flex()`，
+        // **不带 items_center() / justify_center()**。
+        //
+        // 原先这里写成 `div().flex().items_center().justify_center()`，
+        // 把按钮内容整体强制居中。Button 的内容是
+        // `h_flex().justify_between().child(Label).when_some(key_binding)` ——
+        // 外层再叠一层 items_center + justify_center 后，「标签 + 快捷键」这一对
+        // 被推到中间，表现为 ProjectSearch 空状态引导页的按钮文字居中，
+        // 而 zed 是左对齐。h_flex() 自带 items_center，足够对齐图标与文字。
+        // zed 是 `self.base.h_flex()`；aacode 的 ButtonLike 不是 Div，
+        // 故等价地写 `div().h_flex()`。
         let mut button = div()
-            .id(self.id)
-            .flex()
-            .items_center()
-            .justify_center()
-            // 对齐 zed（button_like.rs:799）：按钮不参与父级 flex 的伸缩，
-            // 宽度由内容（或显式 `width` / `box_size`）决定。
+            .h_flex()
+            .id(self.id.clone())
             .flex_none()
-            // 图标与文字的间距由下面的 `.gap(DynamicSpacing::Base04..)` 统一负责
-            // （对齐 zed：zed 的 ButtonLike 也只设一处 gap）。
             .aria_label(self.aria_label.clone().unwrap_or_default());
 
         // 无障碍属性（对齐 zed ButtonLike 的 aria_* 系列）。
