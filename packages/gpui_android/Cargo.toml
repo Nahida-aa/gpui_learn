@@ -23,14 +23,19 @@ spinorama = []
 tokio = []
 urlencoding = []
 
-# GPUI 依赖统一指向本仓库根 [patch.crates-io] 的 zed d88f6821（与 01/02 同源）。
-# 注意：本仓库根已把 gpui / gpui_wgpu patch 到该 rev，这里用相同的 git 源即可。
+# gpui 走 `workspace = true` 继承根 [workspace.dependencies] 的
+# `gpui = { version = "0.2.2", default-features = false }`，再由根
+# [patch.crates-io] 统一指向 zed 的某个 rev。
+#
+# 不可写成 git 直连（`{ git = ..., rev = ... }`）—— 那样绕过 crates.io，
+# 根的 patch 对它不生效，本包就会与仓库其余部分用**两个不同的 gpui**，
+# 同一依赖图里出现两份 gpui 时会报 E0463（类型不互通）。
 [dependencies]
 accesskit = "0.24.0"
 anyhow = "1.0"
 futures = "0.3"
-gpui = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.2.2", default-features = false }
-gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "d88f68217b370f7a66d0c4b4971db31c0dff6df7", version = "=0.1.0" }
+gpui.workspace = true
+gpui_wgpu.workspace = true
 log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
 parking_lot = "0.12"
 raw-window-handle = "0.6"

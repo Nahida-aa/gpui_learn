@@ -73,6 +73,9 @@ gpui_macros = { version = "0.1.0" }
 # gpui_platform 提供平台入口（application()），是发布版例子实际需要的 crate。
 gpui_platform = { version = "0.1.0" }
 gpui_web = { version = "0.1.0" }
+# gpui_wgpu 是渲染后端（winit + wgpu），aa_gpui_android 需要它来建 EGL 上下文。
+# 此前只在 [patch.crates-io] 里、没在这里声明，导致子包无法用 workspace = true 引用。
+gpui_wgpu = { version = "0.1.0" }
 gpui_util = { version = "0.1.0" }
 
 # 任何子包都可以用 `anyhow = { workspace = true }` 引用，版本由这里统一。
