@@ -22,7 +22,7 @@ path = "src/main.rs"
 
 [dependencies]
 gpui = { workspace = true }
-aa_gpui_android = { path = "../../packages/gpui_android" }
+aa_gpui_android.workspace = true
 unicode-segmentation = "1.11"
 
 # 桌面 / 通用依赖：log 给诊断日志用。

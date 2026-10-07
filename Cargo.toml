@@ -168,6 +168,12 @@ aa_gpui_base = { path = "packages/base" }
 aa_gpui_kit_theme = { path = "packages/theme" }
 aa_gpui_kit_component = { path = "packages/component" }
 
+# Android 平台后端（packages/gpui_android）：NativeActivity + JNI 桥 + 输入法
+# / 剪贴板 / 无障碍。vendored 自 zed 的 gpui-android，指向 zed 的 Apache-2.0 侧
+# gpui（d88f6821，与根 [patch.crates-io] 同源）。
+# 子包用 `aa_gpui_android.workspace = true` 引用，路径统一在此声明。
+aa_gpui_android = { path = "packages/gpui_android" }
+
 # 主题的 JSON 装载与装配（packages/theme-settings）：知道主题扩展 JSON 的
 # schema 并把它装进注册表。**单向依赖** aa_gpui_kit_theme——theme 包反过来
 # 完全不知道 JSON 存在（对齐 zed 的 crates/theme ← crates/theme_settings）。
