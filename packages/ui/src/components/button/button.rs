@@ -377,47 +377,56 @@ impl RenderOnce for Button {
             .into_any_element()
         });
 
-        let mut label_like = LabelLike::new()
-            .child(
-                crate::components::label::Label::new(label)
-                    .color(label_color)
-                    .size(self.label_size.unwrap_or_default()),
-            )
-            .when_some(self.alpha, |this, alpha| LabelCommon::alpha(this, alpha));
+        let loading_icon_id = (base.id_ref().clone(), "loading");
 
-        if self.truncate {
-            label_like = LabelCommon::truncate(label_like);
-        }
-
-        let mut row = h_flex()
-            .when(self.truncate, |this| this.min_w_0().overflow_hidden())
-            .gap(gap);
-
-        if let Some(start) = start {
-            row = row.child(start);
-        }
-
-        let mut inner = h_flex()
-            .when(self.truncate, |this| this.min_w_0().overflow_hidden())
-            .when(
-                self.key_binding_position == KeybindingPosition::Start,
-                |this| this.flex_row_reverse(),
-            )
-            .gap(label_gap)
-            .justify_between()
-            .child(label_like);
-
-        if let Some(key_binding) = self.key_binding {
-            inner = inner.child(key_binding);
-        }
-
-        row = row.child(inner);
-
-        if let Some(end) = end {
-            row = row.child(end);
-        }
-
-        base.child(row)
+        // 对齐 zed button.rs:464 —— 直接把 h_flex 挂到 base 上，标签用裸的
+        // `Label::new`，**不套 LabelLike**。
+        //
+        // 原先这里多包了一层 `LabelLike`（aacode 独有，zed 没有），而 LabelLike 的
+        // build() 带 `items_center().justify_center()`，它在下面 `justify_between()`
+        // 的子位里把「标签 + 快捷键」这一对整体居中了 —— 表现为 ProjectSearch 空状态
+        // 引导页（landing_text_minor）的按钮文字居中，而 zed 是左对齐。
+        base.child(
+            h_flex()
+                .when(self.truncate, |this| this.min_w_0().overflow_hidden())
+                .gap(gap)
+                .when_else(
+                    self.loading,
+                    |this| {
+                        this.child(
+                            Icon::new(IconName::LoadCircle)
+                                .size(start_icon_size)
+                                .color(Color::Muted)
+                                .with_keyed_rotate_animation(loading_icon_id, 2),
+                        )
+                    },
+                    |this| match start {
+                        Some(start) => this.child(start),
+                        None => this,
+                    },
+                )
+                .child(
+                    h_flex()
+                        .when(self.truncate, |this| this.min_w_0().overflow_hidden())
+                        .when(
+                            self.key_binding_position == KeybindingPosition::Start,
+                            |this| this.flex_row_reverse(),
+                        )
+                        .gap(label_gap)
+                        .justify_between()
+                        .child(
+                            Label::new(label)
+                                .color(label_color)
+                                .size(self.label_size.unwrap_or_default())
+                                .when_some(self.alpha, |this, alpha| this.alpha(alpha))
+                                .when(self.truncate, |this| this.truncate()),
+                        )
+                        .when_some(self.key_binding, |this, key_binding| {
+                            this.child(key_binding)
+                        }),
+                )
+                .when_some(end, |this, end| this.child(end)),
+        )
     }
 }
 
