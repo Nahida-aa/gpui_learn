@@ -407,8 +407,8 @@ const FILE_SUFFIXES_BY_ICON_KEY: &[(&str, &[&str])] = &[
             "profile",
             "ps1",
             "sh",
-            "a_login",
-            "a_logout",
+            "zlogin",
+            "zlogout",
             "zprofile",
             "zsh",
             "zsh_aliases",
@@ -557,17 +557,23 @@ fn icon_keys_by_association(
     icon_keys_by_association
 }
 
-/// 默认图标主题名(暗色):内置 Catppuccin 图标主题。
+/// 用户默认图标主题名(暗色):内置 Catppuccin 图标主题。
 ///
 /// 浅色系统下用 [`DEFAULT_LIGHT_ICON_THEME_NAME`];两者都不在注册表里时,
-/// 由 [`IconTheme::default`] 退回 [`FALLBACK_ICON_THEME_NAME`]。
+/// 由 [`IconTheme::default`] 退回 [`ZED_DEFAULT_ICON_THEME_NAME`]。
+///
+/// 这与 zed 的 `theme::DEFAULT_ICON_THEME_NAME` **刻意不同**:zed 那份指向
+/// 自带的单色图标集(见 [`ZED_DEFAULT_ICON_THEME_NAME`]),而这里的用户默认是
+/// CTP 多彩图标。注册表的 `default_icon_theme()` 仍返回 zed 那份(对齐 zed),
+/// 它同时是所有图标主题查不到类型时的最后兜底 —— CTP 表里没有 `default` 键,
+/// `LICENSE-APACHE`、`foo.xyz` 这类要靠它才有图标。
 pub const DEFAULT_ICON_THEME_NAME: &str = "Catppuccin Macchiato";
 
-/// 浅色系统下的默认图标主题名。
+/// 浅色系统下的用户默认图标主题名。
 pub const DEFAULT_LIGHT_ICON_THEME_NAME: &str = "Catppuccin Latte";
 
-/// 兜底图标主题名:zed 原样那张表(不含 CTP 图标)。
-pub const FALLBACK_ICON_THEME_NAME: &str = "ui-gpui (Default)";
+/// zed 自带的单色图标主题名(名字与 zed 一致,便于图标主题选择器里对得上)。
+pub const ZED_DEFAULT_ICON_THEME_NAME: &str = "Zed (Default)";
 
 /// 内置 Catppuccin 图标主题家族的 JSON
 /// (`assets/icon_themes/catppuccin-icons.json`,来自 catppuccin/zed-icons)。
@@ -588,15 +594,19 @@ pub fn catppuccin_icon_theme_family() -> IconThemeFamilyContent {
     serde_json::from_str(CATPPUCCIN_ICONS_JSON).expect("内置 CTP 图标主题 JSON 应能解析")
 }
 
-/// 兜底图标主题:目录/箭头图标 + zed 原样的文件类型映射表。
+/// zed 自带的单色图标主题:目录/箭头图标 + zed 原样的文件类型映射表。
 ///
 /// 表(`FILE_STEMS_BY_ICON_KEY` / `FILE_SUFFIXES_BY_ICON_KEY` / `FILE_ICONS`)
 /// 与 zed 逐行一致,引用的 92 个 SVG 都在 `assets/icons/file_icons/` 下。
-/// 同时它也是 [`crate::ThemeRegistry::load_icon_theme`] 的合并基底。
+/// 三处角色:
+/// 1. [`crate::ThemeRegistry::default_icon_theme`] 返回它(对齐 zed)——
+///    `file_icons::FileIcons` 查不到类型时的最后兜底;
+/// 2. [`crate::ThemeRegistry::load_icon_theme`] 拿它当合并基底;
+/// 3. [`IconTheme::default`] 退回它。
 static DEFAULT_ICON_THEME: LazyLock<Arc<IconTheme>> = LazyLock::new(|| {
     Arc::new(IconTheme {
-        id: "ui-gpui-default".into(),
-        name: FALLBACK_ICON_THEME_NAME.into(),
+        id: "zed-default".into(),
+        name: ZED_DEFAULT_ICON_THEME_NAME.into(),
         appearance: Appearance::Dark,
         directory_icons: DirectoryIcons {
             collapsed: Some("icons/file_icons/folder.svg".into()),
@@ -620,7 +630,7 @@ static DEFAULT_ICON_THEME: LazyLock<Arc<IconTheme>> = LazyLock::new(|| {
     })
 });
 
-/// 取默认图标主题。
+/// 取 zed 自带的单色图标主题(对齐 zed 的 `theme::default_icon_theme`)。
 pub fn default_icon_theme() -> Arc<IconTheme> {
     DEFAULT_ICON_THEME.clone()
 }
@@ -762,9 +772,36 @@ mod tests {
     #[test]
     fn builtin_catppuccin_icon_themes_are_registered() {
         let registry = ThemeRegistry::default();
-        for name in [DEFAULT_LIGHT_ICON_THEME_NAME, DEFAULT_ICON_THEME_NAME] {
+        for name in [
+            DEFAULT_LIGHT_ICON_THEME_NAME,
+            DEFAULT_ICON_THEME_NAME,
+            ZED_DEFAULT_ICON_THEME_NAME,
+        ] {
             assert!(registry.get_icon_theme(name).is_ok(), "应注册 {name}");
         }
+    }
+
+    #[test]
+    fn registry_default_icon_theme_is_the_zed_one() {
+        // 对齐 zed:注册表的 default_icon_theme 是 zed 自带那张单色表,
+        // 不是 CTP。CTP 表没有 `default` 键,`FileIcons` 查不到类型时的
+        // 兜底全靠它 —— 若这里返回 CTP,`LICENSE-APACHE` 之类就没有图标。
+        let registry = ThemeRegistry::default();
+        let theme = registry.default_icon_theme().expect("默认图标主题应已注册");
+        assert_eq!(theme.name, ZED_DEFAULT_ICON_THEME_NAME);
+        assert_eq!(
+            theme
+                .file_icons
+                .get("default")
+                .map(|icon| icon.path.to_string()),
+            Some("icons/file_icons/file.svg".to_string()),
+            "兜底主题必须提供 `default` 类型,否则未知后缀的文件没有图标"
+        );
+        assert_eq!(
+            theme.icon_for_file(".zlogin").map(|s| s.to_string()),
+            Some("icons/file_icons/terminal.svg".to_string()),
+            "zlogin/zlogout 要映射到 terminal 图标(与 zed 表一致)"
+        );
     }
 
     #[test]

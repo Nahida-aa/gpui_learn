@@ -8,8 +8,8 @@ use parking_lot::RwLock;
 use thiserror::Error;
 
 use crate::{
-    Appearance, AppearanceContent, ChevronIcons, DEFAULT_ICON_THEME_NAME, DirectoryIcons,
-    IconDefinition, IconTheme, IconThemeFamilyContent, Theme, ThemeFamily, default_icon_theme,
+    Appearance, AppearanceContent, ChevronIcons, DirectoryIcons, IconDefinition, IconTheme,
+    IconThemeFamilyContent, Theme, ThemeFamily, default_icon_theme,
 };
 
 /// The metadata for a theme.
@@ -220,8 +220,17 @@ impl ThemeRegistry {
     }
 
     /// Returns the default icon theme.
+    ///
+    /// 对齐 zed `ThemeRegistry::default_icon_theme`:返回 zed 自带的单色图标
+    /// 主题(`Zed (Default)`),**不是**内置 CTP 那套。
+    ///
+    /// 这条是 `file_icons::FileIcons` 查不到文件类型时的最后兜底
+    /// (`get_icon_for_type` 的 `or_else(default_icon_theme)`)。CTP 的
+    /// `file_icons` 表里没有 `default` 键,若这里返回 CTP 主题,
+    /// `LICENSE-APACHE`、`foo.xyz` 这类文件会**一个图标都没有**;
+    /// zed 那张表有 `default -> icons/file_icons/file.svg`,故与 zed 一致。
     pub fn default_icon_theme(&self) -> Result<Arc<IconTheme>, IconThemeNotFoundError> {
-        self.get_icon_theme(DEFAULT_ICON_THEME_NAME)
+        self.get_icon_theme(crate::default_icon_theme().name.as_ref())
     }
 
     /// Returns the metadata of all icon themes in the registry.
