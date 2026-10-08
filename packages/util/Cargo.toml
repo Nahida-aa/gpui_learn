@@ -6,6 +6,56 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+anyhow.workspace = true
+async_zip.workspace = true
+collections.workspace = true
+futures.workspace = true
+shlex.workspace = true
+which.workspace = true
+futures-lite.workspace = true
+log.workspace = true
+path = { workspace = true, features = ["serde"] }
+regex.workspace = true
+itertools.workspace = true
+tempfile.workspace = true
+globset.workspace = true
+dirs.workspace = true
+url.workspace = true
+rust-embed.workspace = true
+percent-encoding.workspace = true
+unicase.workspace = true
+take-until.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+serde_json_lenient.workspace = true
+gpui_util.workspace = true
+schemars.workspace = true
+rand = { workspace = true, optional = true }
+util_macros = { workspace = true, optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+smol.workspace = true
+which.workspace = true
+async-fs.workspace = true
+walkdir.workspace = true
+dirs.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+command-fds = "0.3.1"
+libc.workspace = true
+nix = { workspace = true, features = ["resource", "user"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mach2.workspace = true
+
+[features]
+test-support = ["rand", "util_macros", "path/test-support"]
+# Always embed fs_embed! assets at compile time — aacode is not the Zed repo,
+# so dev-time filesystem reading via dev_repo_root() would look in the wrong
+# directory (e.g. crates/grammars/src doesn't exist under aacode's repo root).
+default = ["debug-embed"]
+# Embed `fs_embed!` assets at compile time even in debug builds.
+debug-embed = ["rust-embed/debug-embed"]
 
 [lints]
 workspace = true
