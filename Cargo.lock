@@ -329,6 +329,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_gpui_kit_grammars"
+version = "0.1.0"
+
+[[package]]
+name = "aa_gpui_kit_language_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bitflags 2.13.1",
+ "collections",
+ "gpui_shared_string",
+ "gpui_util",
+ "log",
+ "lru",
+ "parking_lot",
+ "path",
+ "regex",
+ "schemars",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "strum 0.28.0",
+ "toml 0.8.23",
+ "tree-sitter",
+]
+
+[[package]]
 name = "aa_gpui_kit_theme"
 version = "0.1.0"
 dependencies = [
@@ -441,10 +468,6 @@ dependencies = [
  "quote",
  "syn 2.0.119",
 ]
-
-[[package]]
-name = "aa_gpui_util"
-version = "0.1.0"
 
 [[package]]
 name = "aa_icons"
@@ -3940,6 +3963,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "lru"
+version = "0.16.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7f66e8d5d03f609abc3a39e6f08e4164ebf1447a732906d39eb9b99b7919ef39"
+dependencies = [
+ "hashbrown 0.16.1",
+]
+
+[[package]]
 name = "lyon"
 version = "1.0.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6290,6 +6322,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
+name = "streaming-iterator"
+version = "0.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2231b7c3057d5e4ad0156fb3dc807d900806020c5ffa3ee6ff2c8c76fb8520"
+
+[[package]]
 name = "strict-num"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6903,6 +6941,23 @@ dependencies = [
  "tracing-core",
  "tracing-log",
 ]
+
+[[package]]
+name = "tree-sitter"
+version = "0.27.0"
+source = "git+https://github.com/tree-sitter/tree-sitter?rev=43623ec9bf0eaaf7113285c46e8a09018f181b18#43623ec9bf0eaaf7113285c46e8a09018f181b18"
+dependencies = [
+ "cc",
+ "regex",
+ "serde_json",
+ "streaming-iterator",
+ "tree-sitter-language",
+]
+
+[[package]]
+name = "tree-sitter-language"
+version = "0.1.8"
+source = "git+https://github.com/tree-sitter/tree-sitter?rev=43623ec9bf0eaaf7113285c46e8a09018f181b18#43623ec9bf0eaaf7113285c46e8a09018f181b18"
 
 [[package]]
 name = "ttf-parser"
