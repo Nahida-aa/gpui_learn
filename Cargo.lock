@@ -265,6 +265,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_cloud_llm_client"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "strum 0.28.0",
+ "uuid",
+]
+
+[[package]]
 name = "aa_gpui_android"
 version = "0.9.3"
 dependencies = [
@@ -3732,6 +3743,16 @@ name = "imagesize"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09e54e57b4c48b40f7aec75635392b12b3421fa26fe8b4332e63138ed278459c"
+
+[[package]]
+name = "imara-diff"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2f01d462f766df78ab820dd06f5eb700233c51f0f4c2e846520eaf4ba6aa5c5c"
+dependencies = [
+ "hashbrown 0.15.5",
+ "memchr",
+]
 
 [[package]]
 name = "imgref"
@@ -9165,6 +9186,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "zed_cloud_llm_client"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "strum 0.28.0",
+ "uuid",
+ "zeta_prompt",
+]
+
+[[package]]
 name = "zeno"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9262,6 +9295,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.4",
+]
+
+[[package]]
+name = "zeta_prompt"
+version = "0.1.0"
+source = "git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831#afecd6d719aad92aecfa2860f49c4f2956708831"
+dependencies = [
+ "anyhow",
+ "imara-diff",
+ "serde",
+ "strum 0.28.0",
 ]
 
 [[package]]

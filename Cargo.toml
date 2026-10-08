@@ -113,6 +113,7 @@ fuzzy = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92a
 # rev 与 gpui 的 [patch.crates-io] 保持一致。
 path = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
 perf = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+zeta_prompt = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
 
 # 调试/结构化日志(仓库约定见 AGENTS.md)
 tracing = "0.1"
@@ -122,6 +123,7 @@ log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
 
 # 数字千分位格式化（DiffStat 的 `1,234` 行数显示，与 zed ui 同款）。
 num-format = "0.4.4"
+uuid = { version = "1.1.2", features = ["v4", "v5", "v7", "serde"] }
 
 # 用 `~8.11` 而非 "8.11"：后者无上界（^8.11），rust-embed 对 impl/utils 的约束
 # 又是 ^8.9，于是三者会各自漂到当前最新的 8.12.x。而 `compressed()` /

@@ -1,0 +1,21 @@
+[package]
+name = "zed_cloud_llm_client"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+test-support = []
+predict-edits = ["dep:zeta_prompt"]
+
+[dependencies]
+anyhow.workspace = true
+serde = { workspace = true, features = ["derive", "rc"] }
+serde_json.workspace = true
+strum = { workspace = true, features = ["derive"] }
+uuid = { workspace = true, features = ["serde"] }
+zeta_prompt = { workspace = true, optional = true }
+
+[lints]
+workspace = true
