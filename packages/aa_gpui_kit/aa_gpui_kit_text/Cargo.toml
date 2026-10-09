@@ -1,0 +1,30 @@
+[package]
+name = "aa_gpui_kit_text"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+test-support = ["rand", "util/test-support"]
+
+[dependencies]
+anyhow.workspace = true
+clock.workspace = true
+collections.workspace = true
+log.workspace = true
+parking_lot.workspace = true
+postage.workspace = true
+rand = { workspace = true, optional = true }
+regex.workspace = true
+rope.workspace = true
+smallvec.workspace = true
+sum_tree.workspace = true
+util.workspace = true
+
+[dev-dependencies]
+collections = { workspace = true, features = ["test-support"] }
+ctor.workspace = true
+gpui = { workspace = true, features = ["test-support"] }
+rand.workspace = true
+util = { workspace = true, features = ["test-support"] }
+zlog.workspace = true

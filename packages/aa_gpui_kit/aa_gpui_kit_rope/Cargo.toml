@@ -1,0 +1,26 @@
+[package]
+name = "aa_gpui_kit_rope"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+heapless.workspace = true
+log.workspace = true
+rayon.workspace = true
+sum_tree.workspace = true
+unicode-segmentation.workspace = true
+util.workspace = true
+ztracing.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+ctor.workspace = true
+gpui = { workspace = true, features = ["test-support"] }
+rand.workspace = true
+util = { workspace = true, features = ["test-support"] }
+criterion.workspace = true
+zlog.workspace = true
