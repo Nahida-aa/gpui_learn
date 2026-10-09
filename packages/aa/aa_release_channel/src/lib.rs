@@ -177,6 +177,21 @@ pub fn docs_url(base_url: &str, slug: &str, cx: &App) -> String {
         .docs_url(base_url, slug)
 }
 
+/// Windows app identifier：`{prefix}-{channel_suffix}`，如 `"Zed-Editor-Dev"`。
+///
+/// 读编译期确定的 [`RELEASE_CHANNEL`]，不需要 `cx`。
+/// aacode 消费方传自己的前缀；Zed 传 `"Zed-Editor"`。
+#[cfg(target_os = "windows")]
+pub fn app_identifier(prefix: &str) -> String {
+    let suffix = match *RELEASE_CHANNEL {
+        ReleaseChannel::Dev => "Dev",
+        ReleaseChannel::Nightly => "Nightly",
+        ReleaseChannel::Preview => "Preview",
+        ReleaseChannel::Stable => "Stable",
+    };
+    format!("{prefix}-{suffix}")
+}
+
 impl ReleaseChannel {
     /// All release channels.
     pub const ALL: [ReleaseChannel; 4] = [
@@ -230,16 +245,16 @@ impl ReleaseChannel {
     /// and WM_CLASS on X11.
     /// This also has to match the bundle identifier for Zed on macOS.
     ///
-    /// `bundle_prefix` e.g. `"dev.zed.Zed"` → `"dev.zed.Zed-Dev"` / `"dev.zed.Zed"`.
-    /// Stable 不拼 channel，直接返回 bundle_prefix。
-    pub fn app_id(&self, bundle_prefix: &str) -> String {
+    /// `app_id` e.g. `"dev.zed.Zed"` → `"dev.zed.Zed-Dev"` / `"dev.zed.Zed"`.
+    /// Stable 不拼 channel，直接返回 `app_id`。
+    pub fn app_id(&self, app_id: &str) -> String {
         let channel_suffix = match self {
             ReleaseChannel::Dev => "-Dev",
             ReleaseChannel::Nightly => "-Nightly",
             ReleaseChannel::Preview => "-Preview",
             ReleaseChannel::Stable => "",
         };
-        format!("{bundle_prefix}{channel_suffix}")
+        format!("{app_id}{channel_suffix}")
     }
 
     /// Returns the query parameter for this [`ReleaseChannel`].

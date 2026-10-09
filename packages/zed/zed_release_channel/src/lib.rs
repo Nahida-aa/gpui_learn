@@ -13,9 +13,8 @@
 pub use aa_release_channel::*;
 
 const ZED_DOCS_URL: &str = "https://zed.dev/docs";
-const ZED_BRAND: &str = "Zed";
-const ZED_BUNDLE_PREFIX: &str = "dev.zed.Zed";
-const ZED_APP_IDENTIFIER_PREFIX: &str = "Zed-Editor";
+const BRAND: &str = "Zed";
+const APP_ID: &str = "dev.zed.Zed";
 
 /// 编译期回退时读 Zed 专有 env var（aa_ 已做了 ZED_RELEASE_CHANNEL → RELEASE_CHANNEL 回退）。
 fn compile_time_release_channel_name() -> String {
@@ -31,7 +30,7 @@ fn compile_time_release_channel_name() -> String {
 pub fn display_name(cx: &gpui::App) -> String {
     ReleaseChannel::try_global(cx)
         .unwrap_or(*RELEASE_CHANNEL)
-        .display_name(ZED_BRAND)
+        .display_name(BRAND)
 }
 
 /// Zed docs URL。
@@ -39,13 +38,17 @@ pub fn docs_url(slug: &str, cx: &gpui::App) -> String {
     aa_release_channel::docs_url(ZED_DOCS_URL, slug, cx)
 }
 
-/// Zed Wayland app_id / macOS bundle identifier。
+/// Returns the application ID that's used by Wayland as application ID
+/// and WM_CLASS on X11.
+/// This also has to match the bundle identifier for Zed on macOS.
 pub fn app_id(cx: &gpui::App) -> String {
     ReleaseChannel::try_global(cx)
         .unwrap_or(*RELEASE_CHANNEL)
-        .app_id(ZED_BUNDLE_PREFIX)
+        .app_id(APP_ID)
 }
 
+#[cfg(target_os = "windows")]
+const APP_IDENTIFIER_PREFIX: &str = "Zed-Editor";
 /// Windows app identifier。
 #[cfg(target_os = "windows")]
 pub fn app_identifier(cx: &gpui::App) -> String {
@@ -57,5 +60,5 @@ pub fn app_identifier(cx: &gpui::App) -> String {
         ReleaseChannel::Preview => "Preview",
         ReleaseChannel::Stable => "Stable",
     };
-    format!("{ZED_APP_IDENTIFIER_PREFIX}-{suffix}")
+    format!("{APP_IDENTIFIER_PREFIX}-{suffix}")
 }
