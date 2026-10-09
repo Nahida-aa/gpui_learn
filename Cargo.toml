@@ -85,7 +85,7 @@ serde_urlencoded = "0.7"
 
 thiserror = "2.0.12"
 
-zed_http_client = { path = "packages/zed_http_client" }
+# zed_http_client = { path = "packages/zed_http_client" }
 # 注意这里的写法：子包声明的是「语义版本 0.2.2」（来自 crates.io），
 # 真正的 git 源在下面的 [patch.crates-io] 里把 crates.io 上的 gpui 整体
 # 替换成 zed 仓库的对应 commit。这样：
@@ -168,15 +168,30 @@ uuid = { version = "1.1.2", features = ["v4", "v5", "v7", "serde"] }
 # 开了 compression；feature 在同一个编译单元内会被 cargo 合并（取并集），
 # 但若本仓库单独构建时不开，两边的编译产物就会不一致（同一 crate 在两个
 # workspace 链接到不同的 feature 组合）。
-# 约束是 "8.11"（caret，<9.0）而不是 "~8.11"（<8.12）。
+# 约束与 Zed 一致（Cargo.toml:825），同为 "8.11"（caret，<9.0）。
 #
-# rust-embed 8.11 的 proc-macro 依赖声明是 rust-embed-impl = "8.9.0"（即 >=8.9, <9），
-# 区间上限到 9。配 "~8.11" 时 lib 被卡在 8.11.x、impl 却会被 cargo 取到最新的 8.13.x，
-# 于是 derive（8.13）生成的代码引用 EmbeddedCompressedFile，而链接的 lib（8.11）
-# 里没有该类型 —— 该 API 是 8.12 才加回来的：
-#     error[E0407]: method `compressed` is not a member of trait `RustEmbed`
-#     error[E0425]: cannot find type `EmbeddedCompressedFile` in crate `rust_embed`
-# 用 "8.11" 让 lib 与 impl 一起落在同一版本上。
+# 【重要】这条约束单独看是"洞"，靠提交的 Cargo.lock 填住 —— 与 Zed 的做法完全相同：
+#
+#   rust-embed 8.11.0 对 proc-macro 的约束是 rust-embed-impl = "8.9.0"（>=8.9, <9），
+#   很松。所以一旦 impl 被解析到 8.12+（其 derive 会生成对 EmbeddedCompressedFile 的
+#   引用，见 crates/util/src/embed.rs 的 __rust_embed），而 lib 仍停在 8.11.0
+#   （该版本没有这个类型），就会错配：
+#     error[E0425]: cannot find type `EmbeddedCompressedFile` in module `::util::__rust_embed`
+#     error[E0422]: cannot find struct, variant or union type `EmbeddedCompressedFile`
+#
+# 三件套必须同版本。实测（rust-embed 对 impl 的约束）：
+#   lib 8.11.0 → impl "8.9.0"   松，impl 可漂到 8.13  ← 唯一会错配的组合
+#   lib 8.12.0 → impl "8.12.0"  下限对齐，不可能错配
+#   lib 8.13.0 → impl "8.13.0"  同上
+# EmbeddedCompressedFile 由 rust-embed-utils 定义，8.11 无、8.12 起有；
+# 引用它的 derive 同理：impl 8.11 不引用、8.12 起引用。
+#
+# 因此：下游必须把 rust-embed / -impl / -utils 三者一起钉在 8.11.x。aacode 侧的做法是
+#   cargo update -p rust-embed       --precise 8.11.0
+#   cargo update -p rust-embed-impl  --precise 8.11.0
+#   cargo update -p rust-embed-utils --precise 8.11.0
+# 并提交 Cargo.lock。Zed 靠同样的机制（lock 已提交 + CI 一律 --locked，run_tests.yml:701），
+# 它没有为这件事写任何文档，本注释是补在 gpui_learn 侧的。
 rust-embed = { version = "8.11", features = ["include-exclude", "compression"] }
 serde = { version = "1.0.221", features = ["derive", "rc"] }
 serde_json = { version = "1.0.144", features = ["preserve_order", "raw_value"] }
@@ -285,6 +300,7 @@ syntax_theme = { git = "https://github.com/zed-industries/zed", rev = "afecd6d71
 # ---- util / util_macros (aa_gpui_kit_util*) 依赖 ----
 # collections：zed 并发友好集合（publish=false，走 git），rev 与 gpui/path/perf 一致。
 collections = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
+http_client = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
 futures = "0.3"
 futures-lite = "2"
