@@ -8,7 +8,7 @@ pub mod util;
 
 use anyhow::{Context as _, Result, anyhow};
 use aa_cloud_llm_client::CompletionRequestStatus;
-use zed_http_client::{StatusCode, http};
+use http_client::{StatusCode, http};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::ops::{Add, Sub};

@@ -522,6 +522,7 @@ dependencies = [
  "collections",
  "futures",
  "gpui_shared_string",
+ "http_client",
  "log",
  "partial-json-fixer",
  "pretty_assertions",
@@ -530,7 +531,30 @@ dependencies = [
  "serde_json",
  "strum 0.28.0",
  "thiserror 2.0.21",
- "zed_http_client",
+]
+
+[[package]]
+name = "aa_settings_json"
+version = "0.1.0"
+dependencies = [
+ "aa_gpui_kit_util",
+ "anyhow",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+ "serde_json_lenient",
+ "serde_path_to_error",
+ "tree-sitter",
+ "tree-sitter-json",
+ "unindent",
+]
+
+[[package]]
+name = "aa_settings_macros"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -6345,9 +6369,9 @@ dependencies = [
 
 [[package]]
 name = "rust-embed"
-version = "8.11.0"
+version = "8.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04113cb9355a377d83f06ef1f0a45b8ab8cd7d8b1288160717d66df5c7988d27"
+checksum = "19afa5b4b6a611de00bd1bdae6ae6f39084c9399f0679c3f52d8469cf335cc23"
 dependencies = [
  "include-flate",
  "rust-embed-impl",
@@ -6376,6 +6400,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d84e8ba78bd384263e5922f084cbe1b081c3b7e69add59c8fb097b879ba968a"
 dependencies = [
  "globset",
+ "include-flate",
  "sha2 0.11.0",
  "walkdir",
 ]
@@ -6655,6 +6680,17 @@ dependencies = [
  "memchr",
  "ryu",
  "serde",
+]
+
+[[package]]
+name = "serde_path_to_error"
+version = "0.1.20"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "10a9ff822e371bb5403e391ecd83e182e0e77ba7f6fe0160b795797109d1b457"
+dependencies = [
+ "itoa",
+ "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -7884,6 +7920,12 @@ name = "unicode-xid"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ebc1c04c71510c7f702b52b7c350734c9ff1295c464a03335b00bb84fc54f853"
+
+[[package]]
+name = "unindent"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7264e107f553ccae879d21fbea1d6724ac785e8c3bfc762137959b5802826ef3"
 
 [[package]]
 name = "url"
