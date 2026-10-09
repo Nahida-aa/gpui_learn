@@ -41,8 +41,8 @@ members = [
     "packages/ui",
     "packages/ui_input",
     "packages/ui_macros",
-    "packages/zed_cloud_llm_client",
-    "packages/zed_http_client",
+    "packages/zed/zed_cloud_llm_client",
+    "packages/zed/zed_http_client",
     # aa_gpui_kit 子 crate（packages/aa_gpui_kit/<name>/Cargo.toml）
     "packages/aa_gpui_kit/settings_content",
     # aa 子 crate（packages/aa/<name>/Cargo.toml）
