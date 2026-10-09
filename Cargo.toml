@@ -20,7 +20,13 @@ resolver = "3"
 # 用通配符 "apps/*" 和 "packages/*" 可以随例子增多自动纳入新包，无需手动维护列表。
 members = [
     "apps/*",
+    # packages/* 会扫到 aa_gpui_kit/ 父目录（它有 Cargo.toml 占位），
+    # 但 aa_gpui_kit 子 crate 由下一条显式匹配。
     "packages/*",
+    # aa_gpui_kit 子 crate 直接放在 packages/aa_gpui_kit/<name>/。
+    # 注意：不能用 packages/aa_gpui_kit/*，因为它会把 src/ 也当作候选。
+    # 显式列出子目录名。
+    "packages/aa_gpui_kit/settings_content",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -231,6 +237,12 @@ aa_gpui_base = { path = "packages/base" }
 # 因此 aa_gpui_kit_ui 也通过 `aa_gpui_kit_theme.workspace = true` 引用（不留 module 别名）。
 aa_gpui_kit_theme = { path = "packages/theme" }
 aa_gpui_kit_component = { path = "packages/component" }
+# settings_content 源码里用 `use settings_macros::*` / `use settings_json::*` /
+# `use language_model_core::*`，但 gpui_learn 里的包名加了 aa_ 前缀。
+# 直接用 alias 让源码零改动，不再单独声明 aa_settings_* / aa_language_model_core。
+settings_macros = { package = "aa_settings_macros", path = "packages/aa_settings_macros" }
+settings_json = { package = "aa_settings_json", path = "packages/aa_settings_json" }
+language_model_core = { package = "aa_language_model_core", path = "packages/aa_language_model_core" }
 
 # Android 平台后端（packages/gpui_android）：NativeActivity + JNI 桥 + 输入法
 # / 剪贴板 / 无障碍。vendored 自 zed 的 gpui-android，指向 zed 的 Apache-2.0 侧

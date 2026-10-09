@@ -319,6 +319,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_gpui_kit"
+version = "0.0.0"
+
+[[package]]
 name = "aa_gpui_kit_assets"
 version = "0.1.0"
 dependencies = [
@@ -388,6 +392,29 @@ dependencies = [
  "strum 0.28.0",
  "toml 0.8.23",
  "tree-sitter",
+]
+
+[[package]]
+name = "aa_gpui_kit_settings_content"
+version = "0.1.0"
+dependencies = [
+ "aa_gpui_kit_util",
+ "aa_language_model_core",
+ "aa_settings_json",
+ "aa_settings_macros",
+ "anyhow",
+ "collections",
+ "derive_more",
+ "gpui",
+ "gpui_util",
+ "log",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_json_lenient",
+ "serde_path_to_error",
+ "strum 0.28.0",
+ "tempfile",
 ]
 
 [[package]]
