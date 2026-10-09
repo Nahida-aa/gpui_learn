@@ -1,5 +1,5 @@
 [package]
-name = "aa_gpui_kit_util"
+name = "aa_util"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

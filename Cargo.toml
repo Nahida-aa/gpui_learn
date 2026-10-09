@@ -41,12 +41,13 @@ members = [
     "packages/ui",
     "packages/ui_input",
     "packages/ui_macros",
-    "packages/util",
-    "packages/util_macros",
     "packages/zed_cloud_llm_client",
     "packages/zed_http_client",
     # aa_gpui_kit 子 crate（packages/aa_gpui_kit/<name>/Cargo.toml）
     "packages/aa_gpui_kit/settings_content",
+    # aa 子 crate（packages/aa/<name>/Cargo.toml）
+    "packages/aa/util",
+    "packages/aa/util_macros",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -357,8 +358,8 @@ rand = "0.9"
 take-until = "0.2.0"
 mach2 = "0.5"
 
-util_macros = { package = "aa_gpui_kit_util_macros", path = "packages/util_macros" }
-util = { package = "aa_gpui_kit_util", path = "packages/util" }
+util_macros = { package = "aa_util_macros", path = "packages/aa/util_macros" }
+util = { package = "aa_util", path = "packages/aa/util" }
 language_core = { package = "aa_gpui_kit_language_core", path = "packages/language_core" }
 
 # [patch.crates-io]：把 crates.io 上的包「替换」成我们指定的源。
