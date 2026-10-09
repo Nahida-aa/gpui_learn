@@ -358,7 +358,7 @@ rand = "0.9"
 take-until = "0.2.0"
 mach2 = "0.5"
 
-util_macros = { package = "aa_util_macros", path = "packages/aa/util_macros" }
+util_macros = { path = "packages/aa/util_macros" }
 util = { package = "aa_util", path = "packages/aa/util" }
 language_core = { package = "aa_gpui_kit_language_core", path = "packages/language_core" }
 
