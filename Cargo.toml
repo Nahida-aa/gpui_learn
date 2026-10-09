@@ -49,7 +49,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -356,6 +356,15 @@ streaming-iterator = "0.1"
 indoc = "2"
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
 futures = "0.3"
+const_format = "0.2"
+ignore = "0.4"
+async-channel = "2"
+chrono = { version = "0.4", features = ["clock"] }
+async-trait = "0.1"
+async-std = { version = "1.12", features = ["unstable"] }
+slotmap = "1.0.6"
+dunce = "1.0"
+windows = "0.58"
 
 # 内部 alias：依赖方用简写，实际包名不同
 git = { package = "aa_gpui_kit_git", path = "packages/aa_gpui_kit/aa_gpui_kit_git" }
@@ -412,3 +421,8 @@ tree-sitter-language = { git = "https://github.com/tree-sitter/tree-sitter", rev
 [workspace.lints.rust]
 # 允许 #[cfg(...)] 属性中出现未识别的配置条件
 unexpected_cfgs = { level = "allow" }
+
+rustix = { version = "1.1", features = ["fs"] }
+prost = "0.14"
+protox = "0.9"
+urlencoding = "2.1.2"
