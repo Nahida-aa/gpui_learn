@@ -536,7 +536,6 @@ dependencies = [
 name = "aa_util"
 version = "0.1.0"
 dependencies = [
- "aa_util_macros",
  "anyhow",
  "async-fs",
  "async_zip",
@@ -567,17 +566,9 @@ dependencies = [
  "tempfile",
  "unicase",
  "url",
+ "util_macros 0.1.0",
  "walkdir",
  "which",
-]
-
-[[package]]
-name = "aa_util_macros"
-version = "0.1.0"
-dependencies = [
- "perf",
- "quote",
- "syn 2.0.119",
 ]
 
 [[package]]
@@ -2582,7 +2573,7 @@ dependencies = [
  "cc",
  "memchr",
  "rustc_version",
- "toml 1.1.7+spec-1.1.0",
+ "toml 1.1.8+spec-1.1.0",
  "vswhom",
  "winreg",
 ]
@@ -3368,7 +3359,7 @@ dependencies = [
  "ttf-parser",
  "url",
  "usvg",
- "util_macros",
+ "util_macros 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
  "uuid",
  "waker-fn",
  "web-time",
@@ -4032,6 +4023,15 @@ dependencies = [
  "hashbrown 0.17.1",
  "serde",
  "serde_core",
+]
+
+[[package]]
+name = "indoc"
+version = "2.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79cf5c93f93228cf8efb3ba362535fb11199ac548a09ce117c9b1adc3030d706"
+dependencies = [
+ "rustversion",
 ]
 
 [[package]]
@@ -5846,7 +5846,7 @@ version = "3.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e67ba7e9b2b56446f1d419b1d807906278ffa1a658a8a5d8a39dcb1f5a78614f"
 dependencies = [
- "toml_edit 0.25.16+spec-1.1.0",
+ "toml_edit 0.25.17+spec-1.1.0",
 ]
 
 [[package]]
@@ -7450,9 +7450,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "1.1.7+spec-1.1.0"
+version = "1.1.8+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7874cd34dd99040fc24e30923aa64a60a81ff3ddfe2b8129ccc84ba24949deed"
+checksum = "20489e00e4d8741d6be680764cc12e270655e375a20d1011e844a9c3379e678d"
 dependencies = [
  "indexmap",
  "serde_core",
@@ -7497,9 +7497,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.25.16+spec-1.1.0"
+version = "0.25.17+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88f38f3af8bf71841c67a990f4e2b52143b2d0a1a994c72513ff4c14977fc722"
+checksum = "e3641d5bbb5349a79e1020a242d251efbc546ad8048d133958323ce9c40a9c9c"
 dependencies = [
  "indexmap",
  "toml_datetime 1.1.2+spec-1.1.0",
@@ -7509,9 +7509,9 @@ dependencies = [
 
 [[package]]
 name = "toml_parser"
-version = "1.1.4+spec-1.1.0"
+version = "1.1.5+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bed810ee007d8e7f9cf20b4774e7198142fa27186e0f805871da7f3c39eaf333"
+checksum = "baa693a8032d7e1cada7d0041e96126df243179ff061456783ac7f12bda4744c"
 dependencies = [
  "winnow 1.0.4",
 ]
@@ -7599,7 +7599,7 @@ dependencies = [
  "regex",
  "serde_json",
  "streaming-iterator",
- "tree-sitter-language 0.1.8",
+ "tree-sitter-language",
  "wasmtime-c-api-impl",
 ]
 
@@ -7610,7 +7610,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e5ec769279cc91b561d3df0d8a5deb26b0ad40d183127f409494d6d8fc53062"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7620,7 +7620,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9b2eb57a55fed6b00812912e730b7a275cf4fe98bfd6a5d76263d4438371728"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7629,7 +7629,7 @@ version = "0.23.4"
 source = "git+https://github.com/tree-sitter/tree-sitter-cpp?rev=5cb9b693cfd7bfacab1d9ff4acac1a4150700609#5cb9b693cfd7bfacab1d9ff4acac1a4150700609"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7639,7 +7639,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ad6489794d41350d12a7fbe520e5199f688618f43aace5443980d1ddcf1b29e"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7649,7 +7649,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dfe1e5ca280a65dfe5ba4205c1bcc84edf486464fed315db53dee6da9a335889"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7658,7 +7658,7 @@ version = "0.0.1"
 source = "git+https://github.com/zed-industries/tree-sitter-git-commit?rev=88309716a69dd13ab83443721ba6e0b491d37ee9#88309716a69dd13ab83443721ba6e0b491d37ee9"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7668,7 +7668,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c8560a4d2f835cc0d4d2c2e03cbd0dde2f6114b43bc491164238d333e28b16ea"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7677,7 +7677,7 @@ version = "1.1.1"
 source = "git+https://github.com/camdencheek/tree-sitter-go-mod?rev=2e886870578eeba1927a2dc4bd2e2b3f598c5f9a#2e886870578eeba1927a2dc4bd2e2b3f598c5f9a"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7686,7 +7686,7 @@ version = "0.0.1"
 source = "git+https://github.com/zed-industries/tree-sitter-go-work?rev=acb0617bf7f4fda02c6217676cc64acb89536dc7#acb0617bf7f4fda02c6217676cc64acb89536dc7"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7696,7 +7696,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3862dfcb1038fc5e7812d7df14190afdeb7e1415288fd5f51f58395f8cb0faf"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7706,14 +7706,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4d727acca406c0020cffc6cf35516764f36c8e3dc4408e5ebe2cb35a947ec471"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
-
-[[package]]
-name = "tree-sitter-language"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c4013970217383f67b18aef68f6fb2e8d409bc5755227092d32efb0422ba24b8"
 
 [[package]]
 name = "tree-sitter-language"
@@ -7726,7 +7720,7 @@ version = "0.3.2"
 source = "git+https://github.com/zed-industries/tree-sitter-markdown?rev=b596e737286780d7bfa9fcddceaeeb754574b352#b596e737286780d7bfa9fcddceaeeb754574b352"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7736,7 +7730,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6bf85fd39652e740bf60f46f4cda9492c3a9ad75880575bf14960f775cb74a1c"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7746,7 +7740,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712656f8c262a5a4b7d6026e6246950787d178d613864952554e1516a33ab0c1"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7756,7 +7750,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "439e577dbe07423ec2582ac62c7531120dbfccfa6e5f92406f93dd271a120e45"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7765,7 +7759,7 @@ version = "0.23.2"
 source = "git+https://github.com/zed-industries/tree-sitter-typescript?rev=e2c53597d6a5d9cf7bbe8dccde576fe1e46c5899#e2c53597d6a5d9cf7bbe8dccde576fe1e46c5899"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -7774,7 +7768,7 @@ version = "0.6.1"
 source = "git+https://github.com/zed-industries/tree-sitter-yaml?rev=baff0b51c64ef6a1fb1f8390f3ad6015b83ec13a#baff0b51c64ef6a1fb1f8390f3ad6015b83ec13a"
 dependencies = [
  "cc",
- "tree-sitter-language 0.1.5",
+ "tree-sitter-language",
 ]
 
 [[package]]
@@ -8000,6 +7994,15 @@ name = "utf8parse"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
+
+[[package]]
+name = "util_macros"
+version = "0.1.0"
+dependencies = [
+ "perf",
+ "quote",
+ "syn 2.0.119",
+]
 
 [[package]]
 name = "util_macros"
@@ -9539,6 +9542,29 @@ dependencies = [
  "tempfile",
  "url",
 ]
+
+[[package]]
+name = "zed_migrator"
+version = "0.1.0"
+dependencies = [
+ "aa_gpui_kit_settings_content",
+ "aa_settings_json",
+ "anyhow",
+ "collections",
+ "convert_case 0.11.0",
+ "indoc",
+ "log",
+ "pretty_assertions",
+ "serde_json",
+ "serde_json_lenient",
+ "streaming-iterator",
+ "tree-sitter",
+ "tree-sitter-json",
+]
+
+[[package]]
+name = "zed_release_channel"
+version = "0.1.0"
 
 [[package]]
 name = "zeno"

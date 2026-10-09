@@ -49,7 +49,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -92,6 +92,7 @@ async-lock = "3.4.2"
 async-tar = { git = "https://github.com/zed-industries/async-tar", rev = "bd3ad6f89df9a9da7a8535958756d6bf465936a0" }
 
 bytes = "1.0"
+convert_case = "0.11.0"
 derive_more = { version = "2.1.1", features = [
     "add",
     "add_assign",
@@ -263,8 +264,9 @@ aa_gpui_kit_component = { path = "packages/component" }
 # settings_content 源码里用 `use settings_macros::*` / `use settings_json::*` /
 # `use language_model_core::*`，但 gpui_learn 里的包名加了 aa_ 前缀。
 # 直接用 alias 让源码零改动，不再单独声明 aa_settings_* / aa_language_model_core。
+settings_content = { package = "aa_gpui_kit_settings_content", path = "packages/aa_gpui_kit/settings_content" }
 settings_macros = { package = "aa_settings_macros", path = "packages/aa_settings_macros" }
-settings_json = { package = "aa_settings_json", path = "packages/aa_settings_json" }
+settings_json = { package = "aa_settings_json", path = "packages/aa_settings_json", default-features = false }
 language_model_core = { package = "aa_language_model_core", path = "packages/aa_language_model_core" }
 
 # Android 平台后端（packages/gpui_android）：NativeActivity + JNI 桥 + 输入法
@@ -305,6 +307,7 @@ smallvec = { version = "1.6", features = ["union", "const_new"] }
 toml = "0.8"
 # tree-sitter（官方 fork）：language_core 做语法高亮和解析。
 tree-sitter = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }
+tree-sitter-language = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }
 tree-sitter-bash = "0.25.1"
 tree-sitter-c = "0.24.1"
 tree-sitter-cpp = { git = "https://github.com/tree-sitter/tree-sitter-cpp", rev = "5cb9b693cfd7bfacab1d9ff4acac1a4150700609" }
@@ -338,6 +341,8 @@ syntax_theme = { git = "https://github.com/zed-industries/zed", rev = "afecd6d71
 # collections：zed 并发友好集合（publish=false，走 git），rev 与 gpui/path/perf 一致。
 collections = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
 http_client = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
+streaming-iterator = "0.1"
+indoc = "2"
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
 futures = "0.3"
 futures-lite = "2"
@@ -377,6 +382,11 @@ gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719
 gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
 gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
 gpui_util = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
+# Unify `tree_sitter_language::LanguageFn` between crates.io grammar crates
+# (tree-sitter-json 0.24 pulls crates.io tree-sitter-language 0.1.5) and our
+# git rev tree-sitter (43623ec → tree-sitter-language 0.1.8). Two instances
+# of LanguageFn would make `tree_sitter_json::LANGUAGE.into()` fail.
+tree-sitter-language = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }
 # [workspace.lints]：统一的 lint 配置，供子包用 `lints.workspace = true` 继承
 # （如 packages/assets）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
 [workspace.lints.rust]
