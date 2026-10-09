@@ -9565,6 +9565,10 @@ dependencies = [
 [[package]]
 name = "zed_release_channel"
 version = "0.1.0"
+dependencies = [
+ "gpui",
+ "semver",
+]
 
 [[package]]
 name = "zeno"
