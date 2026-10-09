@@ -9580,6 +9580,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "zed_settings"
+version = "0.1.0"
+
+[[package]]
 name = "zeno"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

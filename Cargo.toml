@@ -32,7 +32,7 @@ members = [
     "packages/editor",
     "packages/gpui-cli",
     "packages/gpui_android",
-    "packages/gpui_fuzzy",
+    "packages/aa_gpui/gpui_fuzzy",
     "packages/grammars",
     "packages/icons",
     "packages/language_core",
@@ -49,7 +49,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -233,10 +233,10 @@ strum = { version = "0.28", features = ["derive"] }
 # `scrollbars::ShowScrollbar`）直接放进 `#[derive(JsonSchema)]` 的设置项里，
 # 版本必须与 aacode 一致（都是 1.x），否则两个 `JsonSchema` trait 会对不上。
 schemars = { version = "1", features = ["derive"] }
-# 模糊匹配（packages/gpui_fuzzy）：字符串 / 路径的打分与高亮，对齐 zed
+# 模糊匹配（packages/aa_gpui/gpui_fuzzy）：字符串 / 路径的打分与高亮，对齐 zed
 # crates/fuzzy_nucleo（底层用 crates.io 的 nucleo，MPL-2.0）。依赖 gpui 是因为
 # 需要 BackgroundExecutor（并行分段 + 可取消）与 SharedString。
-aa_gpui_fuzzy = { path = "packages/gpui_fuzzy" }
+aa_gpui_fuzzy = { path = "packages/aa_gpui/gpui_fuzzy" }
 
 # 图标名枚举（packages/icons，zed crates/icons 原样）。全仓库唯一的 IconName：
 # base::Icon、ui、aacode 的 `icons` 别名用的都是它，靠 snake_case 序列化拼出

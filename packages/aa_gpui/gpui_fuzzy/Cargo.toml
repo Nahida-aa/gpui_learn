@@ -1,0 +1,30 @@
+[package]
+name = "aa_gpui_fuzzy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "模糊匹配：字符串与文件路径的打分/高亮（对齐 zed crates/fuzzy_nucleo，底层用 nucleo）"
+
+[dependencies]
+# CharBag（候选预筛的 u64 位集合）。zed 的 fuzzy_nucleo 也是依赖旧包 `fuzzy`
+# 来拿它的；直接复用让「旧 fuzzy」与「nucleo 侧」共享同一个类型，worktree 与
+# project 之间不用做转换。
+fuzzy.workspace = true
+# BackgroundExecutor（并行分段 + 可取消）与 SharedString（候选字符串零拷贝）。
+gpui.workspace = true
+# truncate_to_bottom_n_sorted_by：只保留得分最高的 N 个。
+gpui_util.workspace = true
+# helix 的模糊匹配引擎（crates.io，MPL-2.0，仅作依赖使用、不修改），
+# 提供 Pattern / Matcher / Utf32Str —— zed 的 fuzzy_nucleo 用的也是这一层。
+nucleo = "0.5"
+# zed 的路径类型（RelPath / PathStyle，Apache-2.0）。用它与 zed 的
+# crates/fuzzy_nucleo 保持签名一致，调用方（file_finder / project）不必做类型转换。
+path.workspace = true
+
+[features]
+# #[gpui::test] 与 BackgroundExecutor::set_num_cpus 需要它。
+test-support = ["gpui/test-support"]
+
+[lints]
+workspace = true
