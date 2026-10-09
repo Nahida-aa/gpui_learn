@@ -155,6 +155,7 @@ sum_tree = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad
 # 的就是这些 action —— 必须与 aacode 引用的是同一个 crate，否则同一个
 # `SelectNext` 会分裂成两个类型（同 §13）。
 menu = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+net = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
 # refineable：zed 的「部分覆盖」机制（publish = false，故走 git 源）。
 # 主题需要它——主题 JSON 只写想覆盖的字段，其余落回默认值；
 # `#[derive(Refineable)]` 会生成 `XxxRefinement`（每字段 Option 化）+ `refine()`。
@@ -182,6 +183,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
 # gpui_util 的 debug_panic! 宏在 release 分支展开为 log::error!。
 log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
+zeroize = "1"
 
 # 数字千分位格式化（DiffStat 的 `1,234` 行数显示，与 zed ui 同款）。
 num-format = "0.4.4"

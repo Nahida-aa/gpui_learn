@@ -321,6 +321,19 @@ dependencies = [
 [[package]]
 name = "aa_gpui_kit_askpass"
 version = "0.1.0"
+dependencies = [
+ "aa_util",
+ "anyhow",
+ "futures",
+ "gpui",
+ "log",
+ "net",
+ "smol",
+ "tempfile",
+ "which",
+ "windows 0.58.0",
+ "zeroize",
+]
 
 [[package]]
 name = "aa_gpui_kit_assets"
