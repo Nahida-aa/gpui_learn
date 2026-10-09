@@ -1,5 +1,4 @@
 [package]
-publish = true
 name = "ztracing"
 version.workspace = true
 edition.workspace = true

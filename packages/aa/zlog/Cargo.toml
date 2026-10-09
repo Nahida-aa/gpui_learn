@@ -1,5 +1,4 @@
 [package]
-publish = true
 name = "zlog"
 version.workspace = true
 edition.workspace = true
