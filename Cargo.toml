@@ -168,7 +168,16 @@ uuid = { version = "1.1.2", features = ["v4", "v5", "v7", "serde"] }
 # 开了 compression；feature 在同一个编译单元内会被 cargo 合并（取并集），
 # 但若本仓库单独构建时不开，两边的编译产物就会不一致（同一 crate 在两个
 # workspace 链接到不同的 feature 组合）。
-rust-embed = { version = "~8.11", features = ["include-exclude", "compression"] }
+# 约束是 "8.11"（caret，<9.0）而不是 "~8.11"（<8.12）。
+#
+# rust-embed 8.11 的 proc-macro 依赖声明是 rust-embed-impl = "8.9.0"（即 >=8.9, <9），
+# 区间上限到 9。配 "~8.11" 时 lib 被卡在 8.11.x、impl 却会被 cargo 取到最新的 8.13.x，
+# 于是 derive（8.13）生成的代码引用 EmbeddedCompressedFile，而链接的 lib（8.11）
+# 里没有该类型 —— 该 API 是 8.12 才加回来的：
+#     error[E0407]: method `compressed` is not a member of trait `RustEmbed`
+#     error[E0425]: cannot find type `EmbeddedCompressedFile` in crate `rust_embed`
+# 用 "8.11" 让 lib 与 impl 一起落在同一版本上。
+rust-embed = { version = "8.11", features = ["include-exclude", "compression"] }
 serde = { version = "1.0.221", features = ["derive", "rc"] }
 serde_json = { version = "1.0.144", features = ["preserve_order", "raw_value"] }
 strum = { version = "0.28", features = ["derive"] }

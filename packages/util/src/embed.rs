@@ -16,6 +16,17 @@ pub fn asset_str<A: rust_embed::RustEmbed>(path: &str) -> Cow<'static, str> {
 #[doc(hidden)]
 pub mod __rust_embed {
     pub use rust_embed::{EmbeddedFile, Filenames, Metadata, RustEmbed, flate, utils};
+    // rust-embed 的 derive（rust-embed-impl）在 compression 开启时会生成对
+    // EmbeddedCompressedFile 的引用，并经 #[crate_path] 解析到本模块，故必须转出。
+    //
+    // 不做 #[cfg(feature = "compression")] 门控：那个 cfg 判的是 **util 自己的**
+    // feature，而 util 并没有 compression 这个 feature（compression 是开在
+    // rust-embed 上的），门控后恒为 false、类型永远导不出。
+    //
+    // 无条件转出的前提是 rust-embed >= 8.12（该类型 8.12 才加回来）。本 workspace 的
+    // rust-embed 约束已从 "~8.11" 放宽到 "8.11"（caret，<9.0）以便与
+    // rust-embed-impl 同版本，实际解析到 8.13.x。
+    pub use rust_embed::EmbeddedCompressedFile;
 }
 
 #[cfg(all(debug_assertions, not(feature = "debug-embed")))]
