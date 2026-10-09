@@ -1,0 +1,86 @@
+[package]
+name = "aa_gpui_kit_fs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+anyhow.workspace = true
+async-channel.workspace = true
+async-tar.workspace = true
+async-trait.workspace = true
+collections.workspace = true
+futures.workspace = true
+git.workspace = true
+gpui.workspace = true
+ignore.workspace = true
+libc.workspace = true
+log.workspace = true
+parking_lot.workspace = true
+paths.workspace = true
+rope.workspace = true
+proto.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+slotmap.workspace = true
+smol.workspace = true
+telemetry.workspace = true
+tempfile.workspace = true
+text.workspace = true
+util.workspace = true
+path.workspace = true
+is_executable = "1.0.5"
+notify = "9.0.0-rc.4"
+
+[target.'cfg(unix)'.dependencies]
+rustix.workspace = true
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows.workspace = true
+dunce.workspace = true
+async-std.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+unicode-normalization = "0.1"
+
+# trash-rs 只实现了 windows / macos / freedesktop-linux 三套，其 lib.rs 用
+# `all(unix, not(macos), not(ios), not(android))` 显式排除 ios 与 android ——
+# 没有 android 后端可用。
+#
+# 而它此前是**无条件**依赖：依赖它的 real_fs.rs 有两处调用
+# （`trash::delete_with_info` / `trash::restore_all`），于是 fs crate 在
+# target_os = "android" 下直接编不过（E0433: cannot find module `platform`）。
+#
+# 故条件化到「trash-rs 真正支持的平台」。Android 上 fs crate 其余部分
+# （文件读写、watch、metadata…）照常参与编译，只是回收站两个动作退化为返回
+# `Unsupported`。
+#
+# —— 权宜之计，非终态。——
+# 待 android 端有回收站实现后（可行方向：应用私有目录下的 freedesktop 风格
+# `.Trash`，与 XDG 规范同构；Android scoped storage 下应用私有目录无需额外权限），
+# 把 trash-rs 整体换掉并恢复为无条件依赖即可 —— real_fs.rs 那两处调用点与
+# trash.rs 的三个转换 impl 都是照抄 Zed，届时只需改这一层。
+[target.'cfg(not(target_os = "android"))'.dependencies]
+trash = { git = "https://github.com/zed-industries/trash-rs", rev = "41c6c800d884a89351f3b8856d12894cccee261d" }
+
+[package.metadata.cargo-shear]
+ignored = ["async-std"]
+
+# 对齐 zed `crates/fs` L64-L71。三行缺一不可：
+#   - `cargo test` 不会自动开启 `cfg(feature = "test-support")`（`cfg(test)` 是另一回事），
+#     所以测试构建要在这里显式把 feature 打开，否则 `gpui::TestAppContext` /
+#     `run_test` / `ForegroundExecutor::block_test` 全都不存在（fs_watcher 的测试用到）。
+#   - `fs = { features = ["test-support"] }` 是**自引用**，让本 crate 在测试构建下
+#     以 test-support 形态编译（fake_fs / fake_git_repo 里的 #[cfg(feature = ...)] 代码
+#     才会参与编译）。zed 原版同样是自引用，见 crates/fs/Cargo.toml L64-L67。
+[dev-dependencies]
+fs = { workspace = true, features = ["test-support"] }
+gpui = { workspace = true, features = ["test-support"] }
+git = { workspace = true, features = ["test-support"] }
+
+[features]
+test-support = ["gpui/test-support", "git/test-support", "util/test-support"]

@@ -1,0 +1,19 @@
+[package]
+name = "zed_proto"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+test-support = []
+
+[dependencies]
+anyhow.workspace = true
+prost.workspace = true
+serde.workspace = true
+
+[build-dependencies]
+prost-build.workspace = true
+protox.workspace = true
+
+[dev-dependencies]

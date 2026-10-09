@@ -1,0 +1,19 @@
+[package]
+name = "zed_paths"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+test-support = []
+
+[dependencies]
+const_format.workspace = true
+dirs.workspace = true
+ignore.workspace = true
+util.workspace = true
+path.workspace = true
+
+[lints]
+workspace = true
