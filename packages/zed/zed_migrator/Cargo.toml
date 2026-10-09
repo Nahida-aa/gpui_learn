@@ -1,0 +1,22 @@
+[package]
+name = "zed_migrator"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+collections.workspace = true
+convert_case.workspace = true
+log.workspace = true
+streaming-iterator.workspace = true
+tree-sitter-json.workspace = true
+tree-sitter = { workspace = true, features = ["wasm"] }
+serde_json_lenient.workspace = true
+serde_json.workspace = true
+settings_content.workspace = true
+settings_json = { workspace = true, features = ["editing"] }
+
+[dev-dependencies]
+indoc.workspace = true
+pretty_assertions.workspace = true

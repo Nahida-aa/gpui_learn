@@ -48,6 +48,8 @@ members = [
     # aa 子 crate（packages/aa/<name>/Cargo.toml）
     "packages/aa/util",
     "packages/aa/util_macros",
+    # zed 子 crate（packages/zed/<name>/Cargo.toml）
+    "packages/zed/zed_migrator",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
