@@ -19,6 +19,7 @@ regex.workspace = true
 itertools.workspace = true
 tempfile.workspace = true
 globset.workspace = true
+gpui_util.workspace = true
 dirs.workspace = true
 url.workspace = true
 rust-embed.workspace = true
@@ -28,7 +29,6 @@ take-until.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 serde_json_lenient.workspace = true
-gpui_util.workspace = true
 schemars.workspace = true
 rand = { workspace = true, optional = true }
 util_macros = { workspace = true, optional = true }

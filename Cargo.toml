@@ -15,17 +15,37 @@
 # 是为了让读这个文件的人一眼看到我们在用 2024 的工作区语义。
 resolver = "3"
 
-# members：工作区里「所有」成员。cargo 在 `--workspace` 模式或 `cargo build`
-# 没有 default-members 限制时，会处理这里列出的每一个。
-# 用通配符 "apps/*" 和 "packages/*" 可以随例子增多自动纳入新包，无需手动维护列表。
+# members：工作区里「所有」成员。全部显式列出——避免通配符 `packages/*`
+# 扫到 aa_gpui_kit/ 父目录的 src/ 等非 crate 子目录时报错。
+# 新增 crate 时记得在这里加一行。
 members = [
     "apps/*",
-    # packages/* 会扫到 aa_gpui_kit/ 父目录（它有 Cargo.toml 占位），
-    # 但 aa_gpui_kit 子 crate 由下一条显式匹配。
-    "packages/*",
-    # aa_gpui_kit 子 crate 直接放在 packages/aa_gpui_kit/<name>/。
-    # 注意：不能用 packages/aa_gpui_kit/*，因为它会把 src/ 也当作候选。
-    # 显式列出子目录名。
+    # 平铺 crate（packages/<name>/Cargo.toml）
+    "packages/aa_cloud_llm_client",
+    "packages/aa_language_model_core",
+    "packages/aa_settings_json",
+    "packages/aa_settings_macros",
+    "packages/assets",
+    "packages/base",
+    "packages/clock",
+    "packages/component",
+    "packages/editor",
+    "packages/gpui-cli",
+    "packages/gpui_android",
+    "packages/gpui_fuzzy",
+    "packages/grammars",
+    "packages/icons",
+    "packages/language_core",
+    "packages/theme",
+    "packages/theme-settings",
+    "packages/ui",
+    "packages/ui_input",
+    "packages/ui_macros",
+    "packages/util",
+    "packages/util_macros",
+    "packages/zed_cloud_llm_client",
+    "packages/zed_http_client",
+    # aa_gpui_kit 子 crate（packages/aa_gpui_kit/<name>/Cargo.toml）
     "packages/aa_gpui_kit/settings_content",
 ]
 

@@ -319,10 +319,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_gpui_kit"
-version = "0.0.0"
-
-[[package]]
 name = "aa_gpui_kit_assets"
 version = "0.1.0"
 dependencies = [
