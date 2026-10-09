@@ -319,6 +319,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_gpui_kit_askpass"
+version = "0.1.0"
+
+[[package]]
 name = "aa_gpui_kit_assets"
 version = "0.1.0"
 dependencies = [
@@ -337,6 +341,83 @@ dependencies = [
  "inventory",
  "parking_lot",
  "strum 0.28.0",
+]
+
+[[package]]
+name = "aa_gpui_kit_fs"
+version = "0.1.0"
+dependencies = [
+ "aa_gpui_kit_git",
+ "aa_util",
+ "anyhow",
+ "async-channel 2.5.0",
+ "async-std",
+ "async-tar",
+ "async-trait",
+ "collections",
+ "dunce",
+ "fs",
+ "futures",
+ "gpui",
+ "ignore",
+ "is_executable",
+ "libc",
+ "log",
+ "notify",
+ "parking_lot",
+ "path",
+ "paths",
+ "rope",
+ "rustix",
+ "serde",
+ "serde_json",
+ "slotmap",
+ "smol",
+ "telemetry 0.1.0",
+ "tempfile",
+ "text",
+ "thiserror 2.0.21",
+ "trash",
+ "unicode-normalization",
+ "windows 0.58.0",
+ "zed_proto",
+]
+
+[[package]]
+name = "aa_gpui_kit_git"
+version = "0.1.0"
+dependencies = [
+ "aa_gpui_kit_askpass",
+ "aa_util",
+ "anyhow",
+ "async-channel 2.5.0",
+ "async-trait",
+ "collections",
+ "derive_more",
+ "futures",
+ "gpui",
+ "http_client",
+ "itertools 0.14.0",
+ "log",
+ "parking_lot",
+ "pretty_assertions",
+ "rand 0.9.5",
+ "regex",
+ "rope",
+ "schemars",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "smol",
+ "sum_tree",
+ "tempfile",
+ "text",
+ "thiserror 2.0.21",
+ "time",
+ "url",
+ "urlencoding",
+ "uuid",
+ "ztracing 0.1.0",
 ]
 
 [[package]]
@@ -3046,7 +3127,7 @@ dependencies = [
  "serde_json",
  "slotmap",
  "smol",
- "telemetry",
+ "telemetry 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
  "tempfile",
  "text",
  "thiserror 2.0.21",
@@ -3182,6 +3263,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "generator"
+version = "0.8.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54ade96dc9003043bce7c035c85a9df5a858bfb2039c5a2e6fdf00f324f6c551"
+dependencies = [
+ "cc",
+ "cfg-if",
+ "libc",
+ "log",
+ "rustversion",
+ "windows-link 0.2.1",
+ "windows-result 0.4.1",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3299,7 +3395,7 @@ dependencies = [
  "urlencoding",
  "util",
  "uuid",
- "ztracing",
+ "ztracing 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
 ]
 
 [[package]]
@@ -4697,6 +4793,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52d3a9855747c17eaf4383823f135220716ab49bea5fbea7dd42cc9a92f8aa31"
 dependencies = [
  "logos-codegen 0.16.1",
+]
+
+[[package]]
+name = "loom"
+version = "0.7.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "419e0dc8046cb947daa77eb95ae174acfbddb7673b4151f56d1eed8e93fbfaca"
+dependencies = [
+ "cfg-if",
+ "generator",
+ "scoped-tls",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -6897,7 +7006,7 @@ dependencies = [
  "tracing",
  "unicode-segmentation",
  "util",
- "ztracing",
+ "ztracing 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
 ]
 
 [[package]]
@@ -7575,7 +7684,7 @@ dependencies = [
  "log",
  "rayon",
  "tracing",
- "ztracing",
+ "ztracing 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
 ]
 
 [[package]]
@@ -7798,11 +7907,29 @@ dependencies = [
 [[package]]
 name = "telemetry"
 version = "0.1.0"
+dependencies = [
+ "futures",
+ "serde_json",
+ "telemetry_events 0.1.0",
+]
+
+[[package]]
+name = "telemetry"
+version = "0.1.0"
 source = "git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831#afecd6d719aad92aecfa2860f49c4f2956708831"
 dependencies = [
  "futures",
  "serde_json",
- "telemetry_events",
+ "telemetry_events 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
+]
+
+[[package]]
+name = "telemetry_events"
+version = "0.1.0"
+dependencies = [
+ "semver",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -7822,7 +7949,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32497e9a4c7b38532efcdebeef879707aa9f794296a4f0244f6f69e9bc8574bd"
 dependencies = [
  "fastrand",
- "getrandom 0.3.4",
+ "getrandom 0.4.3",
  "once_cell",
  "rustix",
  "windows-sys",
@@ -7857,6 +7984,7 @@ dependencies = [
  "log",
  "parking_lot",
  "postage",
+ "rand 0.9.5",
  "regex",
  "rope",
  "smallvec",
@@ -8173,6 +8301,38 @@ dependencies = [
  "tracing",
  "tracing-core",
  "tracing-log",
+]
+
+[[package]]
+name = "tracing-tracy"
+version = "0.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0eaa1852afa96e0fe9e44caa53dc0bd2d9d05e0f2611ce09f97f8677af56e4ba"
+dependencies = [
+ "tracing-core",
+ "tracing-subscriber",
+ "tracy-client",
+]
+
+[[package]]
+name = "tracy-client"
+version = "0.18.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6131992ff3e2cb96f407eb4eb005427ba15e2687260d99089b90e60e33169ce0"
+dependencies = [
+ "loom",
+ "once_cell",
+ "tracy-client-sys",
+]
+
+[[package]]
+name = "tracy-client-sys"
+version = "0.29.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab27f167b093214c68413a2e0bcd318f0591af475597405ff68138ba0a433379"
+dependencies = [
+ "cc",
+ "windows-targets",
 ]
 
 [[package]]
@@ -9474,6 +9634,16 @@ dependencies = [
 
 [[package]]
 name = "windows"
+version = "0.58.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dd04d41d93c4992d421894c18c8b43496aa748dd4c081bac0dc93eb0489272b6"
+dependencies = [
+ "windows-core 0.58.0",
+ "windows-targets",
+]
+
+[[package]]
+name = "windows"
 version = "0.61.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9babd3a767a4c1aef6900409f85f5d53ce2544ccdfaa86dad48c91782c6d6893"
@@ -9554,6 +9724,19 @@ dependencies = [
 
 [[package]]
 name = "windows-core"
+version = "0.58.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ba6d44ec8c2591c134257ce647b7ea6b20335bf6379a27dac5f1641fcf59f99"
+dependencies = [
+ "windows-implement 0.58.0",
+ "windows-interface 0.58.0",
+ "windows-result 0.2.0",
+ "windows-strings 0.1.0",
+ "windows-targets",
+]
+
+[[package]]
+name = "windows-core"
 version = "0.61.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0fdd3ddb90610c7638aa2b3a3ab2904fb9e5cdbecc643ddb3647212781c4ae3"
@@ -9624,6 +9807,17 @@ dependencies = [
 
 [[package]]
 name = "windows-implement"
+version = "0.58.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2bbd5b46c938e506ecbce286b6628a02171d56153ba733b6c741fc627ec9579b"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "windows-implement"
 version = "0.60.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "053e2e040ab57b9dc951b72c264860db7eb3b0200ba345b4e4c3b14f67855ddf"
@@ -9649,6 +9843,17 @@ name = "windows-interface"
 version = "0.57.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29bee4b38ea3cde66011baa44dba677c432a78593e202392d1e9070cf2a7fca7"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "windows-interface"
+version = "0.58.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "053c4c462dc91d3b1504c6fe5a726dd15e216ba718e84a0e46a88fbe5ded3515"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -9720,6 +9925,15 @@ dependencies = [
 
 [[package]]
 name = "windows-result"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d1043d8214f791817bab27572aaa8af63732e11bf84aa21a45a78d6c317ae0e"
+dependencies = [
+ "windows-targets",
+]
+
+[[package]]
+name = "windows-result"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "56f42bd332cc6c8eac5af113fc0c1fd6a8fd2aa08a0119358686e5160d0586c6"
@@ -9734,6 +9948,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7781fa89eaf60850ac3d2da7af8e5242a5ea78d1a11c49bf2910bb5a73853eb5"
 dependencies = [
  "windows-link 0.2.1",
+]
+
+[[package]]
+name = "windows-strings"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4cd9b125c486025df0eabcb585e62173c6c9eddcec5d117d3b6e8c30e2ee4d10"
+dependencies = [
+ "windows-result 0.2.0",
+ "windows-targets",
 ]
 
 [[package]]
@@ -10285,6 +10509,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "zed_paths"
+version = "0.1.0"
+dependencies = [
+ "aa_util",
+ "const_format",
+ "dirs",
+ "ignore",
+ "path",
+]
+
+[[package]]
+name = "zed_proto"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "prost",
+ "prost-build",
+ "protox",
+ "serde",
+]
+
+[[package]]
 name = "zed_release_channel"
 version = "0.1.0"
 dependencies = [
@@ -10449,6 +10695,17 @@ checksum = "b268e58e7c693d7c271f93ffc4ba3b380412554231c85bf61ca7af91042a4112"
 [[package]]
 name = "zlog"
 version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "collections",
+ "log",
+ "tempfile",
+]
+
+[[package]]
+name = "zlog"
+version = "0.1.0"
 source = "git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831#afecd6d719aad92aecfa2860f49c4f2956708831"
 dependencies = [
  "anyhow",
@@ -10494,13 +10751,33 @@ dependencies = [
 [[package]]
 name = "ztracing"
 version = "0.1.0"
+dependencies = [
+ "async-channel 2.5.0",
+ "js-sys",
+ "tracing",
+ "tracing-subscriber",
+ "tracing-tracy",
+ "tracy-client",
+ "wasm-bindgen",
+ "web-sys",
+ "zlog 0.1.0",
+ "ztracing_macro 0.1.0",
+]
+
+[[package]]
+name = "ztracing"
+version = "0.1.0"
 source = "git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831#afecd6d719aad92aecfa2860f49c4f2956708831"
 dependencies = [
  "tracing",
  "tracing-subscriber",
- "zlog",
- "ztracing_macro",
+ "zlog 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
+ "ztracing_macro 0.1.0 (git+https://github.com/zed-industries/zed?rev=afecd6d719aad92aecfa2860f49c4f2956708831)",
 ]
+
+[[package]]
+name = "ztracing_macro"
+version = "0.1.0"
 
 [[package]]
 name = "ztracing_macro"

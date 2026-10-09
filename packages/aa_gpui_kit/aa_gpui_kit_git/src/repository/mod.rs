@@ -5248,7 +5248,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn test_initial_graph_data_accepts_sha_log_source(cx: &mut TestAppContext) {
+    async fn test_initial_graph_data_accepts_shzlog_source(cx: &mut TestAppContext) {
         disable_git_global_config();
 
         cx.executor().allow_parking();
