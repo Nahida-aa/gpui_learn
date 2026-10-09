@@ -279,8 +279,8 @@ ec4rs = { version = "1.2", features = ["allow-empty-values"] }
 # paths / fs：zed crates，与同 rev 的 path / gpui 等保持一致
 paths = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
 fs = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
-rope = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
-text = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+rope = { package = "aa_gpui_kit_rope", path = "packages/aa_gpui_kit/aa_gpui_kit_rope" }
+text = { package = "aa_gpui_kit_text", path = "packages/aa_gpui_kit/aa_gpui_kit_text" }
 
 # Android 平台后端（packages/gpui_android）：NativeActivity + JNI 桥 + 输入法
 # / 剪贴板 / 无障碍。vendored 自 zed 的 gpui-android，指向 zed 的 Apache-2.0 侧

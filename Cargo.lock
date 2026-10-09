@@ -361,6 +361,8 @@ name = "aa_gpui_kit_fs"
 version = "0.1.0"
 dependencies = [
  "aa_gpui_kit_git",
+ "aa_gpui_kit_rope",
+ "aa_gpui_kit_text",
  "aa_util",
  "anyhow",
  "async-channel 2.5.0",
@@ -380,7 +382,6 @@ dependencies = [
  "parking_lot",
  "path",
  "paths",
- "rope",
  "rustix",
  "serde",
  "serde_json",
@@ -388,7 +389,6 @@ dependencies = [
  "smol",
  "telemetry 0.1.0",
  "tempfile",
- "text",
  "thiserror 2.0.21",
  "trash",
  "unicode-normalization",
@@ -401,6 +401,8 @@ name = "aa_gpui_kit_git"
 version = "0.1.0"
 dependencies = [
  "aa_gpui_kit_askpass",
+ "aa_gpui_kit_rope",
+ "aa_gpui_kit_text",
  "aa_util",
  "anyhow",
  "async-channel 2.5.0",
@@ -416,7 +418,6 @@ dependencies = [
  "pretty_assertions",
  "rand 0.9.5",
  "regex",
- "rope",
  "schemars",
  "serde",
  "serde_json",
@@ -424,7 +425,6 @@ dependencies = [
  "smol",
  "sum_tree",
  "tempfile",
- "text",
  "thiserror 2.0.21",
  "time",
  "url",
@@ -531,6 +531,7 @@ name = "aa_gpui_kit_text"
 version = "0.1.0"
 dependencies = [
  "aa_clock",
+ "aa_gpui_kit_rope",
  "aa_util",
  "anyhow",
  "collections",
@@ -541,7 +542,6 @@ dependencies = [
  "postage",
  "rand 0.9.5",
  "regex",
- "rope",
  "smallvec",
  "sum_tree",
  "zlog 0.1.0",
@@ -8166,7 +8166,6 @@ dependencies = [
  "log",
  "parking_lot",
  "postage",
- "rand 0.9.5",
  "regex",
  "rope",
  "smallvec",
