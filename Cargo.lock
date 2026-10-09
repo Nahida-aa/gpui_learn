@@ -509,6 +509,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_release_channel"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "semver",
+]
+
+[[package]]
 name = "aa_settings_json"
 version = "0.1.0"
 dependencies = [
@@ -9566,6 +9574,7 @@ dependencies = [
 name = "zed_release_channel"
 version = "0.1.0"
 dependencies = [
+ "aa_release_channel",
  "gpui",
  "semver",
 ]
