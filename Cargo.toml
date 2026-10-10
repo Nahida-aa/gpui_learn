@@ -140,7 +140,7 @@ gpui_web = { version = "0.1.0" }
 gpui_wgpu = { version = "0.1.0" }
 gpui_util = { version = "0.1.0" }
 # gpui_shared_string：arc<str> 包装，zed 没发布 crates.io，直接走 git。
-gpui_shared_string = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
+gpui_shared_string = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
 
 # 任何子包都可以用 `anyhow = { workspace = true }` 引用，版本由这里统一。
 anyhow = "1.0"
@@ -149,34 +149,34 @@ anyhow = "1.0"
 # zed 未把它发布到 crates.io（publish = false），因此这里直接写 git 源；
 # rev 与下方 [patch.crates-io] 的 gpui 保持一致，cargo 会把同一 rev 的仓库
 # 去重成一次 clone，且 gpui 内部的 sum_tree 与我们引用的是同一个包实例。
-sum_tree = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+sum_tree = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
 # menu：zed 的通用 action 集合（`Cancel` / `SelectNext` / `SelectPrevious` …，
 # publish = false 故走 git 源，rev 同上）。ui 的 ModalHeader / Navigable 挂
 # 的就是这些 action —— 必须与 aacode 引用的是同一个 crate，否则同一个
 # `SelectNext` 会分裂成两个类型（同 §13）。
-menu = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
-net = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+menu = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
+net = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
 # refineable：zed 的「部分覆盖」机制（publish = false，故走 git 源）。
 # 主题需要它——主题 JSON 只写想覆盖的字段，其余落回默认值；
 # `#[derive(Refineable)]` 会生成 `XxxRefinement`（每字段 Option 化）+ `refine()`。
 # rev 与 gpui 的 [patch.crates-io] 保持一致。
-refineable = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+refineable = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
 # fuzzy：zed 的**旧**包（自写匹配器，publish = false，故走 git 源）。
 # aa_gpui_fuzzy 对齐的是 zed 的新包 fuzzy_nucleo，而 fuzzy_nucleo 正是依赖
 # 这个旧包来拿 `CharBag`（见 zed crates/fuzzy_nucleo/Cargo.toml）。我们同样
 # 只依赖它的 CharBag 并原样转出，避免「两个结构完全相同的 CharBag 类型」
 # ——那是 f6838a7 之后 worktree（用旧 fuzzy）与 project（用 nucleo 侧）之间
 # 必然出现的类型冲突。
-fuzzy = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+fuzzy = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
 
 # path：zed 的路径类型（RelPath / AbsPath / PathStyle）。**Apache-2.0**，
 # 是 zed 仓库里少见的宽松许可 crate，所以引它不会把 GPL 传染进来。
 # aa_gpui_fuzzy 用它做候选路径类型——对齐 zed crates/fuzzy_nucleo 的签名，
 # 这样 `PathMatchCandidateSet::path_style()` 等处不会出现「两套 PathStyle」。
 # rev 与 gpui 的 [patch.crates-io] 保持一致。
-path = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
-perf = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
-zeta_prompt = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+path = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
+perf = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
+zeta_prompt = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
 
 # 调试/结构化日志(仓库约定见 AGENTS.md)
 tracing = "0.1"
@@ -350,12 +350,12 @@ bitflags = "2.6.0"
 lru = "0.16"
 # 注意：`strum` 在上方 [workspace.dependencies] 已声明（0.28），这里不能重复。
 documented = "0.10"
-syntax_theme = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831" }
+syntax_theme = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
 
 # ---- util / util_macros (aa_gpui_kit_util*) 依赖 ----
 # collections：zed 并发友好集合（publish=false，走 git），rev 与 gpui/path/perf 一致。
-collections = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
-http_client = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
+collections = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
+http_client = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
 streaming-iterator = "0.1"
 indoc = "2"
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
@@ -426,11 +426,11 @@ wasm-bindgen = "0.2"
 [patch.crates-io]
 # version = "=0.2.2" 精确指定：zed 仓库在该 rev 的 git 源里同时存在 0.0.0（开发版）
 # 和历史上的 0.2.2 tag，cargo 要求显式锁定到我们要替换的那一个。
-gpui = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.2.2" }
-gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
-gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
-gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
-gpui_util = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecfa2860f49c4f2956708831", version = "=0.1.0" }
+gpui = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.2.2" }
+gpui_macros = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
+gpui_platform = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
+gpui_wgpu = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
+gpui_util = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
 # Unify `tree_sitter_language::LanguageFn` between crates.io grammar crates
 # (tree-sitter-json 0.24 pulls crates.io tree-sitter-language 0.1.5) and our
 # git rev tree-sitter (43623ec → tree-sitter-language 0.1.8). Two instances
