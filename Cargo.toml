@@ -21,8 +21,8 @@ resolver = "3"
 members = [
     "apps/*",
     # 平铺 crate（packages/<name>/Cargo.toml）
-    "packages/aa_cloud_llm_client",
-    "packages/aa_language_model_core",
+    "packages/aa/aa_cloud_llm_client",
+    "packages/aa/aa_language_model_core",
     "packages/aa/aa_settings_json",
     "packages/aa/aa_settings_macros",
     "packages/assets",
@@ -86,7 +86,7 @@ publish = false   # 教学仓库，不发布到 crates.io
 # 子包里写 `gpui = { workspace = true }` 就能拿到这里统一定义的源与版本，
 # 避免每个例子各写一遍 git 源导致版本漂移。
 [workspace.dependencies]
-aa_cloud_llm_client = { path = "packages/aa_cloud_llm_client" }
+aa_cloud_llm_client = { path = "packages/aa/aa_cloud_llm_client" }
 async-compression = { version = "0.4", features = ["bzip2", "gzip", "futures-io"] }
 async-lock = "3.4.2"
 async-tar = { git = "https://github.com/zed-industries/async-tar", rev = "bd3ad6f89df9a9da7a8535958756d6bf465936a0" }
@@ -270,7 +270,7 @@ aa_gpui_kit_component = { path = "packages/component" }
 settings_content = { package = "aa_gpui_kit_settings_content", path = "packages/aa_gpui_kit/settings_content" }
 settings_macros = { package = "aa_settings_macros", path = "packages/aa/aa_settings_macros" }
 settings_json = { package = "aa_settings_json", path = "packages/aa/aa_settings_json", default-features = false }
-language_model_core = { package = "aa_language_model_core", path = "packages/aa_language_model_core" }
+language_model_core = { package = "aa_language_model_core", path = "packages/aa/aa_language_model_core" }
 aa_release_channel = { path = "packages/aa/aa_release_channel" }
 release_channel = { package = "aa_release_channel", path = "packages/aa/aa_release_channel" }
 migrator = { package = "zed_migrator", path = "packages/zed/zed_migrator" }
