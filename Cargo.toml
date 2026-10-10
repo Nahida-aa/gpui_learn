@@ -23,8 +23,8 @@ members = [
     # 平铺 crate（packages/<name>/Cargo.toml）
     "packages/aa_cloud_llm_client",
     "packages/aa_language_model_core",
-    "packages/aa_settings_json",
-    "packages/aa_settings_macros",
+    "packages/aa/aa_settings_json",
+    "packages/aa/aa_settings_macros",
     "packages/assets",
     "packages/base",
     "packages/clock",
@@ -268,8 +268,8 @@ aa_gpui_kit_component = { path = "packages/component" }
 # `use language_model_core::*`，但 gpui_learn 里的包名加了 aa_ 前缀。
 # 直接用 alias 让源码零改动，不再单独声明 aa_settings_* / aa_language_model_core。
 settings_content = { package = "aa_gpui_kit_settings_content", path = "packages/aa_gpui_kit/settings_content" }
-settings_macros = { package = "aa_settings_macros", path = "packages/aa_settings_macros" }
-settings_json = { package = "aa_settings_json", path = "packages/aa_settings_json", default-features = false }
+settings_macros = { package = "aa_settings_macros", path = "packages/aa/aa_settings_macros" }
+settings_json = { package = "aa_settings_json", path = "packages/aa/aa_settings_json", default-features = false }
 language_model_core = { package = "aa_language_model_core", path = "packages/aa_language_model_core" }
 aa_release_channel = { path = "packages/aa/aa_release_channel" }
 release_channel = { package = "aa_release_channel", path = "packages/aa/aa_release_channel" }
