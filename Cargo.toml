@@ -31,7 +31,7 @@ members = [
     "packages/component",
     "packages/editor",
     "packages/gpui-cli",
-    "packages/gpui_android",
+    "packages/aa_gpui/gpui_android",
     "packages/aa_gpui/gpui_fuzzy",
     "packages/grammars",
     "packages/icons",
@@ -76,7 +76,7 @@ edition = "2024"
 # settings_json、fuzzy …），上游是 GPL-3.0-or-later，承载它们就必须同许可。
 # 只有**确认零 zed 代码**的包才在各自的 Cargo.toml 里覆盖成 Apache-2.0：
 #   - packages/gpui-cli（构建/开发工具）
-#   - packages/gpui_android（Android 平台适配，只依赖 zed 的 Apache-2.0 侧 gpui）
+#   - packages/aa_gpui/gpui_android（Android 平台适配，只依赖 zed 的 Apache-2.0 侧 gpui）
 # 新增包时：含 zed 来源代码 → 继承默认（别写 license 字段）；纯自研 → 显式写
 # `license = "Apache-2.0"`。许可证文本见根目录 LICENSE-GPL / LICENSE-APACHE。
 license = "GPL-3.0-or-later"
@@ -282,11 +282,11 @@ fs = { git = "https://github.com/zed-industries/zed", rev = "afecd6d719aad92aecf
 rope = { package = "aa_gpui_kit_rope", path = "packages/aa_gpui_kit/aa_gpui_kit_rope" }
 text = { package = "aa_gpui_kit_text", path = "packages/aa_gpui_kit/aa_gpui_kit_text" }
 
-# Android 平台后端（packages/gpui_android）：NativeActivity + JNI 桥 + 输入法
+# Android 平台后端（packages/aa_gpui/gpui_android）：NativeActivity + JNI 桥 + 输入法
 # / 剪贴板 / 无障碍。vendored 自 zed 的 gpui-android，指向 zed 的 Apache-2.0 侧
 # gpui（d88f6821，与根 [patch.crates-io] 同源）。
 # 子包用 `aa_gpui_android.workspace = true` 引用，路径统一在此声明。
-aa_gpui_android = { path = "packages/gpui_android" }
+aa_gpui_android = { path = "packages/aa_gpui/gpui_android" }
 
 # 主题的 JSON 装载与装配（packages/theme-settings）：知道主题扩展 JSON 的
 # schema 并把它装进注册表。**单向依赖** aa_gpui_kit_theme——theme 包反过来
