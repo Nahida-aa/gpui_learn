@@ -33,9 +33,9 @@ members = [
     "packages/gpui-cli",
     "packages/aa_gpui/gpui_android",
     "packages/aa_gpui/gpui_fuzzy",
-    "packages/grammars",
+    "packages/aa/grammars",
     "packages/icons",
-    "packages/language_core",
+    "packages/aa/language_core",
     "packages/theme",
     "packages/theme-settings",
     "packages/ui",
@@ -338,7 +338,7 @@ tree-sitter-regex = "0.24"
 tree-sitter-rust = "0.24.2"
 tree-sitter-typescript = { git = "https://github.com/zed-industries/tree-sitter-typescript", rev = "e2c53597d6a5d9cf7bbe8dccde576fe1e46c5899" }
 tree-sitter-yaml = { git = "https://github.com/zed-industries/tree-sitter-yaml", rev = "baff0b51c64ef6a1fb1f8390f3ad6015b83ec13a" }
-grammars = { package = "aa_gpui_kit_grammars", path = "packages/grammars" }
+grammars = { package = "aa_gpui_kit_grammars", path = "packages/aa/grammars" }
 # KeyBinding 用 itertools::intersperse / Itertools::join 拼按键提示。
 # 版本与 zed workspace 对齐（0.14 线）。
 itertools = "0.14"
@@ -407,7 +407,7 @@ mach2 = "0.5"
 
 util_macros = { path = "packages/aa/util_macros" }
 util = { package = "aa_util", path = "packages/aa/util" }
-language_core = { package = "aa_gpui_kit_language_core", path = "packages/language_core" }
+language_core = { package = "aa_gpui_kit_language_core", path = "packages/aa/language_core" }
 rustix = { version = "1.1", features = ["fs"] }
 prost = "0.14"
 prost-build = "0.14"
