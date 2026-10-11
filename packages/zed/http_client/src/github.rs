@@ -33,6 +33,21 @@ pub struct GithubReleaseAsset {
     pub digest: Option<String>,
 }
 
+fn deserialize_sha256_digest<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    const PREFIX: &str = "sha256:";
+
+    let mut digest = Option::<String>::deserialize(deserializer)?;
+    if let Some(digest) = digest.as_mut()
+        && digest.starts_with(PREFIX)
+    {
+        digest.replace_range(..PREFIX.len(), "");
+    }
+    Ok(digest)
+}
+
 pub async fn latest_github_release(
     repo_name_with_owner: &str,
     require_assets: bool,
@@ -125,27 +140,6 @@ pub async fn get_release_by_tag_name(
     Ok(release)
 }
 
-/// 剥掉 GitHub asset `digest` 字段的 `sha256:` 前缀。
-/// 逐字照抄 zed `afecd6d` 的 `crates/http_client/src/github.rs`。
-///
-/// 注：本 crate 当前**零引用**（实际用的是 workspace 里 zed git 依赖的 `http_client`）。
-/// 保留本地 fork 是为将来去 zed 化做准备——代码里存在 zed 独有字符串。
-/// 改动请同步 zed 上游，避免与 `afecd6d` 产生无谓 diff。
-fn deserialize_sha256_digest<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    const PREFIX: &str = "sha256:";
-
-    let mut digest = Option::<String>::deserialize(deserializer)?;
-    if let Some(digest) = digest.as_mut()
-        && digest.starts_with(PREFIX)
-    {
-        digest.replace_range(..PREFIX.len(), "");
-    }
-    Ok(digest)
-}
-
 fn github_api_request(url: &str) -> Result<Request<AsyncBody>> {
     Request::get(url)
         .follow_redirects(crate::RedirectPolicy::FollowAll)
@@ -190,8 +184,34 @@ pub fn build_asset_url(repo_name_with_owner: &str, tag: &str, kind: AssetKind) -
 mod tests {
     use crate::{
         RequestTimeout,
-        github::{AssetKind, GITHUB_RELEASE_REQUEST_TIMEOUT, build_asset_url, github_api_request},
+        github::{
+            AssetKind, GITHUB_RELEASE_REQUEST_TIMEOUT, GithubReleaseAsset, build_asset_url,
+            github_api_request,
+        },
     };
+
+    #[test]
+    fn test_asset_digest_deserialization() {
+        let parse = |json: &str| {
+            serde_json::from_str::<GithubReleaseAsset>(json)
+                .unwrap()
+                .digest
+        };
+
+        assert_eq!(
+            parse(r#"{"name":"a","browser_download_url":"u","digest":"sha256:abc"}"#),
+            Some("abc".to_string())
+        );
+        assert_eq!(
+            parse(r#"{"name":"a","browser_download_url":"u","digest":"abc"}"#),
+            Some("abc".to_string())
+        );
+        assert_eq!(
+            parse(r#"{"name":"a","browser_download_url":"u","digest":null}"#),
+            None
+        );
+        assert_eq!(parse(r#"{"name":"a","browser_download_url":"u"}"#), None);
+    }
 
     #[test]
     fn github_api_requests_have_a_total_deadline() {

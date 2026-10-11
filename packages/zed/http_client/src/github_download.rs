@@ -11,7 +11,9 @@ use sha2::{Digest, Sha256};
 
 use crate::{HttpClient, github::AssetKind};
 
-fn sha256_matches(actual: &str, expected: &str) -> bool { actual.eq_ignore_ascii_case(expected) }
+fn sha256_matches(actual: &str, expected: &str) -> bool {
+    actual.eq_ignore_ascii_case(expected)
+}
 
 #[derive(serde::Deserialize, serde::Serialize, Debug)]
 pub struct GithubBinaryMetadata {
@@ -395,9 +397,13 @@ mod tests {
             })
         }
 
-        fn user_agent(&self) -> Option<&HeaderValue> { None }
+        fn user_agent(&self) -> Option<&HeaderValue> {
+            None
+        }
 
-        fn proxy(&self) -> Option<&Url> { None }
+        fn proxy(&self) -> Option<&Url> {
+            None
+        }
     }
 
     #[test]

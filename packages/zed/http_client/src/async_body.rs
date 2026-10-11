@@ -29,7 +29,9 @@ impl AsyncBody {
     ///
     /// An empty body represents the *absence* of a body, which is semantically
     /// different than the presence of a body of zero length.
-    pub fn empty() -> Self { Self(Inner::Empty) }
+    pub fn empty() -> Self {
+        Self(Inner::Empty)
+    }
     /// Create a streaming body that reads from the given reader.
     pub fn from_reader<R>(read: R) -> Self
     where
@@ -38,37 +40,53 @@ impl AsyncBody {
         Self(Inner::AsyncReader(Box::pin(read)))
     }
 
-    pub fn from_bytes(bytes: Bytes) -> Self { Self(Inner::Bytes(Cursor::new(bytes))) }
+    pub fn from_bytes(bytes: Bytes) -> Self {
+        Self(Inner::Bytes(Cursor::new(bytes)))
+    }
 }
 
 impl Default for AsyncBody {
-    fn default() -> Self { Self(Inner::Empty) }
+    fn default() -> Self {
+        Self(Inner::Empty)
+    }
 }
 
 impl From<()> for AsyncBody {
-    fn from(_: ()) -> Self { Self(Inner::Empty) }
+    fn from(_: ()) -> Self {
+        Self(Inner::Empty)
+    }
 }
 
 impl From<Bytes> for AsyncBody {
-    fn from(bytes: Bytes) -> Self { Self::from_bytes(bytes) }
+    fn from(bytes: Bytes) -> Self {
+        Self::from_bytes(bytes)
+    }
 }
 
 impl From<Vec<u8>> for AsyncBody {
-    fn from(body: Vec<u8>) -> Self { Self::from_bytes(body.into()) }
+    fn from(body: Vec<u8>) -> Self {
+        Self::from_bytes(body.into())
+    }
 }
 
 impl From<String> for AsyncBody {
-    fn from(body: String) -> Self { Self::from_bytes(body.into()) }
+    fn from(body: String) -> Self {
+        Self::from_bytes(body.into())
+    }
 }
 
 impl From<&'static [u8]> for AsyncBody {
     #[inline]
-    fn from(s: &'static [u8]) -> Self { Self::from_bytes(Bytes::from_static(s)) }
+    fn from(s: &'static [u8]) -> Self {
+        Self::from_bytes(Bytes::from_static(s))
+    }
 }
 
 impl From<&'static str> for AsyncBody {
     #[inline]
-    fn from(s: &'static str) -> Self { Self::from_bytes(Bytes::from_static(s.as_bytes())) }
+    fn from(s: &'static str) -> Self {
+        Self::from_bytes(Bytes::from_static(s.as_bytes()))
+    }
 }
 
 /// Newtype wrapper that serializes a value as JSON into an `AsyncBody`.

@@ -42,7 +42,7 @@ members = [
     "packages/ui_input",
     "packages/ui_macros",
     "packages/zed/zed_cloud_llm_client",
-    "packages/zed/zed_http_client",
+    "packages/zed/http_client",
     # aa_gpui_kit 子 crate（packages/aa_gpui_kit/<name>/Cargo.toml）
     "packages/aa_gpui_kit/settings_content",
     # aa 子 crate（packages/aa/<name>/Cargo.toml）
@@ -118,7 +118,6 @@ serde_urlencoded = "0.7"
 
 thiserror = "2.0.12"
 
-# zed_http_client = { path = "packages/zed_http_client" }
 # 注意这里的写法：子包声明的是「语义版本 0.2.2」（来自 crates.io），
 # 真正的 git 源在下面的 [patch.crates-io] 里把 crates.io 上的 gpui 整体
 # 替换成 zed 仓库的对应 commit。这样：
@@ -355,7 +354,11 @@ syntax_theme = { git = "https://github.com/zed-industries/zed", rev = "c0199504b
 # ---- util / util_macros (aa_gpui_kit_util*) 依赖 ----
 # collections：zed 并发友好集合（publish=false，走 git），rev 与 gpui/path/perf 一致。
 collections = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
-http_client = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
+# 【有意偏离 zed】zed 用 git rev 直接引 crates/http_client；这里指向本地
+# packages/zed/http_client（源已逐字同步到同一个 rev c0199504）。
+# 目的：与本仓库其余 gpui_learn crate 一致地走本地路径，aacode 侧也只需一条
+# [patch] 即可让 http_client 走本地，不至于成为「全部走本地」原则下的唯一例外。
+http_client = { path = "packages/zed/http_client" }
 streaming-iterator = "0.1"
 indoc = "2"
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }

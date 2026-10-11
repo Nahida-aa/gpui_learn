@@ -58,7 +58,9 @@ pub trait HttpRequestExt {
 }
 
 impl HttpRequestExt for http::request::Builder {
-    fn follow_redirects(self, follow: RedirectPolicy) -> Self { self.extension(follow) }
+    fn follow_redirects(self, follow: RedirectPolicy) -> Self {
+        self.extension(follow)
+    }
 
     fn timeout(self, timeout: Duration) -> Self {
         debug_assert!(!timeout.is_zero(), "timeout must be positive");
@@ -75,9 +77,13 @@ impl HttpRequestExt for http::request::Builder {
 pub struct CustomHeaders(Arc<[(HeaderName, HeaderValue)]>);
 
 impl CustomHeaders {
-    pub fn new(headers: Vec<(HeaderName, HeaderValue)>) -> Self { Self(headers.into()) }
+    pub fn new(headers: Vec<(HeaderName, HeaderValue)>) -> Self {
+        Self(headers.into())
+    }
 
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 
     pub fn iter(&self) -> impl ExactSizeIterator<Item = (&HeaderName, &HeaderValue)> {
         self.0.iter().map(|(n, v)| (n, v))
@@ -163,7 +169,9 @@ pub trait HttpClient: 'static + Send + Sync {
     }
 
     #[cfg(feature = "test-support")]
-    fn as_fake(&self) -> &FakeHttpClient { panic!("called as_fake on {}", type_name::<Self>()) }
+    fn as_fake(&self) -> &FakeHttpClient {
+        panic!("called as_fake on {}", type_name::<Self>())
+    }
 }
 
 /// An [`HttpClient`] that may have a proxy.
@@ -199,12 +207,18 @@ impl HttpClient for HttpClientWithProxy {
         self.client.send(req)
     }
 
-    fn user_agent(&self) -> Option<&HeaderValue> { self.client.user_agent() }
+    fn user_agent(&self) -> Option<&HeaderValue> {
+        self.client.user_agent()
+    }
 
-    fn proxy(&self) -> Option<&Url> { self.proxy.as_ref() }
+    fn proxy(&self) -> Option<&Url> {
+        self.proxy.as_ref()
+    }
 
     #[cfg(feature = "test-support")]
-    fn as_fake(&self) -> &FakeHttpClient { self.client.as_fake() }
+    fn as_fake(&self) -> &FakeHttpClient {
+        self.client.as_fake()
+    }
 }
 
 /// An [`HttpClient`] that has a base URL.
@@ -244,7 +258,9 @@ impl HttpClientWithUrl {
     }
 
     /// Returns the base URL.
-    pub fn base_url(&self) -> String { self.base_url.lock().clone() }
+    pub fn base_url(&self) -> String {
+        self.base_url.lock().clone()
+    }
 
     /// Sets the base URL.
     pub fn set_base_url(&self, base_url: impl Into<String>) {
@@ -253,7 +269,9 @@ impl HttpClientWithUrl {
     }
 
     /// Builds a URL using the given path.
-    pub fn build_url(&self, path: &str) -> String { format!("{}{}", self.base_url(), path) }
+    pub fn build_url(&self, path: &str) -> String {
+        format!("{}{}", self.base_url(), path)
+    }
 
     /// Builds a Zed API URL using the given path.
     pub fn build_zed_api_url(&self, path: &str, query: &[(&str, &str)]) -> Result<Url> {
@@ -322,12 +340,18 @@ impl HttpClient for HttpClientWithUrl {
         self.client.send(req)
     }
 
-    fn user_agent(&self) -> Option<&HeaderValue> { self.client.user_agent() }
+    fn user_agent(&self) -> Option<&HeaderValue> {
+        self.client.user_agent()
+    }
 
-    fn proxy(&self) -> Option<&Url> { self.client.proxy.as_ref() }
+    fn proxy(&self) -> Option<&Url> {
+        self.client.proxy.as_ref()
+    }
 
     #[cfg(feature = "test-support")]
-    fn as_fake(&self) -> &FakeHttpClient { self.client.as_fake() }
+    fn as_fake(&self) -> &FakeHttpClient {
+        self.client.as_fake()
+    }
 }
 
 pub fn read_proxy_from_env() -> Option<Url> {
@@ -355,7 +379,9 @@ pub fn read_no_proxy_from_env() -> Option<String> {
 pub struct BlockedHttpClient;
 
 impl BlockedHttpClient {
-    pub fn new() -> Self { BlockedHttpClient }
+    pub fn new() -> Self {
+        BlockedHttpClient
+    }
 }
 
 impl HttpClient for BlockedHttpClient {
@@ -372,12 +398,18 @@ impl HttpClient for BlockedHttpClient {
         })
     }
 
-    fn user_agent(&self) -> Option<&HeaderValue> { None }
+    fn user_agent(&self) -> Option<&HeaderValue> {
+        None
+    }
 
-    fn proxy(&self) -> Option<&Url> { None }
+    fn proxy(&self) -> Option<&Url> {
+        None
+    }
 
     #[cfg(feature = "test-support")]
-    fn as_fake(&self) -> &FakeHttpClient { panic!("called as_fake on {}", type_name::<Self>()) }
+    fn as_fake(&self) -> &FakeHttpClient {
+        panic!("called as_fake on {}", type_name::<Self>())
+    }
 }
 
 #[cfg(feature = "test-support")]
@@ -462,9 +494,15 @@ impl HttpClient for FakeHttpClient {
         ((self.handler.lock().as_ref().unwrap())(req)) as _
     }
 
-    fn user_agent(&self) -> Option<&HeaderValue> { Some(&self.user_agent) }
+    fn user_agent(&self) -> Option<&HeaderValue> {
+        Some(&self.user_agent)
+    }
 
-    fn proxy(&self) -> Option<&Url> { None }
+    fn proxy(&self) -> Option<&Url> {
+        None
+    }
 
-    fn as_fake(&self) -> &FakeHttpClient { self }
+    fn as_fake(&self) -> &FakeHttpClient {
+        self
+    }
 }

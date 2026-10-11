@@ -1,9 +1,20 @@
 [package]
-name = "zed_http_client"
+# 【与 aacode 的关系】本 crate 刻意与 zed 上游**同名** `http_client`：cargo 的
+# [patch] 要求被 patch 的包同名同版本，叫 zed_http_client 就无法用来 patch
+# aacode 依赖的 zed git 版 http_client（那样它只能零引用地躺着）。
+# 改名后 aacode 侧即可在 [patch] 里指向本路径：http_client 也走本地路径，
+# 与其余 gpui_learn crate 保持一致。
+name = "http_client"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
+
+# crate root 文件名对齐上游：zed 是 src/http_client.rs（需显式指定），
+# 改名之前这里用的是 src/lib.rs。同步上游时保持一致，避免无谓 diff。
+[lib]
+path = "src/http_client.rs"
+doctest = false
 
 [features]
 test-support = []
