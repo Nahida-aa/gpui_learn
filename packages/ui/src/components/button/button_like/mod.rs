@@ -33,7 +33,6 @@ use aa_gpui_kit_theme::ActiveTheme;
 
 use crate::components::button::ClickHandler;
 use crate::components::button::{ButtonRadius, ButtonStyle};
-use crate::components::icon::IconWithIndicator;
 use crate::components::indicator::Indicator;
 use crate::styles::{DynamicSpacing, ElevationIndex};
 use crate::components::tooltip::TooltipHost;
@@ -121,16 +120,6 @@ pub struct ButtonLike {
     style: ButtonStyle,
     /// 文字（与图标可同时存在，水平排列）。
     label: Option<SharedString>,
-    icon: Option<IconName>,
-    /// 显式图标色；`None` 时：selected → accent，否则取样式 fg。
-    icon_color: Option<Hsla>,
-    /// 图标边长（icon-only 时同时决定容器边长）。
-    icon_size: Pixels,
-    /// 图标右下角的徽标（对齐 zed `IconButton::indicator`，经
-    /// [`IconWithIndicator`] 落到按钮上）。
-    indicator: Option<Indicator>,
-    /// 徽标外圈描边色；`None` 时取主题 `elevated_surface_background`。
-    indicator_border_color: Option<Hsla>,
     /// 宽度覆盖（`FixedWidth::width` / `full_width` / `IconButtonShape::Square` 设入）；
     /// `None` 时按内容自适应。
     width: Option<DefiniteLength>,
@@ -213,11 +202,6 @@ impl ButtonLike {
             id: id.into(),
             style: ButtonStyle::Subtle,
             label: None,
-            icon: None,
-            icon_color: None,
-            icon_size: px(14.0),
-            indicator: None,
-            indicator_border_color: None,
             width: None,
             tab_index: None,
             button_size: ButtonSize::default(),
@@ -265,36 +249,6 @@ impl ButtonLike {
     /// 按钮文字。
     pub fn label(mut self, label: impl Into<SharedString>) -> Self {
         self.label = Some(label.into());
-        self
-    }
-
-    /// 设置图标（颜色由 `icon_color` / 主题决定）。
-    pub fn icon(mut self, icon: IconName) -> Self {
-        self.icon = Some(icon);
-        self
-    }
-
-    /// 指定图标颜色（`None` 时：selected → accent，否则样式 fg）。
-    pub fn icon_color(mut self, color: Option<Hsla>) -> Self {
-        self.icon_color = color;
-        self
-    }
-
-    /// 图标边长（icon-only 时同时决定容器边长）。
-    pub fn icon_size(mut self, size: impl Into<Pixels>) -> Self {
-        self.icon_size = size.into();
-        self
-    }
-
-    /// 图标右下角的徽标（对齐 zed `IconButton::indicator`）。
-    pub fn indicator(mut self, indicator: Indicator) -> Self {
-        self.indicator = Some(indicator);
-        self
-    }
-
-    /// 徽标外圈描边色（`None` 时取主题 `elevated_surface_background`）。
-    pub fn indicator_border_color(mut self, color: Option<Hsla>) -> Self {
-        self.indicator_border_color = color;
         self
     }
 
@@ -576,15 +530,18 @@ impl RenderOnce for ButtonLike {
         let disabled = self.disabled;
         let selected = self.selected;
 
-        // 前景色：disabled → `Color::Disabled`（= `text_disabled`，与 zed
-        // `styles/color.rs:100` 同）；selected → accent；
-        // 显式 icon_color → 取之；否则样式 fg（同时用于图标与文字）。
+        // 文字前景色：disabled → `Color::Disabled`（= `text_disabled`，与 zed
+        // `styles/color.rs:100` 同）；selected → accent；否则取样式 fg。
+        //
+        // 图标不归这里管（对齐 zed：ButtonLike 是纯容器，图标由 `IconButton`
+        // 自己 `Icon::new(..).size(..)` 建好后 `child()` 进来），见
+        // `button/mod.rs` 的 `IconButton::render`。
         let fg = if disabled {
             colors.text_disabled
         } else if selected {
             colors.icon_accent
         } else {
-            self.icon_color.unwrap_or(style_colors.fg)
+            style_colors.fg
         };
 
         let button_id = self.id.clone();
@@ -686,28 +643,15 @@ impl RenderOnce for ButtonLike {
             },
         };
 
-        if let Some(icon) = self.icon {
-            let icon_element = Icon::new(icon).size(self.icon_size).color(fg.into());
-            // 与 zed 的差异：zed 的 `IconButton` 自己拼
-            // `IconWithIndicator::new(icon_element, Some(indicator))`（icon_button.rs:264）；
-            // 我们的 `IconButton` 到渲染时才建 `ButtonLike`，所以这一步下移到这里。
-            button = button.child(if self.indicator.is_some() {
-                IconWithIndicator::new(icon_element, self.indicator)
-                    .indicator_border_color(self.indicator_border_color)
-                    .into_any_element()
-            } else {
-                icon_element.into_any_element()
-            });
-        }
         if let Some(label) = self.label {
             button = button.child(div().text_color(fg).child(label));
         }
         // 壳（Button / IconButton）挂进来的内容。
         //
         // 与 zed 的差异：zed 的 `ButtonLike` 是「纯容器」，内容全由壳通过
-        // `child()` 挂入，内置的 `label` / `icon` 字段其实是给直接使用
-        // `ButtonLike` 的场景用的。我们保留那套字段，同时接受 children ——
-        // 壳走 children，直接使用者走字段。
+        // `child()` 挂入，压根没有 `icon` / `icon_size` 字段（图标连同徽标
+        // 由 `IconButton::render` 自己拼好再挂进来）。我们保留了 `label`
+        // 这个便捷字段，图标侧已经按 zed 收回 `IconButton`。
         button = button.children(self.children);
 
         // 只在 group 被 hover 时显示（对齐 zed `ButtonLike::visible_on_hover`）。
@@ -885,6 +829,7 @@ mod tests {
     use super::*;
     use crate::components::button::TintColor;
     use gpui::{TestAppContext, hsla};
+    use crate::{Icon, IconSize};
 
     /// 冒烟：builder 链（含 trait 方法）走一遍，字段确实被设置。
     #[test]
@@ -892,7 +837,7 @@ mod tests {
         let button = ButtonLike::new("test")
             .style(ButtonStyle::Tinted(TintColor::Error))
             .label("保存")
-            .icon(IconName::Check)
+            .child(Icon::new(IconName::Check).size(IconSize::Small))
             .selected(true)
             .disabled(false)
             .on_click(|_, _, _| {})
@@ -900,7 +845,7 @@ mod tests {
 
         assert!(button.on_click.is_some());
         assert_eq!(button.label.as_deref(), Some("保存"));
-        assert!(button.icon.is_some());
+        assert_eq!(button.children.len(), 1, "图标应由调用方 child 进来");
         assert!(button.selected);
         assert!(!button.disabled);
     }

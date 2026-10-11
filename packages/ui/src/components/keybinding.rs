@@ -634,11 +634,8 @@ impl RenderOnce for KeyIcon {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
         let size = self.size.unwrap_or(IconSize::Small.rems().into());
 
-        // 与 zed 的差异：zed 的 `Icon::size` 收 `IconSize`；
-        // 我们的 `Icon::size` 收 `Pixels`，所以这里在渲染期换算
-        // `AbsoluteLength -> Pixels`。
         Icon::new(self.icon)
-            .size(size.to_pixels(window.rem_size()))
+            .size(IconSize::Custom(size.to_rems(window.rem_size())))
             .color(self.color.unwrap_or(Color::Muted))
     }
 }

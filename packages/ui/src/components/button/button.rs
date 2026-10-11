@@ -338,10 +338,7 @@ impl RenderOnce for Button {
             self.label_color.unwrap_or_default()
         };
 
-        // 与 zed 的差异 2：zed 的 `Icon` 收 `IconSize`、`.color()` 收语义 `Color`；
-        // 我们的 `Icon` 收 `Pixels` / `Hsla`，所以尺寸与颜色在这里展开。
-        // loading 的旋转动画已对齐（`with_keyed_rotate_animation`）。
-        let start_icon_size = IconSize::Small.rems() * window.rem_size();
+        // loading 的旋转动画对齐 zed（`with_keyed_rotate_animation`）。
         let gap = DynamicSpacing::Base04.rems(cx);
         let label_gap = DynamicSpacing::Base06.rems(cx);
 
@@ -351,7 +348,7 @@ impl RenderOnce for Button {
             let loading_icon_id = (base.id_ref().clone(), "loading");
             Some(
                 Icon::new(IconName::LoadCircle)
-                    .size(start_icon_size)
+                    .size(IconSize::Small)
                     .color(Color::Muted)
                     // 2 秒转一圈（与 zed 的 `loading_icon_id, 2` 一致）。
                     .with_keyed_rotate_animation(loading_icon_id, 2)
@@ -395,7 +392,7 @@ impl RenderOnce for Button {
                     |this| {
                         this.child(
                             Icon::new(IconName::LoadCircle)
-                                .size(start_icon_size)
+                                .size(IconSize::Small)
                                 .color(Color::Muted)
                                 .with_keyed_rotate_animation(loading_icon_id, 2),
                         )

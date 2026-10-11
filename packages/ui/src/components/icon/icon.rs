@@ -3,10 +3,10 @@
 //! `IconName` 来自 `aa_icons`（zed `crates/icons` 原样），全仓库唯一的枚举；
 //! `path()` 由它的 snake_case 序列化拼出 `assets/icons/` 下的 SVG 路径。
 //!
-//! 与 zed 的差异：`Icon::size` 这里收 `impl Into<Pixels>`（zed 收
-//! `IconSize`）。`From<IconSize> for Pixels` 让两种写法都能编译
-//! （`.size(IconSize::Small)` 与 `.size(px(8.))`），等调用面统一到
-//! `IconSize` 后再收窄成 zed 的签名。
+//! 尺寸收放完全与 zed 一致：`Icon::size` 收 `IconSize` 并存成 `Rems`
+//! （渲染时由 gpui 乘 `window.rem_size()`）。想要一个**非档位**的任意
+//! rems 值，用 crate 私有的 `custom_size`（如 `IndicatorKind::Icon` 的
+//! `rems_from_px(8.)`），这也是 zed 的做法。
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -21,12 +21,6 @@ pub use aa_icons::IconName;
 
 use crate::traits::transformable::Transformable;
 use crate::{Indicator, prelude::*};
-
-impl From<IconSize> for Pixels {
-    fn from(size: IconSize) -> Self {
-        px(16.0) * size.rems().0
-    }
-}
 
 #[derive(IntoElement)]
 pub enum AnyIcon {
@@ -218,13 +212,8 @@ impl Icon {
         self
     }
 
-    /// 与 zed 的差异：zed 收 `IconSize`。这里放宽成 `impl Into<Pixels>`，
-    /// 让 `.size(IconSize::Small)`（经 `From<IconSize> for Pixels`）与现存
-    /// 的 `.size(px(8.))` 两种调用面都能编译；换算沿用「1rem = 16px」约定
-    /// （与 `From<IconSize> for Pixels` 一致）。
-    pub fn size(mut self, size: impl Into<Pixels>) -> Self {
-        let px_value = f32::from(size.into());
-        self.size = rems(px_value / 16.0);
+    pub fn size(mut self, size: IconSize) -> Self {
+        self.size = size.rems();
         self
     }
 

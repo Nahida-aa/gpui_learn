@@ -16,7 +16,7 @@ fn button_apis_from_prelude() {
     // ButtonLike：组件方法 + trait 方法（Clickable/Disableable）混合使用
     let _button = ButtonLike::new("save")
         .label("保存")
-        .icon(IconName::Check)
+        .child(Icon::new(IconName::Check).size(IconSize::Small))
         .on_click(|_, _, _| {})
         .disabled(false);
 

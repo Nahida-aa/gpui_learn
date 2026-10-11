@@ -67,13 +67,6 @@ impl Avatar {
         self.indicator = indicator.into().map(IntoElement::into_any_element);
         self
     }
-
-    /// 与 zed 的差异：`Avatar::render` 需要知道图标尺寸来算容器，
-    /// zed 用 `IconSize`；我们的 `Icon::size` 收 `Pixels`，
-    /// 这里把 `IconSize::Small` 换算成 px 后用 `px()` 表达。
-    fn fallback_icon_size() -> Pixels {
-        px(14.)
-    }
 }
 
 impl RenderOnce for Avatar {
@@ -105,7 +98,7 @@ impl RenderOnce for Avatar {
                             .child(
                                 Icon::new(IconName::Person)
                                     .color(Color::Muted)
-                                    .size(Self::fallback_icon_size()),
+                                    .size(IconSize::Small),
                             )
                             .into_any_element()
                     }),
@@ -149,18 +142,17 @@ impl AvatarAudioStatusIndicator {
 
 impl RenderOnce for AvatarAudioStatusIndicator {
     fn render(self, window: &mut Window, cx: &mut App) -> impl IntoElement {
-        // 与 zed 的差异：zed 用 `IconSize::Indicator.rems()` 直接拿 rems；
-        // 我们的 `Icon::size` 收 `Pixels`，统一换算成 px 再布局。
-        let icon_rems = IconSize::Indicator.rems();
-        let icon_px = icon_rems * window.rem_size();
+        let icon_size = IconSize::Indicator;
+
+        let width_in_px = icon_size.rems() * window.rem_size();
         let padding_x = px(4.);
 
         div()
             .absolute()
             .bottom(rems_from_px(-3.0_f32))
             .right(rems_from_px(-6.0_f32))
-            .w(icon_px + padding_x)
-            .h(icon_px)
+            .w(width_in_px + padding_x)
+            .h(icon_size.rems())
             .child(
                 h_flex()
                     .id("muted-indicator")
@@ -174,7 +166,7 @@ impl RenderOnce for AvatarAudioStatusIndicator {
                             AudioStatus::Muted => IconName::MicMute,
                             AudioStatus::Deafened => IconName::AudioOff,
                         })
-                        .size(icon_px)
+                        .size(icon_size)
                         .color(Color::Error),
                     )
                     .when_some(self.tooltip, |this, tooltip| {

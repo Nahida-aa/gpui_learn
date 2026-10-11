@@ -184,11 +184,6 @@ impl Render for InputField {
             focus_handle
         };
 
-        // 与 zed 的差异：zed 的 `Icon` / `IconButton` 收 `IconSize`、`.color()` 收语义
-        // `Color`；我们这两个控件收 `Pixels` / `Hsla`（见 aa_gpui_kit_ui 的 icon.rs 与
-        // button/mod.rs），所以这里在渲染期用 rem_size 换算。
-        let icon_size = IconSize::Small.rems() * window.rem_size();
-
         v_flex()
             .id(self.placeholder.clone())
             .w_full()
@@ -218,7 +213,7 @@ impl Render for InputField {
                     .when_some(self.start_icon, |this, icon| {
                         this.gap_1().child(
                             Icon::new(icon)
-                                .size(icon_size)
+                                .size(IconSize::Small)
                                 .color(Color::Muted),
                         )
                     })

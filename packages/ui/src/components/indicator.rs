@@ -74,10 +74,9 @@ impl RenderOnce for Indicator {
         };
 
         match self.kind {
-            // 与 zed 的差异：zed 用 `icon.custom_size(rems_from_px(8.))`，
-            // 因为它的 Icon 收 `IconSize`；我们的 `Icon::size` 收 `Pixels`，
-            // 所以直接给 8px。
-            IndicatorKind::Icon(icon) => container.child(icon.size(px(8.)).color(self.color)),
+            IndicatorKind::Icon(icon) => {
+                container.child(icon.custom_size(rems_from_px(8_f32)).color(self.color))
+            }
             IndicatorKind::Dot => container
                 .w_1p5()
                 .h_1p5()

@@ -20,7 +20,7 @@ pub enum KeybindingPosition {
     End,
 }
 
-use crate::{IconName, IconSize};
+use crate::{Icon, IconName, IconSize, IconWithIndicator};
 use std::rc::Rc;
 
 use gpui::{
@@ -389,9 +389,6 @@ impl RenderOnce for IconButton {
         let disabled = self.disabled;
         let selected = self.selected;
 
-        // 图标边长：`IconSize` 档位 → px（与 Button 内图标同一换算方式）。
-        let icon_size = self.icon_size.rems() * window.rem_size();
-
         // 图标前景（对齐 zed icon_button.rs:243-252）：disabled → Disabled；
         // selected → 显式 `selected_icon_color`，否则 `Color::Selected`；
         // 普通态取语义色并乘 `alpha`。
@@ -412,11 +409,14 @@ impl RenderOnce for IconButton {
             self.icon
         };
 
+        // 对齐 zed（icon_button.rs:259）：图标在这里建好后 `child()` 挂进
+        // ButtonLike —— 尺寸直接给 `IconSize`，由 `Icon::size` 存成 `Rems`，
+        // 渲染时再乘 `window.rem_size()`。中途不经过 `Pixels`，否则 rem_size
+        // 会被算两次（`IconSize::rems() * rem_size` 再除回 16）。
+        let icon_element = Icon::new(icon).size(self.icon_size).color(icon_color.into());
+
         let mut like = ButtonLike::new(self.id)
             .style(self.style)
-            .icon(icon)
-            .icon_color(Some(icon_color))
-            .icon_size(icon_size)
             // 对齐 zed（icon_button.rs:267-273）：Square 用
             // `this.width(size).height(size.into())` 走 `ButtonLike` 的 `width`
             // 字段，ButtonLike 渲染时统一 `justify_center`；Wide 不设宽度，
@@ -480,11 +480,16 @@ impl RenderOnce for IconButton {
         if let Some(group) = self.visible_on_hover {
             like = like.visible_on_hover(group);
         }
+        // 对齐 zed（icon_button.rs:262-269）：有徽标就用 `IconWithIndicator`
+        // 包一层再挂进去。
         if let Some(indicator) = self.indicator {
-            like = like.indicator(indicator);
-        }
-        if let Some(color) = self.indicator_border_color {
-            like = like.indicator_border_color(Some(color));
+            like = like.child(
+                IconWithIndicator::new(icon_element, Some(indicator))
+                    .indicator_border_color(self.indicator_border_color)
+                    .into_any_element(),
+            );
+        } else {
+            like = like.child(icon_element.into_any_element());
         }
         // ButtonCommon 那四项
         if let Some(tab_index) = self.tab_index {

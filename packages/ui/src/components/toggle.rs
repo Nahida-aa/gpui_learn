@@ -201,10 +201,6 @@ impl RenderOnce for Checkbox {
             Color::Selected
         };
 
-        // 与 zed 的差异：我们的 `Icon::size` 收 `Pixels`、`.color()` 收 `Hsla`，
-        // 所以把 `IconSize::Small` 用 rem_size 展开成 px、语义色展开成 Hsla。
-        let icon_size = IconSize::Small.rems() * window.rem_size();
-
         let icon = match self.toggle_state {
             ToggleState::Selected => {
                 if self.placeholder {
@@ -212,14 +208,14 @@ impl RenderOnce for Checkbox {
                 } else {
                     Some(
                         Icon::new(IconName::Check)
-                            .size(icon_size)
+                            .size(IconSize::Small)
                             .color(color),
                     )
                 }
             }
             ToggleState::Indeterminate => Some(
                 Icon::new(IconName::Dash)
-                    .size(icon_size)
+                    .size(IconSize::Small)
                     .color(color),
             ),
             ToggleState::Unselected => None,
