@@ -172,13 +172,60 @@ macro_rules! __fs_embed {
 /// wrong checkout from another worktree and is rejected by corgi, whose sandbox
 /// requires checkout-independent output.
 ///
+/// # Choosing the number of `../` — read this before adding a new `fs_embed!`
+///
+/// **`root_relative` is always easy: one segment, relative to the repository root.**
+/// Write `"assets"` and it is done.
+///
+/// **`crate_relative` is the trap.** It is resolved against the *consuming crate's*
+/// `CARGO_MANIFEST_DIR`, so its `../` depth must equal the crate's own nesting depth
+/// inside the repository. There is no compile-time check for this, and the failure
+/// is silent and asymmetric:
+///
+/// | build | which path is used | wrong depth ⇒ |
+/// |---|---|---|
+/// | dev (`cargo run`) | `root_relative` | **works** — reads the checkout |
+/// | release (`cargo build --release`) | `crate_relative` | **embeds nothing** |
+///
+/// The embed then fails at *runtime*, not build time, via
+/// [`asset_str`] → `.expect(path)`:
+///
+/// ```text
+/// thread 'main' panicked at util/src/embed.rs:9:24:
+/// settings/default.json
+/// ```
+///
+/// Because dev builds never touch `crate_relative`, such a mistake survives
+/// however long you only ever run `cargo run` — it surfaces the first time
+/// someone runs an installed release build.
+///
+/// To get the depth right, count from the crate directory up to the repository
+/// root. This repository's assets live at `<repo-root>/assets/`:
+///
+/// | crate location | `crate_relative` |
+/// |---|---|
+/// | `packages/assets/` (depth 1) | `"../../assets"` |
+/// | `packages/zed/zed_settings/` (depth 2) | `"../../../assets"` |
+/// | `crates/settings/` (depth 1) | `"../../assets"` |
+///
+/// **Do not copy another call site's `crate_relative` verbatim** — a sibling crate
+/// one directory deeper needs one more `../` for the same target.
+///
+/// If you are unsure, verify the embed actually contains files rather than
+/// assuming it. `debug-embed` is a default feature of this crate, so a plain
+/// `cargo build` embeds exactly what a release build does; a test like
+/// `assert!(!default_settings().is_empty())` covers the release path even in
+/// debug. `packages/zed/zed_settings/src/lib.rs` has three such regression tests,
+/// added after this exact bug shipped.
+///
 /// ```ignore
+/// // In packages/zed/zed_settings/ (two levels below the repo root):
 /// util::fs_embed! {
-///     pub struct Assets,
-///     crate_relative = "../../assets",
+///     pub struct SettingsAssets,
+///     crate_relative = "../../../assets", // ← three levels, not two
 ///     root_relative = "assets",
-///     include = ["fonts/**/*", "themes/**/*", "*.md"],
-///     exclude = ["themes/src/*", "*.DS_Store"],
+///     include = ["settings/*", "keymaps/*"],
+///     exclude = ["*.DS_Store"],
 /// }
 /// ```
 #[macro_export]
