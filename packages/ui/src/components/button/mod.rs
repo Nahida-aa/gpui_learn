@@ -417,10 +417,15 @@ impl RenderOnce for IconButton {
             .icon(icon)
             .icon_color(Some(icon_color))
             .icon_size(icon_size)
-            // 对齐 zed（icon_button.rs:268-275）：Square 用 `icon_size.square()`
-            // 同时定宽与高；Wide 不设宽度，跟随内容。
+            // 对齐 zed（icon_button.rs:267-273）：Square 用
+            // `this.width(size).height(size.into())` 走 `ButtonLike` 的 `width`
+            // 字段，ButtonLike 渲染时统一 `justify_center`；Wide 不设宽度，
+            // 跟随内容。
             .map(|this| match self.shape {
-                IconButtonShape::Square => this.box_size(self.icon_size.square(window, cx)),
+                IconButtonShape::Square => {
+                    let size = self.icon_size.square(window, cx);
+                    this.width(size).height(size.into())
+                }
                 IconButtonShape::Wide => this,
             })
             .radius(self.radius)

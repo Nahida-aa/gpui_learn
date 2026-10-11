@@ -131,9 +131,8 @@ pub struct ButtonLike {
     indicator: Option<Indicator>,
     /// 徽标外圈描边色；`None` 时取主题 `elevated_surface_background`。
     indicator_border_color: Option<Hsla>,
-    /// 容器边长（icon-only 时的方形边长）；`None` 时按内容自适应。
-    box_size: Option<Pixels>,
-    /// 宽度覆盖（`FixedWidth::width` / `full_width` 设入）；`None` 时按内容自适应。
+    /// 宽度覆盖（`FixedWidth::width` / `full_width` / `IconButtonShape::Square` 设入）；
+    /// `None` 时按内容自适应。
     width: Option<DefiniteLength>,
     /// Tab 键导航序号（`ButtonCommon::tab_index`）。
     tab_index: Option<isize>,
@@ -219,7 +218,6 @@ impl ButtonLike {
             icon_size: px(14.0),
             indicator: None,
             indicator_border_color: None,
-            box_size: None,
             width: None,
             tab_index: None,
             button_size: ButtonSize::default(),
@@ -297,15 +295,6 @@ impl ButtonLike {
     /// 徽标外圈描边色（`None` 时取主题 `elevated_surface_background`）。
     pub fn indicator_border_color(mut self, color: Option<Hsla>) -> Self {
         self.indicator_border_color = color;
-        self
-    }
-
-    /// 容器边长（icon-only 时的方形边长）；有文字时忽略，按内容自适应。
-    ///
-    /// 与 `ButtonCommon::size(ButtonSize)` 区别：那是**尺寸档位**（高度档），
-    /// 这是**显式边长**。名字取 `box_size` 以避开冲突。
-    pub fn box_size(mut self, size: impl Into<Pixels>) -> Self {
-        self.box_size = Some(size.into());
         self
     }
 
@@ -668,16 +657,13 @@ impl RenderOnce for ButtonLike {
                 ButtonSize::None => this.px(px(1.)),
             });
 
-        // 正方形：只在显式给了 `box_size` 时才定死（对齐 zed —— zed 的
-        // `ButtonLike` 本身从不猜方形，方形由 `IconButton` 的
-        // `IconButtonShape::Square` 下发，见 icon_button.rs:268-275）。
-        // 没给 `box_size` 时宽度完全交给内容（文字按钮按文字伸缩）。
-        if let Some(box_size) = self.box_size {
-            button = button.w(box_size).h(box_size);
-        }
-
-        // 宽度覆盖（FixedWidth）与 tab 序号（ButtonCommon）。
+        // 宽度覆盖（FixedWidth / `IconButtonShape::Square`）与 tab 序号。
+        //
         // 对齐 zed（button_like.rs:801-803）：给了宽度就居中内容。
+        // zed 的方形 `IconButton` 也是**走这个 `width` 字段**下发尺寸的
+        // （icon_button.rs:268-275 的 `this.width(size).height(size.into())`），
+        // 所以方形按钮的图标由这一行统一居中；我们原先另开一个 `box_size`
+        // 字段接方形尺寸，绕开了 `justify_center`，图标就会贴左边框。
         if let Some(width) = self.width {
             button = button.w(width).justify_center().text_center();
         }
