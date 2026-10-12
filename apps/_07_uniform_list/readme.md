@@ -146,7 +146,8 @@ Android 上 GPUI 的入口不是 `main()`，而是 **NativeActivity 加载 cdyli
 步骤（需 `bun` + NDK，已就绪）：
 
 ```bash
-# 1. 首次：建 gpui.conf.json（identifier / app_name），再生成 Android 工程
+# 1. 首次：生成 Android 工程（身份默认从 Cargo.toml 推导；
+#    如需自定义，建一份 gpui.conf.json 之类并用 --bundle-meta 指着它）
 bun run android:init        # 生成 apps/07_uniform_list/gen/android
 
 # 2. 编译 + 安装 + 启动（设备需 adb 连接）

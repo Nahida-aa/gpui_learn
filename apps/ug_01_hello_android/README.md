@@ -23,7 +23,7 @@ NativeActivity (GpuiActivity.kt)  ──  系统窗口 / ANativeWindow / JNI
 03_hello_android/
 ├── Cargo.toml          # cdylib：crate-type = ["cdylib"]，只有 android target 真正编出 .so
 ├── src/lib.rs          # android_main 入口 + HelloAndroid 视图（仅 #[cfg(target_os="android")] 编译）
-├── gpui.conf.json      # ★ 唯一需要维护的 Android 配置：identifier / app_name
+├── gpui.conf.json      # 可选：根级身份表（identifier / name），由 --bundle-meta 显式指定
 ├── assets/fonts/       # 例子自带的资源（如 NotoColorEmoji.ttf），init 时自动拷进工程
 ├── package.json        # 命令入口（见下），IDE 会显示运行按钮
 └── gen/android/        # 由 gpui-cli android init 生成（已 gitignore，重跑即更新）
@@ -35,23 +35,26 @@ NativeActivity (GpuiActivity.kt)  ──  系统窗口 / ANativeWindow / JNI
 `gpui-cli`（见 `crates/gpui-cli`）根据两个输入生成：
 
 - 例子的 `Cargo.toml` —— 自动取 `[package] name`（cargo 包名）与 `[lib] name`（→ `libXXX.so`）
-- 例子的 `gpui.conf.json` —— 只放真正属于 Android、Cargo.toml 里没有的两个字段：
+- `--bundle-meta` 指定的身份表（本例是 `gpui.conf.json`）—— 只放真正属于平台、
+  Cargo.toml 里没有的两个字段，均可缺省：
 
 ```json
 {
   "identifier": "dev.gpui.learn.hello_android",
-  "app_name": "GPUI Learn · Hello Android"
+  "name": "GPUI Learn · Hello Android"
 }
 ```
 
 `gpui-cli` 内嵌了 Gradle 模板与 Gradle 8.9 wrapper，生成时自动注入：
 `rustLibName` / `cargoPackage`（来自 Cargo.toml）、`appId` / `appName`（来自
-gpui.conf.json）、默认 ABI 列表（`arm64-v8a` + `x86_64`）；并把例子的 `assets/`
+--bundle-meta 身份表）、默认 ABI 列表（`arm64-v8a` + `x86_64`）；并把例子的 `assets/`
 复制进 `app/src/main/assets/`。`AndroidManifest.xml`、`GpuiTheme`、`GpuiActivity.kt`
 （来自 `gpui-android`）也都一并生成/引用。
 
 > 这和 Tauri 的 `tauri android init` 同一个哲学——**配置极简，工具生成工程**，
-> 应用层完全不碰 kt。改了 `Cargo.toml` / `gpui.conf.json` 后重跑 `bun run init` 即可。
+> 应用层完全不碰 kt。改了 `Cargo.toml` / 身份文件后重跑 `bun run init` 即可。
+> 身份来源没有约定文件名：`package.json` 的 `init` 脚本里用
+> `--bundle-meta gpui.conf.json` 显式指着它。
 
 ## 命令入口（package.json）
 
@@ -90,9 +93,9 @@ bun run uninstall     # adb uninstall
 
 ```bash
 bun run init
-# = cargo run -p gpui-cli -- android init
-#   如需为别的目录生成：android init -p apps/03_hello_android
-# 生成 gen/android/（含 Gradle 8.9 wrapper + 从 Cargo.toml/gpui.conf.json 注入的配置）
+# = cargo run -p gpui-cli -- android init --bundle-meta gpui.conf.json
+#   如需为别的目录生成：android init -p apps/ug_01_hello_android
+# 生成 gen/android/（含 Gradle 8.9 wrapper + 从 Cargo.toml / 身份表 注入的配置）
 ```
 
 ### B. 打 apk（用生成的 Gradle wrapper）

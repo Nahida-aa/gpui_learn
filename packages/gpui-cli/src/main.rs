@@ -1,13 +1,15 @@
 //! # gpui-cli —— GPUI 工程的脚手架工具
 //!
-//! 目前实现 `android init`：读取一个例子的 `Cargo.toml`（取 cargo 包名 / lib 名）
-//! 与 `gpui.conf.json`（取 Android `identifier` / `app_name`），生成
+//! 目前实现 `android init`：读取一个例子的 `Cargo.toml`（取 cargo 包名 / lib 名），
+//! 并按需经 `--bundle-meta` 读取身份表（`identifier` / `name`），生成
 //! `gen/android/` 下的完整 Gradle 工程。生成后直接 `./gradlew assembleDebug`。
 //!
 //! 设计哲学（对齐 Tauri 的 `tauri android init`）：
-//! - 配置极简——`gpui.conf.json` 只放真正属于 Android、Cargo.toml 里没有的字段
-//!   （identifier / app_name）；cargo 包名与 lib 名从 Cargo.toml 自动读，
-//!   不重复声明。
+//! - 配置极简——身份表只放真正属于平台、Cargo.toml 里没有的字段
+//!   （identifier / name）；两者**均可缺省**，缺的从 Cargo.toml 推导。
+//!   cargo 包名与 lib 名从 Cargo.toml 自动读，不重复声明。
+//! - **没有魔法配置文件**：身份来源必须用 `--bundle-meta` 显式指定，
+//!   不隐式读取任何约定文件名。
 //! - 目标 ABI 用默认值，不在配置里让用户填（Tauri 也是这样，默认全编、可用
 //!   命令行参数收窄）。
 
@@ -57,25 +59,30 @@ enum Command {
 enum AndroidCmd {
     /// 为指定工程生成 gen/android/ Gradle 工程
     Init {
-        /// 工程目录（含 Cargo.toml 与 gpui.conf.json），默认当前目录
+        /// 工程目录（含 Cargo.toml），默认当前目录
         #[arg(short = 'p', long, default_value = ".")]
         project_dir: PathBuf,
+        /// 身份来源，两种形式：`<文件>`（文件根即身份表）或
+        /// `<文件>#[k1, k2, ...]`（数组路径下钻到目标表）。支持 .toml / .json，
+        /// 相对路径基于 -p 工程目录。表内 identifier / name 均可缺省。
+        /// 例：`gpui.conf.json`、`Cargo.toml#[package, metadata, bundle-stable]`
+        #[arg(long)]
+        bundle_meta: Option<String>,
         /// 覆盖默认目标 ABI，逗号分隔，如 `--targets arm64-v8a,x86_64`
         #[arg(long, value_delimiter = ',')]
         targets: Option<Vec<String>>,
     },
 }
 
-/// gpui.conf.json 的内容（两个字段均可省略，缺省从 Cargo.toml 推导）。
+/// 身份表：`--bundle-meta` 指向的结构（两个字段均可缺省，缺的从 Cargo.toml 推导）。
 ///
-/// - `app_name` 缺省 → Cargo.toml 的 `package.name`（用作安卓应用显示名）。
-/// - `identifier` 缺省 → `<仓库名>.<package.name>`（安卓包名，反向域名风格）。
-///   仓库名取 git 根目录名的 basename（如 gpui_learn），拿不到回落 "gpui_learn"。
-///   故连 gpui.conf.json 都不存在也能 init，实现「配置极简」。
-#[derive(Deserialize, Default)]
-struct GpuiConf {
+/// 字段名**对齐 cargo-bundle 的 `BundleSettings`**（`identifier` / `name`），
+/// 因此可以直接指向 Cargo.toml 的 `[package.metadata.bundle*]` 表，
+/// 或任何根级含这两个 key 的 JSON 文件。
+#[derive(Deserialize, Default, Debug)]
+struct IdentityTable {
     identifier: Option<String>,
-    app_name: Option<String>,
+    name: Option<String>,
 }
 
 /// 从 Cargo.toml 解析出 [package] name 与 [lib] name
@@ -101,13 +108,18 @@ fn main() -> Result<()> {
         Command::Android { sub } => match sub {
             AndroidCmd::Init {
                 project_dir,
+                bundle_meta,
                 targets,
-            } => android_init(&project_dir, targets),
+            } => android_init(&project_dir, bundle_meta.as_deref(), targets),
         },
     }
 }
 
-fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> {
+fn android_init(
+    project_dir: &Path,
+    bundle_meta: Option<&str>,
+    targets: Option<Vec<String>>,
+) -> Result<()> {
     let project_dir = if project_dir.is_absolute() {
         project_dir.to_path_buf()
     } else {
@@ -130,24 +142,22 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
         .and_then(|l| l.name.clone())
         .unwrap_or_else(|| cargo_package.clone());
 
-    // 2) 读 gpui.conf.json：identifier / app_name（均可选，缺省从 Cargo.toml 推导）。
-    //    连文件都不存在也能 init——实现「配置极简」。
-    let conf_path = project_dir.join("gpui.conf.json");
-    let conf: GpuiConf = if conf_path.exists() {
-        let conf_text =
-            std::fs::read_to_string(&conf_path).with_context(|| "读取 gpui.conf.json 失败")?;
-        serde_json::from_str(&conf_text).context("解析 gpui.conf.json 失败")?
-    } else {
-        GpuiConf::default()
+    // 2) 读身份表（--bundle-meta，可选）：identifier / name 均可缺省，
+    //    缺的走下面的 Cargo.toml 推导。不传 --bundle-meta 就是纯推导。
+    let identity = match bundle_meta {
+        Some(reference) => load_identity_table(reference, &project_dir)?,
+        None => IdentityTable::default(),
     };
     // 字段缺省推导（repo_name 与 cargo_package 都过 pkg_segment 规范化，拼出的
-    // identifier 保证合法）：`app_name` → 包名；`identifier` → <仓库名>.<包名>。
+    // identifier 保证合法）：`name` → 包名；`identifier` → <仓库名>.<包名>。
     // 仓库名取 git 根目录名（如 gpui_learn）。若不在 git 仓库内（拿不到 .git），
     // 直接报错——不硬编码假名，避免默认包名语义失真。
-    let repo_name = repo_name_from(&project_dir)
-        .context("无法确定仓库名来推导默认 identifier：当前目录不在 git 仓库内（找不到 .git），请在 git 仓库中运行，或在 gpui.conf.json 显式写 identifier")?;
-    let app_name = conf.app_name.unwrap_or_else(|| cargo_package.clone());
-    let identifier = conf.identifier.unwrap_or_else(|| {
+    let repo_name = repo_name_from(&project_dir).context(
+        "无法确定仓库名来推导默认 identifier：当前目录不在 git 仓库内（找不到 .git），\
+         请在 git 仓库中运行，或用 --bundle-meta 指定含 identifier 的身份来源",
+    )?;
+    let app_name = identity.name.unwrap_or_else(|| cargo_package.clone());
+    let identifier = identity.identifier.unwrap_or_else(|| {
         format!(
             "{}.{}",
             pkg_segment(&repo_name),
@@ -241,6 +251,129 @@ fn android_init(project_dir: &Path, targets: Option<Vec<String>>) -> Result<()> 
     println!("  cd {}", out.join("gradle").display());
     println!("  ./gradlew assembleDebug");
     Ok(())
+}
+
+/// 解析 `--bundle-meta` 引用并读出身份表。
+///
+/// 语法：`<文件>` 或 `<文件>#[k1, k2, ...]`。
+/// - 文件部分相对工程目录解析；类型按扩展名分派（.toml / .json）。
+/// - 省略 `#[...]` 时取文件根作为表；给了路径则逐层下钻。
+/// - 表内 `identifier` / `name` 均可缺省（返回 `None`，由调用方从 Cargo.toml
+///   推导）；但**引用本身必须解析成功**——文件缺失、路径不存在、中途或目标
+///   不是表、字段存在却不是字符串，都硬报错。不静默回落：路径写错、文件被移动
+///   这类漂移必须立刻暴露，而不是悄悄用推导值生成一个错的包名。
+fn load_identity_table(reference: &str, project_dir: &Path) -> Result<IdentityTable> {
+    // 拆「文件」与「结构路径」。分隔符用 `#` 而非 `:`——后者会与 Windows 盘符
+    // （`C:\...`）碰撞；路径用数组形式而非点分——JSON key 合法含点，且
+    // identifier 本身（如 `dev.aa.AaCode`）就含点，点分在这里会歧义。
+    let (file_part, path_part) = match reference.split_once('#') {
+        Some((file, path)) => {
+            let path = path.trim();
+            // 路径规范写法是 `[k1, k2, ...]`：剥掉首尾方括号（省略方括号也容忍）；
+            // 只写半边说明是笔误，直接报错而不是猜。
+            let inner = match (path.starts_with('['), path.ends_with(']')) {
+                (true, true) => &path[1..path.len() - 1],
+                (false, false) => path,
+                _ => bail!(
+                    "--bundle-meta 的结构路径方括号不配对：`{reference}`\
+                     （应为 `文件#[k1, k2, ...]`）"
+                ),
+            };
+            (file.trim(), Some(inner))
+        }
+        None => (reference.trim(), None),
+    };
+    anyhow::ensure!(
+        !file_part.is_empty(),
+        "--bundle-meta 引用的文件名为空：`{reference}`"
+    );
+
+    let file_path = project_dir.join(file_part);
+    let text = std::fs::read_to_string(&file_path)
+        .with_context(|| format!("读取 --bundle-meta 指向的文件失败：{}", file_path.display()))?;
+
+    // 按扩展名把文件解析成统一的 JSON 值树（TOML 也转成 JSON 值，路径遍历只有一套逻辑）
+    let ext = file_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    let mut value: serde_json::Value = match ext.as_str() {
+        "toml" => {
+            let toml_value: toml::Value = toml::from_str(&text)
+                .with_context(|| format!("解析 {} 失败（TOML）", file_path.display()))?;
+            serde_json::to_value(toml_value).context("TOML 值转 JSON 值失败")?
+        }
+        "json" => serde_json::from_str(&text)
+            .with_context(|| format!("解析 {} 失败（JSON）", file_path.display()))?,
+        other => bail!(
+            "--bundle-meta 不支持的文件类型 `.{other}`（仅 .toml / .json）：{}",
+            file_path.display()
+        ),
+    };
+
+    // 逐层下钻结构路径
+    let mut walked: Vec<&str> = Vec::new();
+    if let Some(path) = path_part {
+        for key in path.split(',') {
+            let key = key.trim();
+            anyhow::ensure!(
+                !key.is_empty(),
+                "--bundle-meta 的结构路径含空 key：`{reference}`"
+            );
+            let object = value.as_object().with_context(|| {
+                format!(
+                    "--bundle-meta `{reference}`：下钻 key `{key}` 时所在层级不是表/对象（实际是 {}）",
+                    value_type_name(&value)
+                )
+            })?;
+            walked.push(key);
+            value = object.get(key).cloned().with_context(|| {
+                let parent = if walked.len() > 1 {
+                    walked[..walked.len() - 1].join(" > ")
+                } else {
+                    "文件根".to_string()
+                };
+                format!("--bundle-meta `{reference}`：{parent} 下找不到 key `{key}`")
+            })?;
+        }
+    }
+
+    let table = value.as_object().with_context(|| {
+        format!(
+            "--bundle-meta `{reference}`：目标不是表/对象（实际是 {}），无法读取 identifier / name",
+            value_type_name(&value)
+        )
+    })?;
+
+    // 字段存在但类型不对 → 硬错误；缺省 → None，由调用方推导。
+    // 只认字符串：把数字/布尔静默转成字符串会掩盖配置错误。
+    let string_field = |key: &str| -> Result<Option<String>> {
+        match table.get(key) {
+            None => Ok(None),
+            Some(serde_json::Value::String(s)) => Ok(Some(s.clone())),
+            Some(other) => bail!(
+                "--bundle-meta `{reference}`：字段 `{key}` 应为字符串，实际是 {}",
+                value_type_name(other)
+            ),
+        }
+    };
+    Ok(IdentityTable {
+        identifier: string_field("identifier")?,
+        name: string_field("name")?,
+    })
+}
+
+/// JSON 值的中文类型名，用于错误消息。
+fn value_type_name(value: &serde_json::Value) -> &'static str {
+    match value {
+        serde_json::Value::Null => "null",
+        serde_json::Value::Bool(_) => "布尔值",
+        serde_json::Value::Number(_) => "数字",
+        serde_json::Value::String(_) => "字符串",
+        serde_json::Value::Array(_) => "数组",
+        serde_json::Value::Object(_) => "表/对象",
+    }
 }
 
 /// 从工程目录向上查找 vendored 的 gpui-android Java 源码根
@@ -387,7 +520,7 @@ fn pkg_segment(s: &str) -> String {
 }
 
 /// 校验完整 identifier（`a`本身、各段 `.` 分隔）：每段须 `[A-Za-z][A-Za-z0-9_]*`。
-/// 用户显式写在 `gpui.conf.json` 的 identifier 走这里——非法时**报错**而非静默改写，
+/// 来自 `--bundle-meta` 或自动推导的 identifier 都走这里——非法时**报错**而非静默改写，
 /// 避免悄悄改变用户预期的包名。
 fn validate_identifier(id: &str) -> Result<()> {
     let ok = id.split('.').all(|seg| {
@@ -401,8 +534,8 @@ fn validate_identifier(id: &str) -> Result<()> {
     if !ok {
         bail!(
             "identifier `{id}` 不是合法 Android applicationId：每段必须以字母开头、\
-             仅含字母/数字/下划线。请修改 `gpui.conf.json` 的 identifier，或删除该项以按 \
-             <仓库名>.<包名> 自动推导。"
+             仅含字母/数字/下划线。请修改 --bundle-meta 指向的身份表里的 identifier，\
+             或删掉该项以按 <仓库名>.<包名> 自动推导。"
         );
     }
     Ok(())
@@ -442,6 +575,132 @@ mod tests {
         // 空段 / 空串 → 非法
         assert!(validate_identifier("").is_err());
         assert!(validate_identifier("gpui_learn..a11y").is_err());
+    }
+
+    // ---- --bundle-meta 身份表解析 ----
+
+    /// 建一个本测试独有的临时目录（pid + tag 防相撞）。
+    fn identity_test_dir(tag: &str) -> PathBuf {
+        let dir = std::env::temp_dir().join(format!(
+            "gpui-cli-identity-{}-{}",
+            std::process::id(),
+            tag
+        ));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("建临时目录失败");
+        dir
+    }
+
+    #[test]
+    fn identity_reads_json_root() {
+        let dir = identity_test_dir("json_root");
+        std::fs::write(
+            dir.join("id.json"),
+            r#"{"identifier": "aa.hello_android", "name": "Hello Android"}"#,
+        )
+        .unwrap();
+        // 文件根即身份表
+        let table = load_identity_table("id.json", &dir).unwrap();
+        assert_eq!(table.identifier.as_deref(), Some("aa.hello_android"));
+        assert_eq!(table.name.as_deref(), Some("Hello Android"));
+    }
+
+    #[test]
+    fn identity_fields_are_optional() {
+        let dir = identity_test_dir("optional");
+        std::fs::write(dir.join("id.json"), r#"{"name": "Only Name"}"#).unwrap();
+        let table = load_identity_table("id.json", &dir).unwrap();
+        assert_eq!(table.identifier, None, "缺 identifier → None，由调用方推导");
+        assert_eq!(table.name.as_deref(), Some("Only Name"));
+    }
+
+    #[test]
+    fn identity_reads_toml_deep_path() {
+        let dir = identity_test_dir("toml_deep");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "ug_01_hello_android"
+
+[package.metadata.bundle]
+identifier = "aa.hello_android"
+name = "Hello Android"
+icon = ["app-icon.png"]
+"#,
+        )
+        .unwrap();
+        // 数组路径下钻 + key 两侧空白容忍；表内额外 key（icon）忽略
+        let table = load_identity_table("Cargo.toml#[package, metadata, bundle]", &dir).unwrap();
+        assert_eq!(table.identifier.as_deref(), Some("aa.hello_android"));
+        assert_eq!(table.name.as_deref(), Some("Hello Android"));
+    }
+
+    #[test]
+    fn identity_array_path_supports_dotted_keys() {
+        // JSON key 合法含点，且 identifier 本身含点——所以路径必须是数组形式
+        let dir = identity_test_dir("dotted_key");
+        std::fs::write(
+            dir.join("id.json"),
+            r#"{"a.b": {"identifier": "dev.aa.AaCode", "name": "AaCode"}}"#,
+        )
+        .unwrap();
+        let table = load_identity_table("id.json#[a.b]", &dir).unwrap();
+        assert_eq!(table.identifier.as_deref(), Some("dev.aa.AaCode"));
+        assert_eq!(table.name.as_deref(), Some("AaCode"));
+    }
+
+    #[test]
+    fn identity_errors_are_hard_not_silent() {
+        let dir = identity_test_dir("errors");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            "[package]\nname = \"x\"\n\n[package.metadata.bundle]\nidentifier = 42\nname = \"Ok\"\n",
+        )
+        .unwrap();
+        std::fs::write(dir.join("arr.json"), r#"["not", "an", "object"]"#).unwrap();
+
+        // 文件缺失
+        let err = load_identity_table("nope.json", &dir)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("nope.json"), "应指出文件：{err}");
+
+        // 路径不存在
+        let err = load_identity_table("Cargo.toml#[package, metadata, missing]", &dir)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("missing"), "应指出缺的 key：{err}");
+
+        // 字段类型不对（identifier 是数字）
+        let err = load_identity_table("Cargo.toml#[package, metadata, bundle]", &dir)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains("identifier") && err.contains("字符串"),
+            "应指出字段与期望类型：{err}"
+        );
+
+        // 下钻中途不是表
+        let err = load_identity_table("arr.json#[0]", &dir)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("不是表/对象"), "应指出层级类型：{err}");
+
+        // 目标本身不是表
+        let err = load_identity_table("arr.json", &dir).unwrap_err().to_string();
+        assert!(err.contains("目标不是表/对象"), "应指出目标类型：{err}");
+
+        // 不支持的扩展名
+        std::fs::write(dir.join("id.yaml"), "identifier: x\n").unwrap();
+        let err = load_identity_table("id.yaml", &dir).unwrap_err().to_string();
+        assert!(err.contains("yaml"), "应指出扩展名：{err}");
+
+        // 结构路径含空 key
+        let err = load_identity_table("Cargo.toml#[package, , name]", &dir)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains("空 key"), "应指出空 key：{err}");
     }
 }
 

@@ -3,7 +3,7 @@ plugins {
 }
 
 // 本文件由 `gpui-cli android init` 生成（模板见 crates/gpui-cli）。
-// 所有可变项来自：例子的 Cargo.toml（cargo 包名 / lib 名）与 gpui.conf.json
+// 所有可变项来自：例子的 Cargo.toml（cargo 包名 / lib 名）与 --bundle-meta 指定的身份表
 // （identifier / app_name）。不要手写——改配置后重跑 `gpui-cli android init`。
 
 // ── 从生成时注入的常量 ──────────────────────────────────────────────────────

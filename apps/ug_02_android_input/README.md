@@ -38,12 +38,13 @@ window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
 **生成**到 `gen/android/`（已 gitignore）。例子目录里只有两样东西：
 
 - `src/lib.rs` —— Rust 代码（TextInput + android_main + 软键盘）
-- `gpui.conf.json` —— 仅两个真正属于 Android、Cargo.toml 里没有的字段：
+- `gpui.conf.json` —— 可选的身份表（经 `--bundle-meta` 显式指定），仅两个真正属于
+  平台、Cargo.toml 里没有的字段，均可缺省：
 
 ```json
 {
   "identifier": "dev.gpui.learn.input_05",
-  "app_name": "GPUI Learn · Input"
+  "name": "GPUI Learn · Input"
 }
 ```
 
@@ -51,22 +52,24 @@ window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
 > （`input_05`）由 `gpui-cli` 读本例子的 `Cargo.toml` 自动获取，不重复声明；
 > 目标 ABI 用默认值（`arm64-v8a` + `x86_64`，覆盖真机 + 模拟器），不写进配置。
 > 这正是 Tauri `tauri android init` 的哲学——配置极简，生成器补全其余。
+> 身份来源没有约定文件名，是本例 `package.json` 的 `init` 脚本用
+> `--bundle-meta gpui.conf.json` 显式指向它的。
 
 生成与构建：
 
 ```bash
-bun run init     # gpui-cli android init → 生成 gen/android/
+bun run init     # gpui-cli android init --bundle-meta gpui.conf.json → 生成 gen/android/
 bun run apk      # cd gen/android && ./gradlew assembleDebug
 ```
 
 `gpui-cli` 的模板里自动注入：`rustLibName` / `cargoPackage`（来自 Cargo.toml）、
-`appId` / `appName`（来自 gpui.conf.json）、默认 ABI 列表；`AndroidManifest.xml`、
+`appId` / `appName`（来自 --bundle-meta 身份表）、默认 ABI 列表；`AndroidManifest.xml`、
 `GpuiTheme`、`GpuiActivity.kt`（来自 `gpui-android`）也都一并生成/引用，无需手写。
 
 ## 命令入口（package.json）
 
 ```bash
-bun run init     # 生成 gen/android/（首次或改了 Cargo.toml / gpui.conf.json 后重跑）
+bun run init     # 生成 gen/android/（首次或改了 Cargo.toml / 身份文件后重跑）
 bun run apk      # ./gradlew assembleDebug（内部自动跑 cargo ndk，多 ABI）
 bun run install  # adb install 到真机
 bun run launch   # adb am start -n dev.gpui.learn.input_05/dev.gpui.mobile.GpuiActivity
