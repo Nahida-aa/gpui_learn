@@ -6,14 +6,16 @@
 //! - 卸载变成 `pacman -R`，不再需要手写 uninstall 脚本
 //! - 身份（包名 / .desktop 名 / 图标）统一来自 `--bundle-meta` 指向的表
 //!
-//! ## 命名：`pkgbuild` vs `arch`
+//! ## 命名：为什么都叫 `pkgbuild`
 //!
-//! CLI 子命令叫 `pkgbuild`（`aa-bundle pkgbuild`），配置段却叫
-//! `[package.metadata.bundle-arch]`（默认引用）。这不是笔误，是**两个维度**：
-//! - 子命令名 = **产出物**（PKGBUILD），所以将来可并列 `deb` / `rpm`
-//! - 配置段名 = **目标发行版**（Arch），所以将来可并列 `bundle-deb`
+//! CLI 子命令 `aa-bundle pkgbuild` 读 Cargo.toml 的
+//! `[package.metadata.bundle-pkgbuild]` —— 同名，省一层映射。
+//! 早期两者都叫 `arch`，与 `--arch`（CPU 架构：x86_64）撞词：同一个词既指发行版
+//! 又指架构。改成 `pkgbuild` 后两边都无歧义。
 //!
-//! 早期子命令也叫 `arch`，与 `--arch`（CPU 架构：x86_64）撞词，故改掉。
+//! 注意这个段是 **aa-bundle 自己的输入**，不是 Arch 的元数据 ——
+//! Arch/pacman 只认 PKGBUILD 与 makepkg 生成的 `.PKGINFO`，从不读 Cargo.toml。
+//! 它只是把「推不出来、又不该每次敲命令行」的设置集中声明。
 //!
 //! **生成的 PKGBUILD 是「本地开发安装」用途**：它直接在源码树里构建（`build()`
 //! 里 cd 回源码目录），不带 `source=`，因此**不能用于分发**（AUR 那种需要真正的
@@ -44,6 +46,11 @@ pub struct PackageInfo {
     pub version: String,
     pub description: String,
     pub license: String,
+    /// `[[bin]]` 目标名。**只有恰好一个 bin 目标时才有值** —— 多个就必须由项目声明，
+    /// 因为 CLI 无从判断该用哪个。
+    pub bin_name: Option<String>,
+    /// `[[bin]]` 目标数量（0 = 纯 lib crate）
+    pub bin_count: usize,
 }
 
 /// `license` 可能是字面量，也可能是 `license.workspace = true`（workspace 继承）。
@@ -59,6 +66,12 @@ enum StringOrWorkspace {
 #[derive(Deserialize)]
 struct CrateManifest {
     package: Option<CratePackage>,
+    bin: Option<Vec<CrateBin>>,
+}
+
+#[derive(Deserialize)]
+struct CrateBin {
+    name: String,
 }
 
 #[derive(Deserialize)]
@@ -107,11 +120,20 @@ pub fn read_package_info(project_dir: &Path) -> Result<PackageInfo> {
         None => bail!("Cargo.toml 的 [package] 缺少 license，请显式传 --license"),
     };
 
+    let bins: Vec<String> = manifest
+        .bin
+        .unwrap_or_default()
+        .into_iter()
+        .map(|b| b.name)
+        .collect();
+
     Ok(PackageInfo {
         name: package.name,
         version: package.version,
         description: package.description.unwrap_or_default(),
         license,
+        bin_name: (bins.len() == 1).then(|| bins[0].clone()),
+        bin_count: bins.len(),
     })
 }
 
@@ -135,7 +157,7 @@ fn find_workspace_root(start: &Path) -> Option<PathBuf> {
     }
 }
 
-/// Arch 打包设置，来自 Cargo.toml 的 `[package.metadata.bundle-arch]`。
+/// Arch 打包设置，来自 Cargo.toml 的 `[package.metadata.bundle-pkgbuild]`。
 ///
 /// 对齐 cargo-bundle 的做法：**打包元数据声明在 Cargo.toml，不在命令行**。
 /// （cargo-bundle 的 `deb_depends` 就是干这个的；这里按同样思路给 Arch 一份。）
@@ -258,7 +280,7 @@ pub struct PkgbuildOptions<'a> {
     pub channel: &'a str,
     /// 身份来源引用；默认 `Cargo.toml#[package, metadata, bundle-<channel>]`
     pub bundle_meta: &'a str,
-    /// Arch 打包设置来源引用；默认 `Cargo.toml#[package, metadata, bundle-arch]`（该段可选）
+    /// Arch 打包设置来源引用；默认 `Cargo.toml#[package, metadata, bundle-pkgbuild]`（该段可选）
     pub pkgbuild_meta: &'a str,
     /// 命令行覆盖：二进制名
     pub bin_name: Option<&'a str>,
@@ -304,15 +326,39 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         settings.prefix = v.to_string();
     }
 
-    // 各名字的推导链：命令行 > Cargo.toml 的 arch 设置 > crate 名
-    let bin = opts
+    // —— 名字的推导链 ——
+    // CLI 不知道项目怎么命名，所以：**声明 > 从 Cargo.toml 的真实数据推导 > 报错**，
+    // 不用「crate 名」这种约定去猜（`[[bin]].name` 完全可能与 `package.name` 不同）。
+    let bin: &str = opts
         .bin_name
         .or(settings.bin_name.as_deref())
-        .unwrap_or(&info.name);
-    let icon = opts
+        .or(info.bin_name.as_deref())
+        .with_context(|| match info.bin_count {
+            0 => format!(
+                "{} 没有 [[bin]] 目标（纯 lib crate），无法推断要装哪个二进制；\
+                 请在 [package.metadata.bundle-pkgbuild] 声明 bin_name，或用 --bin-name",
+                opts.project_dir.display()
+            ),
+            n => format!(
+                "{} 有 {n} 个 [[bin]] 目标，CLI 无法判断该装哪个；\
+                 请在 [package.metadata.bundle-pkgbuild] 声明 bin_name，或用 --bin-name",
+                opts.project_dir.display()
+            ),
+        })?;
+
+    // 图标名没有任何数据源可推导，只能回退到二进制名 —— 但**不静默**：写进 PKGBUILD 注释
+    // 并打印一行，让使用者有机会发现。
+    let icon_declared = opts
         .icon_name
         .or(settings.icon_name.as_deref())
-        .unwrap_or(&info.name);
+        .map(|s| s.to_string());
+    let icon: String = icon_declared.clone().unwrap_or_else(|| {
+        println!(
+            "提示：icon_name 未声明，默认取二进制名 `{bin}`。若你的图标文件名不是它，\
+             请在 [package.metadata.bundle-pkgbuild] 声明 icon_name 或用 --icon-name。"
+        );
+        bin.to_string()
+    });
     let suffix = icon_suffix(opts.channel);
     let license = opts.license.unwrap_or(&info.license);
     let prefix = settings.prefix.trim_end_matches('/');
@@ -356,7 +402,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
                     ("APP_NAME", identity.name.as_deref().unwrap_or(&info.name)),
                     ("APP_ID", &desktop_id),
                     ("APP_CLI", &format!("{prefix}/bin/{bin}")),
-                    ("APP_ICON", icon),
+                    ("APP_ICON", &icon),
                     ("APP_ARGS", "%F"),
                     ("DO_STARTUP_NOTIFY", "true"),
                 ],
@@ -461,7 +507,7 @@ mod tests {
 
     /// 建一个本测试独有的临时目录（pid + tag 防相撞）。
     fn test_dir(tag: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("aa-bundle-arch-{}-{}", std::process::id(), tag));
+        let dir = std::env::temp_dir().join(format!("aa-bundle-pkgbuild-{}-{}", std::process::id(), tag));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).expect("建临时目录失败");
         dir
@@ -487,6 +533,9 @@ name = "aacode"
 version = "1.23.2"
 license = "Apache-2.0"
 
+[[bin]]
+name = "aacode"
+
 [package.metadata.bundle-stable]
 identifier = "dev.aa.AaCode"
 name = "AaCode"
@@ -498,7 +547,7 @@ name = "AaCode"
             project_dir: &dir,
             channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
-            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-arch]",
+            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-pkgbuild]",
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -556,11 +605,14 @@ name = "aacode"
 version = "1.23.2"
 license = "Apache-2.0"
 
+[[bin]]
+name = "aacode"
+
 [package.metadata.bundle-stable]
 identifier = "dev.aa.AaCode"
 name = "AaCode"
 
-[package.metadata.bundle-arch]
+[package.metadata.bundle-pkgbuild]
 depends = ["gcc-libs", "glibc", "gtk3"]
 desktop_template = "resources/aacode.desktop.in"
 bin_name = "aacode"
@@ -578,7 +630,7 @@ bin_name = "aacode"
             project_dir: &dir,
             channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
-            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-arch]",
+            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-pkgbuild]",
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -605,6 +657,98 @@ bin_name = "aacode"
     }
 
     #[test]
+    fn bin_name_comes_from_bin_target_not_crate_name() {
+        // [[bin]].name 与 package.name 不同：要用真实的 bin 目标，不能拿 crate 名顶替
+        let dir = test_dir("bin_differs");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "some_crate"
+version = "0.1.0"
+license = "Apache-2.0"
+
+[[bin]]
+name = "the_real_binary"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+
+        let opts = PkgbuildOptions {
+            project_dir: &dir,
+            channel: "stable",
+            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-pkgbuild]",
+            bin_name: None,
+            desktop_template: None,
+            icon_name: None,
+            depends: None,
+            makedepends: None,
+            arch: None,
+            url: None,
+            license: None,
+            prefix: None,
+        };
+        let (pkgbuild, _) = generate_pkgbuild(&opts).unwrap();
+        assert!(
+            pkgbuild.contains("$pkgdir/usr/bin/the_real_binary"),
+            "应装真实的 [[bin]] 名，而不是 crate 名：{pkgbuild}"
+        );
+        // 但 cargo -p 用的是 package.name
+        assert!(pkgbuild.contains("cargo build --release -p some_crate"));
+    }
+
+    #[test]
+    fn multiple_bins_must_be_declared() {
+        let dir = test_dir("multi_bin");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[[bin]]
+name = "aacode"
+
+[[bin]]
+name = "aacode-cli"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+
+        let opts = PkgbuildOptions {
+            project_dir: &dir,
+            channel: "stable",
+            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-pkgbuild]",
+            bin_name: None,
+            desktop_template: None,
+            icon_name: None,
+            depends: None,
+            makedepends: None,
+            arch: None,
+            url: None,
+            license: None,
+            prefix: None,
+        };
+        let err = generate_pkgbuild(&opts).unwrap_err().to_string();
+        assert!(
+            err.contains("2 个 [[bin]]"),
+            "多个 bin 时不应猜，应要求声明：{err}"
+        );
+    }
+
+    #[test]
     fn missing_arch_section_falls_back_to_defaults() {
         let dir = test_dir("arch_defaults");
         std::fs::write(
@@ -623,7 +767,7 @@ name = "AaCode"
         .unwrap();
 
         let settings = load_pkgbuild_settings(
-            "Cargo.toml#[package, metadata, bundle-arch]",
+            "Cargo.toml#[package, metadata, bundle-pkgbuild]",
             &dir,
         )
         .unwrap();

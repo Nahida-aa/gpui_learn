@@ -4,7 +4,7 @@
 //! 所以这里的 flag 都是「覆盖项」而非「必填项」—— 正常用法就是
 //! `aa-bundle arch -p <crate 目录>`，其余都从 Cargo.toml 推导/读取：
 //! - 身份（identifier / name） ← `[package.metadata.bundle-<channel>]`
-//! - Arch 设置（依赖 / 模板 / 图标名…） ← `[package.metadata.bundle-arch]`（可选）
+//! - Arch 设置（依赖 / 模板 / 图标名…） ← `[package.metadata.bundle-pkgbuild]`（可选）
 
 use std::path::PathBuf;
 
@@ -31,7 +31,7 @@ enum Command {
         /// 身份来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-<channel>]`
         #[arg(long)]
         bundle_meta: Option<String>,
-        /// Arch 设置来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-arch]`
+        /// Arch 设置来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-pkgbuild]`
         #[arg(long)]
         pkgbuild_meta: Option<String>,
         /// 覆盖 .desktop 模板路径
@@ -88,7 +88,7 @@ fn main() -> Result<()> {
         } => {
             let default_meta = format!("Cargo.toml#[package, metadata, bundle-{channel}]");
             let bundle_meta = bundle_meta.as_deref().unwrap_or(&default_meta);
-            let default_pkgbuild_meta = "Cargo.toml#[package, metadata, bundle-arch]";
+            let default_pkgbuild_meta = "Cargo.toml#[package, metadata, bundle-pkgbuild]";
             let pkgbuild_meta = pkgbuild_meta.as_deref().unwrap_or(default_pkgbuild_meta);
 
             let opts = aa_bundle::pkgbuild::PkgbuildOptions {
