@@ -49,14 +49,18 @@ pub struct BundleMeta {
     pub icon: Option<Vec<String>>,
     pub version: Option<String>,
     pub copyright: Option<String>,
-    pub short_description: Option<String>,
+    pub short_description: Option<String>, // cargo.description, pkgdesc
     pub long_description: Option<String>,
+    /// freedesktop Categories 的来源（cargo-bundle 的 `category`，macOS 体系值如
+    /// `"Developer Tool"`）。渲染时经 [`AppCategory::parse`] 映射。
+    pub category: Option<String>,
     pub resources: Option<Vec<String>>,
     pub linux: Option<LinuxTable>,
     /// aa-bundle 自有的 Arch 打包子表（cargo-bundle 无此概念）
     pub arch: Option<ArchTable>,
-    /// aa-bundle 自有：.desktop 模板路径（相对 crate 目录）。
-    /// cargo-bundle 是自己生成 .desktop 的，我们用模板——项目自有格式故单列一个键。
+    /// aa-bundle 自有：.desktop **模板**路径（相对 crate 目录），可选。
+    /// 不填则由 aa-bundle 按 cargo-bundle 的方式自己生成 .desktop；
+    /// 填了则用模板渲染（`$APP_NAME` / `$APP_ID` / `$APP_CLI` / `$APP_ICON` 等）。
     pub desktop_template: Option<String>,
 }
 
@@ -66,7 +70,94 @@ pub struct LinuxTable {
     pub mime_types: Option<Vec<String>>,
     pub exec_args: Option<String>,
     pub use_terminal: Option<bool>,
+    pub startup_wm_class: Option<String>,
+    /// `Actions=` + `[Desktop Action <id>]` 组
+    pub desktop_actions: Option<std::collections::BTreeMap<String, DesktopAction>>,
 }
+
+/// `[bundle.linux.desktop_actions.<id>]`（cargo-bundle settings.rs:107-118）
+#[derive(Deserialize, Default, Debug)]
+pub struct DesktopAction {
+    pub name: String,
+    pub exec: Option<String>,
+    pub icon: Option<String>,
+}
+
+/// 应用类别：cargo-bundle 的 `category` 字段。
+///
+/// **值用的是 macOS `LSApplicationCategoryType` 体系**（如 `"Developer Tool"`），
+/// 与 freedesktop Categories 是两套不同的枚举 —— cargo-bundle 自己做了映射
+/// （category.rs:131-174）。这里照抄那张表，免得项目为两个平台各写一份。
+///
+/// 解析时容错（category.rs:57-80 的简化版）：大小写不敏感、忽略空格与连字符、
+/// 剥离 `public.app-category.` 前缀。认不出时返回 `None`，调用方告警并回退 `Utility;`。
+#[derive(Debug, Clone)]
+pub struct AppCategory(pub &'static str);
+
+impl AppCategory {
+    /// 归一化后查表。认不出返回 `None`。
+    pub fn parse(input: &str) -> Option<Self> {
+        let mut s = input.to_ascii_lowercase();
+        if let Some(rest) = s.strip_prefix("public.app-category.") {
+            s = rest.to_string();
+        }
+        s = s.replace([' ', '-'], "");
+        CATEGORIES
+            .iter()
+            .find(|(key, _)| *key == s.as_str())
+            .map(|(_, v)| Self(v))
+    }
+
+    /// 映射到 freedesktop Categories（末尾带分号）
+    pub fn gnome_desktop_categories(&self) -> &'static str {
+        self.0
+    }
+}
+
+/// `(归一化键, freedesktop Categories)`。键 = 小写、无空格无连字符。
+/// 值取自 cargo-bundle category.rs:131-174 的 gnome_desktop_categories()。
+const CATEGORIES: &[(&str, &str)] = &[
+    ("business", "Office;"),
+    ("developertool", "Development;"),
+    ("education", "Education;"),
+    ("entertainment", "Network;"),
+    ("finance", "Office;Finance;"),
+    ("game", "Game;"),
+    ("actiongame", "Game;ActionGame;"),
+    ("adventuregame", "Game;AdventureGame;"),
+    ("arcadegame", "Game;ArcadeGame;"),
+    ("boardgame", "Game;BoardGame;"),
+    ("cardgame", "Game;CardGame;"),
+    ("casinogame", "Game;"),
+    ("dicegame", "Game;"),
+    ("educationalgame", "Game;Education;"),
+    ("familygame", "Game;"),
+    ("kidsgame", "Game;KidsGame;"),
+    ("musicgame", "Game;"),
+    ("puzzlegame", "Game;LogicGame;"),
+    ("racinggame", "Game;"),
+    ("roleplayinggame", "Game;RolePlaying;"),
+    ("simulationgame", "Game;Simulation;"),
+    ("sportsgame", "Game;SportsGame;"),
+    ("strategygame", "Game;StrategyGame;"),
+    ("triviagame", "Game;"),
+    ("wordgame", "Game;"),
+    ("graphicsanddesign", "Graphics;"),
+    ("healthcareandfitness", "Science;"),
+    ("lifestyle", "Education;"),
+    ("medical", "Science;MedicalSoftware;"),
+    ("music", "AudioVideo;Audio;Music;"),
+    ("news", "Network;News;"),
+    ("photography", "Graphics;Photography;"),
+    ("productivity", "Office;"),
+    ("reference", "Education;"),
+    ("socialnetworking", "Network;"),
+    ("sports", "Education;Sports;"),
+    ("travel", "Education;"),
+    ("utility", "Utility;"),
+    ("video", "AudioVideo;Video;"),
+    ("weather", "Science;"),
+];
 
 /// `[bundle.arch]` 子表 —— Arch 打包设置。
 ///
@@ -261,6 +352,104 @@ pub fn pkg_segment(s: &str) -> String {
 pub fn derive_identifier(repo_name: &str, bin_name: Option<&str>) -> Option<String> {
     let bin = bin_name?;
     Some(format!("{}.{}", pkg_segment(repo_name), pkg_segment(bin)))
+}
+
+/// 生成 FreeDesktop `.desktop` 条目内容。
+///
+/// 对齐 cargo-bundle 的 `render_desktop_entry`（linux/desktop.rs:38-144）：
+/// 字段映射、输出顺序、以及几处刻意的省略都照它来 ——
+/// - 不写 `Version=`（那是 spec 版本，不是 app 版本）
+/// - 不写 `Encoding=`（已废弃）
+/// - `MimeType` 为空则整行省略（裸 `MimeType=` 过不了某些校验器）
+/// - `category` 未设时由调用方告警并回退 `Utility;`
+pub fn render_desktop_entry(meta: &BundleMeta, bin: &str, desktop_id: &str) -> String {
+    use std::fmt::Write;
+    let mut out = String::new();
+
+    let app_name = meta.name.as_deref().unwrap_or(bin);
+    let comment = meta.short_description.as_deref().unwrap_or("");
+    // category 认不出时回退 Utility;（调用方已告警）
+    let categories = meta
+        .category
+        .as_deref()
+        .and_then(AppCategory::parse)
+        .map(|c| c.gnome_desktop_categories().to_string())
+        .unwrap_or_else(|| "Utility;".to_string());
+
+    // spec: https://specifications.freedesktop.org/desktop-entry-spec/latest/
+    let _ = writeln!(out, "[Desktop Entry]");
+    let _ = writeln!(out, "Type=Application");
+    let _ = writeln!(out, "Name={app_name}");
+    if !comment.is_empty() {
+        let _ = writeln!(out, "Comment={comment}");
+    }
+    let _ = writeln!(out, "Exec={bin}{}", meta.exec_suffix());
+    let _ = writeln!(out, "Icon={bin}");
+    let _ = writeln!(out, "Terminal={}", meta.terminal());
+    let _ = writeln!(out, "Categories={categories}");
+    // 与桌面身份一致：launcher 用它把窗口归到该条目下
+    let _ = writeln!(out, "StartupWMClass={desktop_id}");
+
+    let mime = meta.mime_types();
+    if !mime.is_empty() {
+        let _ = write!(out, "MimeType=");
+        for m in mime {
+            let _ = write!(out, "{m};");
+        }
+        let _ = writeln!(out);
+    }
+
+    // Desktop Actions：`Actions=` 列表 + 每组一个 `[Desktop Action <id>]`
+    let actions = meta.desktop_actions();
+    if !actions.is_empty() {
+        let _ = write!(out, "Actions=");
+        for (id, _) in actions {
+            let _ = write!(out, "{id};");
+        }
+        let _ = writeln!(out);
+        for (id, action) in actions {
+            let _ = writeln!(out);
+            let _ = writeln!(out, "[Desktop Action {id}]");
+            let _ = writeln!(out, "Name={}", action.name);
+            let exec = action.exec.as_deref().unwrap_or(bin);
+            let _ = writeln!(out, "Exec={exec}");
+            if let Some(icon) = &action.icon {
+                let _ = writeln!(out, "Icon={icon}");
+            }
+        }
+    }
+
+    out
+}
+
+impl BundleMeta {
+    /// `linux.exec_args` → Exec 的后缀（带前导空格）；未设则为空
+    pub fn exec_suffix(&self) -> String {
+        match self.linux.as_ref().and_then(|l| l.exec_args.as_deref()) {
+            Some(a) if !a.is_empty() => format!(" {a}"),
+            _ => String::new(),
+        }
+    }
+
+    pub fn terminal(&self) -> bool {
+        self.linux.as_ref().and_then(|l| l.use_terminal).unwrap_or(false)
+    }
+
+    pub fn mime_types(&self) -> &[String] {
+        self.linux
+            .as_ref()
+            .and_then(|l| l.mime_types.as_deref())
+            .unwrap_or(&[])
+    }
+
+    pub fn desktop_actions(&self) -> &std::collections::BTreeMap<String, DesktopAction> {
+        static EMPTY: std::collections::BTreeMap<String, DesktopAction> =
+            std::collections::BTreeMap::new();
+        self.linux
+            .as_ref()
+            .and_then(|l| l.desktop_actions.as_ref())
+            .unwrap_or(&EMPTY)
+    }
 }
 
 /// JSON 值的中文类型名，用于错误消息。

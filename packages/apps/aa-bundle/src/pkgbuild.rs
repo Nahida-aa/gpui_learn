@@ -254,24 +254,26 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         settings.prefix = v.to_string();
     }
 
-    // —— 名字的推导链 ——
-    // CLI 不知道项目怎么命名，所以：**声明 > 从 Cargo.toml 的真实数据推导 > 报错**，
-    // 不用「crate 名」这种约定去猜（`[[bin]].name` 完全可能与 `package.name` 不同）。
-    let bin: &str = opts
-        .bin_name
-        .or(info.bin_name.as_deref())
-        .with_context(|| match info.bin_count {
-            0 => format!(
-                "{} 没有 [[bin]] 目标（纯 lib crate），无法推断要装哪个二进制；\
-                 请在 [package.metadata.bundle-pkgbuild] 声明 bin_name，或用 --bin-name",
+    // —— bin 名的推导链（对齐 cargo 的自动发现规则）——
+    // 1. 命令行 --bin-name（最高优先）
+    // 2. 有 `[[bin]]` 且唯一 → 该目标名（可能与 package.name 不同）
+    // 3. 无 `[[bin]]` → **包名**。这是 cargo 的规则：`src/main.rs` 自动成为以
+    //    包名命名的二进制。不是猜，是 cargo 文档化的行为。
+    // 4. 多个 `[[bin]]` → 歧义，报错要求声明
+    let bin: &str = if let Some(b) = opts.bin_name {
+        b
+    } else {
+        match info.bin_count {
+            0 => info.name.as_str(),
+            1 => info.bin_name.as_deref().expect("bin_count==1 时必有 bin_name"),
+            n => bail!(
+                "{} 有 {n} 个 [[bin]] 目标，无法判断该装哪个。\
+                 请用 --bin-name 指定，或在 bundle 元数据里加 `[bundle.arch]` 后\
+                 用 --bundle-meta 指向含 bin 配置的表。",
                 opts.project_dir.display()
             ),
-            n => format!(
-                "{} 有 {n} 个 [[bin]] 目标，CLI 无法判断该装哪个；\
-                 请在 [package.metadata.bundle-pkgbuild] 声明 bin_name，或用 --bin-name",
-                opts.project_dir.display()
-            ),
-        })?;
+        }
+    };
 
     // 图标名没有任何数据源可推导，只能回退到二进制名 —— 但**不静默**：写进 PKGBUILD 注释
     // 并打印一行，让使用者有机会发现。
@@ -334,7 +336,11 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     // cargo 包名直接从 crate 的 Cargo.toml 取 —— 已经指了目录，不需要再让人传一遍
     let cargo_pkg_flag = format!(" -p {}", info.name);
 
-    // 渲染 .desktop（模板路径：命令行 > bundle 元数据的 desktop_template > 不产出）
+    // .desktop 内容：三条路，优先级从高到低
+    //   1. 命令行 --desktop-template（临时覆盖）
+    //   2. bundle 元数据的 desktop_template（项目自有模板）
+    //   3. **aa-bundle 自己生成**（对齐 cargo-bundle：不用模板，直接从 settings 渲染）
+    // 第 3 条是默认路径 —— 项目零配置也能得到合规的 .desktop。
     let template_path = match opts.desktop_template {
         Some(p) => Some(p.to_path_buf()),
         None => identity
@@ -342,24 +348,40 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
             .as_ref()
             .map(|rel| opts.project_dir.join(rel)),
     };
-    let desktop_rel = match &template_path {
-        Some(template_path) => {
-            let template = std::fs::read_to_string(template_path)
-                .with_context(|| format!("读取 .desktop 模板 {} 失败", template_path.display()))?;
-            let rendered = render_desktop(
-                &template,
-                &[
-                    ("APP_NAME", identity.name.as_deref().unwrap_or(&info.name)),
-                    ("APP_ID", &desktop_id),
-                    ("APP_CLI", &format!("{prefix}/bin/{bin}")),
-                    ("APP_ICON", &icon),
-                    ("APP_ARGS", "%F"),
-                    ("DO_STARTUP_NOTIFY", "true"),
-                ],
-            );
-            Some((format!("{desktop_id}.desktop"), rendered))
+    let desktop_rel = if let Some(template_path) = &template_path {
+        let template = std::fs::read_to_string(template_path)
+            .with_context(|| format!("读取 .desktop 模板 {} 失败", template_path.display()))?;
+        let rendered = render_desktop(
+            &template,
+            &[
+                ("APP_NAME", identity.name.as_deref().unwrap_or(&info.name)),
+                ("APP_ID", &desktop_id),
+                ("APP_CLI", &format!("{prefix}/bin/{bin}")),
+                ("APP_ICON", &icon),
+                ("APP_ARGS", "%F"),
+                ("DO_STARTUP_NOTIFY", "true"),
+            ],
+        );
+        Some((format!("{desktop_id}.desktop"), rendered))
+    } else {
+        // 自己生成。category 缺失或认不出时告警并回退 Utility;
+        // （对齐 cargo-bundle desktop.rs:161-170）
+        match identity.category.as_deref().map(crate::AppCategory::parse) {
+            Some(None) => println!(
+                "提示：bundle 元数据的 category = {:?} 无法识别，.desktop 的 Categories \
+                 回退为 Utility;。可用值如 \"Developer Tool\" / \"Utility\" / \"Graphics\"。",
+                identity.category.as_deref().unwrap_or("")
+            ),
+            None => println!(
+                "提示：bundle 元数据里没有 category，.desktop 的 Categories 回退为 Utility;。\
+                 要更准确请设 category = \"Developer Tool\" 等。"
+            ),
+            Some(Some(_)) => {}
         }
-        None => None,
+        Some((
+            format!("{desktop_id}.desktop"),
+            crate::render_desktop_entry(&identity, bin, &desktop_id),
+        ))
     };
 
     // 没给 url 就整行不输出，避免生成 `url=""` 这种空字段
@@ -558,8 +580,10 @@ name = "AaCode"
                 .any(|l| l == "makedepends=(cargo rust)"),
             "构建 Rust crate 必然需要 cargo/rust，这不算猜：{pkgbuild}"
         );
-        // 没配 desktop_template → 不产出 desktop
-        assert!(desktop.is_none());
+        // 没配 desktop_template → 由 aa-bundle 自动生成（不再是不产出）
+        let (dname, dcontent) = desktop.expect("无模板时应自动生成 .desktop");
+        assert_eq!(dname, "dev.aa.AaCode.desktop");
+        assert!(dcontent.contains("Name=AaCode"), "{dcontent}");
         // 源码路径绝对化
         let src = dir.canonicalize().unwrap();
         assert!(
@@ -819,6 +843,85 @@ icon_dir = "share/icons/hicolor"
             pkgbuild.contains("$startdir_icon/resources/app-icon.png"),
             "图标路径应来自 icon 列表：{pkgbuild}"
         );
+    }
+
+    #[test]
+    fn bin_name_falls_back_to_package_name_when_no_bin_section() {
+        // cargo 的规则：没有 [[bin]] 时 src/main.rs 自动成为以包名命名的二进制。
+        // aacode 正是这种（无 [[bin]] 段），此前误报"没有 [[bin]] 目标"。
+        let dir = test_dir("no_bin_section");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+
+        let opts = PkgbuildOptions {
+            project_dir: &dir,
+            channel: "stable",
+            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bin_name: None,
+            desktop_template: None,
+            icon_name: None,
+            depends: None,
+            makedepends: None,
+            arch: None,
+            url: None,
+            license: None,
+            prefix: None,
+        };
+        let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
+        assert!(
+            pkgbuild.contains("$pkgdir/usr/bin/aacode"),
+            "无 [[bin]] 时应回退包名：{pkgbuild}"
+        );
+        assert!(pkgbuild.contains("cargo build --release -p aacode"));
+        // 无 desktop_template → 自动生成 .desktop
+        let (name, content) = desktop.expect("应自动生成 .desktop");
+        assert_eq!(name, "dev.aa.AaCode.desktop");
+        assert!(content.contains("Name=AaCode"), "{content}");
+        assert!(content.contains("Exec=aacode"), "{content}");
+        assert!(content.contains("Icon=aacode"), "{content}");
+        assert!(content.contains("Terminal=false"), "{content}");
+        // 没配 category → 回退 Utility;
+        assert!(content.contains("Categories=Utility;"), "{content}");
+        assert!(content.contains("StartupWMClass=dev.aa.AaCode"), "{content}");
+    }
+
+    #[test]
+    fn desktop_entry_uses_cargo_bundle_category_mapping() {
+        // cargo-bundle 的 category 用 macOS LSApplicationCategoryType 体系的值
+        let meta = crate::BundleMeta {
+            name: Some("AaCode".to_string()),
+            short_description: Some("A coding agent".to_string()),
+            category: Some("Developer Tool".to_string()),
+            linux: Some(crate::LinuxTable {
+                mime_types: Some(vec!["text/plain".to_string()]),
+                exec_args: Some("%F".to_string()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let out = crate::render_desktop_entry(&meta, "aacode", "dev.aa.AaCode");
+        // "Developer Tool" → Development;（cargo-bundle category.rs:134）
+        assert!(out.contains("Categories=Development;"), "{out}");
+        assert!(out.contains("Comment=A coding agent"), "{out}");
+        assert!(out.contains("Exec=aacode %F"), "{out}");
+        assert!(out.contains("MimeType=text/plain;"), "{out}");
+        // 刻意不写的键
+        assert!(!out.contains("Version="), "Version 是 spec 版本不是 app 版本");
+        assert!(!out.contains("Encoding="), "Encoding 已废弃");
     }
 
     #[test]

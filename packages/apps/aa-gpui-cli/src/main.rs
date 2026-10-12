@@ -159,7 +159,7 @@ fn android_init(
         Some(0) | None => cargo_package.clone(),
         Some(n) => bail!(
             "{} 有 {n} 个 [[bin]] 目标，无法推断该用哪个作为 identifier 的第二段；\
-             请在 [package.metadata.*] 的身份表里显式写 identifier，或合并/指定 bin 名",
+             请在 bundle 元数据里显式写 identifier，或合并/指定 bin 名",
             project_dir.display()
         ),
     };
