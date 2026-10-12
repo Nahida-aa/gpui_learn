@@ -7,11 +7,14 @@
 //! - **身份解析**：[`IdentityTable`] / [`load_identity_table`] —— 从结构化文件
 //!   （Cargo.toml 的 `[package.metadata.bundle*]` 或任意 JSON）读出
 //!   `identifier` / `name`，字段名对齐 cargo-bundle 的 `BundleSettings`。
+//! - **打包**：[`arch`] —— 生成 Arch Linux 的 PKGBUILD（第一个目标）。
 //! - 通用基建：[`repo_name_from`]、[`relative_path`]、[`write_file`] /
 //!   [`write_bytes`] / [`copy_dir`] / [`set_executable`]。
 //!
 //! 错误消息里提到 `--bundle-meta`，因为那是消费方 CLI 的约定参数名
 //! （本库不定义 CLI 参数，只定义引用语法与解析规则）。
+
+pub mod arch;
 
 use std::path::{Path, PathBuf};
 
