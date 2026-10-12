@@ -38,6 +38,8 @@ pub struct PackageInfo {
 }
 
 /// `license` 可能是字面量，也可能是 `license.workspace = true`（workspace 继承）。
+/// `workspace` 字段只是用来让 serde 认出这个形状，值本身不读。
+#[allow(dead_code)]
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum StringOrWorkspace {
@@ -147,12 +149,12 @@ pub struct ArchSettings {
 impl Default for ArchSettings {
     fn default() -> Self {
         Self {
-            // GPUI 桌面应用在 Linux 上的常见运行时依赖。这是一份**保守猜测**，
-            // 真要分发请在 Cargo.toml 里显式覆盖。
-            depends: ["gcc-libs", "glibc", "gtk3", "libxkbcommon-x11", "xdg-utils"]
-                .iter()
-                .map(|s| s.to_string())
-                .collect(),
+            // 与 cargo-bundle 的 deb_depends 一致：**不猜、不填默认值**。
+            // 系统包依赖只有项目自己知道（cargo 只认 -l，不认发行版包名），
+            // 没声明就整行不写 Depends/depends（见 cargo-bundle deb_bundle.rs:128-131）。
+            // 本机开发安装时依赖早已在机器上，省略无副作用；要分发再声明。
+            depends: Vec::new(),
+            // 这条不是猜：我们的 PKGBUILD 自己调 cargo build，构建 Rust crate 必然需要
             makedepends: ["cargo", "rust"].iter().map(|s| s.to_string()).collect(),
             arch: vec!["x86_64".to_string()],
             url: String::new(),
@@ -363,6 +365,17 @@ pub fn generate_pkgbuild(opts: &ArchOptions) -> Result<(String, Option<(String, 
     let depends = settings.depends.join(" ");
     let makedepends = settings.makedepends.join(" ");
     let arch = settings.arch.join(" ");
+    // 与 cargo-bundle 一致：空则不写该行（而不是写个空的 depends=()）
+    let depends_line = if settings.depends.is_empty() {
+        String::new()
+    } else {
+        format!("depends=({depends})\n")
+    };
+    let makedepends_line = if settings.makedepends.is_empty() {
+        String::new()
+    } else {
+        format!("makedepends=({makedepends})\n")
+    };
 
     let desktop_install = match &desktop_rel {
         Some((name, _)) => format!(
@@ -380,8 +393,7 @@ pkgrel=1
 pkgdesc="{pkgdesc}"
 arch=({arch})
 {url_line}license=({license})
-depends=({depends})
-makedepends=({makedepends})
+{depends_line}{makedepends_line}
 # aacode 二进制体积大（strip 后仍 300MB+），开 LTO 链接会非常慢；与项目构建配置一致关掉。
 options=(!lto)
 
@@ -410,8 +422,8 @@ package() {{
         arch = arch,
 
         license = license,
-        depends = depends,
-        makedepends = makedepends,
+        depends_line = depends_line,
+        makedepends_line = makedepends_line,
         src = src.display(),
         bin = bin,
         suffix = suffix,
@@ -501,6 +513,18 @@ name = "AaCode"
             "图标应装到 hicolor 512x512：{pkgbuild}"
         );
         assert!(!pkgbuild.contains("url="), "未给 url 时不该输出空字段");
+        // 未声明 depends → 整行不写（对齐 cargo-bundle 的 deb 行为）
+        // 注意按行判断：makedepends= 里也含子串 "depends="
+        assert!(
+            !pkgbuild.lines().any(|l| l.starts_with("depends=")),
+            "没声明依赖时不该写 depends= 行：{pkgbuild}"
+        );
+        assert!(
+            pkgbuild
+                .lines()
+                .any(|l| l == "makedepends=(cargo rust)"),
+            "构建 Rust crate 必然需要 cargo/rust，这不算猜：{pkgbuild}"
+        );
         // 没配 desktop_template → 不产出 desktop
         assert!(desktop.is_none());
         // 源码路径绝对化
@@ -597,7 +621,8 @@ name = "AaCode"
         assert_eq!(settings.makedepends, vec!["cargo", "rust"]);
         assert_eq!(settings.prefix, "/usr");
         assert!(settings.desktop_template.is_none());
-        assert!(settings.depends.contains(&"gtk3".to_string()), "默认依赖应给一份可用基线");
+        // 与 cargo-bundle 一致：不声明就不给依赖（而不是塞一份猜的基线）
+        assert!(settings.depends.is_empty(), "默认依赖应为空：{:?}", settings.depends);
     }
 
     #[test]

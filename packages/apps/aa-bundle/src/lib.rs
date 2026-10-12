@@ -16,7 +16,7 @@
 
 pub mod arch;
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
@@ -291,6 +291,7 @@ pub fn set_executable(_path: &Path) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     /// 建一个本测试独有的临时目录（pid + tag 防相撞）。
     fn identity_test_dir(tag: &str) -> PathBuf {
