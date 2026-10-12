@@ -49,7 +49,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -271,6 +271,18 @@ settings_macros = { package = "aa_settings_macros", path = "packages/aa/aa_setti
 settings_json = { package = "aa_settings_json", path = "packages/aa/aa_settings_json", default-features = false }
 settings = { package = "zed_settings", path = "packages/zed/zed_settings" }
 language_model_core = { package = "aa_language_model_core", path = "packages/aa/aa_language_model_core" }
+
+# —— aa_gpui_kit_language_model 所需（本次随 language_model crate 迁入时新增）——
+# 这五个原先由 aacode 的 packages/language_model 直接声明 crates.io / zed git 源，
+# 迁入 gpui_learn 后改为 workspace 继承，故根清单需要补齐对应条目。
+base64 = "0.22"
+# credentials_provider / icons 沿用 zed 与本仓库既有的 crate：
+#   zed 叫 credentials_provider、icons，本仓库的 icons 包名是 aa_icons（与 aacode
+#   侧 `icons = { package = "aa_icons", ... }` 的别名写法一致）。
+credentials_provider = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
+env_var = { path = "packages/aa/env_var" }
+icons = { package = "aa_icons", path = "packages/icons" }
+image = { version = "0.25.1", default-features = false }
 aa_release_channel = { path = "packages/aa/aa_release_channel" }
 release_channel = { package = "aa_release_channel", path = "packages/aa/aa_release_channel" }
 migrator = { package = "zed_migrator", path = "packages/zed/zed_migrator" }
