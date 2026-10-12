@@ -22,8 +22,8 @@ use serde::Deserialize;
 // 身份解析（`--bundle-meta` 引用语法）、文件写入等打包基础设施来自 aa-bundle 库侧，
 // 本 crate 只保留 Android 工程生成专属逻辑。
 use aa_bundle::{
-    IdentityTable, copy_dir, load_identity_table, relative_path, repo_name_from, set_executable,
-    write_bytes, write_file,
+    IdentityTable, copy_dir, derive_identifier, load_identity_table, relative_path, repo_name_from,
+    set_executable, write_bytes, write_file,
 };
 
 /// 所有模板以编译期内嵌方式打包，使 aa-gpui-cli 完全自包含。
@@ -81,11 +81,12 @@ enum AndroidCmd {
     },
 }
 
-/// 从 Cargo.toml 解析出 [package] name 与 [lib] name
+/// 从 Cargo.toml 解析出 [package] name、[lib] name 与 [[bin]] 列表
 #[derive(Deserialize)]
 struct CargoToml {
     package: CargoPackage,
     lib: Option<CargoLib>,
+    bin: Option<Vec<CargoBin>>,
 }
 
 #[derive(Deserialize)]
@@ -96,6 +97,11 @@ struct CargoPackage {
 #[derive(Deserialize)]
 struct CargoLib {
     name: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct CargoBin {
+    name: String,
 }
 
 fn main() -> Result<()> {
@@ -139,27 +145,35 @@ fn android_init(
         .unwrap_or_else(|| cargo_package.clone());
 
     // 2) 读身份表（--bundle-meta，可选）：identifier / name 均可缺省，
-    //    缺的走下面的 Cargo.toml 推导。不传 --bundle-meta 就是纯推导。
+    //    缺的走下面的推导。不传 --bundle-meta 就是纯推导。
     let identity = match bundle_meta {
         Some(reference) => load_identity_table(reference, &project_dir)?,
         None => IdentityTable::default(),
     };
-    // 字段缺省推导（repo_name 与 cargo_package 都过 pkg_segment 规范化，拼出的
-    // identifier 保证合法）：`name` → 包名；`identifier` → <仓库名>.<包名>。
+    // bin 名解析（与 aa-bundle 同一套规则，见 aa_bundle::derive_identifier）：
+    // 唯一 [[bin]] > 包名（cargo 规则）> 多 bin 报错。**不用包名顶替 bin 名** ——
+    // [[bin]].name 完全可以与 package.name 不同。
+    let bin_name = match cargo.bin.as_ref().map(|b| b.len()) {
+        Some(1) => cargo.bin.as_ref().unwrap()[0].name.clone(),
+        Some(0) | None => cargo_package.clone(),
+        Some(n) => bail!(
+            "{} 有 {n} 个 [[bin]] 目标，无法推断该用哪个作为 identifier 的第二段；\
+             请在 [package.metadata.*] 的身份表里显式写 identifier，或合并/指定 bin 名",
+            project_dir.display()
+        ),
+    };
+    // 字段缺省推导：`name` → bin 名；`identifier` → <仓库名>.<bin 名>（蛇形规范化）。
     // 仓库名取 git 根目录名（如 gpui_learn）。若不在 git 仓库内（拿不到 .git），
     // 直接报错——不硬编码假名，避免默认包名语义失真。
     let repo_name = repo_name_from(&project_dir).context(
         "无法确定仓库名来推导默认 identifier：当前目录不在 git 仓库内（找不到 .git），\
          请在 git 仓库中运行，或用 --bundle-meta 指定含 identifier 的身份来源",
     )?;
-    let app_name = identity.name.unwrap_or_else(|| cargo_package.clone());
-    let identifier = identity.identifier.unwrap_or_else(|| {
-        format!(
-            "{}.{}",
-            pkg_segment(&repo_name),
-            pkg_segment(&cargo_package)
-        )
-    });
+    let app_name = identity.name.unwrap_or_else(|| bin_name.clone());
+    let identifier = identity
+        .identifier
+        .or_else(|| derive_identifier(&repo_name, Some(&bin_name)))
+        .context("无法推导默认 identifier：bin 名为空")?;
     // 统一校验最终 identifier（无论来自 conf 还是自动推导）：段必须以字母开头、
     // 仅含字母/数字/下划线；用户显式写的非法值直接报错，避免静默写坏包名。
     validate_identifier(&identifier)?;
@@ -287,41 +301,6 @@ fn sanitize_ident(s: &str) -> String {
         .join("")
 }
 
-/// 把一个字符串规范成 Android `applicationId` 的「合法段」(`[A-Za-z][A-Za-z0-9_]*`)：
-/// - 仅保留 ASCII 字母/数字/下划线，其余（含 `-`、空格、中文、点等）替换为 `_`；
-/// - 整体转小写（反向域名惯例全小写）；
-/// - **剔除开头所有非字母**（数字/下划线不能作段首：Android 段必须为字母开头，而
-///   不是给它们补 `_` —— 补 `_` 后仍是非法段）。如 `_09_a11y` → `a11y`、`3repo` → `repo`；
-/// - 若剔除后不含任何字母（纯符号/中文名），兜底为单段 `x`，保证拼出的 identifier
-///   段非空且合法。
-///
-/// 仓库目录名可能含 `-`/大写，包名（cargo package name）应以同样规则约束，
-/// 故 repo_name 与 cargo_package 都过这一道。
-fn pkg_segment(s: &str) -> String {
-    let mut seg: String = s
-        .chars()
-        .map(|c| {
-            if c.is_ascii_alphanumeric() || c == '_' {
-                c.to_ascii_lowercase()
-            } else {
-                '_'
-            }
-        })
-        .collect();
-    while seg
-        .chars()
-        .next()
-        .map(|c| !c.is_ascii_alphabetic())
-        .unwrap_or(false)
-    {
-        seg.remove(0);
-    }
-    if seg.is_empty() {
-        seg.push('x');
-    }
-    seg
-}
-
 /// 校验完整 identifier（`a`本身、各段 `.` 分隔）：每段须 `[A-Za-z][A-Za-z0-9_]*`。
 /// 来自 `--bundle-meta` 或自动推导的 identifier 都走这里——非法时**报错**而非静默改写，
 /// 避免悄悄改变用户预期的包名。
@@ -347,23 +326,6 @@ fn validate_identifier(id: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn pkg_segment_normalizes_repo_and_package_names() {
-        // 大写 + 连字符 → 小写 + 下划线
-        assert_eq!(pkg_segment("My-Repo2"), "my_repo2");
-        // 纯小写带连字符
-        assert_eq!(pkg_segment("gpui-learn"), "gpui_learn");
-        // 以数字开头 → 剔除数字，不能前缀补 _
-        assert_eq!(pkg_segment("3repo"), "repo");
-        // 中文等非 ASCII → 下划线；剔光后兜底为单个合法段
-        assert_eq!(pkg_segment("我的仓库"), "x");
-        // 合法名不变
-        assert_eq!(pkg_segment("uniform_list_07"), "uniform_list_07");
-        // 混合：下划线/数字开头 + 非法字符 → 剔除前导非字母
-        assert_eq!(pkg_segment("_09_a11y"), "a11y");
-        assert_eq!(pkg_segment("2-My.App"), "my_app");
-    }
 
     #[test]
     fn validate_identifier_accepts_good_and_rejects_bad() {

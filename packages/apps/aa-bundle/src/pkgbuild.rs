@@ -367,13 +367,26 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     } else {
         info.description.clone()
     };
-    // .desktop 名用 identifier（如 dev.aa.AaCode-Nightly.desktop），与桌面身份一致
-    let desktop_id = identity.identifier.clone().with_context(|| {
-        format!(
-            "身份表 {} 里没有 identifier，无法命名 .desktop（请在该表补 identifier，或改用别的 --bundle-meta）",
-            opts.bundle_meta
-        )
-    })?;
+    // .desktop 名用 identifier（如 dev.aa.AaCode-Nightly.desktop），与桌面身份一致。
+    // 缺省时推导 <仓库名>.<bin 名>（两段蛇形规范化），与 aa-gpui-cli 同一套逻辑。
+    // 注意第二段用 bin 名而非 package 名：[[bin]].name 可能与 package.name 不同。
+    let desktop_id = match identity.identifier.clone() {
+        Some(id) => id,
+        None => {
+            let repo = crate::repo_name_from(opts.project_dir);
+            let derived = repo
+                .as_deref()
+                .and_then(|r| crate::derive_identifier(r, Some(bin)));
+            derived.with_context(|| {
+                format!(
+                    "身份表 {} 里没有 identifier，且无法推导默认值：当前目录不在 git 仓库内\
+                     （拿不到 .git，推导不出仓库名）。请在身份表里补 identifier，\
+                     或在 git 仓库中运行",
+                    opts.bundle_meta
+                )
+            })?
+        }
+    };
 
     // 源码目录绝对化：PKGBUILD 会在自己的目录里执行，必须按绝对路径回到源码树
     let src = opts
