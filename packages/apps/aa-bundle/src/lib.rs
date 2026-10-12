@@ -21,15 +21,72 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
-/// 身份表：`--bundle-meta` 指向的结构（两个字段均可缺省，缺的由调用方推导）。
+/// 身份表：`--bundle-meta` 指向的结构。
 ///
-/// 字段名**对齐 cargo-bundle 的 `BundleSettings`**（`identifier` / `name`），
-/// 因此可以直接指向 Cargo.toml 的 `[package.metadata.bundle*]` 表，
-/// 或任何根级含这两个 key 的 JSON 文件。
+/// 字段**对齐 cargo-bundle 的 `BundleSettings`**（cargo-bundle-0.12.0
+/// settings.rs:174-213），因此可以直接指向 Cargo.toml 的
+/// `[package.metadata.bundle*]` 表 —— 同一份配置将来给 macOS 打包复用。
+///
+/// | 字段 | 来源 | aa-bundle 的用途 |
+/// | --- | --- | --- |
+/// | `identifier` | 通用 | .desktop 文件名；缺省推导 `<仓库名>.<bin 名>` |
+/// | `name` | 通用 | 桌面显示名、pkgdesc 回退 |
+/// | `icon` | 通用 | 图标路径列表（取第一个存在的） |
+/// | `version` | 通用 | pkgver；缺省取 Cargo.toml 版本 |
+/// | `copyright` | 通用 | PKGBUILD 注释 |
+/// | `short_description` / `long_description` | 通用 | pkgdesc |
+/// | `resources` | 通用 | 额外拷进 pkgdir 的文件 |
+/// | `linux` | Linux 专属 | mime_types / exec_args / use_terminal |
+/// | `arch` | **aa-bundle 自有子表** | depends / makedepends / 图标安装路径等 |
+/// | `bin` | 多二进制 | 每个 bin 一套配置（预留） |
+///
+/// cargo-bundle 用 `deny_unknown_fields`，我们**不用** —— 它未来加字段时
+/// 老版本 aa-bundle 不该直接报错，未知字段忽略即可。
 #[derive(Deserialize, Default, Debug)]
 pub struct IdentityTable {
     pub identifier: Option<String>,
     pub name: Option<String>,
+    pub icon: Option<Vec<String>>,
+    pub version: Option<String>,
+    pub copyright: Option<String>,
+    pub short_description: Option<String>,
+    pub long_description: Option<String>,
+    pub resources: Option<Vec<String>>,
+    pub linux: Option<LinuxTable>,
+    /// aa-bundle 自有的 Arch 打包子表（cargo-bundle 无此概念）
+    pub arch: Option<ArchTable>,
+    /// aa-bundle 自有：.desktop 模板路径（相对 crate 目录）。
+    /// cargo-bundle 是自己生成 .desktop 的，我们用模板——项目自有格式故单列一个键。
+    pub desktop_template: Option<String>,
+}
+
+/// cargo-bundle 的 `[bundle.linux]` 子表（settings.rs:151-158）
+#[derive(Deserialize, Default, Debug)]
+pub struct LinuxTable {
+    pub mime_types: Option<Vec<String>>,
+    pub exec_args: Option<String>,
+    pub use_terminal: Option<bool>,
+}
+
+/// `[bundle.arch]` 子表 —— Arch 打包设置。
+///
+/// 这是 cargo-bundle 没有的概念（它不支持 Arch），由 aa-bundle 自己定义。
+/// 之所以放在 bundle 表内部而不是独立段：让「身份 + 打包配置」单一来源，
+/// 与 cargo-bundle 的 `linux` / `osx` 子表同构。
+#[derive(Deserialize, Default, Debug)]
+pub struct ArchTable {
+    /// 运行依赖 → PKGBUILD 的 `depends=`
+    pub depends: Option<Vec<String>>,
+    /// 构建依赖 → `makedepends=`
+    pub makedepends: Option<Vec<String>>,
+    /// 目标架构 → `arch=()`，缺省 `x86_64`
+    pub arch: Option<Vec<String>>,
+    pub url: Option<String>,
+    /// 安装前缀，缺省 `/usr`
+    pub prefix: Option<String>,
+    /// 图标安装路径（相对 prefix），缺省 `share/icons/hicolor`
+    /// （尺寸子目录由 aa-bundle 按 `@2x` 推导，不写在这里）
+    pub icon_dir: Option<String>,
 }
 
 /// 解析身份来源引用并读出身份表。
@@ -43,23 +100,23 @@ pub struct IdentityTable {
 ///   漂移必须立刻暴露，而不是悄悄用推导值生成一个错的包名。
 pub fn load_identity_table(reference: &str, project_dir: &Path) -> Result<IdentityTable> {
     let table = load_table(reference, project_dir)?;
-
-    // 字段存在但类型不对 → 硬错误；缺省 → None，由调用方推导。
-    // 只认字符串：把数字/布尔静默转成字符串会掩盖配置错误。
-    let string_field = |key: &str| -> Result<Option<String>> {
-        match table.get(key) {
-            None => Ok(None),
-            Some(serde_json::Value::String(s)) => Ok(Some(s.clone())),
-            Some(other) => bail!(
-                "--bundle-meta `{reference}`：字段 `{key}` 应为字符串，实际是 {}",
-                value_type_name(other)
-            ),
-        }
-    };
-    Ok(IdentityTable {
-        identifier: string_field("identifier")?,
-        name: string_field("name")?,
-    })
+    // 整表反序列化成 BundleSettings 同构的结构。与 cargo-bundle 不同，
+    // 这里**不用** deny_unknown_fields：它将来加字段时老版本不该报错。
+    let value = serde_json::to_value(&table).context("表转 JSON 值失败")?;
+    let identity: IdentityTable = serde_json::from_value(value).with_context(|| {
+        // serde 报的是 "invalid type: integer `42`, expected a string" 这种，
+        // 补上引用原文与字段名才定位得了。
+        let keys = table
+            .keys()
+            .map(|k| format!("`{k}`"))
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!(
+            "解析身份表 {reference} 失败：有字段类型不符（identifier / name / icon 等应为\
+             字符串或字符串数组）。该表现有键：{keys}"
+        )
+    })?;
+    Ok(identity)
 }
 
 /// 按引用读出一张表（任意键值），是 [`load_identity_table`] 的通用版。

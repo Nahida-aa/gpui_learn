@@ -25,22 +25,22 @@ enum Command {
         /// 源码目录（含 Cargo.toml 与 resources/），默认当前目录
         #[arg(short = 'p', long, default_value = ".")]
         project_dir: PathBuf,
-        /// 频道：决定 bundle 表（`bundle-<channel>`）与图标后缀。默认 stable
+        /// 频道：决定 bundle 表（`bundle-<channel>`）。默认 stable
         #[arg(long, default_value = "stable")]
         channel: String,
-        /// 身份来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-<channel>]`
+        /// 身份/打包配置来源（**必填**）：`<文件>` 或 `<文件>#[k1, k2, ...]`。
+        /// 字段对齐 cargo-bundle 的 BundleSettings；Arch 参数放同表的 `arch` 子表。
+        /// 例：`Cargo.toml#[package, metadata, bundle-stable]`
+        /// （这只是 aacode 的写法，不是约定 —— 你的项目放哪都行）
         #[arg(long)]
-        bundle_meta: Option<String>,
-        /// Arch 设置来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-pkgbuild]`
-        #[arg(long)]
-        pkgbuild_meta: Option<String>,
+        bundle_meta: String,
         /// 覆盖 .desktop 模板路径
         #[arg(long)]
         desktop_template: Option<PathBuf>,
-        /// 覆盖二进制名（默认 crate 名）
+        /// 覆盖二进制名（默认取 Cargo.toml 的 [[bin]]）
         #[arg(long)]
         bin_name: Option<String>,
-        /// 覆盖图标基础名（默认 crate 名）
+        /// 覆盖图标基础名（默认取二进制名，仅作图标安装文件名）
         #[arg(long)]
         icon_name: Option<String>,
         /// 覆盖运行依赖（完全替代 Cargo.toml 里的值，可多次传）
@@ -74,7 +74,6 @@ fn main() -> Result<()> {
             project_dir,
             channel,
             bundle_meta,
-            pkgbuild_meta,
             desktop_template,
             bin_name,
             icon_name,
@@ -86,16 +85,10 @@ fn main() -> Result<()> {
             prefix,
             out,
         } => {
-            let default_meta = format!("Cargo.toml#[package, metadata, bundle-{channel}]");
-            let bundle_meta = bundle_meta.as_deref().unwrap_or(&default_meta);
-            let default_pkgbuild_meta = "Cargo.toml#[package, metadata, bundle-pkgbuild]";
-            let pkgbuild_meta = pkgbuild_meta.as_deref().unwrap_or(default_pkgbuild_meta);
-
             let opts = aa_bundle::pkgbuild::PkgbuildOptions {
                 project_dir: &project_dir,
                 channel: &channel,
-                bundle_meta,
-                pkgbuild_meta,
+                bundle_meta: &bundle_meta,
                 bin_name: bin_name.as_deref(),
                 desktop_template: desktop_template.as_deref(),
                 icon_name: icon_name.as_deref(),
@@ -108,7 +101,7 @@ fn main() -> Result<()> {
             };
             let (pkgbuild, desktop) = aa_bundle::pkgbuild::generate_pkgbuild(&opts)?;
 
-            let out_dir = out.unwrap_or_else(|| project_dir.join("target/aa-bundle/arch"));
+            let out_dir = out.unwrap_or_else(|| project_dir.join("target/aa-bundle/pkgbuild"));
             aa_bundle::write_file(&out_dir.join("PKGBUILD"), &pkgbuild)?;
             println!("已生成 {}", out_dir.join("PKGBUILD").display());
             if let Some((name, rendered)) = desktop {
