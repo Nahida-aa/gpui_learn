@@ -124,6 +124,121 @@ fn find_workspace_root(start: &Path) -> Option<PathBuf> {
     }
 }
 
+/// Arch 打包设置，来自 Cargo.toml 的 `[package.metadata.bundle-arch]`。
+///
+/// 对齐 cargo-bundle 的做法：**打包元数据声明在 Cargo.toml，不在命令行**。
+/// （cargo-bundle 的 `deb_depends` 就是干这个的；这里按同样思路给 Arch 一份。）
+/// 全部字段可缺省，缺省值见 [`ArchSettings::default`]。
+#[derive(Debug, Clone)]
+pub struct ArchSettings {
+    pub depends: Vec<String>,
+    pub makedepends: Vec<String>,
+    pub arch: Vec<String>,
+    pub url: String,
+    pub prefix: String,
+    /// .desktop 模板路径（相对 crate 目录）
+    pub desktop_template: Option<String>,
+    /// 二进制名，缺省取 crate 名
+    pub bin_name: Option<String>,
+    /// 图标基础名，缺省取 crate 名
+    pub icon_name: Option<String>,
+}
+
+impl Default for ArchSettings {
+    fn default() -> Self {
+        Self {
+            // GPUI 桌面应用在 Linux 上的常见运行时依赖。这是一份**保守猜测**，
+            // 真要分发请在 Cargo.toml 里显式覆盖。
+            depends: ["gcc-libs", "glibc", "gtk3", "libxkbcommon-x11", "xdg-utils"]
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+            makedepends: ["cargo", "rust"].iter().map(|s| s.to_string()).collect(),
+            arch: vec!["x86_64".to_string()],
+            url: String::new(),
+            prefix: "/usr".to_string(),
+            desktop_template: None,
+            bin_name: None,
+            icon_name: None,
+        }
+    }
+}
+
+/// 从引用指向的表读 Arch 设置；表不存在时返回默认值（该段是可选的）。
+pub fn load_arch_settings(reference: &str, project_dir: &Path) -> Result<ArchSettings> {
+    let mut settings = ArchSettings::default();
+    let table = match crate::load_table(reference, project_dir) {
+        Ok(t) => t,
+        // 该段是可选的：找不到就用默认值。但**引用语法错误**（如方括号不配对）
+        // 仍然要报，否则用户以为自己配了其实没生效。
+        Err(e) => {
+            let msg = e.to_string();
+            if msg.contains("方括号不配对") || msg.contains("空 key") || msg.contains("扩展名") {
+                return Err(e);
+            }
+            return Ok(settings);
+        }
+    };
+
+    let strings = |key: &str| -> Result<Option<Vec<String>>> {
+        match table.get(key) {
+            None => Ok(None),
+            // 数组：["a", "b"]
+            Some(serde_json::Value::Array(items)) => {
+                let mut out = Vec::new();
+                for item in items {
+                    match item {
+                        serde_json::Value::String(s) => out.push(s.clone()),
+                        other => bail!(
+                            "Arch 设置 `{key}` 数组的每项应为字符串，实际含 {}",
+                            crate::value_type_name(other)
+                        ),
+                    }
+                }
+                Ok(Some(out))
+            }
+            // 也接受空格分隔的单个字符串："a b c"
+            Some(serde_json::Value::String(s)) => Ok(Some(
+                s.split_whitespace().map(|p| p.to_string()).collect(),
+            )),
+            Some(other) => bail!(
+                "Arch 设置 `{key}` 应为字符串数组或空格分隔字符串，实际是 {}",
+                crate::value_type_name(other)
+            ),
+        }
+    };
+    let string = |key: &str| -> Result<Option<String>> {
+        match table.get(key) {
+            None => Ok(None),
+            Some(serde_json::Value::String(s)) => Ok(Some(s.clone())),
+            Some(other) => bail!(
+                "Arch 设置 `{key}` 应为字符串，实际是 {}",
+                crate::value_type_name(other)
+            ),
+        }
+    };
+
+    if let Some(v) = strings("depends")? {
+        settings.depends = v;
+    }
+    if let Some(v) = strings("makedepends")? {
+        settings.makedepends = v;
+    }
+    if let Some(v) = strings("arch")? {
+        settings.arch = v;
+    }
+    if let Some(v) = string("url")? {
+        settings.url = v;
+    }
+    if let Some(v) = string("prefix")? {
+        settings.prefix = v;
+    }
+    settings.desktop_template = string("desktop_template")?;
+    settings.bin_name = string("bin_name")?;
+    settings.icon_name = string("icon_name")?;
+    Ok(settings)
+}
+
 /// PKGBUILD 生成参数。
 pub struct ArchOptions<'a> {
     /// 源码目录（含 Cargo.toml）
@@ -132,22 +247,26 @@ pub struct ArchOptions<'a> {
     pub channel: &'a str,
     /// 身份来源引用；默认 `Cargo.toml#[package, metadata, bundle-<channel>]`
     pub bundle_meta: &'a str,
-    /// 二进制名（默认取 crate 名）
+    /// Arch 打包设置来源引用；默认 `Cargo.toml#[package, metadata, bundle-arch]`（该段可选）
+    pub arch_meta: &'a str,
+    /// 命令行覆盖：二进制名
     pub bin_name: Option<&'a str>,
-    /// 工作区场景下的 `-p <package>`（默认不加）
-    pub cargo_package: Option<&'a str>,
-    /// .desktop 模板路径（模板里的 `$APP_NAME` 等会被替换）；不传则不产出 desktop
+    /// 命令行覆盖：.desktop 模板路径
     pub desktop_template: Option<&'a Path>,
-    /// 图标基础名（不含后缀/扩展），默认取 crate 名
+    /// 命令行覆盖：图标基础名
     pub icon_name: Option<&'a str>,
-    pub depends: &'a [String],
-    pub makedepends: &'a [String],
-    pub arch: &'a [String],
+    /// 命令行覆盖：运行依赖（给了就完全替代 Cargo.toml 里的值）
+    pub depends: Option<&'a [String]>,
+    /// 命令行覆盖：构建依赖
+    pub makedepends: Option<&'a [String]>,
+    /// 命令行覆盖：目标架构
+    pub arch: Option<&'a [String]>,
+    /// 命令行覆盖：url
     pub url: Option<&'a str>,
-    /// 覆盖 license（Cargo.toml 读不到时用）
+    /// 命令行覆盖：license
     pub license: Option<&'a str>,
-    /// 产物安装前缀（默认 `/usr`）
-    pub prefix: &'a str,
+    /// 命令行覆盖：安装前缀
+    pub prefix: Option<&'a str>,
 }
 
 /// 生成 PKGBUILD 文本，并渲染 .desktop。
@@ -156,11 +275,36 @@ pub struct ArchOptions<'a> {
 pub fn generate_pkgbuild(opts: &ArchOptions) -> Result<(String, Option<(String, String)>)> {
     let info = read_package_info(opts.project_dir)?;
     let identity: IdentityTable = load_identity_table(opts.bundle_meta, opts.project_dir)?;
+    let mut settings = load_arch_settings(opts.arch_meta, opts.project_dir)?;
+    // 命令行覆盖优先于 Cargo.toml
+    if let Some(v) = opts.depends {
+        settings.depends = v.to_vec();
+    }
+    if let Some(v) = opts.makedepends {
+        settings.makedepends = v.to_vec();
+    }
+    if let Some(v) = opts.arch {
+        settings.arch = v.to_vec();
+    }
+    if let Some(v) = opts.url {
+        settings.url = v.to_string();
+    }
+    if let Some(v) = opts.prefix {
+        settings.prefix = v.to_string();
+    }
 
-    let bin = opts.bin_name.unwrap_or(&info.name);
-    let icon = opts.icon_name.unwrap_or(&info.name);
+    // 各名字的推导链：命令行 > Cargo.toml 的 arch 设置 > crate 名
+    let bin = opts
+        .bin_name
+        .or(settings.bin_name.as_deref())
+        .unwrap_or(&info.name);
+    let icon = opts
+        .icon_name
+        .or(settings.icon_name.as_deref())
+        .unwrap_or(&info.name);
     let suffix = icon_suffix(opts.channel);
     let license = opts.license.unwrap_or(&info.license);
+    let prefix = settings.prefix.trim_end_matches('/');
     let pkgdesc = if info.description.is_empty() {
         identity.name.clone().unwrap_or_else(|| info.name.clone())
     } else {
@@ -180,23 +324,27 @@ pub fn generate_pkgbuild(opts: &ArchOptions) -> Result<(String, Option<(String, 
         .canonicalize()
         .with_context(|| format!("无法解析源码目录 {}", opts.project_dir.display()))?;
 
-    let cargo_pkg_flag = match opts.cargo_package {
-        Some(p) => format!(" -p {p}"),
-        None => String::new(),
-    };
+    // cargo 包名直接从 crate 的 Cargo.toml 取 —— 已经指了目录，不需要再让人传一遍
+    let cargo_pkg_flag = format!(" -p {}", info.name);
 
-    // 渲染 .desktop
-    let desktop_rel = match opts.desktop_template {
+    // 渲染 .desktop（模板路径：命令行 > Cargo.toml 的 arch 设置 > 不产出）
+    let template_path = match opts.desktop_template {
+        Some(p) => Some(p.to_path_buf()),
+        None => settings
+            .desktop_template
+            .as_ref()
+            .map(|rel| opts.project_dir.join(rel)),
+    };
+    let desktop_rel = match &template_path {
         Some(template_path) => {
-            let template = std::fs::read_to_string(template_path).with_context(|| {
-                format!("读取 .desktop 模板 {} 失败", template_path.display())
-            })?;
+            let template = std::fs::read_to_string(template_path)
+                .with_context(|| format!("读取 .desktop 模板 {} 失败", template_path.display()))?;
             let rendered = render_desktop(
                 &template,
                 &[
                     ("APP_NAME", identity.name.as_deref().unwrap_or(&info.name)),
                     ("APP_ID", &desktop_id),
-                    ("APP_CLI", &format!("{}/bin/{}", opts.prefix.trim_end_matches('/'), bin)),
+                    ("APP_CLI", &format!("{prefix}/bin/{bin}")),
                     ("APP_ICON", icon),
                     ("APP_ARGS", "%F"),
                     ("DO_STARTUP_NOTIFY", "true"),
@@ -212,14 +360,13 @@ pub fn generate_pkgbuild(opts: &ArchOptions) -> Result<(String, Option<(String, 
         Some(u) if !u.is_empty() => format!("url=\"{u}\"\n"),
         _ => String::new(),
     };
-    let depends = opts.depends.join(" ");
-    let makedepends = opts.makedepends.join(" ");
-    let arch = opts.arch.join(" ");
+    let depends = settings.depends.join(" ");
+    let makedepends = settings.makedepends.join(" ");
+    let arch = settings.arch.join(" ");
 
     let desktop_install = match &desktop_rel {
         Some((name, _)) => format!(
-            "  install -Dm644 \"$startdir/{name}\" \"$pkgdir{prefix}/share/applications/{name}\"\n",
-            prefix = opts.prefix.trim_end_matches('/')
+            "  install -Dm644 \"$startdir/{name}\" \"$pkgdir{prefix}/share/applications/{name}\"\n"
         ),
         None => String::new(),
     };
@@ -269,7 +416,7 @@ package() {{
         bin = bin,
         suffix = suffix,
         icon = icon,
-        prefix = opts.prefix.trim_end_matches('/'),
+        prefix = prefix,
         bundle_meta = opts.bundle_meta,
         cargo_pkg_flag = cargo_pkg_flag,
         desktop_install = desktop_install,
@@ -330,16 +477,16 @@ name = "AaCode"
             project_dir: &dir,
             channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            arch_meta: "Cargo.toml#[package, metadata, bundle-arch]",
             bin_name: None,
-            cargo_package: Some("aacode"),
             desktop_template: None,
             icon_name: None,
-            depends: &["gcc-libs".to_string(), "glibc".to_string()],
-            makedepends: &["cargo".to_string()],
-            arch: &["x86_64".to_string()],
+            depends: None,
+            makedepends: None,
+            arch: None,
             url: None,
             license: None,
-            prefix: "/usr",
+            prefix: None,
         };
         let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
 
@@ -347,21 +494,110 @@ name = "AaCode"
         assert!(pkgbuild.contains("pkgname=aacode"));
         assert!(pkgbuild.contains("pkgver=1.23.2"));
         assert!(pkgbuild.contains("license=(Apache-2.0)"));
-        assert!(pkgbuild.contains("depends=(gcc-libs glibc)"));
+        // cargo 包名从 Cargo.toml 推导，不需要再传
         assert!(pkgbuild.contains("cargo build --release -p aacode"));
         assert!(
             pkgbuild.contains("hicolor/512x512/apps/aacode.png"),
             "图标应装到 hicolor 512x512：{pkgbuild}"
         );
         assert!(!pkgbuild.contains("url="), "未给 url 时不该输出空字段");
-        // 没传模板 → 不产出 desktop
+        // 没配 desktop_template → 不产出 desktop
         assert!(desktop.is_none());
-        // 源码路径绝对化（canonicalize 后应含该临时目录）
+        // 源码路径绝对化
         let src = dir.canonicalize().unwrap();
         assert!(
             pkgbuild.contains(&format!("_srcdir=\"{}\"", src.display())),
             "_srcdir 应为绝对路径：{pkgbuild}"
         );
+    }
+
+    #[test]
+    fn pkgbuild_settings_come_from_cargo_toml_not_flags() {
+        let dir = test_dir("arch_settings");
+        // 该段是可选的：不声明也能生成（用默认值）
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+
+[package.metadata.bundle-arch]
+depends = ["gcc-libs", "glibc", "gtk3"]
+desktop_template = "resources/aacode.desktop.in"
+bin_name = "aacode"
+"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(dir.join("resources")).unwrap();
+        std::fs::write(
+            dir.join("resources/aacode.desktop.in"),
+            "Name=$APP_NAME\nExec=$APP_CLI %F\n",
+        )
+        .unwrap();
+
+        let opts = ArchOptions {
+            project_dir: &dir,
+            channel: "stable",
+            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            arch_meta: "Cargo.toml#[package, metadata, bundle-arch]",
+            bin_name: None,
+            desktop_template: None,
+            icon_name: None,
+            depends: None,
+            makedepends: None,
+            arch: None,
+            url: None,
+            license: None,
+            prefix: None,
+        };
+        let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
+
+        assert!(
+            pkgbuild.contains("depends=(gcc-libs glibc gtk3)"),
+            "依赖应来自 Cargo.toml 而非命令行：{pkgbuild}"
+        );
+        // 默认 makedepends（Cargo.toml 未声明）
+        assert!(pkgbuild.contains("makedepends=(cargo rust)"));
+        // desktop_template 生效：产出 desktop 且渲染过
+        let (name, content) = desktop.expect("配了 desktop_template 就应产出 desktop");
+        assert_eq!(name, "dev.aa.AaCode.desktop");
+        assert!(content.contains("Name=AaCode"));
+        assert!(content.contains("Exec=/usr/bin/aacode %F"));
+    }
+
+    #[test]
+    fn missing_arch_section_falls_back_to_defaults() {
+        let dir = test_dir("arch_defaults");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+
+        let settings = load_arch_settings(
+            "Cargo.toml#[package, metadata, bundle-arch]",
+            &dir,
+        )
+        .unwrap();
+        assert_eq!(settings.makedepends, vec!["cargo", "rust"]);
+        assert_eq!(settings.prefix, "/usr");
+        assert!(settings.desktop_template.is_none());
+        assert!(settings.depends.contains(&"gtk3".to_string()), "默认依赖应给一份可用基线");
     }
 
     #[test]

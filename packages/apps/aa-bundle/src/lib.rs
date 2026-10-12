@@ -42,6 +42,34 @@ pub struct IdentityTable {
 ///   字段存在却不是字符串，都硬报错。不静默回落：路径写错、文件被移动这类
 ///   漂移必须立刻暴露，而不是悄悄用推导值生成一个错的包名。
 pub fn load_identity_table(reference: &str, project_dir: &Path) -> Result<IdentityTable> {
+    let table = load_table(reference, project_dir)?;
+
+    // 字段存在但类型不对 → 硬错误；缺省 → None，由调用方推导。
+    // 只认字符串：把数字/布尔静默转成字符串会掩盖配置错误。
+    let string_field = |key: &str| -> Result<Option<String>> {
+        match table.get(key) {
+            None => Ok(None),
+            Some(serde_json::Value::String(s)) => Ok(Some(s.clone())),
+            Some(other) => bail!(
+                "--bundle-meta `{reference}`：字段 `{key}` 应为字符串，实际是 {}",
+                value_type_name(other)
+            ),
+        }
+    };
+    Ok(IdentityTable {
+        identifier: string_field("identifier")?,
+        name: string_field("name")?,
+    })
+}
+
+/// 按引用读出一张表（任意键值），是 [`load_identity_table`] 的通用版。
+///
+/// 打包配置（如 Arch 的 depends / 模板路径）也是「结构化文件里的一张表」，
+/// 走同一套引用语法与同样的硬错误策略，消费方自行取键。
+pub fn load_table(
+    reference: &str,
+    project_dir: &Path,
+) -> Result<serde_json::Map<String, serde_json::Value>> {
     // 拆「文件」与「结构路径」。分隔符用 `#` 而非 `:`——后者会与 Windows 盘符
     // （`C:\...`）碰撞；路径用数组形式而非点分——JSON key 合法含点，且
     // identifier 本身（如 `dev.aa.AaCode`）就含点，点分在这里会歧义。
@@ -118,29 +146,15 @@ pub fn load_identity_table(reference: &str, project_dir: &Path) -> Result<Identi
         }
     }
 
-    let table = value.as_object().with_context(|| {
-        format!(
-            "--bundle-meta `{reference}`：目标不是表/对象（实际是 {}），无法读取 identifier / name",
-            value_type_name(&value)
-        )
-    })?;
-
-    // 字段存在但类型不对 → 硬错误；缺省 → None，由调用方推导。
-    // 只认字符串：把数字/布尔静默转成字符串会掩盖配置错误。
-    let string_field = |key: &str| -> Result<Option<String>> {
-        match table.get(key) {
-            None => Ok(None),
-            Some(serde_json::Value::String(s)) => Ok(Some(s.clone())),
-            Some(other) => bail!(
-                "--bundle-meta `{reference}`：字段 `{key}` 应为字符串，实际是 {}",
-                value_type_name(other)
-            ),
-        }
-    };
-    Ok(IdentityTable {
-        identifier: string_field("identifier")?,
-        name: string_field("name")?,
-    })
+    Ok(value
+        .as_object()
+        .with_context(|| {
+            format!(
+                "--bundle-meta `{reference}`：目标不是表/对象（实际是 {}）",
+                value_type_name(&value)
+            )
+        })?
+        .clone())
 }
 
 /// JSON 值的中文类型名，用于错误消息。

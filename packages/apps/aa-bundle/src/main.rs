@@ -1,4 +1,10 @@
 //! `aa-bundle` 的 CLI 壳 —— 参数解析后全部转调库侧（`aa_bundle::arch` 等）。
+//!
+//! 设计原则（对齐 cargo-bundle）：**打包元数据声明在 Cargo.toml，不在命令行**。
+//! 所以这里的 flag 都是「覆盖项」而非「必填项」—— 正常用法就是
+//! `aa-bundle arch -p <crate 目录>`，其余都从 Cargo.toml 推导/读取：
+//! - 身份（identifier / name） ← `[package.metadata.bundle-<channel>]`
+//! - Arch 设置（依赖 / 模板 / 图标名…） ← `[package.metadata.bundle-arch]`（可选）
 
 use std::path::PathBuf;
 
@@ -25,35 +31,36 @@ enum Command {
         /// 身份来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-<channel>]`
         #[arg(long)]
         bundle_meta: Option<String>,
-        /// .desktop 模板（内含 $APP_NAME/$APP_ID/$APP_CLI/$APP_ICON/$APP_ARGS 等变量）
+        /// Arch 设置来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-arch]`
+        #[arg(long)]
+        arch_meta: Option<String>,
+        /// 覆盖 .desktop 模板路径
         #[arg(long)]
         desktop_template: Option<PathBuf>,
-        /// 二进制名，默认取 crate 名
+        /// 覆盖二进制名（默认 crate 名）
         #[arg(long)]
         bin_name: Option<String>,
-        /// 工作区场景下的 `cargo build -p <package>`
-        #[arg(long)]
-        cargo_package: Option<String>,
-        /// 图标基础名（不含后缀与扩展），默认取 crate 名
+        /// 覆盖图标基础名（默认 crate 名）
         #[arg(long)]
         icon_name: Option<String>,
-        /// 运行依赖，可多次传
+        /// 覆盖运行依赖（完全替代 Cargo.toml 里的值，可多次传）
         #[arg(long)]
         depends: Vec<String>,
-        /// 构建依赖，可多次传
+        /// 覆盖构建依赖（可多次传）
         #[arg(long)]
         makedepends: Vec<String>,
-        /// 目标架构，可多次传。默认 x86_64
-        #[arg(long, default_value = "x86_64")]
+        /// 覆盖目标架构（可多次传）
+        #[arg(long)]
         arch: Vec<String>,
+        /// 覆盖 url
         #[arg(long)]
         url: Option<String>,
         /// 覆盖 license（Cargo.toml 读不到时）
         #[arg(long)]
         license: Option<String>,
-        /// 安装前缀，默认 /usr（pacman 包）
-        #[arg(long, default_value = "/usr")]
-        prefix: String,
+        /// 覆盖安装前缀（默认 /usr）
+        #[arg(long)]
+        prefix: Option<String>,
         /// 输出目录，默认 <project>/target/aa-bundle/arch
         #[arg(long)]
         out: Option<PathBuf>,
@@ -67,9 +74,9 @@ fn main() -> Result<()> {
             project_dir,
             channel,
             bundle_meta,
+            arch_meta,
             desktop_template,
             bin_name,
-            cargo_package,
             icon_name,
             depends,
             makedepends,
@@ -81,37 +88,34 @@ fn main() -> Result<()> {
         } => {
             let default_meta = format!("Cargo.toml#[package, metadata, bundle-{channel}]");
             let bundle_meta = bundle_meta.as_deref().unwrap_or(&default_meta);
-            let makedepends = if makedepends.is_empty() {
-                vec!["cargo".to_string(), "rust".to_string()]
-            } else {
-                makedepends
-            };
+            let default_arch_meta = "Cargo.toml#[package, metadata, bundle-arch]";
+            let arch_meta = arch_meta.as_deref().unwrap_or(default_arch_meta);
 
             let opts = aa_bundle::arch::ArchOptions {
                 project_dir: &project_dir,
                 channel: &channel,
                 bundle_meta,
+                arch_meta,
                 bin_name: bin_name.as_deref(),
-                cargo_package: cargo_package.as_deref(),
                 desktop_template: desktop_template.as_deref(),
                 icon_name: icon_name.as_deref(),
-                depends: &depends,
-                makedepends: &makedepends,
-                arch: &arch,
+                depends: (!depends.is_empty()).then_some(depends.as_slice()),
+                makedepends: (!makedepends.is_empty()).then_some(makedepends.as_slice()),
+                arch: (!arch.is_empty()).then_some(arch.as_slice()),
                 url: url.as_deref(),
                 license: license.as_deref(),
-                prefix: &prefix,
+                prefix: prefix.as_deref(),
             };
             let (pkgbuild, desktop) = aa_bundle::arch::generate_pkgbuild(&opts)?;
 
             let out_dir = out.unwrap_or_else(|| project_dir.join("target/aa-bundle/arch"));
             aa_bundle::write_file(&out_dir.join("PKGBUILD"), &pkgbuild)?;
+            println!("已生成 {}", out_dir.join("PKGBUILD").display());
             if let Some((name, rendered)) = desktop {
                 aa_bundle::write_file(&out_dir.join(&name), &rendered)?;
                 println!("已生成 {}", out_dir.join(name).display());
             }
 
-            println!("已生成 {}", out_dir.join("PKGBUILD").display());
             println!("接下来：");
             println!("  cd {}", out_dir.display());
             println!("  makepkg -si        # 构建并安装（卸载用 pacman -R <pkgname>）");
