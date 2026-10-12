@@ -25,7 +25,8 @@ gpui_learn/
 ├── packages/               # 库 crate（被 apps 共享的内部包）
 │   ├── assets/             # 内嵌资源（字体/图标），供各 app 引用
 │   ├── gpui-android/       # vendored 的 Android 平台层（对接本仓库 GPUI 82aef443）
-│   ├── gpui-cli/           # 开发工具：android init 等，配置驱动生成 Android 工程
+│   ├── apps/               # 平台侧工具（脚手架 / 打包等）
+│   │   └── aa-gpui-cli/    # 开发工具：android init 等，配置驱动生成 Android 工程
 │   └── ui/                 # 组件库（aa_gpui_kit_ui）（后续例子的「共享库」演示）
 ├── justfile                # 常用命令快捷方式
 └── README.md               # 本文件
@@ -114,8 +115,8 @@ git commit -m "chore: 同步 zed rev ${OLD:0:10} → ${NEW:0:10}"
 
 ```bash
 cargo run -p _01_hello_world     # 运行某个例子（包名 == 目录名）
-cargo run -- android init        # 裸 cargo run 走 gpui-cli（需带子命令）
-cargo build                      # 只构建默认成员（packages/gpui-cli，秒完）
+cargo run -- android init        # 裸 cargo run 走 aa-gpui-cli（需带子命令）
+cargo build                      # 只构建默认成员（packages/aa-gpui-cli，秒完）
 cargo build --workspace          # 构建全部（48 个示例 + 库）
 just test                        # 跑 aa_gpui_kit_ui 库测试（engine / editor 单测）
 just run _01_hello_world         # justfile 提供的等价快捷命令
@@ -124,9 +125,9 @@ just run _01_hello_world         # justfile 提供的等价快捷命令
 > **包名 == 目录名**：`_01_hello_world` / `ug_05_editor` 既是目录名也是 Cargo 包名
 > （Cargo 允许下划线开头的包名），所以 `-p` 后面直接写目录名即可，无需记忆两套名字。
 >
-> **默认成员只有 `gpui-cli`**：`apps/` 现有 48 个示例包，全量默认构建很慢，而
-> `gpui-cli` 不依赖 GPUI 运行时。裸 `cargo build`/`cargo run` 因此很快；
-> 注意裸 `cargo test` 也只测 gpui-cli，库测试请用 `just test`、
+> **默认成员只有 `aa-gpui-cli`**：`apps/` 现有 48 个示例包，全量默认构建很慢，而
+> `aa-gpui-cli` 不依赖 GPUI 运行时。裸 `cargo build`/`cargo run` 因此很快；
+> 注意裸 `cargo test` 也只测 aa-gpui-cli，库测试请用 `just test`、
 > 全量用 `cargo test --workspace`。
 
 ## apps 编号规则
@@ -168,7 +169,7 @@ just run _01_hello_world         # justfile 提供的等价快捷命令
 | 范围 | 许可证 | 说明 |
 |---|---|---|
 | **默认**（绝大多数包） | **GPL-3.0-or-later** | 这些包含照搬 / 改写自 zed 的代码（`ui`、`theme`、`theme-settings`、`component`、`assets`、`ui_input`、`ui_macros`、`base`、`editor`、`gpui_fuzzy`、`clock`…），上游是 GPL-3.0-or-later，因此必须同许可 |
-| `packages/gpui-cli` | Apache-2.0 | 构建/开发工具，零 zed 代码 |
+| `packages/aa-gpui-cli` | Apache-2.0 | 构建/开发工具，零 zed 代码 |
 | `packages/gpui-android` | Apache-2.0 | Android 平台适配，只依赖 zed 的 Apache-2.0 侧（`gpui` / `gpui_wgpu`） |
 
 默认值写在根 `Cargo.toml` 的 `[workspace.package].license`，Apache 的两个包在各自

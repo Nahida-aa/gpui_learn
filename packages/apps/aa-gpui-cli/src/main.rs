@@ -1,4 +1,4 @@
-//! # gpui-cli —— GPUI 工程的脚手架工具
+//! # aa-gpui-cli —— GPUI 工程的脚手架工具
 //!
 //! 目前实现 `android init`：读取一个例子的 `Cargo.toml`（取 cargo 包名 / lib 名），
 //! 并按需经 `--bundle-meta` 读取身份表（`identifier` / `name`），生成
@@ -19,7 +19,7 @@ use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
 use serde::Deserialize;
 
-/// 所有模板以编译期内嵌方式打包，使 gpui-cli 完全自包含。
+/// 所有模板以编译期内嵌方式打包，使 aa-gpui-cli 完全自包含。
 const TPL_APP_GRADLE: &str = include_str!("../templates/android-app.gradle.kts");
 const TPL_SETTINGS: &str = include_str!("../templates/settings.gradle.kts");
 const TPL_ROOT_BUILD: &str = include_str!("../templates/root-build.gradle.kts");
@@ -40,7 +40,7 @@ const DEFAULT_ABIS: &[&str] = &["arm64-v8a", "x86_64"];
 const ALL_ABIS: &[&str] = &["arm64-v8a", "armeabi-v7a", "x86", "x86_64"];
 
 #[derive(Parser)]
-#[command(name = "gpui-cli", about = "GPUI 工程脚手架工具")]
+#[command(name = "aa-gpui-cli", about = "GPUI 工程脚手架工具")]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -582,7 +582,7 @@ mod tests {
     /// 建一个本测试独有的临时目录（pid + tag 防相撞）。
     fn identity_test_dir(tag: &str) -> PathBuf {
         let dir = std::env::temp_dir().join(format!(
-            "gpui-cli-identity-{}-{}",
+            "aa-gpui-cli-identity-{}-{}",
             std::process::id(),
             tag
         ));

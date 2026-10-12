@@ -1,13 +1,13 @@
-# gpui-cli —— GPUI 工程脚手架工具
+# aa-gpui-cli —— GPUI 工程脚手架工具
 
 开发期命令行工具，负责**生成 Android 工程**，让例子目录保持「只写 Rust + 按需一份
 身份文件」，不碰任何 Gradle/Kotlin 脚本。定位等同于 Tauri 的 `tauri` CLI
-（`tauri android init`），将来稳定后可 `cargo install gpui-cli` 供外部使用。
+（`tauri android init`），将来稳定后可 `cargo install aa-gpui-cli` 供外部使用。
 
 ## 子命令
 
 ```
-gpui-cli android init [-p <工程目录>] [--bundle-meta <身份来源>] [--targets arm64-v8a,x86_64]
+aa-gpui-cli android init [-p <工程目录>] [--bundle-meta <身份来源>] [--targets arm64-v8a,x86_64]
 ```
 
 工程目录默认**当前目录**（在例子目录下直接跑即可）；如需为别的目录生成，
@@ -82,9 +82,9 @@ ABI 是工具默认值，不写进任何配置文件——遵循「配置极简�
 
 ## 模板从哪来
 
-所有模板以 `include_str!` / `include_bytes!` **编译期内嵌**在 `gpui-cli` 二进制里
-（见 `templates/` 目录），因此 `gpui-cli` 完全自包含，不依赖散落在仓库各处的
-`gradle/` 文件。改模板后重新编译 `gpui-cli` 即可，例子目录无需任何改动。
+所有模板以 `include_str!` / `include_bytes!` **编译期内嵌**在 `aa-gpui-cli` 二进制里
+（见 `templates/` 目录），因此 `aa-gpui-cli` 完全自包含，不依赖散落在仓库各处的
+`gradle/` 文件。改模板后重新编译 `aa-gpui-cli` 即可，例子目录无需任何改动。
 
 ## 与例子的配合
 
@@ -103,10 +103,10 @@ ABI 是工具默认值，不写进任何配置文件——遵循「配置极简�
 
 ```bash
 # justfile / package.json 的 init
-cargo run -p gpui-cli -- android init --bundle-meta gpui.conf.json
+cargo run -p aa-gpui-cli -- android init --bundle-meta gpui.conf.json
 
 # 也可以指向 Cargo.toml 里的 bundle 表（与桌面打包共身份）
-cargo run -p gpui-cli -- android init --bundle-meta "Cargo.toml#[package, metadata, bundle]"
+cargo run -p aa-gpui-cli -- android init --bundle-meta "Cargo.toml#[package, metadata, bundle]"
 ```
 
 改了 `Cargo.toml` / 身份文件后重跑 `init` 即可更新工程。

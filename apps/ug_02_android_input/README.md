@@ -32,9 +32,9 @@ window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
 });
 ```
 
-## 构建：零 Kotlin 脚本（`gpui-cli android init` 生成）
+## 构建：零 Kotlin 脚本（`aa-gpui-cli android init` 生成）
 
-本例子**不写任何 Gradle/Kotlin 脚本**。工程由 `gpui-cli` 这个开发工具根据配置
+本例子**不写任何 Gradle/Kotlin 脚本**。工程由 `aa-gpui-cli` 这个开发工具根据配置
 **生成**到 `gen/android/`（已 gitignore）。例子目录里只有两样东西：
 
 - `src/lib.rs` —— Rust 代码（TextInput + android_main + 软键盘）
@@ -49,7 +49,7 @@ window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
 ```
 
 > 为什么只有这两个？`cargo_package`（`input_05_android`）和 `rust_lib_name`
-> （`input_05`）由 `gpui-cli` 读本例子的 `Cargo.toml` 自动获取，不重复声明；
+> （`input_05`）由 `aa-gpui-cli` 读本例子的 `Cargo.toml` 自动获取，不重复声明；
 > 目标 ABI 用默认值（`arm64-v8a` + `x86_64`，覆盖真机 + 模拟器），不写进配置。
 > 这正是 Tauri `tauri android init` 的哲学——配置极简，生成器补全其余。
 > 身份来源没有约定文件名，是本例 `package.json` 的 `init` 脚本用
@@ -58,11 +58,11 @@ window.on_focus_out(&input_focus, cx, |_event, _window, _cx| {
 生成与构建：
 
 ```bash
-bun run init     # gpui-cli android init --bundle-meta gpui.conf.json → 生成 gen/android/
+bun run init     # aa-gpui-cli android init --bundle-meta gpui.conf.json → 生成 gen/android/
 bun run apk      # cd gen/android && ./gradlew assembleDebug
 ```
 
-`gpui-cli` 的模板里自动注入：`rustLibName` / `cargoPackage`（来自 Cargo.toml）、
+`aa-gpui-cli` 的模板里自动注入：`rustLibName` / `cargoPackage`（来自 Cargo.toml）、
 `appId` / `appName`（来自 --bundle-meta 身份表）、默认 ABI 列表；`AndroidManifest.xml`、
 `GpuiTheme`、`GpuiActivity.kt`（来自 `gpui-android`）也都一并生成/引用，无需手写。
 

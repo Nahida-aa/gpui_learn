@@ -22,14 +22,14 @@ check:
 # 用环境变量 ADB_DEVICE（或 just --set device=...）覆盖。
 device := env_var_or_default("ADB_DEVICE", "7fb0ee72")
 # APK 包名 = "gpui_learn.<包名>"，与 --bundle-meta 身份表里的 identifier
-# （本例 gpui.conf.json 未写 identifier，走 Cargo.toml 推导）/ gpui-cli 生成的 applicationId 一致
+# （本例 gpui.conf.json 未写 identifier，走 Cargo.toml 推导）/ aa-gpui-cli 生成的 applicationId 一致
 android_pkg := "gpui_learn.a11y"
 apk := "gen/android/app/build/outputs/apk/debug/app-debug.apk"
 
 # 初始化并生成 Android 工程（gen/android + android 资源）
 # 身份来源显式指定：gpui.conf.json 的根即身份表（identifier / name，均可缺省）。
 android_init:
-    cargo run -p gpui-cli -- android init --bundle-meta gpui.conf.json
+    cargo run -p aa-gpui-cli -- android init --bundle-meta gpui.conf.json
 
 # 用 cargo-ndk 交叉编译 native 库（仅检查）
 android_check:

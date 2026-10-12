@@ -92,7 +92,7 @@ apps/08_testing/
 ├── src/
 │   ├── lib.rs        # 真正逻辑：Counter + run()(桌面) + android_main()(Android) + tests
 │   └── main.rs       # 桌面薄壳：fn main() { testing_08::run(); }
-└── gen/android/      # gpui-cli android init 生成的 Gradle 骨架（构建产物被 .gitignore）
+└── gen/android/      # aa-gpui-cli android init 生成的 Gradle 骨架（构建产物被 .gitignore）
 ```
 
 - 桌面：`cargo run -p testing_08`，窗口 300×200，↑/↓ 或点按钮增减。
@@ -133,7 +133,7 @@ bun run waydroid:uninstall  # waydroid app uninstall gpui_learn.testing_08
 
 ```bash
 bun run android:run         # = android:init → android:apk → android:install → android:launch
-# 包名（applicationId）由 gpui-cli 从仓库名+包名推导：gpui_learn.testing_08
+# 包名（applicationId）由 aa-gpui-cli 从仓库名+包名推导：gpui_learn.testing_08
 ```
 
 ---

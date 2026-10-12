@@ -7,7 +7,7 @@
     "dev": "cargo watch -x run -p testing_08",
     "run": "cargo run -p testing_08",
     "check": "cargo check -p testing_08",
-    "android:init": "cargo run -p gpui-cli -- android init",
+    "android:init": "cargo run -p aa-gpui-cli -- android init",
     "android:check": "cargo ndk -t arm64-v8a -P 26 check -p testing_08",
     "android:apk": "cd gen/android && ./gradlew assembleDebug",
     "android:apk:release": "cd gen/android && ./gradlew assembleRelease -Prelease",

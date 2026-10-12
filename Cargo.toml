@@ -30,7 +30,7 @@ members = [
     "packages/clock",
     "packages/component",
     "packages/editor",
-    "packages/gpui-cli",
+    "packages/apps/aa-gpui-cli",
     "packages/aa_gpui/gpui_android",
     "packages/aa_gpui/gpui_fuzzy",
     "packages/aa/grammars",
@@ -53,17 +53,17 @@ members = [
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
-# cargo 实际去构建哪些成员。这里只放 `packages/gpui-cli`（开发工具）：
+# cargo 实际去构建哪些成员。这里只放 `packages/apps/aa-gpui-cli`（开发工具）：
 #   - `apps/` 现在有 48 个示例包，全量默认构建一次要很久；
-#   - gpui-cli 不依赖 gpui 运行时（仅 clap/serde/toml），裸 `cargo build` 秒完；
+#   - aa-gpui-cli 不依赖 gpui 运行时（仅 clap/serde/toml），裸 `cargo build` 秒完；
 #   - 它是 CLI 入口，裸 `cargo run` 有明确语义（需带子命令，如
 #     `cargo run -- android init`）。
 #
 # 注意：`default-members` 同时决定裸 `cargo test` 的范围——收窄后
-# `cargo test` 只测 gpui-cli。aa_gpui_kit_ui 的测试请用 `just test`，
+# `cargo test` 只测 aa-gpui-cli。aa_gpui_kit_ui 的测试请用 `just test`，
 # 全量用 `cargo test --workspace`；全量构建用 `cargo build --workspace`。
 default-members = [
-    "packages/gpui-cli",
+    "packages/apps/aa-gpui-cli",
 ]
 
 # [workspace.package] 里写的字段会被子包用 `version.workspace = true` 继承。
@@ -75,7 +75,7 @@ edition = "2024"
 # 本仓库大量文件是照搬 / 改写自 zed（crates/ui、component、theme_settings、
 # settings_json、fuzzy …），上游是 GPL-3.0-or-later，承载它们就必须同许可。
 # 只有**确认零 zed 代码**的包才在各自的 Cargo.toml 里覆盖成 Apache-2.0：
-#   - packages/gpui-cli（构建/开发工具）
+#   - packages/apps/aa-gpui-cli（构建/开发工具）
 #   - packages/aa_gpui/gpui_android（Android 平台适配，只依赖 zed 的 Apache-2.0 侧 gpui）
 # 新增包时：含 zed 来源代码 → 继承默认（别写 license 字段）；纯自研 → 显式写
 # `license = "Apache-2.0"`。许可证文本见根目录 LICENSE-GPL / LICENSE-APACHE。

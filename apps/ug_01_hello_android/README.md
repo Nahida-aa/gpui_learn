@@ -26,13 +26,13 @@ NativeActivity (GpuiActivity.kt)  ──  系统窗口 / ANativeWindow / JNI
 ├── gpui.conf.json      # 可选：根级身份表（identifier / name），由 --bundle-meta 显式指定
 ├── assets/fonts/       # 例子自带的资源（如 NotoColorEmoji.ttf），init 时自动拷进工程
 ├── package.json        # 命令入口（见下），IDE 会显示运行按钮
-└── gen/android/        # 由 gpui-cli android init 生成（已 gitignore，重跑即更新）
+└── gen/android/        # 由 aa-gpui-cli android init 生成（已 gitignore，重跑即更新）
 ```
 
-### 工程由 `gpui-cli android init` 生成（Tauri 风格：不写 Kotlin/Gradle）
+### 工程由 `aa-gpui-cli android init` 生成（Tauri 风格：不写 Kotlin/Gradle）
 
 本例子**不写任何 Gradle/Kotlin 脚本**。`gen/android/` 整个工程由开发工具
-`gpui-cli`（见 `crates/gpui-cli`）根据两个输入生成：
+`aa-gpui-cli`（见 `packages/apps/aa-gpui-cli`）根据两个输入生成：
 
 - 例子的 `Cargo.toml` —— 自动取 `[package] name`（cargo 包名）与 `[lib] name`（→ `libXXX.so`）
 - `--bundle-meta` 指定的身份表（本例是 `gpui.conf.json`）—— 只放真正属于平台、
@@ -45,7 +45,7 @@ NativeActivity (GpuiActivity.kt)  ──  系统窗口 / ANativeWindow / JNI
 }
 ```
 
-`gpui-cli` 内嵌了 Gradle 模板与 Gradle 8.9 wrapper，生成时自动注入：
+`aa-gpui-cli` 内嵌了 Gradle 模板与 Gradle 8.9 wrapper，生成时自动注入：
 `rustLibName` / `cargoPackage`（来自 Cargo.toml）、`appId` / `appName`（来自
 --bundle-meta 身份表）、默认 ABI 列表（`arm64-v8a` + `x86_64`）；并把例子的 `assets/`
 复制进 `app/src/main/assets/`。`AndroidManifest.xml`、`GpuiTheme`、`GpuiActivity.kt`
@@ -62,7 +62,7 @@ NativeActivity (GpuiActivity.kt)  ──  系统窗口 / ANativeWindow / JNI
 脚本旁自动显示 **▶ 运行按钮**，比 `justfile` 更顺手：
 
 ```bash
-bun run init        # gpui-cli android init → 生成 gen/android/
+bun run init        # aa-gpui-cli android init → 生成 gen/android/
 bun run rust:check  # 仅类型检查（aarch64-linux-android）
 bun run apk         # cd gen/android && ./gradlew assembleDebug
 bun run apk:release # release 版
@@ -93,7 +93,7 @@ bun run uninstall     # adb uninstall
 
 ```bash
 bun run init
-# = cargo run -p gpui-cli -- android init --bundle-meta gpui.conf.json
+# = cargo run -p aa-gpui-cli -- android init --bundle-meta gpui.conf.json
 #   如需为别的目录生成：android init -p apps/ug_01_hello_android
 # 生成 gen/android/（含 Gradle 8.9 wrapper + 从 Cargo.toml / 身份表 注入的配置）
 ```
@@ -117,7 +117,7 @@ cd gen/android
 > `~/.gradle/wrapper/dists/gradle-8.9-bin/<hash>/` 再跑 `./gradlew`，它会直接解压使用。
 > 镜像例：`https://mirrors.cloud.tencent.com/gradle/gradle-8.9-bin.zip`。
 
-`assembleDebug` 触发 `:app:preBuild` → `gpui-cli` 生成的 `cargoBuild` 任务，
+`assembleDebug` 触发 `:app:preBuild` → `aa-gpui-cli` 生成的 `cargoBuild` 任务，
 它会自动跑 `cargo ndk`（多 ABI）把 `libhello_android.so` 放到 `jniLibs/`，
 再交给 Android 打包。
 
@@ -158,7 +158,7 @@ adb logcat -s hello_android:T gpui-android:T
   由 `gpui-android` 已实现的 JNI 方法支撑，本例未额外用到。
 - **emoji 字体**：Android 系统 emoji 字体是 COLR v1，cosmic-text 用不了；本例把
   `NotoColorEmoji.ttf`（CBDT 格式，约 10 MB）放在例子的 `assets/fonts/` 目录，
-  `gpui-cli android init` 会把它复制进 `gen/android/app/src/main/assets/fonts/`，
+  `aa-gpui-cli android init` 会把它复制进 `gen/android/app/src/main/assets/fonts/`，
   由 `gpui-android` 在启动时从 `assets/fonts/` 加载，emoji（如标题里的 🤖）才能正常
   渲染。该字体文件已提交进例子目录的 `assets/`，所以 `bun run init && bun run apk`
   开箱即得，无需另下。若想减小 apk，可从例子 `assets/` 删掉它（代价是 emoji 变豆腐块）。

@@ -256,6 +256,17 @@ name = "_45_tree"
 version = "0.1.0"
 
 [[package]]
+name = "aa-gpui-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "serde_json",
+ "toml 0.8.23",
+]
+
+[[package]]
 name = "aa_clock"
 version = "0.1.0"
 dependencies = [
@@ -3587,17 +3598,6 @@ dependencies = [
  "web-time",
  "windows 0.62.2",
  "zed-scap",
-]
-
-[[package]]
-name = "gpui-cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "clap",
- "serde",
- "serde_json",
- "toml 0.8.23",
 ]
 
 [[package]]
