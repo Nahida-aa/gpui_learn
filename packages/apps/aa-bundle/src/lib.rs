@@ -4,7 +4,7 @@
 //! 其他工具（如 `aa-gpui-cli`）依赖本库，不重复实现。
 //!
 //! 当前提供：
-//! - **身份解析**：[`IdentityTable`] / [`load_identity_table`] —— 从结构化文件
+//! - **身份解析**：[`BundleMeta`] / [`load_bundle_meta`] —— 从结构化文件
 //!   （Cargo.toml 的 `[package.metadata.bundle*]` 或任意 JSON）读出
 //!   `identifier` / `name`，字段名对齐 cargo-bundle 的 `BundleSettings`。
 //! - **打包**：[`arch`] —— 生成 Arch Linux 的 PKGBUILD（第一个目标）。
@@ -21,7 +21,7 @@ use std::path::Path;
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
-/// 身份表：`--bundle-meta` 指向的结构。
+/// bundle 元数据：`--bundle-meta` 指向的结构。
 ///
 /// 字段**对齐 cargo-bundle 的 `BundleSettings`**（cargo-bundle-0.12.0
 /// settings.rs:174-213），因此可以直接指向 Cargo.toml 的
@@ -43,7 +43,7 @@ use serde::Deserialize;
 /// cargo-bundle 用 `deny_unknown_fields`，我们**不用** —— 它未来加字段时
 /// 老版本 aa-bundle 不该直接报错，未知字段忽略即可。
 #[derive(Deserialize, Default, Debug)]
-pub struct IdentityTable {
+pub struct BundleMeta {
     pub identifier: Option<String>,
     pub name: Option<String>,
     pub icon: Option<Vec<String>>,
@@ -89,7 +89,7 @@ pub struct ArchTable {
     pub icon_dir: Option<String>,
 }
 
-/// 解析身份来源引用并读出身份表。
+/// 解析打包配置来源引用并读出 bundle 元数据。
 ///
 /// 语法：`<文件>` 或 `<文件>#[k1, k2, ...]`。
 /// - 文件部分相对 `project_dir` 解析；类型按扩展名分派（.toml / .json）。
@@ -98,12 +98,12 @@ pub struct ArchTable {
 ///   但**引用本身必须解析成功**——文件缺失、路径不存在、中途或目标不是表、
 ///   字段存在却不是字符串，都硬报错。不静默回落：路径写错、文件被移动这类
 ///   漂移必须立刻暴露，而不是悄悄用推导值生成一个错的包名。
-pub fn load_identity_table(reference: &str, project_dir: &Path) -> Result<IdentityTable> {
+pub fn load_bundle_meta(reference: &str, project_dir: &Path) -> Result<BundleMeta> {
     let table = load_table(reference, project_dir)?;
     // 整表反序列化成 BundleSettings 同构的结构。与 cargo-bundle 不同，
     // 这里**不用** deny_unknown_fields：它将来加字段时老版本不该报错。
     let value = serde_json::to_value(&table).context("表转 JSON 值失败")?;
-    let identity: IdentityTable = serde_json::from_value(value).with_context(|| {
+    let identity: BundleMeta = serde_json::from_value(value).with_context(|| {
         // serde 报的是 "invalid type: integer `42`, expected a string" 这种，
         // 补上引用原文与字段名才定位得了。
         let keys = table
@@ -112,14 +112,14 @@ pub fn load_identity_table(reference: &str, project_dir: &Path) -> Result<Identi
             .collect::<Vec<_>>()
             .join(", ");
         format!(
-            "解析身份表 {reference} 失败：有字段类型不符（identifier / name / icon 等应为\
+            "解析 bundle 元数据 {reference} 失败：有字段类型不符（identifier / name / icon 等应为\
              字符串或字符串数组）。该表现有键：{keys}"
         )
     })?;
     Ok(identity)
 }
 
-/// 按引用读出一张表（任意键值），是 [`load_identity_table`] 的通用版。
+/// 按引用读出一张表（任意键值），是 [`load_bundle_meta`] 的通用版。
 ///
 /// 打包配置（如 Arch 的 depends / 模板路径）也是「结构化文件里的一张表」，
 /// 走同一套引用语法与同样的硬错误策略，消费方自行取键。
@@ -449,8 +449,8 @@ mod tests {
             r#"{"identifier": "aa.hello_android", "name": "Hello Android"}"#,
         )
         .unwrap();
-        // 文件根即身份表
-        let table = load_identity_table("id.json", &dir).unwrap();
+        // 文件根即 bundle 元数据
+        let table = load_bundle_meta("id.json", &dir).unwrap();
         assert_eq!(table.identifier.as_deref(), Some("aa.hello_android"));
         assert_eq!(table.name.as_deref(), Some("Hello Android"));
     }
@@ -459,7 +459,7 @@ mod tests {
     fn identity_fields_are_optional() {
         let dir = identity_test_dir("optional");
         std::fs::write(dir.join("id.json"), r#"{"name": "Only Name"}"#).unwrap();
-        let table = load_identity_table("id.json", &dir).unwrap();
+        let table = load_bundle_meta("id.json", &dir).unwrap();
         assert_eq!(table.identifier, None, "缺 identifier → None，由调用方推导");
         assert_eq!(table.name.as_deref(), Some("Only Name"));
     }
@@ -481,7 +481,7 @@ icon = ["app-icon.png"]
         )
         .unwrap();
         // 数组路径下钻 + key 两侧空白容忍；表内额外 key（icon）忽略
-        let table = load_identity_table("Cargo.toml#[package, metadata, bundle]", &dir).unwrap();
+        let table = load_bundle_meta("Cargo.toml#[package, metadata, bundle]", &dir).unwrap();
         assert_eq!(table.identifier.as_deref(), Some("aa.hello_android"));
         assert_eq!(table.name.as_deref(), Some("Hello Android"));
     }
@@ -495,7 +495,7 @@ icon = ["app-icon.png"]
             r#"{"a.b": {"identifier": "dev.aa.AaCode", "name": "AaCode"}}"#,
         )
         .unwrap();
-        let table = load_identity_table("id.json#[a.b]", &dir).unwrap();
+        let table = load_bundle_meta("id.json#[a.b]", &dir).unwrap();
         assert_eq!(table.identifier.as_deref(), Some("dev.aa.AaCode"));
         assert_eq!(table.name.as_deref(), Some("AaCode"));
     }
@@ -511,19 +511,19 @@ icon = ["app-icon.png"]
         std::fs::write(dir.join("arr.json"), r#"["not", "an", "object"]"#).unwrap();
 
         // 文件缺失
-        let err = load_identity_table("nope.json", &dir)
+        let err = load_bundle_meta("nope.json", &dir)
             .unwrap_err()
             .to_string();
         assert!(err.contains("nope.json"), "应指出文件：{err}");
 
         // 路径不存在
-        let err = load_identity_table("Cargo.toml#[package, metadata, missing]", &dir)
+        let err = load_bundle_meta("Cargo.toml#[package, metadata, missing]", &dir)
             .unwrap_err()
             .to_string();
         assert!(err.contains("missing"), "应指出缺的 key：{err}");
 
         // 字段类型不对（identifier 是数字）
-        let err = load_identity_table("Cargo.toml#[package, metadata, bundle]", &dir)
+        let err = load_bundle_meta("Cargo.toml#[package, metadata, bundle]", &dir)
             .unwrap_err()
             .to_string();
         assert!(
@@ -532,22 +532,22 @@ icon = ["app-icon.png"]
         );
 
         // 下钻中途不是表
-        let err = load_identity_table("arr.json#[0]", &dir)
+        let err = load_bundle_meta("arr.json#[0]", &dir)
             .unwrap_err()
             .to_string();
         assert!(err.contains("不是表/对象"), "应指出层级类型：{err}");
 
         // 目标本身不是表
-        let err = load_identity_table("arr.json", &dir).unwrap_err().to_string();
+        let err = load_bundle_meta("arr.json", &dir).unwrap_err().to_string();
         assert!(err.contains("目标不是表/对象"), "应指出目标类型：{err}");
 
         // 不支持的扩展名
         std::fs::write(dir.join("id.yaml"), "identifier: x\n").unwrap();
-        let err = load_identity_table("id.yaml", &dir).unwrap_err().to_string();
+        let err = load_bundle_meta("id.yaml", &dir).unwrap_err().to_string();
         assert!(err.contains("yaml"), "应指出扩展名：{err}");
 
         // 结构路径含空 key
-        let err = load_identity_table("Cargo.toml#[package, , name]", &dir)
+        let err = load_bundle_meta("Cargo.toml#[package, , name]", &dir)
             .unwrap_err()
             .to_string();
         assert!(err.contains("空 key"), "应指出空 key：{err}");

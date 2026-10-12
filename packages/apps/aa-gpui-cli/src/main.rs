@@ -1,14 +1,15 @@
 //! # aa-gpui-cli —— GPUI 工程的脚手架工具
 //!
-//! 目前实现 `android init`：读取一个例子的 `Cargo.toml`（取 cargo 包名 / lib 名），
-//! 并按需经 `--bundle-meta` 读取身份表（`identifier` / `name`），生成
+//! 目前实现 `android init`：读取一个例子的 `Cargo.toml`（取 cargo 包名 / lib 名 /
+//! `[[bin]]` 列表），并按需经 `--bundle-meta` 读取 bundle 元数据
+//! （`identifier` / `name`，字段对齐 cargo-bundle 的 BundleSettings），生成
 //! `gen/android/` 下的完整 Gradle 工程。生成后直接 `./gradlew assembleDebug`。
 //!
 //! 设计哲学（对齐 Tauri 的 `tauri android init`）：
-//! - 配置极简——身份表只放真正属于平台、Cargo.toml 里没有的字段
-//!   （identifier / name）；两者**均可缺省**，缺的从 Cargo.toml 推导。
-//!   cargo 包名与 lib 名从 Cargo.toml 自动读，不重复声明。
-//! - **没有魔法配置文件**：身份来源必须用 `--bundle-meta` 显式指定，
+//! - 配置极简——bundle 元数据只放真正属于平台、Cargo.toml 里没有的字段
+//!   （identifier / name）；两者**均可缺省**，缺的按规则推导。
+//!   cargo 包名、lib 名、bin 名从 Cargo.toml 自动读，不重复声明。
+//! - **没有魔法配置文件**：来源必须用 `--bundle-meta` 显式指定，
 //!   不隐式读取任何约定文件名。
 //! - 目标 ABI 用默认值，不在配置里让用户填（Tauri 也是这样，默认全编、可用
 //!   命令行参数收窄）。
@@ -22,7 +23,7 @@ use serde::Deserialize;
 // 身份解析（`--bundle-meta` 引用语法）、文件写入等打包基础设施来自 aa-bundle 库侧，
 // 本 crate 只保留 Android 工程生成专属逻辑。
 use aa_bundle::{
-    IdentityTable, copy_dir, derive_identifier, load_identity_table, relative_path, repo_name_from,
+    BundleMeta, copy_dir, derive_identifier, load_bundle_meta, relative_path, repo_name_from,
     set_executable, write_bytes, write_file,
 };
 
@@ -69,7 +70,7 @@ enum AndroidCmd {
         /// 工程目录（含 Cargo.toml），默认当前目录
         #[arg(short = 'p', long, default_value = ".")]
         project_dir: PathBuf,
-        /// 身份来源，两种形式：`<文件>`（文件根即身份表）或
+        /// bundle 元数据来源，两种形式：`<文件>`（文件根即该表）或
         /// `<文件>#[k1, k2, ...]`（数组路径下钻到目标表）。支持 .toml / .json，
         /// 相对路径基于 -p 工程目录。表内 identifier / name 均可缺省。
         /// 例：`gpui.conf.json`、`Cargo.toml#[package, metadata, bundle-stable]`
@@ -147,8 +148,8 @@ fn android_init(
     // 2) 读身份表（--bundle-meta，可选）：identifier / name 均可缺省，
     //    缺的走下面的推导。不传 --bundle-meta 就是纯推导。
     let identity = match bundle_meta {
-        Some(reference) => load_identity_table(reference, &project_dir)?,
-        None => IdentityTable::default(),
+        Some(reference) => load_bundle_meta(reference, &project_dir)?,
+        None => BundleMeta::default(),
     };
     // bin 名解析（与 aa-bundle 同一套规则，见 aa_bundle::derive_identifier）：
     // 唯一 [[bin]] > 包名（cargo 规则）> 多 bin 报错。**不用包名顶替 bin 名** ——

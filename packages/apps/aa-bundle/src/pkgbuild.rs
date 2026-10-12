@@ -26,7 +26,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
-use crate::{IdentityTable, load_identity_table};
+use crate::{BundleMeta, load_bundle_meta};
 
 /// 图标文件名后缀：stable 无后缀，其余 `-<channel>`，未知 channel 一律 `-dev`。
 /// 规则同 Zed `crates/zed/build.rs` 的 `icon_path()`。
@@ -208,7 +208,7 @@ pub struct PkgbuildOptions<'a> {
     pub project_dir: &'a Path,
     /// 频道：决定 bundle 表（`bundle-<channel>`）与图标后缀
     pub channel: &'a str,
-    /// 身份来源引用（含 `[bundle.arch]` 子表）；**必填**，无默认值
+    /// 打包配置来源引用（含 `[bundle.arch]` 子表）；**必填**，无默认值
     pub bundle_meta: &'a str,
     /// 命令行覆盖：二进制名
     pub bin_name: Option<&'a str>,
@@ -235,7 +235,7 @@ pub struct PkgbuildOptions<'a> {
 /// 返回 `(PKGBUILD 文本, Option<(desktop 文件名, desktop 内容)>)`。
 pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(String, String)>)> {
     let info = read_package_info(opts.project_dir)?;
-    let identity: IdentityTable = load_identity_table(opts.bundle_meta, opts.project_dir)?;
+    let identity: BundleMeta = load_bundle_meta(opts.bundle_meta, opts.project_dir)?;
     let mut settings = arch_settings_from(&identity.arch);
     // 命令行覆盖优先于 Cargo.toml 的 [bundle.arch]
     if let Some(v) = opts.depends {
@@ -289,7 +289,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     };
     let license = opts.license.unwrap_or(&info.license);
     let prefix = settings.prefix.trim_end_matches('/');
-    // pkgver：身份表的 version > Cargo.toml 的 version
+    // pkgver：bundle 元数据的 version > Cargo.toml 的 version
     let version = identity.version.clone().unwrap_or_else(|| info.version.clone());
     // pkgdesc 回退链：short_description > Cargo.toml description > name > crate 名
     // （与 cargo-bundle 的 short_description() 同思路）
@@ -316,8 +316,8 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
                 .and_then(|r| crate::derive_identifier(r, Some(bin)));
             derived.with_context(|| {
                 format!(
-                    "身份表 {} 里没有 identifier，且无法推导默认值：当前目录不在 git 仓库内\
-                     （拿不到 .git，推导不出仓库名）。请在身份表里补 identifier，\
+                    "bundle 元数据 {} 里没有 identifier，且无法推导默认值：当前目录不在 git 仓库内\
+                     （拿不到 .git，推导不出仓库名）。请在 bundle 元数据里补 identifier，\
                      或在 git 仓库中运行",
                     opts.bundle_meta
                 )
@@ -334,7 +334,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     // cargo 包名直接从 crate 的 Cargo.toml 取 —— 已经指了目录，不需要再让人传一遍
     let cargo_pkg_flag = format!(" -p {}", info.name);
 
-    // 渲染 .desktop（模板路径：命令行 > 身份表的 desktop_template > 不产出）
+    // 渲染 .desktop（模板路径：命令行 > bundle 元数据的 desktop_template > 不产出）
     let template_path = match opts.desktop_template {
         Some(p) => Some(p.to_path_buf()),
         None => identity
@@ -398,7 +398,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         let abs = opts.project_dir.join(icon_path);
         anyhow::ensure!(
             abs.exists(),
-            "身份表 {} 的 icon 指向的文件不存在：{}",
+            "bundle 元数据 {} 的 icon 指向的文件不存在：{}",
             opts.bundle_meta,
             abs.display()
         );
@@ -414,12 +414,12 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         ));
     }
     if icon_install.is_empty() {
-        println!("提示：身份表里没有 icon，将不安装应用图标。");
+        println!("提示：bundle 元数据里没有 icon，将不安装应用图标。");
     }
 
     let pkgbuild = format!(
         r#"# 由 aa-bundle 生成（本地开发安装用途，非分发版）—— 手写修改会在下次生成时被覆盖。
-# 身份来源：{bundle_meta}
+# 配置来源：{bundle_meta}
 pkgname={name}
 pkgver={version}
 pkgrel=1
@@ -445,7 +445,7 @@ build() {{
 package() {{
   install -Dm755 "$_srcdir/target/release/{bin}" "$pkgdir{prefix}/bin/{bin}"
 
-  # 图标路径来自身份表的 icon 字段，安装目录来自 [bundle.arch].icon_dir
+  # 图标路径来自 bundle 元数据的 icon 字段，安装目录来自 [bundle.arch].icon_dir
 {icon_install}{desktop_install}}}
 "#,
         name = info.name,
@@ -748,7 +748,7 @@ name = "AaCode"
 
         // 没有 [bundle.arch] 子表 → 走默认值
         let identity =
-            crate::load_identity_table("Cargo.toml#[package, metadata, bundle-stable]", &dir)
+            crate::load_bundle_meta("Cargo.toml#[package, metadata, bundle-stable]", &dir)
                 .unwrap();
         let settings = arch_settings_from(&identity.arch);
         assert_eq!(settings.makedepends, vec!["cargo", "rust"]);
