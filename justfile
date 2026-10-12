@@ -29,6 +29,12 @@ test:
 test-all:
     cargo test --workspace
 
+# 把 aa-bundle 安装为本地 CLI（~/.cargo/bin/aa-bundle）。
+# 改了 aa-bundle 的代码后必须重跑才生效 —— cargo install 是快照式的。
+# 下游用法见 ~/repos/ai_ls/AAgent 的 justfile（just install / just uninstall）。
+install-cli:
+    cargo install --path packages/apps/aa-bundle --force
+
 # ---- 自研 ui-gpui 组件演示 ----
 
 # 运行 Slider 演示（GUI 窗口）
