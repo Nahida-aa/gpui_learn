@@ -25,9 +25,6 @@ enum Command {
         /// 源码目录（含 Cargo.toml 与 resources/），默认当前目录
         #[arg(short = 'p', long, default_value = ".")]
         project_dir: PathBuf,
-        /// 频道：决定 bundle 表（`bundle-<channel>`）。默认 stable
-        #[arg(long, default_value = "stable")]
-        channel: String,
         /// 身份/打包配置来源（**必填**）：`<文件>` 或 `<文件>#[k1, k2, ...]`。
         /// 字段对齐 cargo-bundle 的 BundleSettings；Arch 参数放同表的 `arch` 子表。
         /// 例：`Cargo.toml#[package, metadata, bundle-stable]`
@@ -72,7 +69,6 @@ fn main() -> Result<()> {
     match cli.command {
         Command::Pkgbuild {
             project_dir,
-            channel,
             bundle_meta,
             desktop_template,
             bin_name,
@@ -87,7 +83,6 @@ fn main() -> Result<()> {
         } => {
             let opts = aa_bundle::pkgbuild::PkgbuildOptions {
                 project_dir: &project_dir,
-                channel: &channel,
                 bundle_meta: &bundle_meta,
                 bin_name: bin_name.as_deref(),
                 desktop_template: desktop_template.as_deref(),

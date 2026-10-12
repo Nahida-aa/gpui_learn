@@ -28,17 +28,6 @@ use serde::Deserialize;
 
 use crate::{BundleMeta, load_bundle_meta};
 
-/// 图标文件名后缀：stable 无后缀，其余 `-<channel>`，未知 channel 一律 `-dev`。
-/// 规则同 Zed `crates/zed/build.rs` 的 `icon_path()`。
-pub fn icon_suffix(channel: &str) -> &'static str {
-    match channel {
-        "stable" => "",
-        "preview" => "-preview",
-        "nightly" => "-nightly",
-        _ => "-dev",
-    }
-}
-
 /// crate 的 Cargo.toml 里我们关心的元数据。
 #[derive(Debug, Clone)]
 pub struct PackageInfo {
@@ -206,8 +195,6 @@ fn arch_settings_from(arch: &Option<crate::ArchTable>) -> ArchSettings {
 pub struct PkgbuildOptions<'a> {
     /// 源码目录（含 Cargo.toml）
     pub project_dir: &'a Path,
-    /// 频道：决定 bundle 表（`bundle-<channel>`）与图标后缀
-    pub channel: &'a str,
     /// 打包配置来源引用（含 `[bundle.arch]` 子表）；**必填**，无默认值
     pub bundle_meta: &'a str,
     /// 命令行覆盖：二进制名
@@ -512,15 +499,6 @@ mod tests {
     }
 
     #[test]
-    fn icon_suffix_follows_channel() {
-        assert_eq!(icon_suffix("stable"), "");
-        assert_eq!(icon_suffix("preview"), "-preview");
-        assert_eq!(icon_suffix("nightly"), "-nightly");
-        assert_eq!(icon_suffix("dev"), "-dev");
-        assert_eq!(icon_suffix("whatever"), "-dev");
-    }
-
-    #[test]
     fn pkgbuild_uses_identity_from_bundle_meta() {
         let dir = test_dir("pkgbuild");
         std::fs::write(
@@ -543,7 +521,6 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
             bin_name: None,
             desktop_template: None,
@@ -627,7 +604,6 @@ depends = ["gcc-libs", "glibc", "gtk3"]
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
             bin_name: None,
             desktop_template: None,
@@ -683,7 +659,6 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
             bin_name: None,
             desktop_template: None,
@@ -730,7 +705,6 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
             bin_name: None,
             desktop_template: None,
@@ -813,7 +787,6 @@ icon_dir = "share/icons/hicolor"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
             bin_name: None,
             desktop_template: None,
@@ -869,7 +842,6 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
             bin_name: None,
             desktop_template: None,
