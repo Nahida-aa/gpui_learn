@@ -1060,6 +1060,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3bc62ac97cc33321f50863d514c3bc38a453947a8f9e781137e47c7401020aed"
 
 [[package]]
+name = "arc-swap"
+version = "1.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c049c0be4daef0b145cb3555416b3b8ef5b7888a38aea1a3a155801fe7b0810b"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "arg_enum_proc_macro"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3561,7 +3570,7 @@ dependencies = [
  "log",
  "presser",
  "thiserror 2.0.21",
- "windows 0.56.0",
+ "windows 0.58.0",
 ]
 
 [[package]]
@@ -4101,7 +4110,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.56.0",
+ "windows-core 0.58.0",
 ]
 
 [[package]]
@@ -5299,6 +5308,31 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "418abd1b6d34fbf6cae440dc874771b0525a604428704c76e48b29a5e67b8003"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "node_runtime"
+version = "0.1.0"
+dependencies = [
+ "aa_util",
+ "anyhow",
+ "async-compression",
+ "async-std",
+ "async-tar",
+ "async-trait",
+ "chrono",
+ "futures",
+ "http_client 0.1.0",
+ "log",
+ "semver",
+ "serde",
+ "serde_json",
+ "smol",
+ "tempfile",
+ "thiserror 2.0.21",
+ "watch",
+ "which",
+ "zed_paths",
 ]
 
 [[package]]
@@ -6590,7 +6624,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "03da047801ff44bb6a4d407d4860c05fd70bb81714e6b2f3812603d5b145b042"
 dependencies = [
  "heck 0.5.0",
- "itertools 0.10.5",
+ "itertools 0.14.0",
  "log",
  "multimap",
  "petgraph",
@@ -6609,7 +6643,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b570b25f7617e43d59005d0990ccb79e950a423952cea19671b7a876da390adf"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "syn 2.0.119",
@@ -9290,6 +9324,16 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "watch"
+version = "0.1.0"
+source = "git+https://github.com/zed-industries/zed?rev=c0199504b9cce79bc27524950022ed701bc3ebd5#c0199504b9cce79bc27524950022ed701bc3ebd5"
+dependencies = [
+ "arc-swap",
+ "futures",
+ "parking_lot",
 ]
 
 [[package]]
