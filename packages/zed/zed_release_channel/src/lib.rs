@@ -49,6 +49,7 @@ pub fn app_id(cx: &gpui::App) -> String {
 
 #[cfg(target_os = "windows")]
 const APP_IDENTIFIER_PREFIX: &str = "Zed-Editor";
+
 /// Windows app identifier。
 #[cfg(target_os = "windows")]
 pub fn app_identifier(cx: &gpui::App) -> String {
