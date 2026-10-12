@@ -6,6 +6,15 @@
 //! - 卸载变成 `pacman -R`，不再需要手写 uninstall 脚本
 //! - 身份（包名 / .desktop 名 / 图标）统一来自 `--bundle-meta` 指向的表
 //!
+//! ## 命名：`pkgbuild` vs `arch`
+//!
+//! CLI 子命令叫 `pkgbuild`（`aa-bundle pkgbuild`），配置段却叫
+//! `[package.metadata.bundle-arch]`（默认引用）。这不是笔误，是**两个维度**：
+//! - 子命令名 = **产出物**（PKGBUILD），所以将来可并列 `deb` / `rpm`
+//! - 配置段名 = **目标发行版**（Arch），所以将来可并列 `bundle-deb`
+//!
+//! 早期子命令也叫 `arch`，与 `--arch`（CPU 架构：x86_64）撞词，故改掉。
+//!
 //! **生成的 PKGBUILD 是「本地开发安装」用途**：它直接在源码树里构建（`build()`
 //! 里 cd 回源码目录），不带 `source=`，因此**不能用于分发**（AUR 那种需要真正的
 //! source + checksum）。分发版是后续的事。
@@ -130,9 +139,9 @@ fn find_workspace_root(start: &Path) -> Option<PathBuf> {
 ///
 /// 对齐 cargo-bundle 的做法：**打包元数据声明在 Cargo.toml，不在命令行**。
 /// （cargo-bundle 的 `deb_depends` 就是干这个的；这里按同样思路给 Arch 一份。）
-/// 全部字段可缺省，缺省值见 [`ArchSettings::default`]。
+/// 全部字段可缺省，缺省值见 [`PkgbuildSettings::default`]。
 #[derive(Debug, Clone)]
-pub struct ArchSettings {
+pub struct PkgbuildSettings {
     pub depends: Vec<String>,
     pub makedepends: Vec<String>,
     pub arch: Vec<String>,
@@ -146,7 +155,7 @@ pub struct ArchSettings {
     pub icon_name: Option<String>,
 }
 
-impl Default for ArchSettings {
+impl Default for PkgbuildSettings {
     fn default() -> Self {
         Self {
             // 与 cargo-bundle 的 deb_depends 一致：**不猜、不填默认值**。
@@ -167,8 +176,8 @@ impl Default for ArchSettings {
 }
 
 /// 从引用指向的表读 Arch 设置；表不存在时返回默认值（该段是可选的）。
-pub fn load_arch_settings(reference: &str, project_dir: &Path) -> Result<ArchSettings> {
-    let mut settings = ArchSettings::default();
+pub fn load_pkgbuild_settings(reference: &str, project_dir: &Path) -> Result<PkgbuildSettings> {
+    let mut settings = PkgbuildSettings::default();
     let table = match crate::load_table(reference, project_dir) {
         Ok(t) => t,
         // 该段是可选的：找不到就用默认值。但**引用语法错误**（如方括号不配对）
@@ -242,7 +251,7 @@ pub fn load_arch_settings(reference: &str, project_dir: &Path) -> Result<ArchSet
 }
 
 /// PKGBUILD 生成参数。
-pub struct ArchOptions<'a> {
+pub struct PkgbuildOptions<'a> {
     /// 源码目录（含 Cargo.toml）
     pub project_dir: &'a Path,
     /// 频道：决定 bundle 表（`bundle-<channel>`）与图标后缀
@@ -250,7 +259,7 @@ pub struct ArchOptions<'a> {
     /// 身份来源引用；默认 `Cargo.toml#[package, metadata, bundle-<channel>]`
     pub bundle_meta: &'a str,
     /// Arch 打包设置来源引用；默认 `Cargo.toml#[package, metadata, bundle-arch]`（该段可选）
-    pub arch_meta: &'a str,
+    pub pkgbuild_meta: &'a str,
     /// 命令行覆盖：二进制名
     pub bin_name: Option<&'a str>,
     /// 命令行覆盖：.desktop 模板路径
@@ -274,10 +283,10 @@ pub struct ArchOptions<'a> {
 /// 生成 PKGBUILD 文本，并渲染 .desktop。
 ///
 /// 返回 `(PKGBUILD 文本, Option<(desktop 文件名, desktop 内容)>)`。
-pub fn generate_pkgbuild(opts: &ArchOptions) -> Result<(String, Option<(String, String)>)> {
+pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(String, String)>)> {
     let info = read_package_info(opts.project_dir)?;
     let identity: IdentityTable = load_identity_table(opts.bundle_meta, opts.project_dir)?;
-    let mut settings = load_arch_settings(opts.arch_meta, opts.project_dir)?;
+    let mut settings = load_pkgbuild_settings(opts.pkgbuild_meta, opts.project_dir)?;
     // 命令行覆盖优先于 Cargo.toml
     if let Some(v) = opts.depends {
         settings.depends = v.to_vec();
@@ -485,11 +494,11 @@ name = "AaCode"
         )
         .unwrap();
 
-        let opts = ArchOptions {
+        let opts = PkgbuildOptions {
             project_dir: &dir,
             channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
-            arch_meta: "Cargo.toml#[package, metadata, bundle-arch]",
+            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-arch]",
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -565,11 +574,11 @@ bin_name = "aacode"
         )
         .unwrap();
 
-        let opts = ArchOptions {
+        let opts = PkgbuildOptions {
             project_dir: &dir,
             channel: "stable",
             bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
-            arch_meta: "Cargo.toml#[package, metadata, bundle-arch]",
+            pkgbuild_meta: "Cargo.toml#[package, metadata, bundle-arch]",
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -613,7 +622,7 @@ name = "AaCode"
         )
         .unwrap();
 
-        let settings = load_arch_settings(
+        let settings = load_pkgbuild_settings(
             "Cargo.toml#[package, metadata, bundle-arch]",
             &dir,
         )

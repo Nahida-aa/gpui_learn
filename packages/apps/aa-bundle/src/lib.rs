@@ -14,7 +14,7 @@
 //! 错误消息里提到 `--bundle-meta`，因为那是消费方 CLI 的约定参数名
 //! （本库不定义 CLI 参数，只定义引用语法与解析规则）。
 
-pub mod arch;
+pub mod pkgbuild;
 
 use std::path::Path;
 

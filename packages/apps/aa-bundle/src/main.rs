@@ -21,7 +21,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     /// 生成 Arch Linux 的 PKGBUILD（本地开发安装用途）
-    Arch {
+    Pkgbuild {
         /// 源码目录（含 Cargo.toml 与 resources/），默认当前目录
         #[arg(short = 'p', long, default_value = ".")]
         project_dir: PathBuf,
@@ -33,7 +33,7 @@ enum Command {
         bundle_meta: Option<String>,
         /// Arch 设置来源引用，覆盖默认的 `Cargo.toml#[package, metadata, bundle-arch]`
         #[arg(long)]
-        arch_meta: Option<String>,
+        pkgbuild_meta: Option<String>,
         /// 覆盖 .desktop 模板路径
         #[arg(long)]
         desktop_template: Option<PathBuf>,
@@ -70,11 +70,11 @@ enum Command {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Arch {
+        Command::Pkgbuild {
             project_dir,
             channel,
             bundle_meta,
-            arch_meta,
+            pkgbuild_meta,
             desktop_template,
             bin_name,
             icon_name,
@@ -88,14 +88,14 @@ fn main() -> Result<()> {
         } => {
             let default_meta = format!("Cargo.toml#[package, metadata, bundle-{channel}]");
             let bundle_meta = bundle_meta.as_deref().unwrap_or(&default_meta);
-            let default_arch_meta = "Cargo.toml#[package, metadata, bundle-arch]";
-            let arch_meta = arch_meta.as_deref().unwrap_or(default_arch_meta);
+            let default_pkgbuild_meta = "Cargo.toml#[package, metadata, bundle-arch]";
+            let pkgbuild_meta = pkgbuild_meta.as_deref().unwrap_or(default_pkgbuild_meta);
 
-            let opts = aa_bundle::arch::ArchOptions {
+            let opts = aa_bundle::pkgbuild::PkgbuildOptions {
                 project_dir: &project_dir,
                 channel: &channel,
                 bundle_meta,
-                arch_meta,
+                pkgbuild_meta,
                 bin_name: bin_name.as_deref(),
                 desktop_template: desktop_template.as_deref(),
                 icon_name: icon_name.as_deref(),
@@ -106,7 +106,7 @@ fn main() -> Result<()> {
                 license: license.as_deref(),
                 prefix: prefix.as_deref(),
             };
-            let (pkgbuild, desktop) = aa_bundle::arch::generate_pkgbuild(&opts)?;
+            let (pkgbuild, desktop) = aa_bundle::pkgbuild::generate_pkgbuild(&opts)?;
 
             let out_dir = out.unwrap_or_else(|| project_dir.join("target/aa-bundle/arch"));
             aa_bundle::write_file(&out_dir.join("PKGBUILD"), &pkgbuild)?;
