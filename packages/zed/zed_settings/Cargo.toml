@@ -5,6 +5,9 @@ edition.workspace = true
 license.workspace = true
 description = "aacode 设置系统 (RustEmbed default.json → gpui Global SettingsStore)"
 
+[lib]
+doctest = false
+
 [features]
 test-support = ["gpui/test-support", "fs/test-support"]
 

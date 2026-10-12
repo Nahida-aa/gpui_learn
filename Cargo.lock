@@ -267,6 +267,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_bundle_cli"
+version = "0.1.0"
+
+[[package]]
 name = "aa_clock"
 version = "0.1.0"
 dependencies = [
@@ -660,6 +664,10 @@ dependencies = [
  "gpui",
  "semver",
 ]
+
+[[package]]
+name = "aa_search"
+version = "0.1.0"
 
 [[package]]
 name = "aa_settings_json"
