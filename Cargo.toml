@@ -36,7 +36,6 @@ members = [
     "packages/icons",
     "packages/aa/language_core",
     "packages/aa/aa_theme/aa_theme_gpui",
-    "packages/theme-settings",
     "packages/ui",
     "packages/ui_input",
     "packages/ui_macros",
@@ -48,7 +47,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/aa_assets/aa_assets_core", "packages/aa/aa_assets/aa_assets_gpui", "packages/aa/aa_theme/aa_syntax_theme_gpui", "packages/aa/aa_theme/aa_syntax_theme_iced", "packages/aa/aa_theme/aa_theme_iced", "packages/aa/aa_ui/aa_ui_iced",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/aa_assets/aa_assets_core", "packages/aa/aa_assets/aa_assets_gpui", "packages/aa/aa_theme/aa_syntax_theme_gpui", "packages/aa/aa_theme/aa_syntax_theme_iced", "packages/aa/aa_theme/aa_theme_iced", "packages/aa/aa_ui/aa_ui_iced", "packages/aa/aa_theme/aa_theme_settings_gpui_zed", "packages/aa/aa_assets/aa_assets_iced",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -307,10 +306,8 @@ text = { package = "aa_gpui_kit_text", path = "packages/aa_gpui_kit/aa_gpui_kit_
 # 子包用 `aa_gpui_android.workspace = true` 引用，路径统一在此声明。
 aa_gpui_android = { path = "packages/aa_gpui/gpui_android" }
 
-# 主题的 JSON 装载与装配（packages/theme-settings）：知道主题扩展 JSON 的
-# schema 并把它装进注册表。**单向依赖** aa_gpui_kit_theme——theme 包反过来
-# 完全不知道 JSON 存在（对齐 zed 的 crates/theme ← crates/theme_settings）。
-theme-settings = { path = "packages/theme-settings" }
+# （原 theme-settings 包：主题 JSON 的装载与装配。已删除——无消费者，装配
+# 实际在 AAgent 的 packages/theme_settings。）
 
 # 编辑器内核（packages/editor）：自研 Rope 引擎 + 多行编辑器，从 aa_gpui_kit_ui
 # 拆出（2026-09）。aa_gpui_kit_ui 的 InputState/Textarea 是它的薄 facade。

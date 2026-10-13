@@ -42,11 +42,29 @@ const WORD_DELETED_COLOR: Hsla = Hsla {
 /// The default colors for the theme.
 ///
 /// Themes that do not specify all colors are refined off of these defaults.
+///
+/// ## 本仓库的两层基底
+///
+/// | 函数 | 值 | 用途 |
+/// |---|---|---|
+/// | [`Self::light`] / [`Self::dark`] | Catppuccin Latte / Macchiato | **主题实际用的基底**：主题 JSON 未给的字段就留在这里（即 CTP 配色） |
+/// | [`Self::zed_light`] / [`Self::zed_dark`] | zed 原版灰阶 | 最终兜底：CTP 也没定义的字段落回这里 |
+///
+/// 这样「真默认」就是 CTP 风格，而 zed 那份灰阶仍然兜住 CTP 没覆盖的字段
+/// （CTP 是固定调色板，没有 zed 那种 12 级色阶，少数字段它给不出值）。
 impl ThemeColors {
-    /// Returns the default colors for light themes.
-    ///
-    /// Themes that do not specify all colors are refined off of these defaults.
+    /// 本仓库的浅色基底：Catppuccin Latte。
     pub fn light() -> Self {
+        theme_colors_latte()
+    }
+
+    /// 本仓库的深色基底：Catppuccin Macchiato。
+    pub fn dark() -> Self {
+        theme_colors_macchiato()
+    }
+
+    /// zed 原版的浅色默认（灰阶 + 蓝色强调），作为 CTP 未覆盖字段的兜底。
+    pub fn zed_light() -> Self {
         let system = SystemColors::default();
 
         Self {
@@ -201,10 +219,8 @@ impl ThemeColors {
         }
     }
 
-    /// Returns the default colors for dark themes.
-    ///
-    /// Themes that do not specify all colors are refined off of these defaults.
-    pub fn dark() -> Self {
+    /// zed 原版的深色默认（灰阶 + 蓝色强调），作为 CTP 未覆盖字段的兜底。
+    pub fn zed_dark() -> Self {
         let system = SystemColors::default();
 
         Self {
@@ -2918,7 +2934,7 @@ pub fn status_colors_latte() -> StatusColors {
 }
 
 pub fn theme_colors_mocha() -> ThemeColors {
-    let mut colors = ThemeColors::dark();
+    let mut colors = ThemeColors::zed_dark();
     {
         // border
         colors.border = h(0x313244);
@@ -3048,7 +3064,7 @@ pub fn theme_colors_mocha() -> ThemeColors {
 
 pub fn theme_colors_latte() -> ThemeColors {
     // 同 `theme_colors_mocha`：zed 默认值为基底 + Catppuccin Latte 覆盖。
-    let mut colors = ThemeColors::light();
+    let mut colors = ThemeColors::zed_light();
     {
         colors.border = h(0xccd0da);
         colors.border_variant = h(0xbcc0cc);
@@ -3404,7 +3420,7 @@ pub fn status_colors_macchiato() -> StatusColors {
 }
 
 pub fn theme_colors_macchiato() -> ThemeColors {
-    let mut colors = ThemeColors::dark();
+    let mut colors = ThemeColors::zed_dark();
     {
         colors.border = h(0x363a4f);               // surface0
         colors.border_variant = h(0x313148);        // surface0-darker

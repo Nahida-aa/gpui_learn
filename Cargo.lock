@@ -298,6 +298,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_assets_iced"
+version = "0.1.0"
+
+[[package]]
 name = "aa_clock"
 version = "0.1.0"
 dependencies = [
@@ -776,6 +780,10 @@ dependencies = [
 
 [[package]]
 name = "aa_theme_iced"
+version = "0.1.0"
+
+[[package]]
+name = "aa_theme_settings_gpui_zed"
 version = "0.1.0"
 
 [[package]]
@@ -8476,17 +8484,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "theme-settings"
-version = "0.1.0"
-dependencies = [
- "aa_theme_gpui",
- "gpui",
- "serde",
- "serde_json",
- "tracing",
-]
-
-[[package]]
 name = "thiserror"
 version = "1.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9118,7 +9115,6 @@ dependencies = [
  "editor",
  "gpui",
  "gpui_platform",
- "theme-settings",
  "tracing-subscriber",
  "wasm-bindgen",
 ]

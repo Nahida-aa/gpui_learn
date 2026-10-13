@@ -19,9 +19,11 @@ use gpui::{
     div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use theme_settings::{GlobalAssets, init};
+// 主题装配原先在 `theme-settings` 包（已删除，无消费者）；现在直接用
+// aa_theme_gpui 自带的 init。demo 不需要资产里的主题 JSON，用 JustBase
+// 拿到内置兜底主题即可（那套就是 Catppuccin 配色）。
+use aa_theme_gpui::{LoadThemes, init};
 use tracing_subscriber;
-use aa_theme_gpui::LoadThemes;
 use editor::{
     EDITOR_KEY_CONTEXT, Editor, EditorMode, InputState, bind_editor_keys, bind_input_keys,
 };
@@ -85,11 +87,7 @@ fn run_demo() {
         .without_time()
         .init();
     application().run(|cx: &mut App| {
-        // 资产仍在 gpui 全局里,用适配器桥给主题注册表
-        init(
-            LoadThemes::All(Box::new(GlobalAssets(cx.asset_source().clone()))),
-            cx,
-        );
+        init(LoadThemes::JustBase, cx);
         bind_input_keys(cx);
         bind_editor_keys(cx);
         cx.bind_keys([gpui::KeyBinding::new("cmd-q", Quit, None)]);

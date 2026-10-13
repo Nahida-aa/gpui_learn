@@ -28,14 +28,17 @@ use gpui::Hsla;
 use crate::{PlayerColors, StatusColorsRefinement, ThemeColorsRefinement};
 
 /// 兜底主题的展示名(对齐 zed `DEFAULT_DARK_THEME` 的角色:找不到就退到它)。
-pub const DEFAULT_DARK_THEME: &str = "Catppuccin Mocha";
+///
+/// 用 **Macchiato** 而非 Mocha:基底 `ThemeColors::dark()` 就是 Macchiato，
+/// 兜底与基底同风味,免得「找不到主题」时突然换一套观感。
+pub const DEFAULT_DARK_THEME: &str = "Catppuccin Macchiato";
 
-/// Catppuccin Mocha 兜底主题。
+/// Catppuccin Macchiato 兜底主题(= 深色基底 [`ThemeColors::dark`])。
 ///
 /// 直接复用 [`default_colors`](crate::default_colors) 的内置主题构造，
 /// 不再绕道注册表——兜底要的就是「一定能拿到」。
 pub fn ctp_default_dark() -> crate::Theme {
-    crate::default_colors::catppuccin_mocha()
+    crate::default_colors::catppuccin_macchiato()
 }
 
 /// 兜底主题家族（Catppuccin 三主题：Mocha + Macchiato + Latte）。
@@ -50,7 +53,9 @@ pub fn default_theme_family() -> crate::ThemeFamily {
         author: String::new(),
         themes: vec![
             ctp_default_dark(),
-            crate::default_colors::catppuccin_macchiato(),
+            // Mocha 是另一个深色调（比 Macchiato 更深），留着给用户切；
+            // Latte 是唯一的浅色，浅色系统外观下靠它。
+            crate::default_colors::catppuccin_mocha(),
             crate::default_colors::catppuccin_latte(),
         ],
     }
@@ -147,7 +152,7 @@ mod tests {
     #[test]
     fn fallback_theme_is_the_builtin_catppuccin_dark() {
         let theme = ctp_default_dark();
-        assert_eq!(theme.id, "ui-gpui-default-dark");
+        assert_eq!(theme.id, "ctp-macchiato");
         assert_eq!(theme.name, DEFAULT_DARK_THEME);
     }
 
@@ -157,7 +162,7 @@ mod tests {
         let names: Vec<_> = family.themes.iter().map(|t| t.name.as_ref()).collect();
         assert_eq!(
             names,
-            ["Catppuccin Mocha", "Catppuccin Macchiato", "Catppuccin Latte"],
+            ["Catppuccin Macchiato", "Catppuccin Mocha", "Catppuccin Latte"],
             "兜底家族要带上全部内置 Catppuccin 主题，用户才能直接切换"
         );
         assert_eq!(family.themes[0].id, ctp_default_dark().id);
