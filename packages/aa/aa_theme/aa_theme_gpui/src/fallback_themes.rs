@@ -27,6 +27,9 @@
 
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, hsla};
 
+use crate::default_colors::{
+    ADDED_COLOR, REMOVED_COLOR, WORD_ADDED_COLOR, WORD_DELETED_COLOR, blue, neutral, red, yellow,
+};
 use crate::styles::{PlayerColors, StatusColors, SyntaxTheme, ThemeColors};
 use crate::{StatusColorsRefinement, ThemeColorsRefinement};
 
@@ -350,131 +353,163 @@ pub fn status_colors_macchiato() -> StatusColors {
 ///
 /// 若日后 CTP 或自定义主题要覆盖这些角色，直接在本函数体内补 `colors.x = …`。
 pub fn theme_colors_macchiato() -> ThemeColors {
-    let mut colors = ThemeColors::zed_dark();
-    {
-        colors.border = h(0x363a4f); // surface0
-        colors.border_variant = h(0x313148); // surface0-darker
-        colors.border_focused = h(0xb7bdf8); // lavender
-        colors.border_selected = h(0xc6a0f6); // mauve
-        colors.border_disabled = h(0x6e738d); // overlay0
-        colors.border_transparent = hsla(0., 0., 0., 0.);
-        colors.background = h(0x2c2f46); // base — Zed JSON "background"
-        colors.surface_background = h(0x1e2030); // mantle
-        colors.elevated_surface_background = h(0x1e2030); // mantle (同 surface)
-        colors.element_background = h(0x181926); // crust
-        colors.element_hover = ha(0x363a4f, 1.0); // surface0
-        colors.element_active = ha(0x5b6078, 0.30); // surface2 @30%
-        colors.element_selected = ha(0x363a4f, 0.30); // surface0 @30%
-        colors.element_disabled = h(0x6e738d);
-        colors.ghost_element_background = hsla(0., 0., 0., 0.);
-        colors.ghost_element_hover = ha(0x494d64, 0.30); // surface1 @30%
-        colors.ghost_element_active = ha(0x5b6078, 0.60); // surface2 @60%
-        colors.ghost_element_selected = ha(0x737995, 0.40); // overlay2 @40%
-        colors.ghost_element_disabled = h(0x6e738d);
-        colors.text = h(0xcad3f5); // text
-        colors.text_muted = h(0xb8c0e0); // subtext0
-        colors.text_placeholder = h(0x5b6078); // surface2
-        colors.text_disabled = h(0x6e738d); // overlay0
-        colors.text_accent = h(0xc6a0f6); // mauve
-        colors.icon = h(0xcad3f5);
-        colors.icon_muted = h(0x8087a2); // overlay2
-        colors.icon_disabled = h(0x6e738d);
-        colors.icon_placeholder = h(0x5b6078);
-        colors.icon_accent = h(0xc6a0f6);
+    let system = crate::styles::SystemColors::default();
 
+    ThemeColors {
+        border: h(0x363a4f),  // surface0
+        border_variant: h(0x313148),  // surface0-darker
+        border_focused: h(0xb7bdf8),  // lavender
+        border_selected: h(0xc6a0f6),  // mauve
+        border_disabled: h(0x6e738d),  // overlay0
+        border_transparent: hsla(0., 0., 0., 0.),
+        background: h(0x2c2f46),  // base — Zed JSON "background"
+        surface_background: h(0x1e2030),  // mantle
+        elevated_surface_background: h(0x1e2030),  // mantle (同 surface)
+        element_background: h(0x181926),  // crust
+        element_hover: ha(0x363a4f, 1.0),  // surface0
+        element_active: ha(0x5b6078, 0.30),  // surface2 @30%
+        element_selected: ha(0x363a4f, 0.30),  // surface0 @30%
+        element_disabled: h(0x6e738d),
+        ghost_element_background: hsla(0., 0., 0., 0.),
+        ghost_element_hover: ha(0x494d64, 0.30),  // surface1 @30%
+        ghost_element_active: ha(0x5b6078, 0.60),  // surface2 @60%
+        ghost_element_selected: ha(0x737995, 0.40),  // overlay2 @40%
+        ghost_element_disabled: h(0x6e738d),
+        text: h(0xcad3f5),  // text
+        text_muted: h(0xb8c0e0),  // subtext0
+        text_placeholder: h(0x5b6078),  // surface2
+        text_disabled: h(0x6e738d),  // overlay0
+        text_accent: h(0xc6a0f6),  // mauve
+        icon: h(0xcad3f5),
+        icon_muted: h(0x8087a2),  // overlay2
+        icon_disabled: h(0x6e738d),
+        icon_placeholder: h(0x5b6078),
+        icon_accent: h(0xc6a0f6),
         // — Zed JSON 显式设置的状态/标题栏/Tab/toolbar（之前缺失！）——
-        colors.status_bar_background = h(0x181926); // crust
-        colors.title_bar_background = h(0x181926); // crust
-        colors.title_bar_inactive_background = h(0x1e1f30); // mantle-darker
-        colors.toolbar_background = h(0x24273a); // base (CTP base #24273a)
-        colors.tab_bar_background = h(0x181926); // crust
-        colors.tab_inactive_background = h(0x12121c); // base-darker
-        colors.tab_active_background = h(0x24273a); // base
-        colors.search_match_background = ha(0x8bd5ca, 0.30); // teal @30%
-        colors.search_active_match_background = ha(0xed8796, 0.30); // red @30%
-        colors.panel_background = h(0x1e2030); // mantle
-        colors.panel_focused_border = h(0xcad3f5); // text
-        colors.panel_indent_guide = ha(0x363a4f, 0.60); // surface0 @60%
-        colors.panel_indent_guide_active = h(0x5b6078); // surface2
-        colors.panel_indent_guide_hover = h(0xc6a0f6); // mauve
-        colors.panel_overlay_background = h(0x1e2030); // mantle
-        colors.pane_focused_border = h(0xcad3f5); // text
-        colors.pane_group_border = h(0x363a4f); // surface0
-        colors.scrollbar_thumb_background = ha(0x5b6078, 0.50); // surface2 @50%
-        colors.scrollbar_thumb_hover_background = h(0x6e738d); // overlay0
-        colors.scrollbar_track_background = h(0x181926); // crust
-        colors.scrollbar_track_border = ha(0xcad3f5, 0.07); // text @7%
-
-        colors.editor_foreground = h(0xcad3f5);
-        colors.editor_background = h(0x24273a); // base
-        colors.editor_gutter_background = h(0x24273a);
-        colors.editor_subheader_background = h(0x1e2030); // mantle
-        colors.editor_active_line_background = ha(0xcad3f5, 0.07); // text @7%
-        colors.editor_line_number = h(0x8087a2); // overlay2
-        colors.editor_active_line_number = h(0xc6a0f6); // mauve
-        colors.editor_wrap_guide = h(0x5b6078); // surface2
-        colors.editor_indent_guide = ha(0x363a4f, 0.60); // surface0 @60%
-        colors.editor_indent_guide_active = h(0x5b6078); // surface2
-        colors.editor_invisible = ha(0x939ab7, 0.40); // overlay1 @40%
-        colors.editor_debugger_active_line_background = ha(0xf5a97f, 0.07); // peach @7%
-        colors.selection_background = ha(0x939ab7, 0.25); // overlay1 @25%
-        colors.editor_cursor = h(0xf4dbd6); // rosewater
-        colors.editor_document_highlight_read_background = ha(0xa5adcb, 0.16); // subtext1 @16%
-        colors.editor_document_highlight_write_background = ha(0xa5adcb, 0.16); // subtext1 @16%
-        colors.editor_document_highlight_bracket_background = ha(0xc6a0f6, 0.09); // mauve @9%
-
-        colors.terminal_background = h(0x24273a);
-        colors.terminal_foreground = h(0xcad3f5);
-        colors.terminal_dim_foreground = h(0x8087a2);
-        colors.terminal_bright_foreground = h(0xcad3f5);
-        colors.terminal_ansi_background = h(0x24273a);
-        colors.terminal_ansi_black = h(0x494d64);
-        colors.terminal_ansi_white = h(0xa5adcb);
-        colors.terminal_ansi_red = h(0xed8796);
-        colors.terminal_ansi_green = h(0xa6da95);
-        colors.terminal_ansi_yellow = h(0xeed49f);
-        colors.terminal_ansi_blue = h(0x8aadf4);
-        colors.terminal_ansi_magenta = h(0xf5bde6);
-        colors.terminal_ansi_cyan = h(0x8bd5ca);
-
-        colors.link = h(0x91d7e3); // teal-light
-
+        status_bar_background: h(0x181926),  // crust
+        title_bar_background: h(0x181926),  // crust
+        title_bar_inactive_background: h(0x1e1f30),  // mantle-darker
+        toolbar_background: h(0x24273a),  // base (CTP base #24273a)
+        tab_bar_background: h(0x181926),  // crust
+        tab_inactive_background: h(0x12121c),  // base-darker
+        tab_active_background: h(0x24273a),  // base
+        search_match_background: ha(0x8bd5ca, 0.30),  // teal @30%
+        search_active_match_background: ha(0xed8796, 0.30),  // red @30%
+        panel_background: h(0x1e2030),  // mantle
+        panel_focused_border: h(0xcad3f5),  // text
+        panel_indent_guide: ha(0x363a4f, 0.60),  // surface0 @60%
+        panel_indent_guide_active: h(0x5b6078),  // surface2
+        panel_indent_guide_hover: h(0xc6a0f6),  // mauve
+        panel_overlay_background: h(0x1e2030),  // mantle
+        pane_focused_border: h(0xcad3f5),  // text
+        pane_group_border: h(0x363a4f),  // surface0
+        scrollbar_thumb_background: ha(0x5b6078, 0.50),  // surface2 @50%
+        scrollbar_thumb_hover_background: h(0x6e738d),  // overlay0
+        scrollbar_track_background: h(0x181926),  // crust
+        scrollbar_track_border: ha(0xcad3f5, 0.07),  // text @7%
+        editor_foreground: h(0xcad3f5),
+        editor_background: h(0x24273a),  // base
+        editor_gutter_background: h(0x24273a),
+        editor_subheader_background: h(0x1e2030),  // mantle
+        editor_active_line_background: ha(0xcad3f5, 0.07),  // text @7%
+        editor_line_number: h(0x8087a2),  // overlay2
+        editor_active_line_number: h(0xc6a0f6),  // mauve
+        editor_wrap_guide: h(0x5b6078),  // surface2
+        editor_indent_guide: ha(0x363a4f, 0.60),  // surface0 @60%
+        editor_indent_guide_active: h(0x5b6078),  // surface2
+        editor_invisible: ha(0x939ab7, 0.40),  // overlay1 @40%
+        editor_debugger_active_line_background: ha(0xf5a97f, 0.07),  // peach @7%
+        selection_background: ha(0x939ab7, 0.25),  // overlay1 @25%
+        editor_cursor: h(0xf4dbd6),  // rosewater
+        editor_document_highlight_read_background: ha(0xa5adcb, 0.16),  // subtext1 @16%
+        editor_document_highlight_write_background: ha(0xa5adcb, 0.16),  // subtext1 @16%
+        editor_document_highlight_bracket_background: ha(0xc6a0f6, 0.09),  // mauve @9%
+        terminal_background: h(0x24273a),
+        terminal_foreground: h(0xcad3f5),
+        terminal_dim_foreground: h(0x8087a2),
+        terminal_bright_foreground: h(0xcad3f5),
+        terminal_ansi_background: h(0x24273a),
+        terminal_ansi_black: h(0x494d64),
+        terminal_ansi_white: h(0xa5adcb),
+        terminal_ansi_red: h(0xed8796),
+        terminal_ansi_green: h(0xa6da95),
+        terminal_ansi_yellow: h(0xeed49f),
+        terminal_ansi_blue: h(0x8aadf4),
+        terminal_ansi_magenta: h(0xf5bde6),
+        terminal_ansi_cyan: h(0x8bd5ca),
+        link: h(0x91d7e3),  // teal-light
         // — Zed JSON 的 debugger / version_control / minimap / terminal ansi（之前缺失！）—
-        colors.debugger_accent = h(0xed8796);
-        colors.version_control_added = h(0xa6da95);
-        colors.version_control_deleted = h(0xed8796);
-        colors.version_control_modified = h(0xeed49f);
-        colors.version_control_renamed = h(0x7dc4e4);
-        colors.version_control_conflict = h(0xf5a97f);
-        colors.version_control_ignored = h(0x6e738d);
-        colors.version_control_conflict_marker_ours = ha(0xa6da95, 0.20);
-        colors.version_control_conflict_marker_theirs = ha(0x8aadf4, 0.20);
-        colors.drop_target_background = ha(0x363a4f, 0.40);
-        colors.editor_active_wrap_guide = h(0x5b6078);
-        colors.link_text_hover = h(0x91d7e3);
-        colors.minimap_thumb_background = ha(0xc6a0f6, 0.20);
-        colors.minimap_thumb_hover_background = ha(0xc6a0f6, 0.40);
-        colors.minimap_thumb_active_background = ha(0xc6a0f6, 0.60);
-        colors.terminal_ansi_bright_black = h(0x5b6078);
-        colors.terminal_ansi_bright_white = h(0xb8c0e0);
-        colors.terminal_ansi_bright_red = h(0xec7486);
-        colors.terminal_ansi_bright_green = h(0x8ccf7f);
-        colors.terminal_ansi_bright_yellow = h(0xe1c682);
-        colors.terminal_ansi_bright_blue = h(0x78a1f6);
-        colors.terminal_ansi_bright_magenta = h(0xf2a9dd);
-        colors.terminal_ansi_bright_cyan = h(0x63cbc0);
-        colors.terminal_ansi_dim_black = h(0x494d64);
-        colors.terminal_ansi_dim_white = h(0xa5adcb);
-        colors.terminal_ansi_dim_red = h(0xed8796);
-        colors.terminal_ansi_dim_green = h(0xa6da95);
-        colors.terminal_ansi_dim_yellow = h(0xeed49f);
-        colors.terminal_ansi_dim_blue = h(0x8aadf4);
-        colors.terminal_ansi_dim_magenta = h(0xf5bde6);
-        colors.terminal_ansi_dim_cyan = h(0x8bd5ca);
-
-        colors
+        debugger_accent: h(0xed8796),
+        version_control_added: h(0xa6da95),
+        version_control_deleted: h(0xed8796),
+        version_control_modified: h(0xeed49f),
+        version_control_renamed: h(0x7dc4e4),
+        version_control_conflict: h(0xf5a97f),
+        version_control_ignored: h(0x6e738d),
+        version_control_conflict_marker_ours: ha(0xa6da95, 0.20),
+        version_control_conflict_marker_theirs: ha(0x8aadf4, 0.20),
+        drop_target_background: ha(0x363a4f, 0.40),
+        editor_active_wrap_guide: h(0x5b6078),
+        link_text_hover: h(0x91d7e3),
+        minimap_thumb_background: ha(0xc6a0f6, 0.20),
+        minimap_thumb_hover_background: ha(0xc6a0f6, 0.40),
+        minimap_thumb_active_background: ha(0xc6a0f6, 0.60),
+        terminal_ansi_bright_black: h(0x5b6078),
+        terminal_ansi_bright_white: h(0xb8c0e0),
+        terminal_ansi_bright_red: h(0xec7486),
+        terminal_ansi_bright_green: h(0x8ccf7f),
+        terminal_ansi_bright_yellow: h(0xe1c682),
+        terminal_ansi_bright_blue: h(0x78a1f6),
+        terminal_ansi_bright_magenta: h(0xf2a9dd),
+        terminal_ansi_bright_cyan: h(0x63cbc0),
+        terminal_ansi_dim_black: h(0x494d64),
+        terminal_ansi_dim_white: h(0xa5adcb),
+        terminal_ansi_dim_red: h(0xed8796),
+        terminal_ansi_dim_green: h(0xa6da95),
+        terminal_ansi_dim_yellow: h(0xeed49f),
+        terminal_ansi_dim_blue: h(0x8aadf4),
+        terminal_ansi_dim_magenta: h(0xf5bde6),
+        terminal_ansi_dim_cyan: h(0x8bd5ca),
+        // ── 以下字段 CTP 调色板未定义，取自 zed 默认配色 ──
+        // （ThemeColors::zed_dark() 的同名值，显式写出便于审阅/微调）
+        drop_target_border: neutral().dark().step_12(),  // zed 默认（CTP 调色板未定义）
+        editor_code_lens_foreground: None,
+        editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.12),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.06),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.36),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.12),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.06),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.36),  // zed 默认（CTP 调色板未定义）
+        editor_highlighted_line_background: yellow().dark_alpha().step_4(),  // zed 默认（CTP 调色板未定义）
+        editor_hover_line_number: neutral().dark_alpha().step_12(),  // zed 默认（CTP 调色板未定义）
+        element_selection_background: blue().dark().step_3().alpha(0.25),  // zed 默认（CTP 调色板未定义）
+        minimap_thumb_border: gpui::transparent_black(),  // zed 默认（CTP 调色板未定义）
+        panel_overlay_hover: neutral().dark().step_4(),  // zed 默认（CTP 调色板未定义）
+        scrollbar_thumb_active_background: neutral().dark_alpha().step_5(),  // zed 默认（CTP 调色板未定义）
+        scrollbar_thumb_border: gpui::transparent_black(),  // zed 默认（CTP 调色板未定义）
+        version_control_word_added: WORD_ADDED_COLOR,  // zed 默认（CTP 调色板未定义）
+        version_control_word_deleted: WORD_DELETED_COLOR,  // zed 默认（CTP 调色板未定义）
+        vim_helix_jump_label_foreground: red().dark().step_9(),  // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_helix_select_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_helix_select_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_insert_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_insert_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_replace_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_replace_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_block_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_block_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_line_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_line_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_yank_background: neutral().dark_alpha().step_4(),  // zed 默认（CTP 调色板未定义）
     }
 }
+
 
 /// Catppuccin Macchiato 兜底主题(= 深色基底 [`ThemeColors::dark`])。
 ///
@@ -641,128 +676,162 @@ pub fn status_colors_latte() -> StatusColors {
 /// vim_helix_jump_label_foreground、drop_target_border、
 /// minimap_thumb_border、panel_overlay_hover）。
 pub fn theme_colors_latte() -> ThemeColors {
-    // 同 `theme_colors_macchiato`：zed 默认值为基底 + Catppuccin Latte 覆盖。
-    let mut colors = ThemeColors::zed_light();
-    {
-        colors.border = h(0xccd0da);
-        colors.border_variant = h(0xbcc0cc);
-        colors.border_focused = h(0x1e66f5);
-        colors.border_selected = h(0x1e66f5);
-        colors.border_disabled = h(0xccd0da);
-        colors.border_transparent = hsla(0., 0., 0., 0.);
-        colors.background = h(0xeff1f5);
-        colors.surface_background = h(0xe6e9ef);
-        colors.elevated_surface_background = h(0xffffff);
-        colors.element_background = h(0xccd0da);
-        colors.element_hover = h(0xbcc0cc);
-        colors.element_active = h(0xacb0be);
-        colors.element_selected = h(0xbcc0cc);
-        colors.element_disabled = h(0xccd0da);
-        colors.ghost_element_background = hsla(0., 0., 0., 0.);
-        colors.ghost_element_hover = h(0xccd0da);
-        colors.ghost_element_active = h(0xbcc0cc);
-        colors.ghost_element_selected = h(0xbcc0cc);
-        colors.ghost_element_disabled = hsla(0., 0., 0., 0.);
-        colors.text = h(0x4c4f69);
-        colors.text_muted = h(0x6c6f85);
-        colors.text_placeholder = h(0x9ca0b0);
-        colors.text_disabled = h(0x8c8fa1);
-        colors.text_accent = h(0x1e66f5);
-        colors.icon = h(0x4c4f69);
-        colors.icon_muted = h(0x6c6f85);
-        colors.icon_disabled = h(0xacb0be);
-        colors.icon_accent = h(0x1e66f5);
-        colors.editor_foreground = h(0x4c4f69);
-        colors.editor_background = h(0xeff1f5);
-        colors.editor_gutter_background = h(0xeff1f5);
-        colors.editor_active_line_background = h(0xccd0da);
-        colors.editor_line_number = h(0x9ca0b0);
-        colors.editor_active_line_number = h(0x4c4f69);
-        colors.editor_wrap_guide = h(0xccd0da);
-        colors.editor_indent_guide = h(0xccd0da);
-        colors.editor_indent_guide_active = h(0xbcc0cc);
-        colors.editor_invisible = h(0x9ca0b0);
-        colors.selection_background = h(0xbcc0cc);
-        colors.editor_cursor = h(0xdc8a78);
-        colors.editor_document_highlight_read_background = ha(0x1e66f5, 0.12);
-        colors.editor_document_highlight_write_background = ha(0x1e66f5, 0.2);
-        colors.panel_background = h(0xe6e9ef);
-        colors.pane_focused_border = h(0x1e66f5);
-        colors.pane_group_border = h(0xccd0da);
-        colors.search_match_background = h(0xccd0da);
-        colors.search_active_match_background = h(0xbcc0cc);
-        colors.scrollbar_thumb_background = h(0xacb0be);
-        colors.scrollbar_thumb_hover_background = h(0x9ca0b0);
-        colors.scrollbar_thumb_active_background = h(0x1e66f5);
-        colors.scrollbar_thumb_border = hsla(0., 0., 0., 0.);
-        colors.scrollbar_track_background = h(0xe6e9ef);
-        colors.scrollbar_track_border = hsla(0., 0., 0., 0.);
-        colors.link = h(0x1e66f5);
-        // — Zed JSON 里 latte 还显式设置了这些（之前缺失，落回 zed 浅色默认值）—
-        colors.icon_placeholder = h(0xacb0be);
-        colors.status_bar_background = h(0xdce0e8);
-        colors.title_bar_background = h(0xdce0e8);
-        colors.title_bar_inactive_background = h(0xe6e9ee);
-        colors.toolbar_background = h(0xeff1f5);
-        colors.tab_bar_background = h(0xdce0e8);
-        colors.tab_inactive_background = h(0xd2d7e2);
-        colors.tab_active_background = h(0xeff1f5);
-        colors.panel_focused_border = h(0x4c4f69);
-        colors.panel_indent_guide = ha(0xccd0da, 0.60);
-        colors.panel_indent_guide_active = h(0xacb0be);
-        colors.panel_indent_guide_hover = h(0x8839ef);
-        colors.panel_overlay_background = h(0xe6e9ef);
-        colors.drop_target_background = ha(0xccd0da, 0.40);
-        colors.minimap_thumb_background = ha(0x8839ef, 0.20);
-        colors.minimap_thumb_hover_background = ha(0x8839ef, 0.40);
-        colors.minimap_thumb_active_background = ha(0x8839ef, 0.60);
-        colors.editor_subheader_background = h(0xe6e9ef);
-        colors.editor_active_wrap_guide = h(0xacb0be);
-        colors.editor_document_highlight_bracket_background = ha(0x8839ef, 0.09);
-        colors.editor_debugger_active_line_background = ha(0xfe640b, 0.07);
-        colors.link_text_hover = h(0x04a5e5);
-        colors.debugger_accent = h(0xd20f39);
-        colors.version_control_added = h(0x40a02b);
-        colors.version_control_deleted = h(0xd20f39);
-        colors.version_control_modified = h(0xdf8e1d);
-        colors.version_control_renamed = h(0x209fb5);
-        colors.version_control_conflict = h(0xfe640b);
-        colors.version_control_ignored = h(0x9ca0b0);
-        colors.version_control_conflict_marker_ours = ha(0x40a02b, 0.20);
-        colors.version_control_conflict_marker_theirs = ha(0x1e66f5, 0.20);
-        colors.terminal_background = h(0xeff1f5);
-        colors.terminal_ansi_background = h(0xeff1f5);
-        colors.terminal_foreground = h(0x4c4f69);
-        colors.terminal_dim_foreground = h(0x8c8fa1);
-        colors.terminal_bright_foreground = h(0x4c4f69);
-        colors.terminal_ansi_black = h(0x5c5f77);
-        colors.terminal_ansi_white = h(0xacb0be);
-        colors.terminal_ansi_red = h(0xd20f39);
-        colors.terminal_ansi_green = h(0x40a02b);
-        colors.terminal_ansi_yellow = h(0xdf8e1d);
-        colors.terminal_ansi_blue = h(0x1e66f5);
-        colors.terminal_ansi_magenta = h(0xea76cb);
-        colors.terminal_ansi_cyan = h(0x179299);
-        colors.terminal_ansi_bright_black = h(0x6c6f85);
-        colors.terminal_ansi_bright_white = h(0xbcc0cc);
-        colors.terminal_ansi_bright_red = h(0xde293e);
-        colors.terminal_ansi_bright_green = h(0x49af3d);
-        colors.terminal_ansi_bright_yellow = h(0xeea02d);
-        colors.terminal_ansi_bright_blue = h(0x456eff);
-        colors.terminal_ansi_bright_magenta = h(0xfe85d8);
-        colors.terminal_ansi_bright_cyan = h(0x2d9fa8);
-        colors.terminal_ansi_dim_black = h(0x5c5f77);
-        colors.terminal_ansi_dim_white = h(0xacb0be);
-        colors.terminal_ansi_dim_red = h(0xd20f39);
-        colors.terminal_ansi_dim_green = h(0x40a02b);
-        colors.terminal_ansi_dim_yellow = h(0xdf8e1d);
-        colors.terminal_ansi_dim_blue = h(0x1e66f5);
-        colors.terminal_ansi_dim_magenta = h(0xea76cb);
-        colors.terminal_ansi_dim_cyan = h(0x179299);
+    let system = crate::styles::SystemColors::default();
 
-        colors
+    ThemeColors {
+        border: h(0xccd0da),
+        border_variant: h(0xbcc0cc),
+        border_focused: h(0x1e66f5),
+        border_selected: h(0x1e66f5),
+        border_disabled: h(0xccd0da),
+        border_transparent: hsla(0., 0., 0., 0.),
+        background: h(0xeff1f5),
+        surface_background: h(0xe6e9ef),
+        elevated_surface_background: h(0xffffff),
+        element_background: h(0xccd0da),
+        element_hover: h(0xbcc0cc),
+        element_active: h(0xacb0be),
+        element_selected: h(0xbcc0cc),
+        element_disabled: h(0xccd0da),
+        ghost_element_background: hsla(0., 0., 0., 0.),
+        ghost_element_hover: h(0xccd0da),
+        ghost_element_active: h(0xbcc0cc),
+        ghost_element_selected: h(0xbcc0cc),
+        ghost_element_disabled: hsla(0., 0., 0., 0.),
+        text: h(0x4c4f69),
+        text_muted: h(0x6c6f85),
+        text_placeholder: h(0x9ca0b0),
+        text_disabled: h(0x8c8fa1),
+        text_accent: h(0x1e66f5),
+        icon: h(0x4c4f69),
+        icon_muted: h(0x6c6f85),
+        icon_disabled: h(0xacb0be),
+        icon_accent: h(0x1e66f5),
+        editor_foreground: h(0x4c4f69),
+        editor_background: h(0xeff1f5),
+        editor_gutter_background: h(0xeff1f5),
+        editor_active_line_background: h(0xccd0da),
+        editor_line_number: h(0x9ca0b0),
+        editor_active_line_number: h(0x4c4f69),
+        editor_wrap_guide: h(0xccd0da),
+        editor_indent_guide: h(0xccd0da),
+        editor_indent_guide_active: h(0xbcc0cc),
+        editor_invisible: h(0x9ca0b0),
+        selection_background: h(0xbcc0cc),
+        editor_cursor: h(0xdc8a78),
+        editor_document_highlight_read_background: ha(0x1e66f5, 0.12),
+        editor_document_highlight_write_background: ha(0x1e66f5, 0.2),
+        panel_background: h(0xe6e9ef),
+        pane_focused_border: h(0x1e66f5),
+        pane_group_border: h(0xccd0da),
+        search_match_background: h(0xccd0da),
+        search_active_match_background: h(0xbcc0cc),
+        scrollbar_thumb_background: h(0xacb0be),
+        scrollbar_thumb_hover_background: h(0x9ca0b0),
+        scrollbar_thumb_active_background: h(0x1e66f5),
+        scrollbar_thumb_border: hsla(0., 0., 0., 0.),
+        scrollbar_track_background: h(0xe6e9ef),
+        scrollbar_track_border: hsla(0., 0., 0., 0.),
+        link: h(0x1e66f5),
+        // — Zed JSON 里 latte 还显式设置了这些（之前缺失，落回 zed 浅色默认值）—
+        icon_placeholder: h(0xacb0be),
+        status_bar_background: h(0xdce0e8),
+        title_bar_background: h(0xdce0e8),
+        title_bar_inactive_background: h(0xe6e9ee),
+        toolbar_background: h(0xeff1f5),
+        tab_bar_background: h(0xdce0e8),
+        tab_inactive_background: h(0xd2d7e2),
+        tab_active_background: h(0xeff1f5),
+        panel_focused_border: h(0x4c4f69),
+        panel_indent_guide: ha(0xccd0da, 0.60),
+        panel_indent_guide_active: h(0xacb0be),
+        panel_indent_guide_hover: h(0x8839ef),
+        panel_overlay_background: h(0xe6e9ef),
+        drop_target_background: ha(0xccd0da, 0.40),
+        minimap_thumb_background: ha(0x8839ef, 0.20),
+        minimap_thumb_hover_background: ha(0x8839ef, 0.40),
+        minimap_thumb_active_background: ha(0x8839ef, 0.60),
+        editor_subheader_background: h(0xe6e9ef),
+        editor_active_wrap_guide: h(0xacb0be),
+        editor_document_highlight_bracket_background: ha(0x8839ef, 0.09),
+        editor_debugger_active_line_background: ha(0xfe640b, 0.07),
+        link_text_hover: h(0x04a5e5),
+        debugger_accent: h(0xd20f39),
+        version_control_added: h(0x40a02b),
+        version_control_deleted: h(0xd20f39),
+        version_control_modified: h(0xdf8e1d),
+        version_control_renamed: h(0x209fb5),
+        version_control_conflict: h(0xfe640b),
+        version_control_ignored: h(0x9ca0b0),
+        version_control_conflict_marker_ours: ha(0x40a02b, 0.20),
+        version_control_conflict_marker_theirs: ha(0x1e66f5, 0.20),
+        terminal_background: h(0xeff1f5),
+        terminal_ansi_background: h(0xeff1f5),
+        terminal_foreground: h(0x4c4f69),
+        terminal_dim_foreground: h(0x8c8fa1),
+        terminal_bright_foreground: h(0x4c4f69),
+        terminal_ansi_black: h(0x5c5f77),
+        terminal_ansi_white: h(0xacb0be),
+        terminal_ansi_red: h(0xd20f39),
+        terminal_ansi_green: h(0x40a02b),
+        terminal_ansi_yellow: h(0xdf8e1d),
+        terminal_ansi_blue: h(0x1e66f5),
+        terminal_ansi_magenta: h(0xea76cb),
+        terminal_ansi_cyan: h(0x179299),
+        terminal_ansi_bright_black: h(0x6c6f85),
+        terminal_ansi_bright_white: h(0xbcc0cc),
+        terminal_ansi_bright_red: h(0xde293e),
+        terminal_ansi_bright_green: h(0x49af3d),
+        terminal_ansi_bright_yellow: h(0xeea02d),
+        terminal_ansi_bright_blue: h(0x456eff),
+        terminal_ansi_bright_magenta: h(0xfe85d8),
+        terminal_ansi_bright_cyan: h(0x2d9fa8),
+        terminal_ansi_dim_black: h(0x5c5f77),
+        terminal_ansi_dim_white: h(0xacb0be),
+        terminal_ansi_dim_red: h(0xd20f39),
+        terminal_ansi_dim_green: h(0x40a02b),
+        terminal_ansi_dim_yellow: h(0xdf8e1d),
+        terminal_ansi_dim_blue: h(0x1e66f5),
+        terminal_ansi_dim_magenta: h(0xea76cb),
+        terminal_ansi_dim_cyan: h(0x179299),
+        // ── 以下字段 CTP 调色板未定义，取自 zed 默认配色 ──
+        // （ThemeColors::zed_light() 的同名值，显式写出便于审阅/微调）
+        drop_target_border: neutral().light().step_12(),  // zed 默认（CTP 调色板未定义）
+        editor_code_lens_foreground: None,
+        editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.16),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.08),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.48),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.16),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.08),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.48),  // zed 默认（CTP 调色板未定义）
+        editor_highlighted_line_background: neutral().light_alpha().step_3(),  // zed 默认（CTP 调色板未定义）
+        editor_hover_line_number: neutral().light().step_12(),  // zed 默认（CTP 调色板未定义）
+        element_selection_background: blue().light().step_3().alpha(0.25),  // zed 默认（CTP 调色板未定义）
+        minimap_thumb_border: gpui::transparent_black(),  // zed 默认（CTP 调色板未定义）
+        panel_overlay_hover: neutral().light().step_4(),  // zed 默认（CTP 调色板未定义）
+        version_control_word_added: WORD_ADDED_COLOR,  // zed 默认（CTP 调色板未定义）
+        version_control_word_deleted: WORD_DELETED_COLOR,  // zed 默认（CTP 调色板未定义）
+        vim_helix_jump_label_foreground: red().light().step_9(),  // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_helix_select_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_helix_select_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_insert_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_insert_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_replace_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_replace_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_block_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_block_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_line_background: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_visual_line_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        vim_yank_background: neutral().light_alpha().step_3(),  // zed 默认（CTP 调色板未定义）
     }
 }
+
 
 #[cfg(test)]
 mod tests {

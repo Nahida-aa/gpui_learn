@@ -1,381 +1,58 @@
 use gpui::{Hsla, Rgba};
 
 use crate::ColorScale;
-use crate::fallback_themes::{theme_colors_latte, theme_colors_macchiato};
 use crate::scale::{ColorScaleSet, ColorScales};
-use crate::{SystemColors, ThemeColors};
+use crate::ThemeColors;
 
 pub(crate) fn neutral() -> ColorScaleSet {
     sand()
 }
 
-const ADDED_COLOR: Hsla = Hsla {
+// git diff 的语义色（zed 同款常量）。`pub(crate)`：CTP 配色在
+// `fallback_themes` 里补齐「zed 默认」字段时要引用。
+pub(crate) const ADDED_COLOR: Hsla = Hsla {
     h: 134. / 360.,
     s: 0.55,
     l: 0.40,
     a: 1.0,
 };
-const WORD_ADDED_COLOR: Hsla = Hsla {
+pub(crate) const WORD_ADDED_COLOR: Hsla = Hsla {
     h: 134. / 360.,
     s: 0.55,
     l: 0.40,
     a: 0.35,
 };
-const MODIFIED_COLOR: Hsla = Hsla {
-    h: 48. / 360.,
-    s: 0.76,
-    l: 0.47,
-    a: 1.0,
-};
-const REMOVED_COLOR: Hsla = Hsla {
+pub(crate) const REMOVED_COLOR: Hsla = Hsla {
     h: 350. / 360.,
     s: 0.88,
     l: 0.25,
     a: 1.0,
 };
-const WORD_DELETED_COLOR: Hsla = Hsla {
+pub(crate) const WORD_DELETED_COLOR: Hsla = Hsla {
     h: 350. / 360.,
     s: 0.88,
     l: 0.25,
     a: 0.80,
 };
-
-/// The default colors for the theme.
+/// 主题的默认基底。
 ///
 /// Themes that do not specify all colors are refined off of these defaults.
 ///
-/// ## 本仓库的两层基底
-///
-/// | 函数 | 值 | 用途 |
-/// |---|---|---|
-/// | [`Self::light`] / [`Self::dark`] | Catppuccin Latte / Macchiato | **主题实际用的基底**：主题 JSON 未给的字段就留在这里（即 CTP 配色） |
-/// | [`Self::zed_light`] / [`Self::zed_dark`] | zed 原版灰阶 | 最终兜底：CTP 也没定义的字段落回这里 |
-///
-/// 这样「真默认」就是 CTP 风格，而 zed 那份灰阶仍然兜住 CTP 没覆盖的字段
-/// （CTP 是固定调色板，没有 zed 那种 12 级色阶，少数字段它给不出值）。
+/// 本仓库的「真默认」就是 Catppuccin 风格：浅色 = Latte、深色 = Macchiato。
+/// 具体配色在 `crate::fallback_themes::theme_colors_{latte,macchiato}` ——
+/// 它们只服务兜底路径，与这里（色阶 + 基底委托）职责不同。
 impl ThemeColors {
     /// 本仓库的浅色基底：Catppuccin Latte。
     pub fn light() -> Self {
-        theme_colors_latte()
+        crate::fallback_themes::theme_colors_latte()
     }
 
     /// 本仓库的深色基底：Catppuccin Macchiato。
     pub fn dark() -> Self {
-        theme_colors_macchiato()
-    }
-
-    /// zed 原版的浅色默认（灰阶 + 蓝色强调），作为 CTP 未覆盖字段的兜底。
-    pub fn zed_light() -> Self {
-        let system = SystemColors::default();
-
-        Self {
-            border: neutral().light().step_6(),
-            border_variant: neutral().light().step_5(),
-            border_focused: blue().light().step_5(),
-            border_selected: blue().light().step_5(),
-            border_transparent: system.transparent,
-            border_disabled: neutral().light().step_3(),
-            elevated_surface_background: neutral().light().step_2(),
-            surface_background: neutral().light().step_2(),
-            background: neutral().light().step_1(),
-            element_background: neutral().light().step_3(),
-            element_hover: neutral().light_alpha().step_4(),
-            element_active: neutral().light_alpha().step_5(),
-            element_selected: neutral().light_alpha().step_5(),
-            element_disabled: neutral().light_alpha().step_3(),
-            element_selection_background: blue().light().step_3().alpha(0.25),
-            drop_target_background: blue().light_alpha().step_2(),
-            drop_target_border: neutral().light().step_12(),
-            ghost_element_background: system.transparent,
-            ghost_element_hover: neutral().light_alpha().step_3(),
-            ghost_element_active: neutral().light_alpha().step_4(),
-            ghost_element_selected: neutral().light_alpha().step_5(),
-            ghost_element_disabled: neutral().light_alpha().step_3(),
-            text: neutral().light().step_12(),
-            text_muted: neutral().light().step_10(),
-            text_placeholder: neutral().light().step_10(),
-            text_disabled: neutral().light().step_9(),
-            text_accent: blue().light().step_11(),
-            icon: neutral().light().step_11(),
-            icon_muted: neutral().light().step_10(),
-            icon_disabled: neutral().light().step_9(),
-            icon_placeholder: neutral().light().step_10(),
-            icon_accent: blue().light().step_11(),
-            debugger_accent: red().light().step_10(),
-            status_bar_background: neutral().light().step_2(),
-            title_bar_background: neutral().light().step_2(),
-            title_bar_inactive_background: neutral().light().step_3(),
-            toolbar_background: neutral().light().step_1(),
-            tab_bar_background: neutral().light().step_2(),
-            tab_inactive_background: neutral().light().step_2(),
-            tab_active_background: neutral().light().step_1(),
-            search_match_background: neutral().light().step_5(),
-            search_active_match_background: neutral().light().step_7(),
-            panel_background: neutral().light().step_2(),
-            panel_focused_border: blue().light().step_10(),
-            panel_indent_guide: neutral().light_alpha().step_5(),
-            panel_indent_guide_hover: neutral().light_alpha().step_6(),
-            panel_indent_guide_active: neutral().light_alpha().step_6(),
-            panel_overlay_background: neutral().light().step_2(),
-            panel_overlay_hover: neutral().light().step_4(),
-            pane_focused_border: blue().light().step_5(),
-            pane_group_border: neutral().light().step_6(),
-            scrollbar_thumb_background: neutral().light_alpha().step_3(),
-            scrollbar_thumb_hover_background: neutral().light_alpha().step_4(),
-            scrollbar_thumb_active_background: neutral().light_alpha().step_5(),
-            scrollbar_thumb_border: gpui::transparent_black(),
-            scrollbar_track_background: gpui::transparent_black(),
-            scrollbar_track_border: neutral().light().step_5(),
-            minimap_thumb_background: neutral().light_alpha().step_3().alpha(0.7),
-            minimap_thumb_hover_background: neutral().light_alpha().step_4().alpha(0.7),
-            minimap_thumb_active_background: neutral().light_alpha().step_5().alpha(0.7),
-            minimap_thumb_border: gpui::transparent_black(),
-            editor_foreground: neutral().light().step_12(),
-            editor_code_lens_foreground: None,
-            editor_background: neutral().light().step_1(),
-            editor_gutter_background: neutral().light().step_1(),
-            editor_subheader_background: neutral().light().step_2(),
-            editor_active_line_background: neutral().light_alpha().step_3(),
-            editor_highlighted_line_background: neutral().light_alpha().step_3(),
-            editor_debugger_active_line_background: yellow().dark_alpha().step_3(),
-            editor_line_number: neutral().light().step_10(),
-            editor_hover_line_number: neutral().light().step_12(),
-            editor_active_line_number: neutral().light().step_11(),
-            editor_invisible: neutral().light().step_10(),
-            editor_wrap_guide: neutral().light_alpha().step_7(),
-            editor_active_wrap_guide: neutral().light_alpha().step_8(),
-            editor_indent_guide: neutral().light_alpha().step_5(),
-            editor_indent_guide_active: neutral().light_alpha().step_6(),
-            editor_document_highlight_read_background: neutral().light_alpha().step_3(),
-            editor_document_highlight_write_background: neutral().light_alpha().step_4(),
-            editor_document_highlight_bracket_background: green().light_alpha().step_5(),
-            editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.16),
-            editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.08),
-            editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.48),
-            editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.16),
-            editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.08),
-            editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.48),
-            terminal_background: neutral().light().step_1(),
-            terminal_foreground: black().light().step_12(),
-            terminal_bright_foreground: black().light().step_11(),
-            terminal_dim_foreground: black().light().step_10(),
-            terminal_ansi_background: neutral().light().step_1(),
-            terminal_ansi_bright_black: black().light().step_11(),
-            terminal_ansi_bright_red: red().light().step_10(),
-            terminal_ansi_bright_green: green().light().step_10(),
-            terminal_ansi_bright_yellow: yellow().light().step_10(),
-            terminal_ansi_bright_blue: blue().light().step_10(),
-            terminal_ansi_bright_magenta: violet().light().step_10(),
-            terminal_ansi_bright_cyan: cyan().light().step_10(),
-            terminal_ansi_bright_white: neutral().light().step_11(),
-            terminal_ansi_black: black().light().step_12(),
-            terminal_ansi_red: red().light().step_11(),
-            terminal_ansi_green: green().light().step_11(),
-            terminal_ansi_yellow: yellow().light().step_11(),
-            terminal_ansi_blue: blue().light().step_11(),
-            terminal_ansi_magenta: violet().light().step_11(),
-            terminal_ansi_cyan: cyan().light().step_11(),
-            terminal_ansi_white: neutral().light().step_12(),
-            terminal_ansi_dim_black: black().light().step_11(),
-            terminal_ansi_dim_red: red().light().step_10(),
-            terminal_ansi_dim_green: green().light().step_10(),
-            terminal_ansi_dim_yellow: yellow().light().step_10(),
-            terminal_ansi_dim_blue: blue().light().step_10(),
-            terminal_ansi_dim_magenta: violet().light().step_10(),
-            terminal_ansi_dim_cyan: cyan().light().step_10(),
-            terminal_ansi_dim_white: neutral().light().step_11(),
-            link_text_hover: orange().light().step_10(),
-            version_control_added: ADDED_COLOR,
-            version_control_deleted: REMOVED_COLOR,
-            version_control_modified: MODIFIED_COLOR,
-            version_control_renamed: MODIFIED_COLOR,
-            version_control_conflict: orange().light().step_12(),
-            version_control_ignored: gray().light().step_12(),
-            version_control_word_added: WORD_ADDED_COLOR,
-            version_control_word_deleted: WORD_DELETED_COLOR,
-            version_control_conflict_marker_ours: green().light().step_10().alpha(0.5),
-            version_control_conflict_marker_theirs: blue().light().step_10().alpha(0.5),
-            vim_normal_background: system.transparent,
-            vim_insert_background: system.transparent,
-            vim_replace_background: system.transparent,
-            vim_visual_background: system.transparent,
-            vim_visual_line_background: system.transparent,
-            vim_visual_block_background: system.transparent,
-            vim_yank_background: neutral().light_alpha().step_3(),
-            vim_helix_jump_label_foreground: red().light().step_9(),
-            vim_helix_normal_background: system.transparent,
-            vim_helix_select_background: system.transparent,
-            vim_normal_foreground: system.transparent,
-            vim_insert_foreground: system.transparent,
-            vim_replace_foreground: system.transparent,
-            vim_visual_foreground: system.transparent,
-            vim_visual_line_foreground: system.transparent,
-            vim_visual_block_foreground: system.transparent,
-            vim_helix_normal_foreground: system.transparent,
-            vim_helix_select_foreground: system.transparent,
-            // ---- 本仓库增补的字段 ----
-            selection_background: blue().light().step_3().alpha(0.35),
-            editor_cursor: neutral().light().step_12(),
-            link: blue().light().step_11(),
-        }
-    }
-
-    /// zed 原版的深色默认（灰阶 + 蓝色强调），作为 CTP 未覆盖字段的兜底。
-    pub fn zed_dark() -> Self {
-        let system = SystemColors::default();
-
-        Self {
-            border: neutral().dark().step_6(),
-            border_variant: neutral().dark().step_5(),
-            border_focused: blue().dark().step_5(),
-            border_selected: blue().dark().step_5(),
-            border_transparent: system.transparent,
-            border_disabled: neutral().dark().step_3(),
-            elevated_surface_background: neutral().dark().step_2(),
-            surface_background: neutral().dark().step_2(),
-            background: neutral().dark().step_1(),
-            element_background: neutral().dark().step_3(),
-            element_hover: neutral().dark_alpha().step_4(),
-            element_active: neutral().dark_alpha().step_5(),
-            element_selected: neutral().dark_alpha().step_5(),
-            element_disabled: neutral().dark_alpha().step_3(),
-            element_selection_background: blue().dark().step_3().alpha(0.25),
-            drop_target_background: blue().dark_alpha().step_2(),
-            drop_target_border: neutral().dark().step_12(),
-            ghost_element_background: system.transparent,
-            ghost_element_hover: neutral().dark_alpha().step_4(),
-            ghost_element_active: neutral().dark_alpha().step_5(),
-            ghost_element_selected: neutral().dark_alpha().step_5(),
-            ghost_element_disabled: neutral().dark_alpha().step_3(),
-            text: neutral().dark().step_12(),
-            text_muted: neutral().dark().step_11(),
-            text_placeholder: neutral().dark().step_10(),
-            text_disabled: neutral().dark().step_9(),
-            text_accent: blue().dark().step_11(),
-            icon: neutral().dark().step_11(),
-            icon_muted: neutral().dark().step_10(),
-            icon_disabled: neutral().dark().step_9(),
-            icon_placeholder: neutral().dark().step_10(),
-            icon_accent: blue().dark().step_11(),
-            debugger_accent: red().light().step_10(),
-            status_bar_background: neutral().dark().step_2(),
-            title_bar_background: neutral().dark().step_2(),
-            title_bar_inactive_background: neutral().dark().step_3(),
-            toolbar_background: neutral().dark().step_1(),
-            tab_bar_background: neutral().dark().step_2(),
-            tab_inactive_background: neutral().dark().step_2(),
-            tab_active_background: neutral().dark().step_1(),
-            search_match_background: neutral().dark().step_5(),
-            search_active_match_background: neutral().dark().step_3(),
-            panel_background: neutral().dark().step_2(),
-            panel_focused_border: blue().dark().step_8(),
-            panel_indent_guide: neutral().dark_alpha().step_4(),
-            panel_indent_guide_hover: neutral().dark_alpha().step_6(),
-            panel_indent_guide_active: neutral().dark_alpha().step_6(),
-            panel_overlay_background: neutral().dark().step_2(),
-            panel_overlay_hover: neutral().dark().step_4(),
-            pane_focused_border: blue().dark().step_5(),
-            pane_group_border: neutral().dark().step_6(),
-            scrollbar_thumb_background: neutral().dark_alpha().step_3(),
-            scrollbar_thumb_hover_background: neutral().dark_alpha().step_4(),
-            scrollbar_thumb_active_background: neutral().dark_alpha().step_5(),
-            scrollbar_thumb_border: gpui::transparent_black(),
-            scrollbar_track_background: gpui::transparent_black(),
-            scrollbar_track_border: neutral().dark().step_5(),
-            minimap_thumb_background: neutral().dark_alpha().step_3().alpha(0.7),
-            minimap_thumb_hover_background: neutral().dark_alpha().step_4().alpha(0.7),
-            minimap_thumb_active_background: neutral().dark_alpha().step_5().alpha(0.7),
-            minimap_thumb_border: gpui::transparent_black(),
-            editor_foreground: neutral().dark().step_12(),
-            editor_code_lens_foreground: None,
-            editor_background: neutral().dark().step_1(),
-            editor_gutter_background: neutral().dark().step_1(),
-            editor_subheader_background: neutral().dark().step_3(),
-            editor_active_line_background: neutral().dark_alpha().step_3(),
-            editor_highlighted_line_background: yellow().dark_alpha().step_4(),
-            editor_debugger_active_line_background: yellow().dark_alpha().step_3(),
-            editor_line_number: neutral().dark_alpha().step_10(),
-            editor_hover_line_number: neutral().dark_alpha().step_12(),
-            editor_active_line_number: neutral().dark_alpha().step_11(),
-            editor_invisible: neutral().dark_alpha().step_4(),
-            editor_wrap_guide: neutral().dark_alpha().step_4(),
-            editor_active_wrap_guide: neutral().dark_alpha().step_4(),
-            editor_indent_guide: neutral().dark_alpha().step_4(),
-            editor_indent_guide_active: neutral().dark_alpha().step_6(),
-            editor_document_highlight_read_background: neutral().dark_alpha().step_4(),
-            editor_document_highlight_write_background: neutral().dark_alpha().step_4(),
-            editor_document_highlight_bracket_background: green().dark_alpha().step_6(),
-            editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.12),
-            editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.06),
-            editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.36),
-            editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.12),
-            editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.06),
-            editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.36),
-            terminal_background: neutral().dark().step_1(),
-            terminal_ansi_background: neutral().dark().step_1(),
-            terminal_foreground: white().dark().step_12(),
-            terminal_bright_foreground: white().dark().step_11(),
-            terminal_dim_foreground: white().dark().step_10(),
-            terminal_ansi_black: black().dark().step_12(),
-            terminal_ansi_bright_black: black().dark().step_11(),
-            terminal_ansi_dim_black: black().dark().step_10(),
-            terminal_ansi_red: red().dark().step_11(),
-            terminal_ansi_bright_red: red().dark().step_10(),
-            terminal_ansi_dim_red: red().dark().step_9(),
-            terminal_ansi_green: green().dark().step_11(),
-            terminal_ansi_bright_green: green().dark().step_10(),
-            terminal_ansi_dim_green: green().dark().step_9(),
-            terminal_ansi_yellow: yellow().dark().step_11(),
-            terminal_ansi_bright_yellow: yellow().dark().step_10(),
-            terminal_ansi_dim_yellow: yellow().dark().step_9(),
-            terminal_ansi_blue: blue().dark().step_11(),
-            terminal_ansi_bright_blue: blue().dark().step_10(),
-            terminal_ansi_dim_blue: blue().dark().step_9(),
-            terminal_ansi_magenta: violet().dark().step_11(),
-            terminal_ansi_bright_magenta: violet().dark().step_10(),
-            terminal_ansi_dim_magenta: violet().dark().step_9(),
-            terminal_ansi_cyan: cyan().dark().step_11(),
-            terminal_ansi_bright_cyan: cyan().dark().step_10(),
-            terminal_ansi_dim_cyan: cyan().dark().step_9(),
-            terminal_ansi_white: neutral().dark().step_12(),
-            terminal_ansi_bright_white: neutral().dark().step_11(),
-            terminal_ansi_dim_white: neutral().dark().step_10(),
-            link_text_hover: orange().dark().step_10(),
-            version_control_added: ADDED_COLOR,
-            version_control_deleted: REMOVED_COLOR,
-            version_control_modified: MODIFIED_COLOR,
-            version_control_renamed: MODIFIED_COLOR,
-            version_control_conflict: orange().dark().step_12(),
-            version_control_ignored: gray().dark().step_12(),
-            version_control_word_added: WORD_ADDED_COLOR,
-            version_control_word_deleted: WORD_DELETED_COLOR,
-            version_control_conflict_marker_ours: green().dark().step_10().alpha(0.5),
-            version_control_conflict_marker_theirs: blue().dark().step_10().alpha(0.5),
-            vim_normal_background: system.transparent,
-            vim_insert_background: system.transparent,
-            vim_replace_background: system.transparent,
-            vim_visual_background: system.transparent,
-            vim_visual_line_background: system.transparent,
-            vim_visual_block_background: system.transparent,
-            vim_yank_background: neutral().dark_alpha().step_4(),
-            vim_helix_jump_label_foreground: red().dark().step_9(),
-            vim_helix_normal_background: system.transparent,
-            vim_helix_select_background: system.transparent,
-            vim_normal_foreground: system.transparent,
-            vim_insert_foreground: system.transparent,
-            vim_replace_foreground: system.transparent,
-            vim_visual_foreground: system.transparent,
-            vim_visual_line_foreground: system.transparent,
-            vim_visual_block_foreground: system.transparent,
-            vim_helix_normal_foreground: system.transparent,
-            vim_helix_select_foreground: system.transparent,
-            // ---- 本仓库增补的字段 ----
-            selection_background: blue().dark().step_3().alpha(0.35),
-            editor_cursor: neutral().dark().step_12(),
-            link: blue().dark().step_11(),
-        }
+        crate::fallback_themes::theme_colors_macchiato()
     }
 }
+
 
 type StaticColorScale = [&'static str; 12];
 
@@ -2598,7 +2275,7 @@ mod tests {
     #[test]
     fn macchiato_uses_catppuccin_debugger_and_version_control_colors() {
         assert_ctp(
-            &theme_colors_macchiato(),
+            &crate::fallback_themes::theme_colors_macchiato(),
             0xed8796,
             0xa6da95,
             0xeed49f,
@@ -2609,7 +2286,7 @@ mod tests {
     #[test]
     fn latte_uses_catppuccin_debugger_and_version_control_colors() {
         assert_ctp(
-            &theme_colors_latte(),
+            &crate::fallback_themes::theme_colors_latte(),
             0xd20f39,
             0x40a02b,
             0xdf8e1d,
