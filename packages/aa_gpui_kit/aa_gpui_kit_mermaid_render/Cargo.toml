@@ -1,0 +1,36 @@
+[package]
+name = "aa_gpui_kit_mermaid_render"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[features]
+test-support = []
+
+[dependencies]
+anyhow.workspace = true
+gpui.workspace = true
+merman = { version = "=0.8.0-alpha.5", default-features = false, features = [
+    "layout-cytoscape",
+    "svg",
+] }
+# merman 全套 pin alpha.5，merman-core alpha.6 与 merman-render alpha.5 API 不兼容
+merman-core = "=0.8.0-alpha.5"
+quick-xml.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+ztracing.workspace = true
+
+[dev-dependencies]
+gpui = { workspace = true, features = ["test-support"] }
+# 自引用（开 test-support feature 跑本 crate 的测试）。包名改为
+# aa_gpui_kit_mermaid_render 后，这里的自引用也必须同步，否则 cargo 找不到
+# 名为 mermaid_render 的包而报 no matching package found。
+aa_gpui_kit_mermaid_render = { path = ".", features = ["test-support"] }
+usvg.workspace = true
+
+[package.metadata.cargo-shear]
+ignored = ["tracing"]
+[lints]
+workspace = true
