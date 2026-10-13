@@ -105,8 +105,8 @@ pub fn read_package_info(project_dir: &Path) -> Result<PackageInfo> {
                 let ws: WorkspaceManifest = toml::from_str(&text).ok()?;
                 ws.workspace?.package?.license
             })
-            .context("license 是 workspace 继承，但没能从 workspace 根解析出值（请显式传 --license）")?,
-        None => bail!("Cargo.toml 的 [package] 缺少 license，请显式传 --license"),
+            .context("license 是 workspace 继承，但没能从 workspace 根解析出值（请在 workspace 根的 [workspace.package] 补 license）")?,
+        None => bail!("Cargo.toml 的 [package] 缺少 license（请在 [package] 补 license = \"...\"，或让 workspace 根继承）"),
     };
 
     let bins: Vec<String> = manifest
@@ -192,29 +192,61 @@ fn arch_settings_from(arch: &Option<crate::ArchTable>) -> ArchSettings {
 }
 
 /// PKGBUILD 生成参数。
+///
+/// 字段分两类：`project_dir` / `bundle_meta` / `bin_name` / `icon_name` /
+/// `desktop_template` 是所有格式通用的（CLI 有对应 flag）；其余
+/// （`depends` 及以下）是 Arch 特有设置的**库 API 覆盖项**——CLI 不暴露
+/// 它们，格式特有设置一律声明在 bundle 元数据的 `[bundle.arch]` 子表里，
+/// 免得 `--format tar.gz` 时面对一堆无效 flag。
 pub struct PkgbuildOptions<'a> {
     /// 源码目录（含 Cargo.toml）
     pub project_dir: &'a Path,
     /// 打包配置来源引用（含 `[bundle.arch]` 子表）；**必填**，无默认值
     pub bundle_meta: &'a str,
-    /// 命令行覆盖：二进制名
+    /// 覆盖二进制名
     pub bin_name: Option<&'a str>,
-    /// 命令行覆盖：.desktop 模板路径
+    /// 覆盖 .desktop 模板路径
     pub desktop_template: Option<&'a Path>,
-    /// 命令行覆盖：图标基础名（不含尺寸目录与扩展）
+    /// 覆盖图标基础名（不含尺寸目录与扩展）
     pub icon_name: Option<&'a str>,
-    /// 命令行覆盖：运行依赖（完全替代 `[bundle.arch].depends`）
+    /// 覆盖运行依赖（完全替代 `[bundle.arch].depends`）
     pub depends: Option<&'a [String]>,
-    /// 命令行覆盖：构建依赖
+    /// 覆盖构建依赖
     pub makedepends: Option<&'a [String]>,
-    /// 命令行覆盖：目标架构
+    /// 覆盖目标架构
     pub arch: Option<&'a [String]>,
-    /// 命令行覆盖：url
+    /// 覆盖 url
     pub url: Option<&'a str>,
-    /// 命令行覆盖：license
+    /// 覆盖 license
     pub license: Option<&'a str>,
-    /// 命令行覆盖：安装前缀
+    /// 覆盖安装前缀
     pub prefix: Option<&'a str>,
+}
+
+/// bin 名的推导链（对齐 cargo 的自动发现规则）：
+/// 1. 覆盖值（最高优先）
+/// 2. 有 `[[bin]]` 且唯一 → 该目标名（可能与 package.name 不同）
+/// 3. 无 `[[bin]]` → **包名**。这是 cargo 的规则：`src/main.rs` 自动成为以
+///    包名命名的二进制。不是猜，是 cargo 文档化的行为。
+/// 4. 多个 `[[bin]]` → 歧义，报错要求声明
+pub fn resolve_bin_name<'a>(
+    info: &'a PackageInfo,
+    override_name: Option<&'a str>,
+    project_dir: &Path,
+) -> Result<&'a str> {
+    if let Some(b) = override_name {
+        return Ok(b);
+    }
+    match info.bin_count {
+        0 => Ok(info.name.as_str()),
+        1 => Ok(info.bin_name.as_deref().expect("bin_count==1 时必有 bin_name")),
+        n => bail!(
+            "{} 有 {n} 个 [[bin]] 目标，无法判断该装哪个。\
+             请用 --bin-name 指定，或在 bundle 元数据里加 `[bundle.arch]` 后\
+             用 --bundle-meta 指向含 bin 配置的表。",
+            project_dir.display()
+        ),
+    }
 }
 
 /// 生成 PKGBUILD 文本，并渲染 .desktop。
@@ -241,41 +273,11 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         settings.prefix = v.to_string();
     }
 
-    // —— bin 名的推导链（对齐 cargo 的自动发现规则）——
-    // 1. 命令行 --bin-name（最高优先）
-    // 2. 有 `[[bin]]` 且唯一 → 该目标名（可能与 package.name 不同）
-    // 3. 无 `[[bin]]` → **包名**。这是 cargo 的规则：`src/main.rs` 自动成为以
-    //    包名命名的二进制。不是猜，是 cargo 文档化的行为。
-    // 4. 多个 `[[bin]]` → 歧义，报错要求声明
-    let bin: &str = if let Some(b) = opts.bin_name {
-        b
-    } else {
-        match info.bin_count {
-            0 => info.name.as_str(),
-            1 => info.bin_name.as_deref().expect("bin_count==1 时必有 bin_name"),
-            n => bail!(
-                "{} 有 {n} 个 [[bin]] 目标，无法判断该装哪个。\
-                 请用 --bin-name 指定，或在 bundle 元数据里加 `[bundle.arch]` 后\
-                 用 --bundle-meta 指向含 bin 配置的表。",
-                opts.project_dir.display()
-            ),
-        }
-    };
+    // —— bin 名（对齐 cargo 的自动发现规则，见 resolve_bin_name）——
+    let bin: &str = resolve_bin_name(&info, opts.bin_name, opts.project_dir)?;
 
-    // 图标名没有任何数据源可推导，只能回退到二进制名 —— 但**不静默**：写进 PKGBUILD 注释
-    // 并打印一行，让使用者有机会发现。
-    // 图标名：命令行 > [bundle.arch]（无此键，回退 bin 名）。无数据源可推导，
-    // 所以回退时**不静默** —— 打印提示，让使用者有机会发现。
-    let icon: String = match opts.icon_name {
-        Some(s) => s.to_string(),
-        None => {
-            println!(
-                "提示：未用 --icon-name 指定图标名，默认取二进制名 `{bin}`。\
-                 若你的图标文件不叫这个名字，请用 --icon-name 指定。"
-            );
-            bin.to_string()
-        }
-    };
+    // 图标安装名：覆盖 > bin 名。无数据源可推导，回退时不静默（见 resolve_icon_name）。
+    let icon = crate::resolve_icon_name(opts.icon_name, bin);
     let license = opts.license.unwrap_or(&info.license);
     let prefix = settings.prefix.trim_end_matches('/');
     // pkgver：bundle 元数据的 version > Cargo.toml 的 version
@@ -293,27 +295,6 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
                 identity.name.clone().unwrap_or_else(|| info.name.clone())
             }
         });
-    // .desktop 名用 identifier（如 dev.aa.AaCode-Nightly.desktop），与桌面身份一致。
-    // 缺省时推导 <仓库名>.<bin 名>（两段蛇形规范化），与 aa-gpui-cli 同一套逻辑。
-    // 注意第二段用 bin 名而非 package 名：[[bin]].name 可能与 package.name 不同。
-    let desktop_id = match identity.identifier.clone() {
-        Some(id) => id,
-        None => {
-            let repo = crate::repo_name_from(opts.project_dir);
-            let derived = repo
-                .as_deref()
-                .and_then(|r| crate::derive_identifier(r, Some(bin)));
-            derived.with_context(|| {
-                format!(
-                    "bundle 元数据 {} 里没有 identifier，且无法推导默认值：当前目录不在 git 仓库内\
-                     （拿不到 .git，推导不出仓库名）。请在 bundle 元数据里补 identifier，\
-                     或在 git 仓库中运行",
-                    opts.bundle_meta
-                )
-            })?
-        }
-    };
-
     // 源码目录绝对化：PKGBUILD 会在自己的目录里执行，必须按绝对路径回到源码树
     let src = opts
         .project_dir
@@ -323,53 +304,17 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     // cargo 包名直接从 crate 的 Cargo.toml 取 —— 已经指了目录，不需要再让人传一遍
     let cargo_pkg_flag = format!(" -p {}", info.name);
 
-    // .desktop 内容：三条路，优先级从高到低
-    //   1. 命令行 --desktop-template（临时覆盖）
-    //   2. bundle 元数据的 desktop_template（项目自有模板）
-    //   3. **aa-bundle 自己生成**（对齐 cargo-bundle：不用模板，直接从 settings 渲染）
-    // 第 3 条是默认路径 —— 项目零配置也能得到合规的 .desktop。
-    let template_path = match opts.desktop_template {
-        Some(p) => Some(p.to_path_buf()),
-        None => identity
-            .desktop_template
-            .as_ref()
-            .map(|rel| opts.project_dir.join(rel)),
-    };
-    let desktop_rel = if let Some(template_path) = &template_path {
-        let template = std::fs::read_to_string(template_path)
-            .with_context(|| format!("读取 .desktop 模板 {} 失败", template_path.display()))?;
-        let rendered = render_desktop(
-            &template,
-            &[
-                ("APP_NAME", identity.name.as_deref().unwrap_or(&info.name)),
-                ("APP_ID", &desktop_id),
-                ("APP_CLI", &format!("{prefix}/bin/{bin}")),
-                ("APP_ICON", &icon),
-                ("APP_ARGS", "%F"),
-                ("DO_STARTUP_NOTIFY", "true"),
-            ],
-        );
-        Some((format!("{desktop_id}.desktop"), rendered))
-    } else {
-        // 自己生成。category 缺失或认不出时告警并回退 Utility;
-        // （对齐 cargo-bundle desktop.rs:161-170）
-        match identity.category.as_deref().map(crate::AppCategory::parse) {
-            Some(None) => println!(
-                "提示：bundle 元数据的 category = {:?} 无法识别，.desktop 的 Categories \
-                 回退为 Utility;。可用值如 \"Developer Tool\" / \"Utility\" / \"Graphics\"。",
-                identity.category.as_deref().unwrap_or("")
-            ),
-            None => println!(
-                "提示：bundle 元数据里没有 category，.desktop 的 Categories 回退为 Utility;。\
-                 要更准确请设 category = \"Developer Tool\" 等。"
-            ),
-            Some(Some(_)) => {}
-        }
-        Some((
-            format!("{desktop_id}.desktop"),
-            crate::render_desktop_entry(&identity, bin, &icon, &desktop_id),
-        ))
-    };
+    // .desktop（文件名 + 内容）：模板 > aa-bundle 自动生成，见 resolve_desktop_entry。
+    // `$APP_CLI` 用绝对安装路径——PKGBUILD 装完二进制就在 <prefix>/bin/<bin>。
+    let desktop_rel = crate::resolve_desktop_entry(
+        &identity,
+        bin,
+        &icon,
+        &format!("{prefix}/bin/{bin}"),
+        opts.project_dir,
+        opts.bundle_meta,
+        opts.desktop_template,
+    )?;
 
     // 没给 url 就整行不输出，避免生成 `url=""` 这种空字段
     let url_line = match opts.url {
@@ -391,11 +336,9 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         format!("makedepends=({makedepends})\n")
     };
 
-    let desktop_install = match &desktop_rel {
-        Some((name, _)) => format!(
-            "  install -Dm644 \"$startdir/{name}\" \"$pkgdir{prefix}/share/applications/{name}\"\n"
-        ),
-        None => String::new(),
+    let desktop_install = {
+        let (name, _) = &desktop_rel;
+        format!("  install -Dm644 \"$startdir/{name}\" \"$pkgdir{prefix}/share/applications/{name}\"\n")
     };
 
     // 图标安装行：路径来自 `[bundle].icon`（cargo-bundle 的字段），安装目录来自
@@ -413,13 +356,9 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         );
         // 尺寸目录按文件名约定判断：`@2x` 结尾 → 1024x1024，否则 512x512。
         // （cargo-bundle 的 icon 列表也是这个约定；不按文件大小猜——那不可靠。）
-        let size_dir = if icon_path.ends_with("@2x.png") || icon_path.ends_with("@2x") {
-            "1024x1024"
-        } else {
-            "512x512"
-        };
+        let size_dir = crate::icon_size_dir(icon_path);
         icon_install.push_str(&format!(
-            "  install -Dm644 \"$startdir_icon/{icon_path}\" \"$pkgdir{icon_dir_full}/{size_dir}/apps/{icon}.png\"\n"
+            "  install -Dm644 \"$_srcdir/{icon_path}\" \"$pkgdir{icon_dir_full}/{size_dir}/apps/{icon}.png\"\n"
         ));
     }
     if icon_install.is_empty() {
@@ -440,11 +379,9 @@ arch=({arch})
 options=(!lto)
 
 # 源码树路径。本 PKGBUILD 不带 source=，直接在源码目录里构建以复用 target/ 的
-# 增量缓存 —— 代价是不能用于 AUR/分发，只适合本机安装。
+# 增量缓存 —— 代价是不能用于 AUR/分发，只适合本机安装。图标源文件也在源码树里
+# （bundle 元数据的 icon 字段），同样按 $_srcdir 引用。
 _srcdir="{src}"
-
-# 图标源文件按绝对路径准备到 $startdir_icon（PKGBUILD 与源码树分离时也能装上）
-_startdir_icon="{src}"
 
 build() {{
   cd "$_srcdir"
@@ -491,16 +428,7 @@ package() {{
         desktop_install = desktop_install,
     );
 
-    Ok((pkgbuild, desktop_rel))
-}
-
-/// 类 envsubst 的 `$VAR` 替换（只处理传入的变量名，其他 `$xxx` 原样保留）。
-pub fn render_desktop(template: &str, vars: &[(&str, &str)]) -> String {
-    let mut out = template.to_string();
-    for (key, value) in vars {
-        out = out.replace(&format!("${key}"), value);
-    }
-    out
+    Ok((pkgbuild, Some(desktop_rel)))
 }
 
 #[cfg(test)]
@@ -843,11 +771,11 @@ icon_dir = "share/icons/hicolor"
             "1024 图标应按 icon 列表安装：{pkgbuild}"
         );
         assert!(
-            !pkgbuild.contains("$_srcdir/resources/"),
-            "图标应经 $startdir_icon 引用，而不是直接引源码树：{pkgbuild}"
+            !pkgbuild.contains("$startdir_icon"),
+            "图标引用应走 $_srcdir（曾因定义/引用变量名不一致导致空路径）：{pkgbuild}"
         );
         assert!(
-            pkgbuild.contains("$startdir_icon/resources/app-icon.png"),
+            pkgbuild.contains("$_srcdir/resources/app-icon.png"),
             "图标路径应来自 icon 列表：{pkgbuild}"
         );
     }
@@ -934,7 +862,7 @@ name = "AaCode"
 
     #[test]
     fn desktop_rendering_substitutes_only_known_vars() {
-        let out = render_desktop(
+        let out = crate::render_template(
             "Name=$APP_NAME\nExec=$APP_CLI %F\nIcon=$APP_ICON\nX=$UNKNOWN",
             &[("APP_NAME", "AaCode"), ("APP_CLI", "/usr/bin/aacode"), ("APP_ICON", "aacode")],
         );

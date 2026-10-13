@@ -7,14 +7,25 @@
 //! - **身份解析**：[`BundleMeta`] / [`load_bundle_meta`] —— 从结构化文件
 //!   （Cargo.toml 的 `[package.metadata.bundle*]` 或任意 JSON）读出
 //!   `identifier` / `name`，字段名对齐 cargo-bundle 的 `BundleSettings`。
-//! - **打包**：[`arch`] —— 生成 Arch Linux 的 PKGBUILD（第一个目标）。
+//! - **打包格式**（CLI 的 `--format` 枚举，一个模块一种）：
+//!   - [`pkgbuild`] —— Arch Linux 的 PKGBUILD（makepkg 的输入）
+//!   - [`targz`] —— 自包含 tar.gz 应用包（zed.app 布局，跨发行版）
+//! - **格式共用的桌面/图标基建**：[`resolve_desktop_entry`]、
+//!   [`icon_size_dir`]、[`resolve_icon_name`]。
 //! - 通用基建：[`repo_name_from`]、[`relative_path`]、[`write_file`] /
-//!   [`write_bytes`] / [`copy_dir`] / [`set_executable`]。
+//!   [`write_bytes`]、[`copy_dir`] / [`set_executable`]。
+//!
+//! 格式特有设置（Arch 的 depends / 安装前缀等）一律放 bundle 元数据的
+//! 子表（如 `[bundle.arch]`），**不做成 CLI flag**——flag 只留所有格式
+//! 通用的（`-p` / `--bundle-meta` / `--bin-name` / `--icon-name` /
+//! `--desktop-template` / `--out`），否则加新格式时用户会看到一堆对当前
+//! 格式无效的参数。
 //!
 //! 错误消息里提到 `--bundle-meta`，因为那是消费方 CLI 的约定参数名
 //! （本库不定义 CLI 参数，只定义引用语法与解析规则）。
 
 pub mod pkgbuild;
+pub mod targz;
 
 use std::path::Path;
 
@@ -362,6 +373,7 @@ pub fn derive_identifier(repo_name: &str, bin_name: Option<&str>) -> Option<Stri
 /// - 不写 `Encoding=`（已废弃）
 /// - `MimeType` 为空则整行省略（裸 `MimeType=` 过不了某些校验器）
 /// - `category` 未设时由调用方告警并回退 `Utility;`
+///
 /// `icon` 是**安装名**（hicolor `apps/<名字>.png`），与 `bin` 分开传：
 /// `--icon-name` 可覆盖它，覆盖后 `Icon=` 必须跟着变，否则桌面环境
 /// 按 bin 名找不到装好的图标。
@@ -423,6 +435,132 @@ pub fn render_desktop_entry(meta: &BundleMeta, bin: &str, icon: &str, desktop_id
     }
 
     out
+}
+
+/// 图标在 hicolor 主题里的尺寸子目录。
+///
+/// 按 cargo-bundle / zed 的**文件名约定**：`@2x` 结尾 → 1024x1024，
+/// 否则 512x512。不读图片真实尺寸——那要引入图片解码，且 cargo-bundle
+/// 同样只认文件名约定。
+pub fn icon_size_dir(icon_path: &str) -> &'static str {
+    if icon_path.ends_with("@2x.png") || icon_path.ends_with("@2x") {
+        "1024x1024"
+    } else {
+        "512x512"
+    }
+}
+
+/// 图标安装名：命令行覆盖值 > 二进制名。
+///
+/// 图标文件名的 basename 是 `app-icon` 这类通用名，推不出应用名，所以
+/// 回退 bin 名时**不静默**——打印提示，让使用者有机会发现并用
+/// `--icon-name` 纠正。
+pub fn resolve_icon_name(override_name: Option<&str>, bin: &str) -> String {
+    match override_name {
+        Some(s) => s.to_string(),
+        None => {
+            println!(
+                "提示：未用 --icon-name 指定图标名，默认取二进制名 `{bin}`。\
+                 若你的图标文件不叫这个名字，请用 --icon-name 指定。"
+            );
+            bin.to_string()
+        }
+    }
+}
+
+/// `.desktop` 文件名用的 identifier：`meta.identifier` > 推导
+/// `<仓库名>.<bin 名>`（两段蛇形规范化）。推导不出（不在 git 仓库内）
+/// 报错，不兜底假名。注意第二段用 bin 名而非 package 名——`[[bin]].name`
+/// 可以与 `package.name` 不同。
+pub fn resolve_desktop_id(meta: &BundleMeta, project_dir: &Path, bin: &str, meta_ref: &str) -> Result<String> {
+    if let Some(id) = &meta.identifier {
+        return Ok(id.clone());
+    }
+    let repo = repo_name_from(project_dir);
+    repo.as_deref()
+        .and_then(|r| derive_identifier(r, Some(bin)))
+        .with_context(|| {
+            format!(
+                "bundle 元数据 {meta_ref} 里没有 identifier，且无法推导默认值：当前目录不在 git 仓库内\
+                 （拿不到 .git，推导不出仓库名）。请在 bundle 元数据里补 identifier，\
+                 或在 git 仓库中运行"
+            )
+        })
+}
+
+/// 类 envsubst 的 `$VAR` 替换（只处理传入的变量名，其他 `$xxx` 原样保留）。
+pub fn render_template(template: &str, vars: &[(&str, &str)]) -> String {
+    let mut out = template.to_string();
+    for (key, value) in vars {
+        out = out.replace(&format!("${key}"), value);
+    }
+    out
+}
+
+/// `.desktop` 条目（文件名 + 内容），各格式共用。
+///
+/// 内容来源优先级：
+/// 1. `template_override`（命令行 `--desktop-template`，临时覆盖）
+/// 2. `meta.desktop_template`（项目自有模板，相对 crate 目录）
+/// 3. **aa-bundle 自己生成**（[`render_desktop_entry`]，对齐 cargo-bundle）——
+///    项目零配置也能得到合规的 .desktop
+///
+/// `app_cli` 是模板里 `$APP_CLI` 的值，按格式的安装形态给：PKGBUILD 用绝对
+/// 安装路径（`/usr/bin/<bin>`），tar.gz 用裸 bin 名（可重定位，解包位置由
+/// 安装脚本决定，zed 同款）。自动生成路径的 `Exec=` 恒为裸 bin 名（靠 PATH）。
+///
+/// category 缺失或认不出时告警并回退 `Utility;`（cargo-bundle
+/// desktop.rs:161-170 同款）。
+pub fn resolve_desktop_entry(
+    meta: &BundleMeta,
+    bin: &str,
+    icon: &str,
+    app_cli: &str,
+    project_dir: &Path,
+    meta_ref: &str,
+    template_override: Option<&Path>,
+) -> Result<(String, String)> {
+    let desktop_id = resolve_desktop_id(meta, project_dir, bin, meta_ref)?;
+    let app_name = meta.name.as_deref().unwrap_or(bin);
+
+    let template_path = match template_override {
+        Some(p) => Some(p.to_path_buf()),
+        None => meta.desktop_template.as_ref().map(|rel| project_dir.join(rel)),
+    };
+    if let Some(template_path) = &template_path {
+        let template = std::fs::read_to_string(template_path)
+            .with_context(|| format!("读取 .desktop 模板 {} 失败", template_path.display()))?;
+        let rendered = render_template(
+            &template,
+            &[
+                ("APP_NAME", app_name),
+                ("APP_ID", &desktop_id),
+                ("APP_CLI", app_cli),
+                ("APP_ICON", icon),
+                ("APP_ARGS", "%F"),
+                ("DO_STARTUP_NOTIFY", "true"),
+            ],
+        );
+        return Ok((format!("{desktop_id}.desktop"), rendered));
+    }
+
+    // 自己生成。category 缺失或认不出时告警并回退 Utility;
+    match meta.category.as_deref().map(AppCategory::parse) {
+        Some(None) => println!(
+            "提示：bundle 元数据的 category = {:?} 无法识别，.desktop 的 Categories \
+             回退为 Utility;。可用值如 \"Developer Tool\" / \"Utility\" / \"Graphics\"。",
+            meta.category.as_deref().unwrap_or("")
+        ),
+        None => println!(
+            "提示：bundle 元数据里没有 category，.desktop 的 Categories 回退为 Utility;。\
+             要更准确请设 category = \"Developer Tool\" 等。"
+        ),
+        Some(Some(_)) => {}
+    }
+    Ok((
+        format!("{desktop_id}.desktop"),
+        render_desktop_entry(meta, bin, icon, &desktop_id),
+    ))
 }
 
 impl BundleMeta {
