@@ -6,16 +6,18 @@
 //! 保证界面不空。本模块提供 [`ctp_default_dark`]——它是主题体系的最低
 //! 保证，任何情况下都能取到。
 //!
+//! ## 本模块还放什么
+//!
+//! CTP 配色（Macchiato / Latte 的 `ThemeColors` / `StatusColors` /
+//! `SyntaxTheme`，以及 [`ctp_default_dark`] 的组装）也在这里——它们只服务
+//! 兜底路径，与 `default_colors`（色阶 + 基底）职责不同。
+//!
 //! ## 与 zed 的差异
 //!
-//! zed 这里是 `zed_default_themes()`：zed 自己的默认灰阶配色，约 300 行
-//! 手写色值。我们改用 **Catppuccin Mocha**（`ctp` = Catppuccin）：它已经
-//! 是本仓库的内置主题（见 [`default_colors`](crate::default_colors)），
-//! 色值不必重复定义一遍，视觉也与其余内置主题一致。
-//!
-//! 另外 zed 的 `ThemeFamily` 带 `scales`（色板集合）字段，我们的色板是
-//! 全局函数（[`default_colors`](crate::default_colors)）不随家族走，
-//! 故没有这个字段。
+//! | zed | 我们 |
+//! |---|---|
+//! | `zed_default_themes()` 注册一个灰阶兜底主题 | [`default_theme_family`] 只注册深色 Macchiato |
+//! | `ThemeFamily.scales` 每家族一份 | 也有该字段（`ThemeFamily` 结构对齐），但填的是全局色阶的聚合 |
 //!
 //! ## 两个补齐规则
 //!
@@ -34,21 +36,18 @@ use crate::{StatusColorsRefinement, ThemeColorsRefinement};
 /// 兜底与基底同风味,免得「找不到主题」时突然换一套观感。
 pub const DEFAULT_DARK_THEME: &str = "Catppuccin Macchiato";
 
-/// zed_default_themes
-/// 兜底主题家族（Catppuccin 三主题：Mocha + Macchiato + Latte）。
+/// 兜底主题家族。对应 zed 的 `zed_default_themes()`（`fallback_themes.rs:15`）。
 ///
-/// Zed 原版的 default_theme_family 只包含一个兜底主题（灰阶默认主题）。
-/// 我们这里改为注册全部三个内置 Catppuccin 主题，方便用户在
-/// ThemeSettings 里直接切换，不需要额外加载 theme JSON 扩展。
-/// 兜底主题家族：只有深色 Macchiato 一个。
+/// zed 原版只注册一个灰阶兜底主题；我们只注册深色 Macchiato 一个
+/// （[`ctp_default_dark`]）。
 ///
 /// **已知取舍**：浅色系统外观下若资产 JSON 没加载（`LoadThemes::JustBase`、
 /// 资产缺失），会退到这个深色主题，UI 变深。接受这个取舍的理由：
 /// 生产路径 `LoadThemes::All` 总会装上 `assets/themes/**/*.json`（含 Aa Latte），
 /// 兜底家族只在「一个主题都装载不到」时兜底，此时「有得用」比「明暗正确」优先。
 ///
-/// 浅色基底仍在 `ThemeColors::light()`（= Catppuccin Latte 配色），只是兜底
-/// 家族不再单独装一个浅色 Theme。
+/// 浅色基底仍在 `ThemeColors::light()`（= Catppuccin Latte 配色，见
+/// [`theme_colors_latte`]），只是兜底家族不再单独装一个浅色 Theme。
 pub fn default_theme_family() -> crate::ThemeFamily {
     crate::ThemeFamily {
         id: "ui-gpui-fallback".into(),
@@ -331,6 +330,25 @@ pub fn status_colors_macchiato() -> StatusColors {
     colors
 }
 
+/// Catppuccin Macchiato 的 `ThemeColors`（= 深色基底 [`ThemeColors::dark`]）。
+///
+/// **结构**：`ThemeColors::zed_dark()` 起步，再覆盖 CTP 调色板有的字段。
+/// 因此本函数只写 CTP 定义了的角色；**CTP 没定义的角色自动留在 zed 默认
+/// 配色上**——这是有意的分层，不是漏配：
+///
+/// - CTP 是固定调色板（26 个语义色），没有 zed 那种 12 级色阶；
+/// - zed 对 vim 模式、diff hunk、code lens、jump label 等角色都有默认值，
+///   CTP JSON 则不提供，故这些字段**来自 zed 默认配色**（`ThemeColors::zed_dark()`）。
+///
+/// 未覆盖字段共 35 个，与 `theme_colors_latte` 的 33 个大致同批
+/// （vim_* 全套、editor_diff_hunk_*、editor_code_lens_foreground、
+/// editor_highlighted_line_background、editor_hover_line_number、
+/// element_selection_background、version_control_word_*、
+/// vim_helix_jump_label_foreground、drop_target_border、
+/// minimap_thumb_border、panel_overlay_hover），外加
+/// scrollbar_thumb_active_background / scrollbar_thumb_border。
+///
+/// 若日后 CTP 或自定义主题要覆盖这些角色，直接在本函数体内补 `colors.x = …`。
 pub fn theme_colors_macchiato() -> ThemeColors {
     let mut colors = ThemeColors::zed_dark();
     {
@@ -613,6 +631,15 @@ pub fn status_colors_latte() -> StatusColors {
     colors
 }
 
+/// Catppuccin Latte 的 `ThemeColors`（= 浅色基底 [`ThemeColors::light`]）。
+///
+/// **结构**同 [`theme_colors_macchiato`]：`ThemeColors::zed_light()` 起步，
+/// 只覆盖 CTP 定义了的角色；未覆盖的 33 个字段**来自 zed 默认配色**
+/// （vim_* 全套、editor_diff_hunk_*、editor_code_lens_foreground、
+/// editor_highlighted_line_background、editor_hover_line_number、
+/// element_selection_background、version_control_word_*、
+/// vim_helix_jump_label_foreground、drop_target_border、
+/// minimap_thumb_border、panel_overlay_hover）。
 pub fn theme_colors_latte() -> ThemeColors {
     // 同 `theme_colors_macchiato`：zed 默认值为基底 + Catppuccin Latte 覆盖。
     let mut colors = ThemeColors::zed_light();
