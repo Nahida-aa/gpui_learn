@@ -1090,6 +1090,8 @@ impl VsCodeSettings {
             pane_split_direction_horizontal: None,
             pane_split_direction_vertical: None,
             resize_all_panels_in_dock: None,
+            // VS Code 没有对应概念，导入时保持默认值（不共享面板宽度）。
+            share_panel_size_in_dock: None,
             restore_on_file_reopen: self.read_bool("workbench.editor.restoreViewState"),
             reveal_if_open: self.read_bool("workbench.editor.revealIfOpen"),
             restore_on_startup: None,
