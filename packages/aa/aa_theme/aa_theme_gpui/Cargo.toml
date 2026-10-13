@@ -55,3 +55,10 @@ strum = { version = "0.27", features = ["derive"] }
 # 此前这里挂的是 zed git 的 syntax_theme，但从未被引用过 —— theme::SyntaxTheme
 # 实际来自本包内一份残缺的手写版（缺 merge / new_test / one_dark / JSON 解析）。
 aa_syntax_theme_gpui.workspace = true
+
+[dev-dependencies]
+# 仅 tests/color_parity.rs 使用：校验 core 的颜色数学与 gpui 逐位一致。
+# 一致性是「core ↔ gpui」之间的关系，故由已依赖 gpui 的这一侧来断言，
+# 而不是让 core 的 dev-dependencies 拖进 gpui 整棵树。
+aa_theme_core.workspace = true
+serde_json.workspace = true

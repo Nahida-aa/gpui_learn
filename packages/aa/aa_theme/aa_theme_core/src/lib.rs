@@ -25,8 +25,6 @@
 
 pub mod color;
 pub mod color_space;
-#[cfg(test)]
-mod parity_check;
 
 pub use color::{
     Hsla, Rgba, black, blue, green, hsla, opaque_grey, red, transparent_black, transparent_white,

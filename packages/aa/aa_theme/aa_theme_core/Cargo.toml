@@ -19,7 +19,6 @@ schemars.workspace = true
 [dev-dependencies]
 # 只在测试里用来验证 hex 序列化往返。
 serde_json.workspace = true
-gpui.workspace = true
 
 [lints]
 workspace = true
