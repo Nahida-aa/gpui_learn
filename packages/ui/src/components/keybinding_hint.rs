@@ -7,7 +7,7 @@ use gpui::{AnyElement, App, BoxShadow, Hsla, IntoElement, Window};
 
 use crate::prelude::*;
 use crate::{KeyBinding, TextSize, rems_from_px};
-use aa_gpui_kit_theme::Appearance;
+use aa_theme_gpui::Appearance;
 
 /// Represents a hint for a keybinding, optionally with a prefix and suffix.
 ///

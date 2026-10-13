@@ -16,7 +16,7 @@ use std::{rc::Rc, sync::Arc};
 
 use crate::prelude::*;
 use crate::{DynamicSpacing, ElevationIndex, IconSize, KeyBinding, ToggleState};
-use aa_gpui_kit_theme::Appearance;
+use aa_theme_gpui::Appearance;
 
 /// Creates a new checkbox.
 pub fn checkbox(id: impl Into<ElementId>, toggle_state: ToggleState) -> Checkbox {

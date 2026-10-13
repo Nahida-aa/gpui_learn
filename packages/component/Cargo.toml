@@ -10,7 +10,7 @@ gpui.workspace = true
 inventory.workspace = true
 parking_lot.workspace = true
 strum.workspace = true
-aa_gpui_kit_theme.workspace = true
+aa_theme_gpui.workspace = true
 
 [dev-dependencies]
 documented.workspace = true

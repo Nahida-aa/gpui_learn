@@ -35,7 +35,7 @@ use serde::Deserialize;
 
 // 明暗形态的「序列化形态」定义在 theme 包（zed 也在 `theme/src/schema.rs`），
 // 这里转出以便本包的调用方从一处取到全部 JSON 结构。
-pub use aa_gpui_kit_theme::AppearanceContent;
+pub use aa_theme_gpui::AppearanceContent;
 
 /// 一个主题家族文件（= 一个主题扩展的 `themes/*.json`）。
 #[derive(Debug, Deserialize)]

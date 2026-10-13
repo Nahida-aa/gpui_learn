@@ -19,7 +19,7 @@ use std::sync::Arc;
 
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, WindowBackgroundAppearance};
 
-use aa_gpui_kit_theme::{
+use aa_theme_gpui::{
     AccentColors, Appearance, PlayerColors, StatusColors, SyntaxTheme, SystemColors, Theme,
     ThemeColors, ThemeFamily, ThemeStyles,
 };
@@ -130,26 +130,26 @@ fn theme_from_style(
 
 fn base_colors(appearance: Appearance) -> ThemeColors {
     match appearance {
-        Appearance::Light => aa_gpui_kit_theme::default_colors::theme_colors_latte(),
-        Appearance::Dark => aa_gpui_kit_theme::default_colors::theme_colors_mocha(),
+        Appearance::Light => aa_theme_gpui::default_colors::theme_colors_latte(),
+        Appearance::Dark => aa_theme_gpui::default_colors::theme_colors_mocha(),
     }
 }
 
 fn base_status(appearance: Appearance) -> StatusColors {
     match appearance {
-        Appearance::Light => aa_gpui_kit_theme::default_colors::status_colors_latte(),
-        Appearance::Dark => aa_gpui_kit_theme::default_colors::status_colors_mocha(),
+        Appearance::Light => aa_theme_gpui::default_colors::status_colors_latte(),
+        Appearance::Dark => aa_theme_gpui::default_colors::status_colors_mocha(),
     }
 }
 
 /// `#rrggbb` / `#rrggbbaa` → `Hsla`，解析失败返回 `None`。
 ///
-/// 实际解析在 [`aa_gpui_kit_theme::try_parse_color`]（对外的公开契约，
+/// 实际解析在 [`aa_theme_gpui::try_parse_color`]（对外的公开契约，
 /// 与 zed 同名）；这里只做 `Result` → `Option` 的适配——加载器遇到
 /// 单个坏颜色值的选择是**跳过并继续**（整份主题不该因为一个字段报废），
 /// 而不是向上传播错误。
 fn parse_hex(hex: &str) -> Option<Hsla> {
-    aa_gpui_kit_theme::try_parse_color(hex).ok()
+    aa_theme_gpui::try_parse_color(hex).ok()
 }
 
 fn highlight_from_syntax(entry: &SyntaxContent) -> HighlightStyle {

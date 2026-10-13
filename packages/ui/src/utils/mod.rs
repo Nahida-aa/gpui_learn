@@ -1,4 +1,4 @@
-use aa_gpui_kit_theme::ActiveTheme as _;
+use aa_theme_gpui::ActiveTheme as _;
 use gpui::App;
 
 pub mod apca_contrast;
@@ -58,13 +58,13 @@ pub fn capitalize(str: &str) -> String {
 ///
 /// outline / markdown 预览这些「按编辑器排版渲染」的组件用它取统一字体。
 pub fn buffer_text_style(cx: &App) -> gpui::TextStyle {
-    let buffer_font = aa_gpui_kit_theme::buffer_font(cx);
+    let buffer_font = aa_theme_gpui::buffer_font(cx);
     gpui::TextStyle {
         color: cx.theme().colors().text,
         font_family: buffer_font.family.clone(),
         font_features: buffer_font.features.clone(),
         font_fallbacks: buffer_font.fallbacks.clone(),
-        font_size: gpui::AbsoluteLength::from(aa_gpui_kit_theme::buffer_font_size(cx)),
+        font_size: gpui::AbsoluteLength::from(aa_theme_gpui::buffer_font_size(cx)),
         font_weight: buffer_font.weight,
         line_height: gpui::relative(1.),
         ..gpui::TextStyle::default()

@@ -3,7 +3,7 @@ use gpui::{
     px,
 };
 
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 
 use crate::ElevationIndex;
 use crate::traits::StyledExt;

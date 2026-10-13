@@ -114,8 +114,8 @@ impl Toggleable for ListHeader {
 impl RenderOnce for ListHeader {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         // zed 这里是 `theme::theme_settings(cx).ui_density(cx)`；我们的设置
-        // 读法对齐 `styles/typography.rs`（`aa_gpui_kit_theme::theme_settings`）。
-        let ui_density = aa_gpui_kit_theme::theme_settings(cx).ui_density(cx);
+        // 读法对齐 `styles/typography.rs`（`aa_theme_gpui::theme_settings`）。
+        let ui_density = aa_theme_gpui::theme_settings(cx).ui_density(cx);
 
         h_flex()
             .id(self.label.clone())

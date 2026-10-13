@@ -2,7 +2,7 @@ use gpui::{
     AnyElement, App, IntoElement, Pixels, RenderOnce, SharedString, Window, div, pattern_slash,
     prelude::*, px, rems,
 };
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 
 /// A single example of a component.
 #[derive(IntoElement)]

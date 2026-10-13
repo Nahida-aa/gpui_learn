@@ -381,7 +381,7 @@ dependencies = [
 name = "aa_gpui_kit_component"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_theme",
+ "aa_theme_gpui",
  "documented",
  "gpui",
  "inventory",
@@ -620,34 +620,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_gpui_kit_theme"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "gpui",
- "palette",
- "parking_lot",
- "refineable",
- "schemars",
- "serde",
- "serde_json",
- "strum 0.27.2",
- "syntax_theme",
- "thiserror 2.0.21",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "aa_gpui_kit_ui"
 version = "0.1.0"
 dependencies = [
  "aa_assets_gpui",
  "aa_gpui_base",
  "aa_gpui_kit_component",
- "aa_gpui_kit_theme",
  "aa_gpui_kit_ui_macros",
  "aa_icons",
+ "aa_theme_gpui",
  "documented",
  "futures",
  "gpui",
@@ -760,6 +741,46 @@ dependencies = [
  "quote",
  "syn 2.0.119",
 ]
+
+[[package]]
+name = "aa_syntax_theme_gpui"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "aa_syntax_theme_iced"
+version = "0.1.0"
+
+[[package]]
+name = "aa_theme_gpui"
+version = "0.1.0"
+dependencies = [
+ "aa_syntax_theme_gpui",
+ "anyhow",
+ "gpui",
+ "palette",
+ "parking_lot",
+ "refineable",
+ "schemars",
+ "serde",
+ "serde_json",
+ "strum 0.27.2",
+ "thiserror 2.0.21",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "aa_theme_iced"
+version = "0.1.0"
+
+[[package]]
+name = "aa_ui_iced"
+version = "0.1.0"
 
 [[package]]
 name = "aa_util"
@@ -2929,8 +2950,8 @@ checksum = "3b31a881d38439026e3d5dd938ab20328d36e23caca8fd5981c42e4b677f5842"
 name = "editor"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_theme",
  "aa_gpui_kit_ui_input",
+ "aa_theme_gpui",
  "gpui",
  "rand 0.9.5",
  "sum_tree",
@@ -8345,14 +8366,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "syntax_theme"
-version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed?rev=c0199504b9cce79bc27524950022ed701bc3ebd5#c0199504b9cce79bc27524950022ed701bc3ebd5"
-dependencies = [
- "gpui",
-]
-
-[[package]]
 name = "sys-locale"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8466,7 +8479,7 @@ dependencies = [
 name = "theme-settings"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_theme",
+ "aa_theme_gpui",
  "gpui",
  "serde",
  "serde_json",
@@ -9100,8 +9113,8 @@ dependencies = [
 name = "ug_05_editor"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_theme",
  "aa_gpui_kit_ui",
+ "aa_theme_gpui",
  "editor",
  "gpui",
  "gpui_platform",

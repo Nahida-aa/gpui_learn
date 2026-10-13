@@ -14,7 +14,7 @@ aa_gpui_kit_ui.workspace = true
 theme-settings.workspace = true
 # 编辑器内核已独立成包(demo 直接用内核的多行 Editor)
 editor.workspace = true
-aa_gpui_kit_theme.workspace = true
+aa_theme_gpui.workspace = true
 tracing-subscriber.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]

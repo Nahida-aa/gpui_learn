@@ -17,7 +17,7 @@ use gpui::{
 use std::ops::Range;
 
 use super::{DisplayMap, Editor, EditorMode};
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 
 /// 一次性渲染元素:持有 `Entity<Editor>`。
 pub struct EditorElement {

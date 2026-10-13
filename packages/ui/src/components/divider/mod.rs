@@ -11,7 +11,7 @@
 //! 本实现与 zed 同构：实线走 `bg`，虚线走 `canvas` + `PathBuilder::stroke`
 //! `dash_array`（zed divider.rs:100-128，`window.paint_path` 画线）。
 
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 
 use gpui::{
     App, Div, Hsla, IntoElement, PathBuilder, Refineable as _, StyleRefinement, Styled, Window,
@@ -111,7 +111,7 @@ impl Divider {
     }
 
     /// 当前边框/分割线颜色（按主题 `colors` 解析）。
-    fn color_hsla(&self, colors: &aa_gpui_kit_theme::ThemeColors) -> Hsla {
+    fn color_hsla(&self, colors: &aa_theme_gpui::ThemeColors) -> Hsla {
         match self.color {
             DividerColor::Border => colors.border,
             DividerColor::BorderFaded => colors.border.opacity(0.6),

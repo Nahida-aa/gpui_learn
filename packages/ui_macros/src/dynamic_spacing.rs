@@ -10,8 +10,8 @@
 //! - 比值以 16px/rem 为基准；`rems(cx)` / `px(cx)` 内部读当前 `UiDensity` 与
 //!   UI 字号，调用方不传参数（与 zed 同形）。
 //!
-//! 生成的代码引用 `gpui::` / `aa_gpui_kit_theme::`，因此**使用方的 Cargo.toml
-//! 必须同时有 gpui 与 aa_gpui_kit_theme 两个依赖**（`aa_gpui_kit_ui` 两者都有）。
+//! 生成的代码引用 `gpui::` / `aa_theme_gpui::`，因此**使用方的 Cargo.toml
+//! 必须同时有 gpui 与 aa_theme_gpui 两个依赖**（`aa_gpui_kit_ui` 两者都有）。
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -126,13 +126,13 @@ pub fn expand(input: TokenStream) -> TokenStream {
             /// 不参与换算 —— 与 zed `DynamicSpacing::spacing_ratio(cx)` 同形。
             pub fn spacing_ratio(&self, cx: &gpui::App) -> f32 {
                 const BASE_REM_SIZE_IN_PX: f32 = 16.0;
-                let density = aa_gpui_kit_theme::ui_density(cx);
+                let density = aa_theme_gpui::ui_density(cx);
                 match self {
                     #(
                         Self::#variants => match density {
-                            aa_gpui_kit_theme::UiDensity::Compact => #compacts / BASE_REM_SIZE_IN_PX,
-                            aa_gpui_kit_theme::UiDensity::Default => #defaults / BASE_REM_SIZE_IN_PX,
-                            aa_gpui_kit_theme::UiDensity::Comfortable => #comfortables / BASE_REM_SIZE_IN_PX,
+                            aa_theme_gpui::UiDensity::Compact => #compacts / BASE_REM_SIZE_IN_PX,
+                            aa_theme_gpui::UiDensity::Default => #defaults / BASE_REM_SIZE_IN_PX,
+                            aa_theme_gpui::UiDensity::Comfortable => #comfortables / BASE_REM_SIZE_IN_PX,
                         },
                     )*
                 }
@@ -146,7 +146,7 @@ pub fn expand(input: TokenStream) -> TokenStream {
             /// 间距值（pixels）。基数是**当前 UI 字号**（不是窗口 rem_size），
             /// 这样「界面缩放」设置能生效 —— 与 zed 一致。
             pub fn px(&self, cx: &gpui::App) -> Pixels {
-                let ui_font_size: f32 = f32::from(aa_gpui_kit_theme::ui_font_size(cx));
+                let ui_font_size: f32 = f32::from(aa_theme_gpui::ui_font_size(cx));
                 px(ui_font_size * self.spacing_ratio(cx))
             }
         }

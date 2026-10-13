@@ -270,7 +270,7 @@ impl RenderOnce for Label {
                 // provider，导致上层（如 aacode 的 theme_settings）覆盖 provider
                 // 后 Label 仍用旧硬编码值。provider 默认实现即返回 monospace，
                 // 故未配置时行为不回退。
-                let buffer_font_family = aa_gpui_kit_theme::buffer_font(cx).family;
+                let buffer_font_family = aa_theme_gpui::buffer_font(cx).family;
                 let background_color = cx.theme().colors().element_background;
 
                 let highlights = code_ranges.iter().map(|range| {

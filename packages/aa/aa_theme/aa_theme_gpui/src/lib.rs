@@ -15,7 +15,7 @@
 //! theme_settings::set_theme_by_name(cx, "Catppuccin Mocha");
 //!
 //! // 任意组件取色（对齐 zed 的 cx.theme()）
-//! use aa_gpui_kit_theme::ActiveTheme as _;
+//! use aa_theme_gpui::ActiveTheme as _;
 //! div().bg(cx.theme().colors().editor_background)
 //! ```
 //!
@@ -35,7 +35,7 @@
 //!
 //! 本 crate 原为 `ui-gpui/src/base/theme`（模块路径 `ui_gpui::base::theme`），
 //! 2026-09 拆成 workspace 独立包。**不提供** `ui_gpui::base::theme` 别名——
-//! 调用方一律用 `aa_gpui_kit_theme::`，让「主题不隶属控件库」这件事在代码里可见。
+//! 调用方一律用 `aa_theme_gpui::`，让「主题不隶属控件库」这件事在代码里可见。
 
 pub mod buffer_line_height;
 pub mod color_space;

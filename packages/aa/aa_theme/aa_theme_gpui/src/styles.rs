@@ -13,7 +13,7 @@
 //! | `system` | `system.rs`([`SystemColors`]) |
 //! | `accents` | `accents.rs`([`AccentColors`]) |
 //! | `players` | `players.rs`([`PlayerColor`] / [`PlayerColors`],协作者配色) |
-//! | `syntax` | `syntax.rs`([`SyntaxTheme`],在 zed 是 `syntax_theme` 的重导出) |
+//! | `syntax` | `syntax.rs`(单行 `pub use`,重导出 zed `crates/syntax_theme`) |
 //!
 //! 与本 crate 其他模块的关系:本模块只放**颜色结构体本身**;
 //! 装配(注册表、全局状态、切换)在 [`Theme`](crate::Theme) 所在的 `state` 模块,
@@ -32,5 +32,5 @@ pub use accents::AccentColors;
 pub use colors::{ThemeColorField, ThemeColors, ThemeColorsRefinement, all_theme_colors};
 pub use players::{PlayerColor, PlayerColors};
 pub use status::{DiagnosticColors, StatusColors, StatusColorsRefinement};
-pub use syntax::SyntaxTheme;
+pub use syntax::*;
 pub use system::SystemColors;

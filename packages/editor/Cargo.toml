@@ -20,7 +20,7 @@ unicode-segmentation = "1"
 
 # 取当前主题色（选区背景、光标色）。编辑器内核不隶属控件库，
 # 主题是独立包（依赖方向 editor → theme）。
-aa_gpui_kit_theme.workspace = true
+aa_theme_gpui.workspace = true
 
 # 表单类输入组件（packages/ui_input）。依赖方向 editor → ui_input → ui：
 # ui_input 里的 InputField 需要编辑器，但它编译期不能依赖本包（会成环），

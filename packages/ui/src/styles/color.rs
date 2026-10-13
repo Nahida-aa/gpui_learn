@@ -1,5 +1,5 @@
 use crate::{Label, LabelCommon, component_prelude::*, v_flex};
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 use documented::{DocumentedFields, DocumentedVariants};
 use gpui::{App, Hsla, IntoElement, ParentElement, Styled};
 

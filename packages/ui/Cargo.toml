@@ -37,7 +37,7 @@ aa_assets_gpui.workspace = true
 # 输入框需要编辑器内核，放在本包会让 `ui → editor`，而 `editor` 反过来要用
 # `ui` 的 Label/Icon/主题色就成环了。现在输入 facade 住在 editor 包，
 # 表单壳 InputField 住在 aa_gpui_kit_ui_input（依赖本包、编译期不依赖 editor）。
-aa_gpui_kit_theme.workspace = true
+aa_theme_gpui.workspace = true
 
 # 基础控件层（packages/base）：geometry / icon / slider。**zed 的 ui 里没有
 # 对应物**，是我们自研的一层。方向是单向 `ui → base`（base 不反向依赖 ui/theme），

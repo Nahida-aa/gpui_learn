@@ -582,7 +582,9 @@ pub const ZED_DEFAULT_ICON_THEME_NAME: &str = "Zed (Default)";
 /// 完,而 `LoadThemes::JustBase` 下注册表拿到的资产源是空的,读不到任何资产。
 /// JSON 只在这里用,故没有加进 assets crate 的嵌入列表(避免二进制里两份)。
 const CATPPUCCIN_ICONS_JSON: &str =
-    include_str!("../../../../assets/icon_themes/catppuccin-icons.json");
+    // 相对**源文件**目录 src/icon_theme/，上 6 级到仓库根；
+    // 下面两处 CARGO_MANIFEST_DIR 的 4 级基准不同，别互相照抄。
+    include_str!("../../../../../../assets/icon_themes/catppuccin-icons.json");
 
 /// 内置 Catppuccin 图标主题家族:Macchiato(暗)+ Latte(浅)两个 variant,
 /// 每个 1810 条后缀、400 个图标、10 条完整文件名。
@@ -808,7 +810,7 @@ mod tests {
     fn every_builtin_icon_path_exists_in_assets() {
         // 表里每个路径都必须能在 assets 下找到,否则文件树会拿到空白图标
         // (上游还有 Frappé / Mocha 等 variant,补齐时这条测试就是守门的)。
-        let assets = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        let assets = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../../assets");
         for theme in catppuccin_icon_theme_family().themes {
             let paths = theme
                 .file_icons
@@ -878,7 +880,7 @@ mod tests {
             .map(|(_, path)| *path)
             .filter(|path| {
                 !std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-                    .join("../../assets")
+                    .join("../../../../assets")
                     .join(path)
                     .exists()
             })

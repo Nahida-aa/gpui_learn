@@ -7,14 +7,14 @@
 //! 这里体现「装载」与「状态」的分工：本模块只负责**把主题装进注册表**
 //! （[`init`] / [`load_asset_themes`]）与**按名字切**（[`set_theme_by_name`]），
 //! 而「当前主题是什么」这份状态归 theme 包的 `GlobalTheme` 管
-//! （切换最终调用 `aa_gpui_kit_theme::set_theme`）。
+//! （切换最终调用 `aa_theme_gpui::set_theme`）。
 
 use std::borrow::Cow;
 use std::sync::Arc;
 
-use aa_gpui_kit_theme::default_colors::{catppuccin_latte, catppuccin_mocha};
-use aa_gpui_kit_theme::registry::ThemeRegistry;
-use aa_gpui_kit_theme::{FontFamilyCache, LoadThemes, SystemAppearance, Theme, set_theme};
+use aa_theme_gpui::default_colors::{catppuccin_latte, catppuccin_mocha};
+use aa_theme_gpui::registry::ThemeRegistry;
+use aa_theme_gpui::{FontFamilyCache, LoadThemes, SystemAppearance, Theme, set_theme};
 use gpui::{App, AssetSource, Result, SharedString};
 
 /// 把 gpui 全局里的 `Arc<dyn AssetSource>` 适配成注册表要的
@@ -38,8 +38,8 @@ impl AssetSource for GlobalAssets {
 /// 装入内置主题（Catppuccin Mocha / Latte）。
 ///
 /// 注册表构造时已装入兜底家族；这里再补上成对的 Mocha / Latte。
-fn builtin_family() -> aa_gpui_kit_theme::ThemeFamily {
-    aa_gpui_kit_theme::ThemeFamily {
+fn builtin_family() -> aa_theme_gpui::ThemeFamily {
+    aa_theme_gpui::ThemeFamily {
         id: "ui-gpui-default".into(),
         name: "ui-gpui Default".into(),
         author: String::new(),
@@ -133,7 +133,7 @@ pub fn list_theme_names(cx: &App) -> Vec<gpui::SharedString> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aa_gpui_kit_theme::ActiveTheme as _;
+    use aa_theme_gpui::ActiveTheme as _;
 
     /// 兜底路径：未 `init` 时 `cx.theme()` 也应拿到内置深色主题。
     /// 这条链路在注册表重构后改成直接构造，单独锁一下。

@@ -89,4 +89,4 @@ pub use crate::styles::units::{rems_from_px, vh, vw};
 
 pub use crate::component_prelude::*;
 
-pub use aa_gpui_kit_theme::ActiveTheme;
+pub use aa_theme_gpui::ActiveTheme;

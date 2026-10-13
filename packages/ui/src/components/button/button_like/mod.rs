@@ -29,7 +29,7 @@ use gpui::{
     Window, div, prelude::*, px,
 };
 
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 
 use crate::components::button::ClickHandler;
 use crate::components::button::{ButtonRadius, ButtonStyle};

@@ -11,7 +11,7 @@ use gpui::{
     UniformListScrollHandle, Window, ease_in_out, prelude::FluentBuilder as _, px, quad, relative,
     size,
 };
-use aa_gpui_kit_theme::ActiveTheme as _;
+use aa_theme_gpui::ActiveTheme as _;
 use smallvec::SmallVec;
 
 use std::ops::Range;

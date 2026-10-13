@@ -18,7 +18,7 @@
 //! ## 相关 workspace 包（不在本 crate 内）
 //!
 //! - `aa_gpui_base`（`packages/base`）：图标 / 滑块 / 几何数学
-//! - `aa_gpui_kit_theme`（`packages/theme`）：主题系统，组件用它取色
+//! - `aa_theme_gpui`（`packages/theme`）：主题系统，组件用它取色
 //! - `aa_assets_gpui`（`packages/aa/aa_assets/aa_assets_gpui`）：图标等资源内嵌的 gpui 适配层
 //! - `aa_gpui_kit_ui_input`（`packages/ui_input`）：需要编辑器的表单件
 

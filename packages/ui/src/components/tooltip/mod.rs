@@ -32,7 +32,7 @@ use gpui::{
     SharedString, Window, anchored, deferred, div, prelude::*, px,
 };
 
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 
 // `elevation_2` / `text_ui` 来自 crate 自己的 StyledExt / StyledTypography trait，
 // 这里是按需引入（本文件顶部用的是 gpui 的 prelude，不含它们）。
@@ -699,7 +699,7 @@ where
     // zed 这里写 `theme::theme_settings(app).ui_font(app)`；我们 theme 已经有
     // `ui_font` 便捷函数（未注册设置时回退默认实现，不 panic）。
     let app = std::borrow::Borrow::borrow(&*cx);
-    let ui_font = aa_gpui_kit_theme::ui_font(app);
+    let ui_font = aa_theme_gpui::ui_font(app);
 
     // padding to avoid tooltip appearing right below the mouse cursor
     div().pl_2().pt_2p5().child(

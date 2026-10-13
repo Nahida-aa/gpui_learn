@@ -9,7 +9,7 @@
 
 use gpui::Hsla;
 
-use aa_gpui_kit_theme::Theme;
+use aa_theme_gpui::Theme;
 
 use crate::components::button::ButtonStyle;
 

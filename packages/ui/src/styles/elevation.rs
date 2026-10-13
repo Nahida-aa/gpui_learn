@@ -1,6 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
-use aa_gpui_kit_theme::{ActiveTheme, Appearance};
+use aa_theme_gpui::{ActiveTheme, Appearance};
 use gpui::{App, BoxShadow, Hsla, hsla, px};
 
 /// Today, elevation is primarily used to add shadows to elements, and set the correct background for elements like buttons.

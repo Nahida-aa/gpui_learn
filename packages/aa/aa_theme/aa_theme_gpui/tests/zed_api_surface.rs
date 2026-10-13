@@ -3,7 +3,7 @@
 //! 这份清单来自 zed 的真实调用方代码（用户提供的 import 列表），
 //! 外部代码照 zed 的习惯写 import 时不应遇到缺符号。
 #[allow(unused_imports)]
-use aa_gpui_kit_theme::{
+use aa_theme_gpui::{
     AccentColors, Appearance, AppearanceContent, DEFAULT_DARK_THEME, DEFAULT_ICON_THEME_NAME,
     GlobalTheme, LoadThemes, PlayerColor, PlayerColors, StatusColors, SyntaxTheme,
     SystemAppearance, SystemColors, Theme, ThemeColors, ThemeFamily, ThemeRegistry,
@@ -20,5 +20,5 @@ fn zed_public_api_surface_is_covered() {
     // file_icons 之类「只依赖 theme、不依赖 theme_settings」的 crate 要用它们。
     let _: fn(LoadThemes, &mut gpui::App) = init;
     let _: fn(&gpui::App) -> &std::sync::Arc<Theme> = GlobalTheme::theme;
-    let _: fn(&gpui::App) -> &std::sync::Arc<aa_gpui_kit_theme::IconTheme> = GlobalTheme::icon_theme;
+    let _: fn(&gpui::App) -> &std::sync::Arc<aa_theme_gpui::IconTheme> = GlobalTheme::icon_theme;
 }

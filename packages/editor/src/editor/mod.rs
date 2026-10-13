@@ -43,7 +43,7 @@ pub(super) use selection::Selection;
 pub(super) use undo::{Change, EditIntent};
 
 use crate::engine::{OffsetUtf16, Rope};
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 pub use selection::SelectionGoal;
 pub use undo::UndoManager;
 

@@ -1,5 +1,5 @@
 use crate::prelude::*;
-use aa_gpui_kit_theme::ActiveTheme;
+use aa_theme_gpui::ActiveTheme;
 use gpui::{
     AnyElement, App, IntoElement, ParentElement, Rems, RenderOnce, SharedString, Styled, Window,
     div, rems,
@@ -11,7 +11,7 @@ use crate::{Color, rems_from_px};
 pub trait StyledTypography: Styled + Sized {
     /// Sets the font family to the buffer font.
     fn font_buffer(self, cx: &App) -> Self {
-        let settings = aa_gpui_kit_theme::theme_settings(cx);
+        let settings = aa_theme_gpui::theme_settings(cx);
         let buffer_font_family = settings.buffer_font(cx).family.clone();
 
         self.font_family(buffer_font_family)
@@ -19,7 +19,7 @@ pub trait StyledTypography: Styled + Sized {
 
     /// Sets the font family to the UI font.
     fn font_ui(self, cx: &App) -> Self {
-        let settings = aa_gpui_kit_theme::theme_settings(cx);
+        let settings = aa_theme_gpui::theme_settings(cx);
         let ui_font_family = settings.ui_font(cx).family.clone();
 
         self.font_family(ui_font_family)
@@ -81,7 +81,7 @@ pub trait StyledTypography: Styled + Sized {
     /// This should only be used for text that is displayed in a buffer,
     /// or other places that text needs to match the user's buffer font size.
     fn text_buffer(self, cx: &App) -> Self {
-        let settings = aa_gpui_kit_theme::theme_settings(cx);
+        let settings = aa_theme_gpui::theme_settings(cx);
         self.text_size(settings.buffer_font_size(cx))
     }
 }
@@ -132,7 +132,7 @@ pub enum TextSize {
 impl TextSize {
     /// Returns the text size in rems.
     pub fn rems(self, cx: &App) -> Rems {
-        let settings = aa_gpui_kit_theme::theme_settings(cx);
+        let settings = aa_theme_gpui::theme_settings(cx);
 
         match self {
             Self::Large => rems_from_px(16_f32),
@@ -145,7 +145,7 @@ impl TextSize {
     }
 
     pub fn pixels(self, cx: &App) -> Pixels {
-        let settings = aa_gpui_kit_theme::theme_settings(cx);
+        let settings = aa_theme_gpui::theme_settings(cx);
 
         match self {
             Self::Large => px(16.),
@@ -211,7 +211,7 @@ pub struct Headline {
 
 impl RenderOnce for Headline {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        let ui_font = aa_gpui_kit_theme::theme_settings(cx).ui_font(cx).clone();
+        let ui_font = aa_theme_gpui::theme_settings(cx).ui_font(cx).clone();
 
         div()
             .font(ui_font)

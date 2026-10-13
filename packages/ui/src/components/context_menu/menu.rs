@@ -3,7 +3,7 @@
 //! **整文件照搬 zed**（2535 行），只改了三处外部引用，其余连注释一起原样：
 //!
 //! 1. `use theme::BufferLineHeight` / `theme::theme_settings(cx)` →
-//!    `aa_gpui_kit_theme::*`；
+//!    `aa_theme_gpui::*`；
 //! 2. `use web_time::Instant` → `std::time::Instant`；
 //! 3. `use menu::{...}` 不动 —— 我们和 zed 一样直接依赖 zed 的 `menu` crate
 //!    （`Cargo.toml` 里的 `menu.workspace = true`），动作名仍是
@@ -35,7 +35,7 @@ use std::{
     rc::Rc,
     time::Duration,
 };
-use aa_gpui_kit_theme::BufferLineHeight;
+use aa_theme_gpui::BufferLineHeight;
 use std::time::Instant;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -2223,7 +2223,7 @@ impl ContextMenuItem {
 
 impl Render for ContextMenu {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme_settings = aa_gpui_kit_theme::theme_settings(cx);
+        let theme_settings = aa_theme_gpui::theme_settings(cx);
         let ui_font_size = theme_settings.ui_font_size(cx);
         let ui_font_family = theme_settings.ui_font(cx).family.clone();
         // Menus can be deferred from inside elements that override the text

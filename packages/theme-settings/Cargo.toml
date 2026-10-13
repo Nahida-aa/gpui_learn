@@ -12,7 +12,7 @@ workspace = true
 # 单向依赖 aa_gpui_kit_theme：本包知道「主题 JSON 长什么样」并把它装进主题
 # 注册表；theme 包反过来完全不知道 JSON 存在——与 zed 的
 # `crates/theme` ← `crates/theme_settings` 同一方向。
-aa_gpui_kit_theme.workspace = true
+aa_theme_gpui.workspace = true
 gpui.workspace = true
 tracing.workspace = true
 

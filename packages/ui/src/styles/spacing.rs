@@ -15,19 +15,19 @@
 //! div().p(DynamicSpacing::Base16.rems(cx))
 //! ```
 //!
-//! 密度与 UI 字号都来自 `aa_gpui_kit_theme`（读注册的
+//! 密度与 UI 字号都来自 `aa_theme_gpui`（读注册的
 //! `ThemeSettingsProvider`）—— 与 zed 完全同形，调用方零参数。
 
 use gpui::{Pixels, Rems, px, rems};
 
 use aa_gpui_kit_ui_macros::derive_dynamic_spacing;
 
-/// UI 密度：**定义在 `aa_gpui_kit_theme`**（对齐 zed `theme::UiDensity`），
+/// UI 密度：**定义在 `aa_theme_gpui`**（对齐 zed `theme::UiDensity`），
 /// 这里原样转出，所以外部路径 `aa_gpui_kit_ui::UiDensity` 不变。
 ///
 /// 2026-09 合并：此前 `ui` 里另有一份同名 `UiDensity`，与 theme 的那份重复；
 /// 已删除只留 theme 的 —— `ThemeSettingsProvider::ui_density` 返回的就是它。
-pub use aa_gpui_kit_theme::UiDensity;
+pub use aa_theme_gpui::UiDensity;
 
 // 档位列表与 zed spacing.rs 保持一致（便于调用方代码与 zed 交互对照）。
 derive_dynamic_spacing![
@@ -61,7 +61,7 @@ mod tests {
         ui_font_size: Pixels,
     }
 
-    impl aa_gpui_kit_theme::ThemeSettingsProvider for FixedSettings {
+    impl aa_theme_gpui::ThemeSettingsProvider for FixedSettings {
         fn ui_font(&self, _cx: &App) -> &gpui::Font {
             unimplemented!("测试不涉及字体")
         }
@@ -85,7 +85,7 @@ mod tests {
         cx: &mut App,
         f: impl FnOnce(&mut App) -> R,
     ) -> R {
-        aa_gpui_kit_theme::set_theme_settings_provider(
+        aa_theme_gpui::set_theme_settings_provider(
             Box::new(FixedSettings {
                 density,
                 ui_font_size,
