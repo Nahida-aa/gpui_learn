@@ -499,7 +499,14 @@
   // The default number of context lines shown in multibuffer excerpts.
   "excerpt_context_lines": 2,
   // Globs to match against file paths to determine if a file is private.
-  "private_files": ["**/.env*", "**/*.pem", "**/*.key", "**/*.cert", "**/*.crt", "**/secrets.yml"],
+  "private_files": [
+    "**/.env*",
+    "**/*.pem",
+    "**/*.key",
+    "**/*.cert",
+    "**/*.crt",
+    "**/secrets.yml"
+  ],
   // Whether to use additional LSP queries to format (and amend) the code after
   // every "trigger" symbol input, defined by LSP server capabilities.
   "use_on_type_format": true,
@@ -633,7 +640,7 @@
     // Whether to open the menus in the titlebar on hover.
     "open_menus_on_hover": false,
     // The layout of window control buttons in the title bar (Linux only).
-    "button_layout": "platform_default",
+    "button_layout": "platform_default"
   },
   "audio": {
     // Select specific output audio device.
@@ -876,7 +883,7 @@
   // between them. Can be a combination of "left", "right" and "bottom";
   // "bottom" is ignored because that dock's height is not shared.
   // Empty by default: each panel keeps its own remembered width, matching Zed.
-  "share_panel_size_in_dock": [],
+  "share_panel_size_in_dock": ["right"],
   "project_panel": {
     // Whether to show the project panel button in the status bar
     "button": true,
@@ -2444,7 +2451,14 @@
     },
     "EEx": {
       "format_on_save": "on",
-      "language_servers": ["elixir-ls", "!expert", "!dexter", "!next-ls", "!lexical", "..."]
+      "language_servers": [
+        "elixir-ls",
+        "!expert",
+        "!dexter",
+        "!next-ls",
+        "!lexical",
+        "..."
+      ]
     },
     "Elixir": {
       "format_on_save": "on",
@@ -2486,7 +2500,14 @@
     },
     "HEEx": {
       "format_on_save": "on",
-      "language_servers": ["elixir-ls", "!expert", "!dexter", "!next-ls", "!lexical", "..."]
+      "language_servers": [
+        "elixir-ls",
+        "!expert",
+        "!dexter",
+        "!next-ls",
+        "!lexical",
+        "..."
+      ]
     },
     "HTML": {
       "prettier": {
@@ -2546,7 +2567,13 @@
       }
     },
     "PHP": {
-      "language_servers": ["phpactor", "!intelephense", "!phptools", "!phpantom", "..."],
+      "language_servers": [
+        "phpactor",
+        "!intelephense",
+        "!phptools",
+        "!phpantom",
+        "..."
+      ],
       "prettier": {
         "allowed": true,
         "plugins": ["@prettier/plugin-php"],
@@ -2561,7 +2588,12 @@
       }
     },
     "Proto": {
-      "language_servers": ["buf", "!protols", "!protobuf-language-server", "..."]
+      "language_servers": [
+        "buf",
+        "!protols",
+        "!protobuf-language-server",
+        "..."
+      ]
     },
     "Python": {
       "code_actions_on_format": {
@@ -2573,7 +2605,15 @@
         }
       },
       "debuggers": ["Debugpy"],
-      "language_servers": ["basedpyright", "ruff", "!ty", "!pyrefly", "!pyright", "!pylsp", "..."]
+      "language_servers": [
+        "basedpyright",
+        "ruff",
+        "!ty",
+        "!pyrefly",
+        "!pyright",
+        "!pylsp",
+        "..."
+      ]
     },
     "Ruby": {
       "language_servers": [
@@ -2904,7 +2944,13 @@
   "windows": {
     "languages": {
       "PHP": {
-        "language_servers": ["intelephense", "!phpactor", "!phptools", "!phpantom", "..."]
+        "language_servers": [
+          "intelephense",
+          "!phpactor",
+          "!phptools",
+          "!phpantom",
+          "..."
+        ]
       }
     }
   },

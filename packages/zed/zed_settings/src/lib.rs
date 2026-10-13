@@ -110,12 +110,12 @@ impl fmt::Display for WorktreeId {
 // `crate_relative` 必须回退**三级**到仓库根的 `assets/`，而 `root_relative`
 // 只有一级（后者相对 git 根，前者相对本 crate 的 Cargo.toml 目录）。
 // 本 crate 在 `packages/zed/zed_settings/`，两级只回到 `packages/`，会指向
-// `packages/assets/` —— 那是 `aa_gpui_kit_assets` 的 crate 目录（只有 src/ 和
-// Cargo.toml，没有任何 settings 文件），于是 release 构建内嵌了个空目录，
-// 启动时 `asset_str::<SettingsAssets>("settings/default.json")` 拿不到文件直接
-// panic。dev 构建因为走 root_relative 读运行时文件系统，反而一直正常 ——
-// 只有 release 包会崩。三个回退是 `aa_gpui_kit_assets` 那个 `../../assets` 的
-// 对照：它在 `packages/assets/`，两级正好落到仓库根。
+// `packages/assets/` —— 那里曾放资源 crate 的目录（只有 src/ 和 Cargo.toml，
+// 没有任何 settings 文件），于是 release 构建内嵌了个空目录，启动时
+// `asset_str::<SettingsAssets>("settings/default.json")` 拿不到文件直接 panic。
+// dev 构建因为走 root_relative 读运行时文件系统，反而一直正常 —— 只有
+// release 包会崩。三个回退可与 `aa_assets_core` 的对照：它在
+// `packages/aa/aa_assets/aa_assets_core/`，三级回退正好落到仓库根。
 ::util::fs_embed! {
     pub struct SettingsAssets,
     crate_relative = "../../../assets",
@@ -199,8 +199,8 @@ pub fn initial_local_debug_tasks_content() -> Cow<'static, str> {
 #[cfg(test)]
 mod embed_regression_tests {
     // 回归测试：曾因 fs_embed! 的 crate_relative 层级错位（"../../assets" 在
-    // packages/zed/zed_settings/ 下只回到 packages/，指向 aa_gpui_kit_assets 的
-    // crate 目录而非仓库根 assets/），导致 release 构建内嵌空目录，
+    // packages/zed/zed_settings/ 下只回到 packages/，指向某个 crate 的目录
+    // 而非仓库根 assets/），导致 release 构建内嵌空目录，
     // default_settings() 一调用就 panic：settings/default.json。
     // dev 构建走 root_relative 读运行时文件系统所以一直正常 —— 只有 release 会崩。
     //

@@ -204,9 +204,13 @@ macro_rules! __fs_embed {
 ///
 /// | crate location | `crate_relative` |
 /// |---|---|
-/// | `packages/assets/` (depth 1) | `"../../assets"` |
+/// | `packages/aa/aa_assets/aa_assets_core/` (depth 3) | `"../../../../assets"` |
 /// | `packages/zed/zed_settings/` (depth 2) | `"../../../assets"` |
 /// | `crates/settings/` (depth 1) | `"../../assets"` |
+///
+/// 注意第一行用的是 `RustEmbed` 的 `#[folder]` 而不是 `crate_relative`；
+/// 两者都按 crate 目录起算，但 `#[folder]` 不在 dev/release 间切换，
+/// 写错时两种构建都会静默内嵌出空目录 —— 靠 `cargo run` 发现不了。
 ///
 /// **Do not copy another call site's `crate_relative` verbatim** — a sibling crate
 /// one directory deeper needs one more `../` for the same target.

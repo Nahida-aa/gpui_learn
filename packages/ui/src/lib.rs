@@ -19,7 +19,7 @@
 //!
 //! - `aa_gpui_base`（`packages/base`）：图标 / 滑块 / 几何数学
 //! - `aa_gpui_kit_theme`（`packages/theme`）：主题系统，组件用它取色
-//! - `aa_gpui_kit_assets`（`packages/assets`）：图标等资源内嵌
+//! - `aa_assets_gpui`（`packages/aa/aa_assets/aa_assets_gpui`）：图标等资源内嵌的 gpui 适配层
 //! - `aa_gpui_kit_ui_input`（`packages/ui_input`）：需要编辑器的表单件
 
 pub mod animation;
@@ -42,9 +42,12 @@ pub use components::label::{
 pub use styles::units::{vh, vw, BASE_REM_SIZE_IN_PX, rems_from_px};
 mod styles;
 pub mod traits;
-/// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `assets` crate 统一加载。
+/// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `aa_assets_core` 统一加载。
 /// aa_gpui_kit_ui 复用它，不自带资源目录。
-pub use aa_gpui_kit_assets::Assets;
+///
+/// 沿用 `Assets` 这个名字（而非 `GpuiAssets`）是为了不打断下游的
+/// `ui::Assets` 路径；实际类型是 `aa_assets_gpui::GpuiAssets`。
+pub use aa_assets_gpui::GpuiAssets as Assets;
 
 // ---- 基础控件层：来自 aa_gpui_base（原 packages/ui/src/base，2026-09 拆出）----
 pub use aa_gpui_base::{

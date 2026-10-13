@@ -25,7 +25,6 @@ members = [
     "packages/aa/aa_language_model_core",
     "packages/aa/aa_settings_json",
     "packages/aa/aa_settings_macros",
-    "packages/assets",
     "packages/base",
     "packages/clock",
     "packages/component",
@@ -49,7 +48,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/aa_assets/aa_assets_core", "packages/aa/aa_assets/aa_assets_gpui",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -86,6 +85,8 @@ publish = false   # 教学仓库，不发布到 crates.io
 # 子包里写 `gpui = { workspace = true }` 就能拿到这里统一定义的源与版本，
 # 避免每个例子各写一遍 git 源导致版本漂移。
 [workspace.dependencies]
+aa_assets_core = { path = "packages/aa/aa_assets/aa_assets_core" }
+aa_assets_gpui = { path = "packages/aa/aa_assets/aa_assets_gpui" }
 aa_cloud_llm_client = { path = "packages/aa/aa_cloud_llm_client" }
 async-compression = { version = "0.4", features = ["bzip2", "gzip", "futures-io"] }
 async-lock = "3.4.2"
@@ -198,7 +199,7 @@ uuid = { version = "1.1.2", features = ["v4", "v5", "v7", "serde"] }
 # 锁到 8.11.x 可保证本仓库与 aacode 的 rust-embed 三件套版本一致。
 #
 # features 也要与上游 zed（Cargo.toml L825）、aacode 三方一致，都开 compression：
-# 本仓库的 packages/assets 经 aacode 的 [patch] 以 path 依赖被引入，而 aacode 侧
+# 本仓库的资源 crate 经 aacode 的 [patch] 以 path 依赖被引入，而 aacode 侧
 # 开了 compression；feature 在同一个编译单元内会被 cargo 合并（取并集），
 # 但若本仓库单独构建时不开，两边的编译产物就会不一致（同一 crate 在两个
 # workspace 链接到不同的 feature 组合）。
@@ -249,9 +250,11 @@ aa_icons = { path = "packages/icons" }
 # 所以任何层都可以引用它而不会把 gpui 拖进依赖图。
 aa_clock = { path = "packages/clock" }
 
-# 工作区共享的资源 crate（packages/assets）：内嵌仓库根 assets/ 下的字体/图标等。
-# 子包用 `assets.workspace = true` 引用，位置统一在此声明，避免各包散写相对路径。
-aa_gpui_kit_assets = { path = "packages/assets" }
+# 工作区共享的资源 crate：内嵌仓库根 assets/ 下的字体/图标等。分两层：
+#   aa_assets_core —— 只有 rust-embed，不依赖 gpui，任何 crate 都能用；
+#   aa_assets_gpui —— 给 core 的类型套上 gpui::AssetSource（孤儿规则要求
+#                     必须有本地类型承载 impl，见该 crate 头部注释）。
+# 位置统一在此声明，避免各包散写相对路径。
 
 # 基础控件层（packages/base）：geometry / icon / slider。
 # **zed 的 ui 里没有对应物** —— 这是我们自研的一层，`aa_gpui_kit_ui` 在它
@@ -463,7 +466,7 @@ gpui_util = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cc
 # of LanguageFn would make `tree_sitter_json::LANGUAGE.into()` fail.
 tree-sitter-language = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }
 # [workspace.lints]：统一的 lint 配置，供子包用 `lints.workspace = true` 继承
-# （如 packages/assets）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
+# （如 packages/aa/aa_assets/aa_assets_core）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
 [workspace.lints.rust]
 # 允许 #[cfg(...)] 属性中出现未识别的配置条件
 unexpected_cfgs = { level = "allow" }

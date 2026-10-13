@@ -1,0 +1,13 @@
+[package]
+name = "aa_assets_core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+rust-embed.workspace = true
+
+[lints]
+workspace = true
