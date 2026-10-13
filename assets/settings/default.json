@@ -871,6 +871,12 @@
   // Whether to resize all the panels in a dock when resizing the dock.
   // Can be a combination of "left", "right" and "bottom".
   "resize_all_panels_in_dock": ["left"],
+
+  // Whether panels in a dock keep the dock's current width when switching
+  // between them. Can be a combination of "left", "right" and "bottom";
+  // "bottom" is ignored because that dock's height is not shared.
+  // Empty by default: each panel keeps its own remembered width, matching Zed.
+  "share_panel_size_in_dock": [],
   "project_panel": {
     // Whether to show the project panel button in the status bar
     "button": true,

@@ -150,6 +150,19 @@ pub struct WorkspaceSettingsContent {
     ///
     /// Default: ["left"]
     pub resize_all_panels_in_dock: Option<Vec<DockPosition>>,
+    /// Whether panels in a dock keep the dock's current width when you switch
+    /// between them. When enabled, activating a panel copies the outgoing
+    /// panel's size onto the incoming one, so toggling between e.g. the Project
+    /// and Outline panels no longer makes the dock jump between two remembered
+    /// widths. Each panel still stores its own size, so turning this back off
+    /// restores the per-panel widths that were in effect.
+    ///
+    /// Only affects horizontal docks (left / right); a bottom dock's height is
+    /// left alone. That mirrors `panel_uses_flexible_width`, which likewise
+    /// gates on `position.axis() == Axis::Horizontal`.
+    ///
+    /// Default: []
+    pub share_panel_size_in_dock: Option<Vec<DockPosition>>,
     /// Whether to automatically close files that have been deleted on disk.
     ///
     /// Default: false
