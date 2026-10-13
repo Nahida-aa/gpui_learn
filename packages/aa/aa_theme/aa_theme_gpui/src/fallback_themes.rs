@@ -25,8 +25,6 @@
 //! 作用于 `Refineable` 生成的 refinement 类型：主题 JSON 只写部分字段时，
 //! 未写的那些按语义**派生**（而不是硬编码一个值）。
 
-use gpui::Hsla;
-
 use crate::default_colors::{
     h, ha, status_colors_macchiato, syntax_macchiato, theme_colors_macchiato,
 };
@@ -107,43 +105,6 @@ pub fn apply_theme_color_defaults(
             selection.a = 0.25;
         }
         theme_colors.element_selection_background = Some(selection);
-    }
-}
-
-/// 一次性套用两条补齐规则（主题装载的「派生补齐」阶段）。
-pub fn apply_defaults(
-    colors: &mut ThemeColorsRefinement,
-    status: &mut StatusColorsRefinement,
-    players: &PlayerColors,
-) {
-    apply_status_color_defaults(status);
-    apply_theme_color_defaults(colors, players);
-}
-
-/// 便捷：非 refinement 版本的状态色补齐——直接改 `StatusColors` 里
-/// 仍是全透明的 `*_background` 字段（值为 `Hsla::default()` 时视为未设置）。
-pub fn fill_status_backgrounds(status: &mut crate::StatusColors) {
-    let transparent = Hsla::default();
-    let pairs = [
-        (status.conflict, &mut status.conflict_background),
-        (status.created, &mut status.created_background),
-        (status.deleted, &mut status.deleted_background),
-        (status.error, &mut status.error_background),
-        (status.hidden, &mut status.hidden_background),
-        (status.hint, &mut status.hint_background),
-        (status.ignored, &mut status.ignored_background),
-        (status.info, &mut status.info_background),
-        (status.modified, &mut status.modified_background),
-        (status.predictive, &mut status.predictive_background),
-        (status.renamed, &mut status.renamed_background),
-        (status.success, &mut status.success_background),
-        (status.unreachable, &mut status.unreachable_background),
-        (status.warning, &mut status.warning_background),
-    ];
-    for (foreground, background) in pairs {
-        if *background == transparent {
-            *background = foreground.opacity(0.25);
-        }
     }
 }
 
@@ -295,16 +256,4 @@ mod tests {
         );
     }
 
-    #[test]
-    fn fill_status_backgrounds_handles_concrete_status_colors() {
-        let mut status = crate::StatusColors::dark();
-        // 人为清空一个背景，模拟“作者没给”
-        status.error_background = Hsla::default();
-        fill_status_backgrounds(&mut status);
-        assert!(
-            status.error_background.a > 0.0,
-            "应被前景色补齐: {:?}",
-            status.error_background
-        );
-    }
 }
