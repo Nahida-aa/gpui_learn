@@ -1,3 +1,24 @@
+//! # ⚠️ 已废弃：本包当前没有消费者，不要作为参考
+//!
+//! 2026-10-14 确认：原先唯一的消费方已换成 AAgent 自己的
+//! `packages/theme_settings`
+//! （AAgent `Cargo.toml`：`theme_settings = { path = "packages/theme_settings" }`），
+//! 本包在 gpui_learn 与 AAgent 两侧都**没有依赖方**，处于「留着未删」状态。
+//!
+//! **排查主题相关问题时不要读本包**：下面的说明与 `init_theme.rs` 的内容都已
+//! 过时——例如它写着「内置主题只有 Mocha / Latte、默认回退 Mocha」，而实际
+//! 入口在 AAgent 侧：
+//! - `packages/theme_settings/src/bundled_themes.rs`：注册内置主题
+//! - `packages/theme_settings/src/lib.rs`：`init()` 与默认主题兜底（现在是
+//!   `catppuccin_macchiato()`）
+//!
+//! 保留条件：将来若要把「主题 JSON 装载」这段搬回 gpui_learn，本包仍是参考
+//! 实现；在那之前不要改它，也不要照它改别处。
+//!
+//! ---
+//!
+//! 以下为历史说明（对应 zed `crates/theme_settings` 的设计）：
+//!
 //! # theme-settings —— 主题的 JSON 装载与装配
 //!
 //! 本包负责「把磁盘上的主题扩展 JSON 变成可用的主题」这一段，

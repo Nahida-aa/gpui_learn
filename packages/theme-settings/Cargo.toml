@@ -1,3 +1,6 @@
+# ⚠️ 已废弃：无消费者（2026-10-14）。
+# 主题装配实际走 AAgent 的 `packages/theme_settings`；排查主题问题不要读本包，
+# 见 src/lib.rs 顶部的说明。
 [package]
 name = "theme-settings"
 version.workspace = true
