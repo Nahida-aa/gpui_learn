@@ -448,6 +448,12 @@ _startdir_icon="{src}"
 
 build() {{
   cd "$_srcdir"
+  # 卸掉 makepkg 从 /etc/makepkg.conf 注入的编译器环境变量。rustc 不读它们，
+  # 但 cc-rs 会读，且**追加在命令行末尾**——覆盖 crate 为个别文件设的 -O0。
+  # 实例：aws-lc-sys 的 jitterentropy-base.c 禁用优化（源码 #error 强制），
+  # 被 CFLAGS 的 -O2 覆盖后必挂。用户 shell 里这些变量本来就不存在，卸掉
+  # 正好让包内构建与直接 `cargo build` 一致。
+  unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
   cargo build --release{cargo_pkg_flag}
 }}
 
@@ -540,6 +546,13 @@ name = "AaCode"
         assert!(pkgbuild.contains("license=(Apache-2.0)"));
         // cargo 包名从 Cargo.toml 推导，不需要再传
         assert!(pkgbuild.contains("cargo build --release -p aacode"));
+        // build() 必须卸掉 makepkg 注入的编译器环境变量：cc-rs 把它们追加在
+        // C 编译命令行末尾，会覆盖 aws-lc-sys 等 crate 为个别文件设的 -O0
+        // （jitterentropy-base.c 禁优化，被 CFLAGS 的 -O2 覆盖后 #error 挂死）
+        assert!(
+            pkgbuild.contains("unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS"),
+            "build() 应卸掉 makepkg 的编译器环境变量：{pkgbuild}"
+        );
         assert!(
             !pkgbuild.contains("install -Dm644") || !pkgbuild.contains("hicolor"),
             "没配 icon 时不该装图标：{pkgbuild}"
