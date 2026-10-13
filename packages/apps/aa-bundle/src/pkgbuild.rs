@@ -367,7 +367,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         }
         Some((
             format!("{desktop_id}.desktop"),
-            crate::render_desktop_entry(&identity, bin, &desktop_id),
+            crate::render_desktop_entry(&identity, bin, &icon, &desktop_id),
         ))
     };
 
@@ -885,11 +885,13 @@ name = "AaCode"
             }),
             ..Default::default()
         };
-        let out = crate::render_desktop_entry(&meta, "aacode", "dev.aa.AaCode");
+        // 图标安装名与 bin 名不同时，Icon= 必须用安装名（曾写死 bin 名的 bug）
+        let out = crate::render_desktop_entry(&meta, "aacode", "my_icon", "dev.aa.AaCode");
         // "Developer Tool" → Development;（cargo-bundle category.rs:134）
         assert!(out.contains("Categories=Development;"), "{out}");
         assert!(out.contains("Comment=A coding agent"), "{out}");
         assert!(out.contains("Exec=aacode %F"), "{out}");
+        assert!(out.contains("Icon=my_icon"), "{out}");
         assert!(out.contains("MimeType=text/plain;"), "{out}");
         // 刻意不写的键
         assert!(!out.contains("Version="), "Version 是 spec 版本不是 app 版本");

@@ -362,7 +362,10 @@ pub fn derive_identifier(repo_name: &str, bin_name: Option<&str>) -> Option<Stri
 /// - 不写 `Encoding=`（已废弃）
 /// - `MimeType` 为空则整行省略（裸 `MimeType=` 过不了某些校验器）
 /// - `category` 未设时由调用方告警并回退 `Utility;`
-pub fn render_desktop_entry(meta: &BundleMeta, bin: &str, desktop_id: &str) -> String {
+/// `icon` 是**安装名**（hicolor `apps/<名字>.png`），与 `bin` 分开传：
+/// `--icon-name` 可覆盖它，覆盖后 `Icon=` 必须跟着变，否则桌面环境
+/// 按 bin 名找不到装好的图标。
+pub fn render_desktop_entry(meta: &BundleMeta, bin: &str, icon: &str, desktop_id: &str) -> String {
     use std::fmt::Write;
     let mut out = String::new();
 
@@ -384,7 +387,7 @@ pub fn render_desktop_entry(meta: &BundleMeta, bin: &str, desktop_id: &str) -> S
         let _ = writeln!(out, "Comment={comment}");
     }
     let _ = writeln!(out, "Exec={bin}{}", meta.exec_suffix());
-    let _ = writeln!(out, "Icon={bin}");
+    let _ = writeln!(out, "Icon={icon}");
     let _ = writeln!(out, "Terminal={}", meta.terminal());
     let _ = writeln!(out, "Categories={categories}");
     // 与桌面身份一致：launcher 用它把窗口归到该条目下
