@@ -2582,12 +2582,12 @@ use crate::state::{Appearance, Theme, ThemeStyles};
 use crate::styles::{AccentColors, PlayerColors, StatusColors, SyntaxTheme};
 
 /// `0xRRGGBB` → `Hsla`。
-fn h(hex: u32) -> Hsla {
+pub(crate) fn h(hex: u32) -> Hsla {
     gpui::rgb(hex).into()
 }
 
 /// 带透明度的 `Hsla`。
-fn ha(hex: u32, a: f32) -> Hsla {
+pub(crate) fn ha(hex: u32, a: f32) -> Hsla {
     let mut c: Hsla = gpui::rgb(hex).into();
     c.a = a;
     c
@@ -2944,7 +2944,7 @@ pub fn theme_colors_mocha() -> ThemeColors {
         colors.border_disabled = h(0x6c7086);
         colors.border_transparent = hsla(0., 0., 0., 0.);
         // background
-        colors.background = h(0x27273b);            // Zed JSON "background" (不同于 editor.background!)
+        colors.background = h(0x27273b); // Zed JSON "background" (不同于 editor.background!)
         colors.surface_background = h(0x181825);
         colors.elevated_surface_background = h(0x11111b);
         colors.element_background = h(0x11111b);
@@ -2970,8 +2970,8 @@ pub fn theme_colors_mocha() -> ThemeColors {
         colors.icon_placeholder = h(0x585b70);
         colors.icon_accent = h(0xcba6f7);
         // — Zed JSON 显式设置的状态/标题栏/Tab/toolbar（之前缺失！）——
-        colors.status_bar_background = h(0x11111b);        // crust
-        colors.title_bar_background = h(0x11111b);          // crust
+        colors.status_bar_background = h(0x11111b); // crust
+        colors.title_bar_background = h(0x11111b); // crust
         colors.title_bar_inactive_background = h(0x171725);
         colors.toolbar_background = h(0x1e1e2e);
         colors.tab_bar_background = h(0x11111b);
@@ -3207,14 +3207,46 @@ pub fn catppuccin_mocha() -> Theme {
         hsla(0., 0., 0., 0.),
     ]));
     let players = PlayerColors(vec![
-        PlayerColor { cursor: h(0xf5e0dc), selection: ha(0x9399b2, 0.25), background: h(0xf5e0dc) },
-        PlayerColor { cursor: h(0xcba6f7), selection: ha(0xcba6f7, 0.25), background: h(0xcba6f7) },
-        PlayerColor { cursor: h(0xb4befe), selection: ha(0xb4befe, 0.25), background: h(0xb4befe) },
-        PlayerColor { cursor: h(0x74c7ec), selection: ha(0x74c7ec, 0.25), background: h(0x74c7ec) },
-        PlayerColor { cursor: h(0xa6e3a1), selection: ha(0xa6e3a1, 0.25), background: h(0xa6e3a1) },
-        PlayerColor { cursor: h(0xf9e2af), selection: ha(0xf9e2af, 0.25), background: h(0xf9e2af) },
-        PlayerColor { cursor: h(0xfab387), selection: ha(0xfab387, 0.25), background: h(0xfab387) },
-        PlayerColor { cursor: h(0xf38ba8), selection: ha(0xf38ba8, 0.25), background: h(0xf38ba8) },
+        PlayerColor {
+            cursor: h(0xf5e0dc),
+            selection: ha(0x9399b2, 0.25),
+            background: h(0xf5e0dc),
+        },
+        PlayerColor {
+            cursor: h(0xcba6f7),
+            selection: ha(0xcba6f7, 0.25),
+            background: h(0xcba6f7),
+        },
+        PlayerColor {
+            cursor: h(0xb4befe),
+            selection: ha(0xb4befe, 0.25),
+            background: h(0xb4befe),
+        },
+        PlayerColor {
+            cursor: h(0x74c7ec),
+            selection: ha(0x74c7ec, 0.25),
+            background: h(0x74c7ec),
+        },
+        PlayerColor {
+            cursor: h(0xa6e3a1),
+            selection: ha(0xa6e3a1, 0.25),
+            background: h(0xa6e3a1),
+        },
+        PlayerColor {
+            cursor: h(0xf9e2af),
+            selection: ha(0xf9e2af, 0.25),
+            background: h(0xf9e2af),
+        },
+        PlayerColor {
+            cursor: h(0xfab387),
+            selection: ha(0xfab387, 0.25),
+            background: h(0xfab387),
+        },
+        PlayerColor {
+            cursor: h(0xf38ba8),
+            selection: ha(0xf38ba8, 0.25),
+            background: h(0xf38ba8),
+        },
     ]);
 
     Theme {
@@ -3255,7 +3287,7 @@ pub fn catppuccin_latte() -> Theme {
 // Macchiato = Mocha 的次深 variant (base #24273A vs Mocha #1E1E2E)。
 // 色值来源: https://github.com/catppuccin/palette (macchiato)
 
-fn syntax_macchiato() -> SyntaxTheme {
+pub(crate) fn syntax_macchiato() -> SyntaxTheme {
     SyntaxTheme::new([
         (
             "comment".into(),
@@ -3422,17 +3454,17 @@ pub fn status_colors_macchiato() -> StatusColors {
 pub fn theme_colors_macchiato() -> ThemeColors {
     let mut colors = ThemeColors::zed_dark();
     {
-        colors.border = h(0x363a4f);               // surface0
-        colors.border_variant = h(0x313148);        // surface0-darker
-        colors.border_focused = h(0xb7bdf8);        // lavender
-        colors.border_selected = h(0xc6a0f6);       // mauve
-        colors.border_disabled = h(0x6e738d);       // overlay0
+        colors.border = h(0x363a4f); // surface0
+        colors.border_variant = h(0x313148); // surface0-darker
+        colors.border_focused = h(0xb7bdf8); // lavender
+        colors.border_selected = h(0xc6a0f6); // mauve
+        colors.border_disabled = h(0x6e738d); // overlay0
         colors.border_transparent = hsla(0., 0., 0., 0.);
-        colors.background = h(0x2c2f46);            // base — Zed JSON "background"
-        colors.surface_background = h(0x1e2030);    // mantle
+        colors.background = h(0x2c2f46); // base — Zed JSON "background"
+        colors.surface_background = h(0x1e2030); // mantle
         colors.elevated_surface_background = h(0x1e2030); // mantle (同 surface)
-        colors.element_background = h(0x181926);    // crust
-        colors.element_hover = ha(0x363a4f, 1.0);  // surface0
+        colors.element_background = h(0x181926); // crust
+        colors.element_hover = ha(0x363a4f, 1.0); // surface0
         colors.element_active = ha(0x5b6078, 0.30); // surface2 @30%
         colors.element_selected = ha(0x363a4f, 0.30); // surface0 @30%
         colors.element_disabled = h(0x6e738d);
@@ -3441,54 +3473,54 @@ pub fn theme_colors_macchiato() -> ThemeColors {
         colors.ghost_element_active = ha(0x5b6078, 0.60); // surface2 @60%
         colors.ghost_element_selected = ha(0x737995, 0.40); // overlay2 @40%
         colors.ghost_element_disabled = h(0x6e738d);
-        colors.text = h(0xcad3f5);                  // text
-        colors.text_muted = h(0xb8c0e0);            // subtext0
-        colors.text_placeholder = h(0x5b6078);      // surface2
-        colors.text_disabled = h(0x6e738d);         // overlay0
-        colors.text_accent = h(0xc6a0f6);           // mauve
+        colors.text = h(0xcad3f5); // text
+        colors.text_muted = h(0xb8c0e0); // subtext0
+        colors.text_placeholder = h(0x5b6078); // surface2
+        colors.text_disabled = h(0x6e738d); // overlay0
+        colors.text_accent = h(0xc6a0f6); // mauve
         colors.icon = h(0xcad3f5);
-        colors.icon_muted = h(0x8087a2);            // overlay2
+        colors.icon_muted = h(0x8087a2); // overlay2
         colors.icon_disabled = h(0x6e738d);
         colors.icon_placeholder = h(0x5b6078);
         colors.icon_accent = h(0xc6a0f6);
 
         // — Zed JSON 显式设置的状态/标题栏/Tab/toolbar（之前缺失！）——
-        colors.status_bar_background = h(0x181926);        // crust
-        colors.title_bar_background = h(0x181926);          // crust
+        colors.status_bar_background = h(0x181926); // crust
+        colors.title_bar_background = h(0x181926); // crust
         colors.title_bar_inactive_background = h(0x1e1f30); // mantle-darker
-        colors.toolbar_background = h(0x24273a);            // base (CTP base #24273a)
-        colors.tab_bar_background = h(0x181926);            // crust
-        colors.tab_inactive_background = h(0x12121c);       // base-darker
-        colors.tab_active_background = h(0x24273a);        // base
-        colors.search_match_background = ha(0x8bd5ca, 0.30);   // teal @30%
+        colors.toolbar_background = h(0x24273a); // base (CTP base #24273a)
+        colors.tab_bar_background = h(0x181926); // crust
+        colors.tab_inactive_background = h(0x12121c); // base-darker
+        colors.tab_active_background = h(0x24273a); // base
+        colors.search_match_background = ha(0x8bd5ca, 0.30); // teal @30%
         colors.search_active_match_background = ha(0xed8796, 0.30); // red @30%
-        colors.panel_background = h(0x1e2030);              // mantle
-        colors.panel_focused_border = h(0xcad3f5);          // text
-        colors.panel_indent_guide = ha(0x363a4f, 0.60);     // surface0 @60%
-        colors.panel_indent_guide_active = h(0x5b6078);     // surface2
-        colors.panel_indent_guide_hover = h(0xc6a0f6);      // mauve
-        colors.panel_overlay_background = h(0x1e2030);      // mantle
-        colors.pane_focused_border = h(0xcad3f5);           // text
-        colors.pane_group_border = h(0x363a4f);             // surface0
-        colors.scrollbar_thumb_background = ha(0x5b6078, 0.50);   // surface2 @50%
-        colors.scrollbar_thumb_hover_background = h(0x6e738d);   // overlay0
-        colors.scrollbar_track_background = h(0x181926);         // crust
-        colors.scrollbar_track_border = ha(0xcad3f5, 0.07);      // text @7%
+        colors.panel_background = h(0x1e2030); // mantle
+        colors.panel_focused_border = h(0xcad3f5); // text
+        colors.panel_indent_guide = ha(0x363a4f, 0.60); // surface0 @60%
+        colors.panel_indent_guide_active = h(0x5b6078); // surface2
+        colors.panel_indent_guide_hover = h(0xc6a0f6); // mauve
+        colors.panel_overlay_background = h(0x1e2030); // mantle
+        colors.pane_focused_border = h(0xcad3f5); // text
+        colors.pane_group_border = h(0x363a4f); // surface0
+        colors.scrollbar_thumb_background = ha(0x5b6078, 0.50); // surface2 @50%
+        colors.scrollbar_thumb_hover_background = h(0x6e738d); // overlay0
+        colors.scrollbar_track_background = h(0x181926); // crust
+        colors.scrollbar_track_border = ha(0xcad3f5, 0.07); // text @7%
 
         colors.editor_foreground = h(0xcad3f5);
-        colors.editor_background = h(0x24273a);              // base
+        colors.editor_background = h(0x24273a); // base
         colors.editor_gutter_background = h(0x24273a);
-        colors.editor_subheader_background = h(0x1e2030);    // mantle
+        colors.editor_subheader_background = h(0x1e2030); // mantle
         colors.editor_active_line_background = ha(0xcad3f5, 0.07); // text @7%
-        colors.editor_line_number = h(0x8087a2);            // overlay2
-        colors.editor_active_line_number = h(0xc6a0f6);     // mauve
-        colors.editor_wrap_guide = h(0x5b6078);             // surface2
-        colors.editor_indent_guide = ha(0x363a4f, 0.60);    // surface0 @60%
-        colors.editor_indent_guide_active = h(0x5b6078);    // surface2
-        colors.editor_invisible = ha(0x939ab7, 0.40);       // overlay1 @40%
+        colors.editor_line_number = h(0x8087a2); // overlay2
+        colors.editor_active_line_number = h(0xc6a0f6); // mauve
+        colors.editor_wrap_guide = h(0x5b6078); // surface2
+        colors.editor_indent_guide = ha(0x363a4f, 0.60); // surface0 @60%
+        colors.editor_indent_guide_active = h(0x5b6078); // surface2
+        colors.editor_invisible = ha(0x939ab7, 0.40); // overlay1 @40%
         colors.editor_debugger_active_line_background = ha(0xf5a97f, 0.07); // peach @7%
-        colors.selection_background = ha(0x939ab7, 0.25);   // overlay1 @25%
-        colors.editor_cursor = h(0xf4dbd6);                 // rosewater
+        colors.selection_background = ha(0x939ab7, 0.25); // overlay1 @25%
+        colors.editor_cursor = h(0xf4dbd6); // rosewater
         colors.editor_document_highlight_read_background = ha(0xa5adcb, 0.16); // subtext1 @16%
         colors.editor_document_highlight_write_background = ha(0xa5adcb, 0.16); // subtext1 @16%
         colors.editor_document_highlight_bracket_background = ha(0xc6a0f6, 0.09); // mauve @9%
@@ -3507,7 +3539,7 @@ pub fn theme_colors_macchiato() -> ThemeColors {
         colors.terminal_ansi_magenta = h(0xf5bde6);
         colors.terminal_ansi_cyan = h(0x8bd5ca);
 
-        colors.link = h(0x91d7e3);                 // teal-light
+        colors.link = h(0x91d7e3); // teal-light
 
         // — Zed JSON 的 debugger / version_control / minimap / terminal ansi（之前缺失！）—
         colors.debugger_accent = h(0xed8796);
@@ -3546,57 +3578,6 @@ pub fn theme_colors_macchiato() -> ThemeColors {
     }
 }
 
-/// Catppuccin Macchiato（次深暗色）。
-pub fn catppuccin_macchiato() -> Theme {
-    // 所有值取自 Zed Catppuccin 扩展 JSON:
-    // /home/aa/repos/ide_ls/learn_ls/zed/themes/catppuccin-mauve.json → "Catppuccin Macchiato" 段
-    use crate::styles::{AccentColors, PlayerColor, PlayerColors};
-
-    // Zed JSON "accents" — 7 个,我们扩到 9 个(AccentColors 固定 13 槽位, 多余留 transparent)
-    let accents = AccentColors(Arc::from([
-        h(0xc6a0f6), // mauve
-        h(0xb7bdf8), // lavender
-        h(0x7dc4e4), // sky
-        h(0xa6da95), // green
-        h(0xeed49f), // yellow
-        h(0xf5a97f), // peach
-        h(0xed8796), // red
-        h(0xf5bde6), // pink
-        h(0x8bd5ca), // teal
-        hsla(0., 0., 0., 0.),
-        hsla(0., 0., 0., 0.),
-        hsla(0., 0., 0., 0.),
-        hsla(0., 0., 0., 0.),
-    ]));
-
-    // Zed JSON "players" — 8 个,第一个是本地玩家(cursor=rosewater)
-    let players = PlayerColors(vec![
-        PlayerColor { cursor: h(0xf4dbd6), selection: ha(0x939ab7, 0.25), background: h(0xf4dbd6) },
-        PlayerColor { cursor: h(0xc6a0f6), selection: ha(0xc6a0f6, 0.25), background: h(0xc6a0f6) },
-        PlayerColor { cursor: h(0xb7bdf8), selection: ha(0xb7bdf8, 0.25), background: h(0xb7bdf8) },
-        PlayerColor { cursor: h(0x7dc4e4), selection: ha(0x7dc4e4, 0.25), background: h(0x7dc4e4) },
-        PlayerColor { cursor: h(0xa6da95), selection: ha(0xa6da95, 0.25), background: h(0xa6da95) },
-        PlayerColor { cursor: h(0xeed49f), selection: ha(0xeed49f, 0.25), background: h(0xeed49f) },
-        PlayerColor { cursor: h(0xf5a97f), selection: ha(0xf5a97f, 0.25), background: h(0xf5a97f) },
-        PlayerColor { cursor: h(0xed8796), selection: ha(0xed8796, 0.25), background: h(0xed8796) },
-    ]);
-
-    Theme {
-        id: "ctp-macchiato".into(),
-        name: "Catppuccin Macchiato".into(),
-        appearance: Appearance::Dark,
-        styles: ThemeStyles {
-            window_background_appearance: WindowBackgroundAppearance::Opaque,
-            system: SystemColors::default(),
-            accents,
-            players,
-            syntax: Arc::new(syntax_macchiato()),
-            colors: theme_colors_macchiato(),
-            status: status_colors_macchiato(),
-        },
-    }
-}
-
 #[cfg(test)]
 mod tests {
     //! 内置 Catppuccin 主题「必须与 JSON 一致」的回归测试。
@@ -3606,13 +3587,7 @@ mod tests {
     //! `assets/themes/catppuccin/catppuccin-mauve.json` 的对应值。
     use super::*;
 
-    fn assert_ctp(
-        colors: &ThemeColors,
-        debugger: u32,
-        added: u32,
-        modified: u32,
-        deleted: u32,
-    ) {
+    fn assert_ctp(colors: &ThemeColors, debugger: u32, added: u32, modified: u32, deleted: u32) {
         assert_eq!(
             colors.debugger_accent,
             gpui::rgb(debugger).into(),
@@ -3625,7 +3600,13 @@ mod tests {
 
     #[test]
     fn mocha_uses_catppuccin_debugger_and_version_control_colors() {
-        assert_ctp(&theme_colors_mocha(), 0xf38ba8, 0xa6e3a1, 0xf9e2af, 0xf38ba8);
+        assert_ctp(
+            &theme_colors_mocha(),
+            0xf38ba8,
+            0xa6e3a1,
+            0xf9e2af,
+            0xf38ba8,
+        );
     }
 
     #[test]
@@ -3641,6 +3622,12 @@ mod tests {
 
     #[test]
     fn latte_uses_catppuccin_debugger_and_version_control_colors() {
-        assert_ctp(&theme_colors_latte(), 0xd20f39, 0x40a02b, 0xdf8e1d, 0xd20f39);
+        assert_ctp(
+            &theme_colors_latte(),
+            0xd20f39,
+            0x40a02b,
+            0xdf8e1d,
+            0xd20f39,
+        );
     }
 }

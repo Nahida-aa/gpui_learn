@@ -33,14 +33,7 @@ use crate::{PlayerColors, StatusColorsRefinement, ThemeColorsRefinement};
 /// 兜底与基底同风味,免得「找不到主题」时突然换一套观感。
 pub const DEFAULT_DARK_THEME: &str = "Catppuccin Macchiato";
 
-/// Catppuccin Macchiato 兜底主题(= 深色基底 [`ThemeColors::dark`])。
-///
-/// 直接复用 [`default_colors`](crate::default_colors) 的内置主题构造，
-/// 不再绕道注册表——兜底要的就是「一定能拿到」。
-pub fn ctp_default_dark() -> crate::Theme {
-    crate::default_colors::catppuccin_macchiato()
-}
-
+/// zed_default_themes
 /// 兜底主题家族（Catppuccin 三主题：Mocha + Macchiato + Latte）。
 ///
 /// Zed 原版的 default_theme_family 只包含一个兜底主题（灰阶默认主题）。
@@ -50,7 +43,7 @@ pub fn default_theme_family() -> crate::ThemeFamily {
     crate::ThemeFamily {
         id: "ui-gpui-fallback".into(),
         name: "ui-gpui Fallback".into(),
-        author: String::new(),
+        author: "".into(),
         themes: vec![
             ctp_default_dark(),
             // Mocha 是另一个深色调（比 Macchiato 更深），留着给用户切；
@@ -58,6 +51,10 @@ pub fn default_theme_family() -> crate::ThemeFamily {
             crate::default_colors::catppuccin_mocha(),
             crate::default_colors::catppuccin_latte(),
         ],
+        // 与 zed `zed_default_themes()` 同款：家族自带一份色阶。我们的色阶取值
+        // 走模块级静态函数（blue()/neutral()…），这里填的是同一份数据的聚合
+        // 形式，供消费方按 zed 的形状读。
+        scales: crate::default_colors::default_color_scales(),
     }
 }
 
@@ -144,6 +141,106 @@ pub fn fill_status_backgrounds(status: &mut crate::StatusColors) {
     }
 }
 
+/// Catppuccin Macchiato 兜底主题(= 深色基底 [`ThemeColors::dark`])。
+///
+/// 直接复用 [`default_colors`](crate::default_colors) 的内置主题构造，
+/// 不再绕道注册表——兜底要的就是「一定能拿到」。
+pub fn ctp_default_dark() -> crate::Theme {
+    // 所有值取自 Zed Catppuccin 扩展 JSON:
+    // /home/aa/repos/ide_ls/learn_ls/zed/themes/catppuccin-mauve.json → "Catppuccin Macchiato" 段
+    //
+    // 这就是 `catppuccin_macchiato()`（= 深色基底 ThemeColors::dark()）的组装；
+    // 之所以在本文件再写一遍而不是直接调那个构造函数，是因为 `catppuccin_*`
+    // 家族构造函数不随基底走——这里是「兜底一定要拿到」的独立保证。
+    use std::sync::Arc;
+
+    use gpui::hsla;
+    use crate::default_colors::{
+        h, ha, status_colors_macchiato, syntax_macchiato, theme_colors_macchiato,
+    };
+    use crate::state::{Appearance, Theme, ThemeStyles};
+    use crate::styles::{
+        AccentColors, PlayerColor, PlayerColors, SystemColors,
+    };
+    use gpui::WindowBackgroundAppearance;
+
+    // Zed JSON "accents" — 7 个,我们扩到 9 个(AccentColors 固定 13 槽位, 多余留 transparent)
+    let accents = AccentColors(Arc::from([
+        h(0xc6a0f6), // mauve
+        h(0xb7bdf8), // lavender
+        h(0x7dc4e4), // sky
+        h(0xa6da95), // green
+        h(0xeed49f), // yellow
+        h(0xf5a97f), // peach
+        h(0xed8796), // red
+        h(0xf5bde6), // pink
+        h(0x8bd5ca), // teal
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+        hsla(0., 0., 0., 0.),
+    ]));
+
+    // Zed JSON "players" — 8 个,第一个是本地玩家(cursor=rosewater)
+    let players = PlayerColors(vec![
+        PlayerColor {
+            cursor: h(0xf4dbd6),
+            selection: ha(0x939ab7, 0.25),
+            background: h(0xf4dbd6),
+        },
+        PlayerColor {
+            cursor: h(0xc6a0f6),
+            selection: ha(0xc6a0f6, 0.25),
+            background: h(0xc6a0f6),
+        },
+        PlayerColor {
+            cursor: h(0xb7bdf8),
+            selection: ha(0xb7bdf8, 0.25),
+            background: h(0xb7bdf8),
+        },
+        PlayerColor {
+            cursor: h(0x7dc4e4),
+            selection: ha(0x7dc4e4, 0.25),
+            background: h(0x7dc4e4),
+        },
+        PlayerColor {
+            cursor: h(0xa6da95),
+            selection: ha(0xa6da95, 0.25),
+            background: h(0xa6da95),
+        },
+        PlayerColor {
+            cursor: h(0xeed49f),
+            selection: ha(0xeed49f, 0.25),
+            background: h(0xeed49f),
+        },
+        PlayerColor {
+            cursor: h(0xf5a97f),
+            selection: ha(0xf5a97f, 0.25),
+            background: h(0xf5a97f),
+        },
+        PlayerColor {
+            cursor: h(0xed8796),
+            selection: ha(0xed8796, 0.25),
+            background: h(0xed8796),
+        },
+    ]);
+
+    Theme {
+        id: "ctp-macchiato".into(),
+        name: "Catppuccin Macchiato".into(),
+        appearance: Appearance::Dark,
+        styles: ThemeStyles {
+            window_background_appearance: WindowBackgroundAppearance::Opaque,
+            system: SystemColors::default(),
+            accents,
+            players,
+            syntax: Arc::new(syntax_macchiato()),
+            colors: theme_colors_macchiato(),
+            status: status_colors_macchiato(),
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -162,7 +259,11 @@ mod tests {
         let names: Vec<_> = family.themes.iter().map(|t| t.name.as_ref()).collect();
         assert_eq!(
             names,
-            ["Catppuccin Macchiato", "Catppuccin Mocha", "Catppuccin Latte"],
+            [
+                "Catppuccin Macchiato",
+                "Catppuccin Mocha",
+                "Catppuccin Latte"
+            ],
             "兜底家族要带上全部内置 Catppuccin 主题，用户才能直接切换"
         );
         assert_eq!(family.themes[0].id, ctp_default_dark().id);

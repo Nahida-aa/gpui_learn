@@ -11,6 +11,7 @@ use gpui::{App, Global, SharedString, WindowAppearance, WindowBackgroundAppearan
 use crate::styles::{
     AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
 };
+use crate::scale::ColorScales;
 
 /// 主题适配的明暗形态(对齐 zed `theme.rs` 的 `Appearance`)。
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -182,6 +183,13 @@ pub struct ThemeFamily {
     pub author: String,
     /// 家族内的主题(通常 light / dark 各一)。
     pub themes: Vec<Theme>,
+    /// 家族自带的色阶(对齐 zed `ThemeFamily::scales`)。
+    ///
+    /// zed 让每个家族可以覆盖色阶(主题 JSON 里能按色阶名引用、扩展可整族替换)。
+    /// 我们的色阶取值函数是模块级静态的(`blue()` / `neutral()`…),**不读这里**;
+    /// 字段存在是为了与 zed 的家族结构对齐——消费方(如 AAgent 的
+    /// theme_selector)会照 zed 的形状构造 `ThemeFamily`。
+    pub scales: ColorScales,
 }
 
 /// 要装载哪些主题(对齐 zed `LoadThemes`,主要用于测试与嵌入场景)。
