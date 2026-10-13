@@ -1,0 +1,25 @@
+[package]
+name = "aa_theme_core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# 主题 JSON 里的颜色是十六进制字符串，解析错误需要带上下文（同 zed / gpui）。
+anyhow.workspace = true
+# OKLab/OKLCh 转换。与 aa_theme_gpui 保持同一实现，避免同一份调色板
+# 在两个后端下算出不同的感知亮度。
+palette = { version = "0.7.5", default-features = false, features = ["std"] }
+# 主题要序列化进 settings JSON / 主题文件。
+serde = { workspace = true }
+# AppearanceContent 的 JsonSchema derive（对齐 zed crates/theme）。
+schemars.workspace = true
+
+[dev-dependencies]
+# 只在测试里用来验证 hex 序列化往返。
+serde_json.workspace = true
+gpui.workspace = true
+
+[lints]
+workspace = true
