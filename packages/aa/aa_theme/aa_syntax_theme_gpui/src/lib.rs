@@ -84,6 +84,14 @@ impl SyntaxTheme {
             .map(|(key, _)| key.as_ref())
     }
 
+    /// 全部 capture 名（对齐 zed `SyntaxTheme::names()`）。
+    ///
+    /// 消费方（如 AAgent 的 theme_settings 测试）用它核对「内置主题带的
+    /// 语法 capture 数是否与 JSON 一致」。
+    pub fn names(&self) -> impl Iterator<Item = &str> {
+        self.capture_name_map.keys().map(|name| name.as_str())
+    }
+
     pub fn highlight_id(&self, capture_name: &str) -> Option<u32> {
         self.capture_name_map
             .range::<str, _>((
