@@ -458,7 +458,18 @@ build() {{
 }}
 
 package() {{
-  install -Dm755 "$_srcdir/target/release/{bin}" "$pkgdir{prefix}/bin/{bin}"
+  # 二进制路径不能硬编码「crate 目录下的 target/release」——cargo 的
+  # target_directory 由 **workspace 根**决定（多 crate workspace 下产物不在
+  # crate 目录），且 CARGO_TARGET_DIR 可改。直接问 cargo；--no-deps 只读
+  # manifest，不解析依赖、不联网。也顺带尊重 makepkg 运行环境的
+  # CARGO_TARGET_DIR。
+  _target_dir=$(cd "$_srcdir" && cargo metadata --no-deps --format-version 1 \
+    | sed -n 's/.*"target_directory": *"\([^"]*\)".*/\1/p')
+  if [ -z "$_target_dir" ]; then
+    echo "aa-bundle: 无法从 cargo metadata 解析 target_directory" >&2
+    return 1
+  fi
+  install -Dm755 "$_target_dir/release/{bin}" "$pkgdir{prefix}/bin/{bin}"
 
   # 图标路径来自 bundle 元数据的 icon 字段，安装目录来自 [bundle.arch].icon_dir
 {icon_install}{desktop_install}}}
@@ -546,6 +557,16 @@ name = "AaCode"
         assert!(pkgbuild.contains("license=(Apache-2.0)"));
         // cargo 包名从 Cargo.toml 推导，不需要再传
         assert!(pkgbuild.contains("cargo build --release -p aacode"));
+        // 二进制路径必须向 cargo 问 target_directory（workspace 根的 target/），
+        // 不能硬编码 crate 目录——多 crate workspace 下那样必挂
+        assert!(
+            pkgbuild.contains("cargo metadata --no-deps --format-version 1"),
+            "package() 应向 cargo 询问 target_directory：{pkgbuild}"
+        );
+        assert!(
+            !pkgbuild.contains("$_srcdir/target/release/"),
+            "不该硬编码产物在 crate 目录的 target/ 下：{pkgbuild}"
+        );
         // build() 必须卸掉 makepkg 注入的编译器环境变量：cc-rs 把它们追加在
         // C 编译命令行末尾，会覆盖 aws-lc-sys 等 crate 为个别文件设的 -O0
         // （jitterentropy-base.c 禁优化，被 CFLAGS 的 -O2 覆盖后 #error 挂死）
