@@ -161,12 +161,49 @@ fn serde_representation_agrees() {
 /// 解析出的颜色不会出现 1e-7 的漂移。
 #[test]
 fn try_parse_color_agrees_with_gpui_side() {
-    for hex in ["#24273a", "#cad3f5", "#ed8796", "#1e1e2e", "#89b4fa", "#f38ba8"] {
+    // 覆盖 gpui::Rgba::try_from 支持的全部格式（#rgb / #rgba / #rrggbb /
+    // #rrggbbaa）+ 边界值。core 的 color.rs 是 gpui color.rs 的**重构副本而非
+    // 逐字副本**（两份文件 diff 有 679 行差异），所以「Hsla::from 两边一样」
+    // 推不出「Rgba::try_from 两边一样」—— 只能靠这份语料逐位验证。
+    // 色值取 0x00 / 0x7f / 0x80 / 0xff 等易在整除与舍入上分叉的边界。
+    let mut corpus: Vec<String> = [
+        "#24273a", "#cad3f5", "#ed8796", "#1e1e2e", "#89b4fa", "#f38ba8",
+        "#000000", "#ffffff", "#ff0000", "#00ff00", "#0000ff", "#010203",
+        "#00000000", "#ffffffff", "#7f7f7f80", "#80808080", "#ff00007f",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    // 只生成合法长度：#rgb(3) / #rgba(4) / #rrggbb(6) / #rrggbbaa(8)
+    for d in ["0", "7", "8", "f"] {
+        for n in [3usize, 4, 6, 8] {
+            corpus.push(format!("#{}", d.repeat(n)));
+        }
+    }
+
+    for hex in &corpus {
         let via_gpui = aa_theme_gpui::try_parse_color(hex).expect("gpui 侧解析");
         let via_core = aa_theme_core::try_parse_color(hex).expect("core 侧解析");
         assert_eq!(via_gpui.h.to_bits(), via_core.h.to_bits(), "{hex}: h");
         assert_eq!(via_gpui.s.to_bits(), via_core.s.to_bits(), "{hex}: s");
         assert_eq!(via_gpui.l.to_bits(), via_core.l.to_bits(), "{hex}: l");
         assert_eq!(via_gpui.a.to_bits(), via_core.a.to_bits(), "{hex}: a");
+    }
+}
+
+/// 反向：非法输入两边必须**同时**失败。core 若放宽了格式（比如接受了
+/// `rgb(...)` 函数式写法），就会出现「gpui 侧报错、core 侧接受」的不对称，
+/// 那会让上游主题文件在某个后端下悄悄解析出意料之外的值。
+#[test]
+fn try_parse_color_rejects_the_same_invalid_inputs() {
+    for bad in ["", "rgb(1,2,3)", "24273a", "#", "#12", "#1234567", "#gggggg", " # "] {
+        assert!(
+            aa_theme_gpui::try_parse_color(bad).is_err(),
+            "gpui 侧本应拒绝 {bad:?}"
+        );
+        assert!(
+            aa_theme_core::try_parse_color(bad).is_err(),
+            "core 侧本应拒绝 {bad:?}"
+        );
     }
 }
