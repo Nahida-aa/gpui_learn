@@ -21,6 +21,7 @@
 //! gpui 版本应被删除而非保留。
 
 use anyhow::{Context as _, Result, bail};
+use palette::FromColor as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 
@@ -546,10 +547,29 @@ impl schemars::JsonSchema for Hsla {
 /// [`From<Rgba> for Hsla`]。两者结果差异在 1e-7 量级（见 gpui 侧同名测试），
 /// 但后者与 gpui 渲染路径**逐位一致**，因此取后者 —— 共享同一份色板时，
 /// 两端不该因为走不同公式而出现肉眼不可见但确实存在的偏差。
+/// 解析 `#rgb` / `#rrggbb` / `#rrggbbaa` 成 [`Hsla`]。
+///
+/// RGB→HSL 走 `palette` 而不是本 crate 的 `Hsla::from(Rgba)`：后者是 gpui
+/// 手写的 max/min 公式，与 **zed `crates/theme/src/schema.rs:17` 的 palette
+/// 路径**在 hue 上差 1 ulp（如 `#cad3f5` 的 h 差 6e-8）。本函数属于 theme 而非
+/// gpui，语义上应与上游一致，故取 palette 路径。palette 是纯计算库，不引入
+/// 任何 UI 框架依赖，符合本 crate 的边界。
+///
+/// 之所以要精确到 ulp：gpui 后端切换到本 crate 之前，两份实现会同时存在并
+/// 分别解析同一份调色板；若解析结果不一致，同一个色值在两个后端下会漂移。
+/// `aa_theme_gpui` 侧的 `color_parity` 测试用 `to_bits()` 比对来盯这件事。
 pub fn try_parse_color(color: &str) -> Result<Hsla> {
     let rgba =
         Rgba::try_from(color).map_err(|err| anyhow::anyhow!("invalid color {color:?}: {err}"))?;
-    Ok(Hsla::from(rgba))
+    let srgba = palette::rgb::Srgba::from_components((rgba.r, rgba.g, rgba.b, rgba.a));
+    // 局部变量不能也叫 hsla —— 本模块导出了同名函数 `hsla()`，会遮蔽它。
+    let converted = palette::Hsla::from_color(srgba);
+    Ok(hsla(
+        converted.hue.into_positive_degrees() / 360.,
+        converted.saturation,
+        converted.lightness,
+        converted.alpha,
+    ))
 }
 
 #[cfg(test)]
