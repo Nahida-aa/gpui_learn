@@ -57,8 +57,8 @@ struct CommonArgs {
     /// 覆盖 .desktop 模板路径
     #[arg(long)]
     desktop_template: Option<PathBuf>,
-    /// 输出位置：pkgbuild 为目录（默认 <project>/target/aa-bundle/pkgbuild）；
-    /// tar.gz 为文件（默认 <project>/target/aa-bundle/targz/<bin>-linux-<arch>.tar.gz）
+    /// 输出位置：pkgbuild 为目录（默认 <workspace target>/aa-bundle/pkgbuild/<bin>）；
+    /// tar.gz 为文件（默认 <workspace target>/aa-bundle/targz/<bin>-linux-<arch>.tar.gz）
     #[arg(long)]
     out: Option<PathBuf>,
 }
@@ -83,10 +83,13 @@ fn main() -> Result<()> {
             };
             let (pkgbuild, desktop) = aa_bundle::pkgbuild::generate_pkgbuild(&opts)?;
 
-            let out_dir = cli
-                .common
-                .out
-                .unwrap_or_else(|| cli.common.project_dir.join("target/aa-bundle/pkgbuild"));
+            let out_dir = match cli.common.out {
+                Some(p) => p,
+                None => aa_bundle::pkgbuild::default_out_dir(
+                    &cli.common.project_dir,
+                    cli.common.bin_name.as_deref(),
+                )?,
+            };
             aa_bundle::write_file(&out_dir.join("PKGBUILD"), &pkgbuild)?;
             println!("已生成 {}", out_dir.join("PKGBUILD").display());
             if let Some((name, rendered)) = desktop {

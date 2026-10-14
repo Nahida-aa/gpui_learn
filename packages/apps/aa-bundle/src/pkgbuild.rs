@@ -249,6 +249,17 @@ pub fn resolve_bin_name<'a>(
     }
 }
 
+/// pkgbuild 格式的默认输出目录：`<workspace target>/aa-bundle/pkgbuild/<bin>/`。
+///
+/// 不放在 crate 目录的 `target/` 下——workspace 成员的 target 由 workspace
+/// 根决定（见 [`crate::resolve_target_dir`]），crate 目录下的 target/ cargo
+/// 根本不用。末尾按 bin 名分目录：同一 workspace 打多个 crate 不会互相覆盖。
+pub fn default_out_dir(project_dir: &Path, bin_name: Option<&str>) -> Result<PathBuf> {
+    let info = read_package_info(project_dir)?;
+    let bin = resolve_bin_name(&info, bin_name, project_dir)?;
+    Ok(crate::resolve_target_dir(project_dir).join(format!("aa-bundle/pkgbuild/{bin}")))
+}
+
 /// 生成 PKGBUILD 文本，并渲染 .desktop。
 ///
 /// 返回 `(PKGBUILD 文本, Option<(desktop 文件名, desktop 内容)>)`。
@@ -639,6 +650,38 @@ name = "AaCode"
         );
         // 但 cargo -p 用的是 package.name
         assert!(pkgbuild.contains("cargo build --release -p some_crate"));
+    }
+
+    #[test]
+    fn default_out_dir_lives_in_workspace_target() {
+        let dir = test_dir("default_out");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::write(dir.join("src/main.rs"), "fn main() {}\n").unwrap();
+
+        // 独立 crate（无 workspace）：cargo metadata 问出的 target 就是 <dir>/target，
+        // 默认输出在其下的 aa-bundle/pkgbuild/<bin>/——不能猜在 crate 目录乱放，
+        // 也不能不给 bin 名分目录（同一 workspace 打多个 crate 会互相覆盖）。
+        let out = default_out_dir(&dir, None).unwrap();
+        assert_eq!(
+            out,
+            dir.join("target").join("aa-bundle/pkgbuild/aacode"),
+            "默认输出应为 <workspace target>/aa-bundle/pkgbuild/<bin>：{}",
+            out.display()
+        );
     }
 
     #[test]

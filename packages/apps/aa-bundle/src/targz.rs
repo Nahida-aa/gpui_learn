@@ -118,7 +118,7 @@ pub struct TargzOptions<'a> {
     /// 覆盖 .desktop 模板路径
     pub desktop_template: Option<&'a Path>,
     /// 覆盖输出文件路径，默认
-    /// `<project>/target/aa-bundle/targz/<bin>-linux-<arch>.tar.gz`
+    /// `<workspace target>/aa-bundle/targz/<bin>-linux-<arch>.tar.gz`
     pub out: Option<&'a Path>,
     /// 直接指定二进制路径，跳过 cargo 推导。测试用；CI 把产物放在自定义
     /// 位置时也可用。
@@ -148,8 +148,8 @@ pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
     let app_name = format!("{bin}.app");
     let out = match opts.out {
         Some(p) => p.to_path_buf(),
-        None => opts.project_dir.join(format!(
-            "target/aa-bundle/targz/{bin}-linux-{arch}.tar.gz",
+        None => crate::resolve_target_dir(opts.project_dir).join(format!(
+            "aa-bundle/targz/{bin}-linux-{arch}.tar.gz",
             arch = std::env::consts::ARCH
         )),
     };
@@ -270,21 +270,10 @@ fn pack_targz(staging: &Path, app_name: &str, out: &Path) -> Result<()> {
     Ok(())
 }
 
-/// 二进制路径：`cargo metadata --no-deps` 问出 target_directory（workspace 根，
-/// 尊重 CARGO_TARGET_DIR），拼 `release/<bin>`。metadata 拿不到时退回 crate
-/// 目录的 target/，由调用方的 exists() 检查兜底。
+/// 二进制路径：`resolve_target_dir` 问出 workspace 根的 target/，拼
+/// `release/<bin>`（也尊重 `CARGO_TARGET_DIR`）。
 fn resolve_binary_path(project_dir: &Path, bin: &str) -> PathBuf {
-    let target_dir = Command::new("cargo")
-        .args(["metadata", "--no-deps", "--format-version", "1"])
-        .current_dir(project_dir)
-        .output()
-        .ok()
-        .filter(|o| o.status.success())
-        .and_then(|o| String::from_utf8(o.stdout).ok())
-        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
-        .and_then(|v| v.get("target_directory")?.as_str().map(PathBuf::from))
-        .unwrap_or_else(|| project_dir.join("target"));
-    target_dir.join("release").join(bin)
+    crate::resolve_target_dir(project_dir).join("release").join(bin)
 }
 
 /// 拷文件并自动建父目录。权限随源文件（`fs::copy` 保留 mode），二进制因此

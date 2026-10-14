@@ -27,7 +27,7 @@
 pub mod pkgbuild;
 pub mod targz;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
@@ -603,6 +603,26 @@ pub fn value_type_name(value: &serde_json::Value) -> &'static str {
         serde_json::Value::Array(_) => "数组",
         serde_json::Value::Object(_) => "表/对象",
     }
+}
+
+/// cargo 的 `target_directory`：`cargo metadata --no-deps` 问出。
+///
+/// **workspace 成员的 target 由 workspace 根决定**，不在 crate 目录下——
+/// 把产物/输出猜在 `<crate>/target/` 是多 crate workspace 下的经典错误。
+/// 这里问 cargo 而不是拼路径，顺带尊重 `CARGO_TARGET_DIR`；metadata 拿不到
+/// （cargo 不在 PATH 等）时退回 `<project_dir>/target`，由调用方的存在性
+/// 检查兜底。`--no-deps` 只读 manifest，不解析依赖、不联网。
+pub fn resolve_target_dir(project_dir: &Path) -> PathBuf {
+    std::process::Command::new("cargo")
+        .args(["metadata", "--no-deps", "--format-version", "1"])
+        .current_dir(project_dir)
+        .output()
+        .ok()
+        .filter(|o| o.status.success())
+        .and_then(|o| String::from_utf8(o.stdout).ok())
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(&s).ok())
+        .and_then(|v| v.get("target_directory")?.as_str().map(PathBuf::from))
+        .unwrap_or_else(|| project_dir.join("target"))
 }
 
 /// 推导仓库名（用于默认包名 / identifier 的命名空间前缀）。
