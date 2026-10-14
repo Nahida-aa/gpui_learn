@@ -35,7 +35,7 @@ members = [
     "packages/aa/grammars",
     "packages/icons",
     "packages/aa/language_core",
-    "packages/aa/aa_theme/aa_theme_gpui",
+    "packages/aa/theme/aa_theme_gpui",
     "packages/ui",
     "packages/ui_input",
     "packages/ui_macros",
@@ -47,7 +47,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/aa_assets/aa_assets_core", "packages/aa/aa_assets/aa_assets_gpui", "packages/aa/aa_theme/aa_syntax_theme_gpui", "packages/aa/aa_theme/aa_syntax_theme_iced", "packages/aa/aa_theme/aa_theme_iced", "packages/aa/aa_ui/aa_ui_iced", "packages/aa/aa_theme/aa_theme_settings_gpui_zed", "packages/aa/aa_assets/aa_assets_iced", "packages/aa/aa_theme/aa_theme_core",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/theme/aa_syntax_theme_gpui", "packages/aa/theme/aa_syntax_theme_iced", "packages/aa/theme/aa_theme_iced", "packages/aa/ui/aa_ui_iced", "packages/aa/theme/aa_theme_settings_gpui_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/theme/aa_theme_core",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -84,11 +84,11 @@ publish = false   # 教学仓库，不发布到 crates.io
 # 子包里写 `gpui = { workspace = true }` 就能拿到这里统一定义的源与版本，
 # 避免每个例子各写一遍 git 源导致版本漂移。
 [workspace.dependencies]
-aa_assets_core = { path = "packages/aa/aa_assets/aa_assets_core" }
-aa_assets_gpui = { path = "packages/aa/aa_assets/aa_assets_gpui" }
+aa_assets_core = { path = "packages/aa/assets/aa_assets_core" }
+aa_assets_gpui = { path = "packages/aa/assets/aa_assets_gpui" }
 # 语法高亮主题：zed `crates/syntax_theme` 的完整移植（逐字一致，见该 crate 头部）。
 # theme crate 只做重导出，不自带的残缺版本。
-aa_syntax_theme_gpui = { path = "packages/aa/aa_theme/aa_syntax_theme_gpui" }
+aa_syntax_theme_gpui = { path = "packages/aa/theme/aa_syntax_theme_gpui" }
 aa_cloud_llm_client = { path = "packages/aa/aa_cloud_llm_client" }
 async-compression = { version = "0.4", features = ["bzip2", "gzip", "futures-io"] }
 async-lock = "3.4.2"
@@ -263,12 +263,12 @@ aa_clock = { path = "packages/clock" }
 # 之上对齐 zed，所以依赖方向是 ui → base（单向，base 不反向依赖 ui / theme）。
 aa_gpui_base = { path = "packages/base" }
 
-# 主题系统（packages/aa/aa_theme/aa_theme_gpui）：对齐 zed crates/theme 的精简版，含语义色、
+# 主题系统（packages/aa/theme/aa_theme_gpui）：对齐 zed crates/theme 的精简版，含语义色、
 # 语法色与主题注册表。独立成包是因为它不隶属控件库——aa_gpui_kit_ui 只是调用方，
 # 因此 aa_gpui_kit_ui 也通过 `aa_theme_gpui.workspace = true` 引用（不留 module 别名）。
-aa_theme_gpui = { path = "packages/aa/aa_theme/aa_theme_gpui" }
+aa_theme_gpui = { path = "packages/aa/theme/aa_theme_gpui" }
 # 前端无关的主题内核（颜色类型 / OKLab），gpui 与 iced 两个后端共享。
-aa_theme_core = { path = "packages/aa/aa_theme/aa_theme_core" }
+aa_theme_core = { path = "packages/aa/theme/aa_theme_core" }
 aa_gpui_kit_component = { path = "packages/component" }
 # settings_content 源码里用 `use settings_macros::*` / `use settings_json::*` /
 # `use language_model_core::*`，但 gpui_learn 里的包名加了 aa_ 前缀。
@@ -467,7 +467,7 @@ gpui_util = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cc
 # of LanguageFn would make `tree_sitter_json::LANGUAGE.into()` fail.
 tree-sitter-language = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }
 # [workspace.lints]：统一的 lint 配置，供子包用 `lints.workspace = true` 继承
-# （如 packages/aa/aa_assets/aa_assets_core）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
+# （如 packages/aa/assets/aa_assets_core）。这里保持宽松，避免给教学仓库引入额外编译告警噪音。
 [workspace.lints.rust]
 # 允许 #[cfg(...)] 属性中出现未识别的配置条件
 unexpected_cfgs = { level = "allow" }

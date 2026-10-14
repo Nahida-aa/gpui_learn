@@ -760,10 +760,22 @@ name = "aa_syntax_theme_iced"
 version = "0.1.0"
 
 [[package]]
+name = "aa_theme_core"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "palette",
+ "schemars",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "aa_theme_gpui"
 version = "0.1.0"
 dependencies = [
  "aa_syntax_theme_gpui",
+ "aa_theme_core",
  "anyhow",
  "gpui",
  "palette",
