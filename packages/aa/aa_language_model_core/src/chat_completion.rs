@@ -540,8 +540,23 @@ impl ChatCompletionEventMapper {
             }
             Some("tool_calls") => {
                 if !self.tool_call_accumulation_failed {
-                    events.extend(self.tool_calls.drain().map(
-                        |tool_call| match parse_tool_arguments(&tool_call.arguments) {
+                    events.extend(self.tool_calls.drain().filter_map(|tool_call| {
+                        // A tool call whose id or name never arrived cannot be
+                        // replayed: an empty id serializes to an invalid
+                        // `tool_call_id` that providers reject on every
+                        // subsequent request (#65655). Drop it here, mirroring
+                        // the guard on the per-delta emit above, rather than
+                        // persisting a call that poisons the thread.
+                        if tool_call.id.is_empty() || tool_call.name.is_empty() {
+                            log::error!(
+                                "Discarding streamed tool call with empty id or name (id: {:?}, name: {:?})",
+                                tool_call.id,
+                                tool_call.name,
+                            );
+                            return None;
+                        }
+
+                        Some(match parse_tool_arguments(&tool_call.arguments) {
                             Ok(input) => Ok(LanguageModelCompletionEvent::ToolUse(
                                 LanguageModelToolUse {
                                     id: tool_call.id.clone().into(),
@@ -558,8 +573,8 @@ impl ChatCompletionEventMapper {
                                 raw_input: tool_call.arguments.clone().into(),
                                 json_parse_error: error.to_string(),
                             }),
-                        },
-                    ));
+                        })
+                    }));
                 }
 
                 events.push(Ok(LanguageModelCompletionEvent::Stop(StopReason::ToolUse)));
@@ -1632,5 +1647,41 @@ mod tests {
         assert_eq!(tool_uses[0].raw_input, r#"{"city":"Berlin"}"#);
         assert_eq!(tool_uses[1].id.to_string(), "call_b");
         assert_eq!(tool_uses[1].raw_input, r#"{"city":"Tokyo"}"#);
+    }
+
+    // A streamed tool call whose id or name never becomes non-empty must not be
+    // emitted on the finish drain: replaying an empty id serializes to an
+    // invalid `tool_call_id`, which providers reject on every later request
+    // (#65655). The partial emit already guards on this; the drain must too.
+    #[test]
+    fn drops_tool_calls_with_empty_id_or_name_on_finish() {
+        for (id, name) in [("", ""), ("", "list_directory"), ("call_a", "")] {
+            let mapped = map_completion_events(vec![
+                tool_call_chunk_event(vec![ToolCallChunk {
+                    index: Some(0),
+                    id: Some(id.into()),
+                    function: Some(FunctionChunk {
+                        name: Some(name.into()),
+                        arguments: Some(r#"{"path":"src"}"#.into()),
+                        thought_signature: None,
+                    }),
+                }]),
+                finish_tool_calls_event(),
+            ]);
+
+            assert!(
+                !mapped
+                    .iter()
+                    .any(|event| matches!(event, LanguageModelCompletionEvent::ToolUse(_))),
+                "expected no tool call for id={id:?} name={name:?}, got: {mapped:?}"
+            );
+            assert!(
+                mapped.iter().any(|event| matches!(
+                    event,
+                    LanguageModelCompletionEvent::Stop(StopReason::ToolUse)
+                )),
+                "expected Stop(ToolUse) for id={id:?} name={name:?}"
+            );
+        }
     }
 }
