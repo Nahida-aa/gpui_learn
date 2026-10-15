@@ -837,6 +837,36 @@ mod tests {
     }
 
     #[test]
+    fn linux_subtable_is_nested_not_flat() {
+        let dir = identity_test_dir("linux_nested");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+
+[package.metadata.bundle-stable.linux]
+mime_types = ["text/plain", "x-scheme-handler/aacode"]
+"#,
+        )
+        .unwrap();
+        let meta = load_bundle_meta("Cargo.toml#[package, metadata, bundle-stable]", &dir).unwrap();
+        // cargo-bundle 的 BundleSettings 是 linux: Option<LinuxSettings>（嵌套，
+        // settings.rs:191），mime_types 在 LinuxSettings 里。平铺的
+        // linux_mime_types 不在 schema 里——cargo-bundle 有 deny_unknown_fields
+        // 会直接报错，我们静默忽略（所以平铺写法等于没配）。这个测试锁住嵌套形态。
+        assert_eq!(
+            meta.mime_types(),
+            ["text/plain", "x-scheme-handler/aacode"],
+            "mime_types 应在 [....linux] 嵌套子表里"
+        );
+    }
+
+    #[test]
     fn identity_reads_toml_deep_path() {
         let dir = identity_test_dir("toml_deep");
         std::fs::write(
