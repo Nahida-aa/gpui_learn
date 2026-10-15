@@ -1,0 +1,13 @@
+[package]
+name = "aa_ui_core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+# 颜色类型。APCA 只需要 Hsla/Rgba，不需要整个主题层。
+aa_theme_core.workspace = true
+
+[lints]
+workspace = true
