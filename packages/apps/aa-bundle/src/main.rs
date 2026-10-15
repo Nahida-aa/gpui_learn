@@ -41,13 +41,18 @@ struct CommonArgs {
     /// 源码目录（含 Cargo.toml 与 resources/），默认当前目录
     #[arg(short = 'p', long, default_value = ".")]
     project_dir: PathBuf,
-    /// 身份/打包配置来源（**必填**）：`<文件>` 或 `<文件>#[k1, k2, ...]`。
+    /// 身份/打包配置来源（**必填，可重复**）：`<文件>` 或 `<文件>#[k1, k2, ...]`。
     /// 字段对齐 cargo-bundle 的 BundleSettings；格式特有设置放同表的子表
     /// （如 `[bundle.arch]`）。
     /// 例：`Cargo.toml#[package, metadata, bundle-stable]`
     /// （这只是 aacode 的写法，不是约定 —— 你的项目放哪都行）
-    #[arg(long)]
-    bundle_meta: String,
+    ///
+    /// 重复给出时按顺序**分层**：后者递归覆盖前者（对象递归合并，数组/标量
+    /// 整体替换）。典型用法是先给各 channel 的共享表，再给 channel 专属表：
+    /// `--bundle-meta "Cargo.toml#[package, metadata, bundle-shared]" \
+    ///  --bundle-meta "Cargo.toml#[package, metadata, bundle-stable]"`
+    #[arg(long, required = true)]
+    bundle_meta: Vec<String>,
     /// 覆盖二进制名（默认取 Cargo.toml 的 [[bin]] 推导链）
     #[arg(long)]
     bin_name: Option<String>,
@@ -69,7 +74,7 @@ fn main() -> Result<()> {
         Format::Pkgbuild => {
             let opts = aa_bundle::pkgbuild::PkgbuildOptions {
                 project_dir: &cli.common.project_dir,
-                bundle_meta: &cli.common.bundle_meta,
+                bundle_meta: cli.common.bundle_meta.clone(),
                 bin_name: cli.common.bin_name.as_deref(),
                 desktop_template: cli.common.desktop_template.as_deref(),
                 icon_name: cli.common.icon_name.as_deref(),
@@ -104,7 +109,7 @@ fn main() -> Result<()> {
         Format::TarGz => {
             let opts = aa_bundle::targz::TargzOptions {
                 project_dir: &cli.common.project_dir,
-                bundle_meta: &cli.common.bundle_meta,
+                bundle_meta: cli.common.bundle_meta.clone(),
                 bin_name: cli.common.bin_name.as_deref(),
                 icon_name: cli.common.icon_name.as_deref(),
                 desktop_template: cli.common.desktop_template.as_deref(),

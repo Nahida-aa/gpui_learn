@@ -29,10 +29,7 @@ use std::process::Command;
 
 use anyhow::{Context, Result, bail};
 
-use crate::{
-    BundleMeta, icon_size_dir, load_bundle_meta, resolve_desktop_entry, resolve_icon_name,
-    write_file,
-};
+use crate::{BundleMeta, icon_size_dir, resolve_desktop_entry, resolve_icon_name, write_file};
 
 /// 不打包的库（对齐 zed bundle-linux 的 `find_libs` 排除清单）：
 /// - glibc / libgcc / libm / pthread / dl / asound：任何 glibc 系统的必备品，
@@ -109,8 +106,9 @@ pub fn libs_to_bundle(ldd_output: &str) -> Result<Vec<PathBuf>> {
 pub struct TargzOptions<'a> {
     /// 源码目录（含 Cargo.toml 与 resources/）
     pub project_dir: &'a Path,
-    /// 身份/打包配置来源引用；**必填**，无默认值
-    pub bundle_meta: &'a str,
+    /// 身份/打包配置来源引用列表（**必填**，无默认值）：多个按顺序分层，
+    /// 后者递归覆盖前者（见 [`crate::load_bundle_meta_layered`]）。
+    pub bundle_meta: Vec<String>,
     /// 覆盖二进制名（默认取 Cargo.toml 的 [[bin]] 推导链）
     pub bin_name: Option<&'a str>,
     /// 覆盖图标基础名（默认取二进制名）
@@ -128,7 +126,7 @@ pub struct TargzOptions<'a> {
 /// 生成 tar.gz，返回产物路径。
 pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
     let info = crate::pkgbuild::read_package_info(opts.project_dir)?;
-    let meta: BundleMeta = load_bundle_meta(opts.bundle_meta, opts.project_dir)?;
+    let meta: BundleMeta = crate::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
     let bin = crate::pkgbuild::resolve_bin_name(&info, opts.bin_name, opts.project_dir)?;
     let icon = resolve_icon_name(opts.icon_name, bin);
 
@@ -192,6 +190,8 @@ fn stage_app(
     fallback_comment: &str,
 ) -> Result<()> {
     let app_dir = staging.join(app_name);
+    // 错误消息里展示的「配置来源」：多引用按顺序用 + 连起来
+    let meta_ref = opts.bundle_meta.join(" + ");
 
     // 1. 二进制 → bin/
     copy_file(bin_path, &app_dir.join("bin").join(bin))?;
@@ -222,7 +222,7 @@ fn stage_app(
         anyhow::ensure!(
             abs.exists(),
             "bundle 元数据 {} 的 icon 指向的文件不存在：{}",
-            opts.bundle_meta,
+            meta_ref,
             abs.display()
         );
         let size = icon_size_dir(icon_path);
@@ -244,7 +244,7 @@ fn stage_app(
         icon,
         bin,
         opts.project_dir,
-        opts.bundle_meta,
+        &meta_ref,
         opts.desktop_template,
         fallback_comment,
     )?;
@@ -385,7 +385,7 @@ icon = ["resources/app-icon@2x.png", "resources/app-icon.png"]
 
         let opts = TargzOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             icon_name: None,
             desktop_template: None,
@@ -471,7 +471,7 @@ name = "AaCode"
 
         let opts = TargzOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             icon_name: None,
             desktop_template: None,

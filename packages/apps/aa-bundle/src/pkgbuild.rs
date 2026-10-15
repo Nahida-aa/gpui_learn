@@ -26,7 +26,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
-use crate::{BundleMeta, load_bundle_meta};
+use crate::BundleMeta;
 
 /// crate 的 Cargo.toml 里我们关心的元数据。
 #[derive(Debug, Clone)]
@@ -201,8 +201,10 @@ fn arch_settings_from(arch: &Option<crate::ArchTable>) -> ArchSettings {
 pub struct PkgbuildOptions<'a> {
     /// 源码目录（含 Cargo.toml）
     pub project_dir: &'a Path,
-    /// 打包配置来源引用（含 `[bundle.arch]` 子表）；**必填**，无默认值
-    pub bundle_meta: &'a str,
+    /// 身份/打包配置来源引用列表（**必填**，无默认值）：多个按顺序分层，
+    /// 后者递归覆盖前者（见 [`crate::load_bundle_meta_layered`]）。
+    /// 典型用法：先给共享表，再给 channel 专属表。
+    pub bundle_meta: Vec<String>,
     /// 覆盖二进制名
     pub bin_name: Option<&'a str>,
     /// 覆盖 .desktop 模板路径
@@ -265,7 +267,9 @@ pub fn default_out_dir(project_dir: &Path, bin_name: Option<&str>) -> Result<Pat
 /// 返回 `(PKGBUILD 文本, Option<(desktop 文件名, desktop 内容)>)`。
 pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(String, String)>)> {
     let info = read_package_info(opts.project_dir)?;
-    let identity: BundleMeta = load_bundle_meta(opts.bundle_meta, opts.project_dir)?;
+    let identity: BundleMeta = crate::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
+    // 错误消息 / PKGBUILD 注释里展示的「配置来源」：多引用按顺序用 + 连起来
+    let meta_ref = opts.bundle_meta.join(" + ");
     let mut settings = arch_settings_from(&identity.arch);
     // 命令行覆盖优先于 Cargo.toml 的 [bundle.arch]
     if let Some(v) = opts.depends {
@@ -324,7 +328,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         &icon,
         &format!("{prefix}/bin/{bin}"),
         opts.project_dir,
-        opts.bundle_meta,
+        &meta_ref,
         opts.desktop_template,
         &info.description,
     )?;
@@ -364,7 +368,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         anyhow::ensure!(
             abs.exists(),
             "bundle 元数据 {} 的 icon 指向的文件不存在：{}",
-            opts.bundle_meta,
+            meta_ref,
             abs.display()
         );
         // 尺寸目录按文件名约定判断：`@2x` 结尾 → 1024x1024，否则 512x512。
@@ -436,7 +440,7 @@ package() {{
         bin = bin,
         icon_install = icon_install,
         prefix = prefix,
-        bundle_meta = opts.bundle_meta,
+        bundle_meta = meta_ref,
         cargo_pkg_flag = cargo_pkg_flag,
         desktop_install = desktop_install,
     );
@@ -479,7 +483,7 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -579,7 +583,7 @@ depends = ["gcc-libs", "glibc", "gtk3"]
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -634,7 +638,7 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -712,7 +716,7 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -794,7 +798,7 @@ icon_dir = "share/icons/hicolor"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             desktop_template: None,
             icon_name: None,
@@ -850,7 +854,7 @@ name = "AaCode"
 
         let opts = PkgbuildOptions {
             project_dir: &dir,
-            bundle_meta: "Cargo.toml#[package, metadata, bundle-stable]",
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
             bin_name: None,
             desktop_template: None,
             icon_name: None,
