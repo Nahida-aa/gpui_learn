@@ -8,6 +8,8 @@ publish.workspace = true
 [dependencies]
 anyhow.workspace = true
 rust-embed.workspace = true
+# 框架无关的共享字符串（替代走 zed git 的 gpui_shared_string）。
+aa_shared_string.workspace = true
 
 [lints]
 workspace = true

@@ -282,6 +282,7 @@ dependencies = [
 name = "aa_assets_core"
 version = "0.1.0"
 dependencies = [
+ "aa_shared_string",
  "anyhow",
  "rust-embed",
 ]
@@ -747,6 +748,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_shared_string"
+version = "0.1.0"
+dependencies = [
+ "schemars",
+ "serde",
+ "smol_str",
+]
+
+[[package]]
 name = "aa_syntax_theme_gpui"
 version = "0.1.0"
 dependencies = [
@@ -797,6 +807,13 @@ version = "0.1.0"
 [[package]]
 name = "aa_theme_settings_gpui_zed"
 version = "0.1.0"
+
+[[package]]
+name = "aa_ui_core"
+version = "0.1.0"
+dependencies = [
+ "aa_theme_core",
+]
 
 [[package]]
 name = "aa_ui_iced"

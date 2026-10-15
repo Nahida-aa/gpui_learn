@@ -1,4 +1,5 @@
 // This crate was essentially pulled out verbatim from main `zed` crate to avoid having to run RustEmbed macro whenever zed has to be rebuilt. It saves a second or two on an incremental build.
+use aa_shared_string::SharedString;
 use anyhow::{Context as _, Result};
 use rust_embed::RustEmbed;
 use std::borrow::Cow;
@@ -22,7 +23,7 @@ pub struct Assets;
 
 pub trait AssetProvider {
     fn load(&self, path: &str) -> Result<Option<Cow<'static, [u8]>>>;
-    fn list(&self, path: &str) -> Result<Vec<String>>;
+    fn list(&self, path: &str) -> Result<Vec<SharedString>>;
 }
 
 impl AssetProvider for Assets {
@@ -30,7 +31,7 @@ impl AssetProvider for Assets {
         self.load_asset(path)
     }
 
-    fn list(&self, path: &str) -> Result<Vec<String>> {
+    fn list(&self, path: &str) -> Result<Vec<SharedString>> {
         self.list_assets(path)
     }
 }
@@ -42,17 +43,16 @@ impl Assets {
             .with_context(|| format!("loading asset at path {path:?}"))
     }
 
-    pub fn list_assets(&self, path: &str) -> Result<Vec<String>> {
+    /// 列出 `path` 前缀下的资源路径。
+    ///
+    /// 返回 [`SharedString`] 而非 [`String`]：资源路径都是短字符串，
+    /// `SharedString`（`SmolStr`）对短串是**内联存储**，不分配堆，而且克隆
+    /// 廉价 —— 这份列表会被上层反复遍历、克隆。
+    pub fn list_assets(&self, path: &str) -> Result<Vec<SharedString>> {
         Ok(Self::iter()
-            .filter_map(|p| {
-                if p.starts_with(path) {
-                    // Self::iter() 产出 Cow<'_, str>；要 String 必须用 into_owned()
-                    // 而不是 to_owned()（后者作用在 Cow 上仍是 Cow）。
-                    Some(p.into_owned())
-                } else {
-                    None
-                }
-            })
+            .filter(|p| p.starts_with(path))
+            // `SharedString: From<Cow<str>>`；短路径走 SmolStr 内联存储。
+            .map(SharedString::from)
             .collect())
     }
     pub fn load_font_bytes(&self) -> Result<Vec<Cow<'static, [u8]>>> {

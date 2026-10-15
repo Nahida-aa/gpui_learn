@@ -1,0 +1,13 @@
+[package]
+name = "aa_shared_string"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+test = false
+doctest = false
+
+[dependencies]
+schemars.workspace = true
+serde.workspace = true
+smol_str = { version = "0.3.6", default-features = false, features = ["serde"] }
