@@ -317,6 +317,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
 
     // .desktop（文件名 + 内容）：模板 > aa-bundle 自动生成，见 resolve_desktop_entry。
     // `$APP_CLI` 用绝对安装路径——PKGBUILD 装完二进制就在 <prefix>/bin/<bin>。
+    // Comment 回退值取 Cargo.toml 的 [package].description。
     let desktop_rel = crate::resolve_desktop_entry(
         &identity,
         bin,
@@ -325,6 +326,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         opts.project_dir,
         opts.bundle_meta,
         opts.desktop_template,
+        &info.description,
     )?;
 
     // 没给 url 就整行不输出，避免生成 `url=""` 这种空字段
@@ -834,6 +836,7 @@ icon_dir = "share/icons/hicolor"
 [package]
 name = "aacode"
 version = "1.23.2"
+description = "A coding agent built with Rust and GPUI"
 license = "Apache-2.0"
 
 [package.metadata.bundle-stable]
@@ -871,6 +874,11 @@ name = "AaCode"
         assert!(content.contains("Exec=aacode"), "{content}");
         assert!(content.contains("Icon=aacode"), "{content}");
         assert!(content.contains("Terminal=false"), "{content}");
+        // Comment 回退链：short_description 缺省 → Cargo.toml 的 [package].description
+        assert!(
+            content.contains("Comment=A coding agent built with Rust and GPUI"),
+            "Comment 应回退到 package.description：{content}"
+        );
         // 没配 category → 回退 Utility;
         assert!(content.contains("Categories=Utility;"), "{content}");
         assert!(content.contains("StartupWMClass=dev.aa.AaCode"), "{content}");
@@ -891,7 +899,7 @@ name = "AaCode"
             ..Default::default()
         };
         // 图标安装名与 bin 名不同时，Icon= 必须用安装名（曾写死 bin 名的 bug）
-        let out = crate::render_desktop_entry(&meta, "aacode", "my_icon", "dev.aa.AaCode");
+        let out = crate::render_desktop_entry(&meta, "aacode", "my_icon", "dev.aa.AaCode", "");
         // "Developer Tool" → Development;（cargo-bundle category.rs:134）
         assert!(out.contains("Categories=Development;"), "{out}");
         assert!(out.contains("Comment=A coding agent"), "{out}");

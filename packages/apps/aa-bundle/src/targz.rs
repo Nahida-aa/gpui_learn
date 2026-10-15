@@ -164,7 +164,7 @@ pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
         std::fs::remove_dir_all(&staging).ok();
     }
     let result = (|| {
-        stage_app(opts, &meta, bin, &icon, &bin_path, &staging, &app_name)?;
+        stage_app(opts, &meta, bin, &icon, &bin_path, &staging, &app_name, &info.description)?;
         pack_targz(&staging, &app_name, &out)
     })();
     std::fs::remove_dir_all(&staging).ok();
@@ -178,7 +178,9 @@ pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
     Ok(out)
 }
 
-/// 组装 `<bin>.app/` 目录树。
+/// 组装 `<bin>.app/` 目录树。`fallback_comment` 是 .desktop `Comment=` 的
+/// 回退值（Cargo.toml 的 `[package].description`）。
+#[allow(clippy::too_many_arguments)] // 每个入参对应一个独立来源，拆结构体不划算
 fn stage_app(
     opts: &TargzOptions,
     meta: &BundleMeta,
@@ -187,6 +189,7 @@ fn stage_app(
     bin_path: &Path,
     staging: &Path,
     app_name: &str,
+    fallback_comment: &str,
 ) -> Result<()> {
     let app_dir = staging.join(app_name);
 
@@ -234,6 +237,7 @@ fn stage_app(
 
     // 4. .desktop → share/applications/<id>.desktop。
     //    Exec 用裸 bin 名：tar.gz 可重定位，解包位置由安装脚本决定（zed 同款）。
+    //    Comment 回退值取 Cargo.toml 的 [package].description。
     let (name, content) = resolve_desktop_entry(
         meta,
         bin,
@@ -242,6 +246,7 @@ fn stage_app(
         opts.project_dir,
         opts.bundle_meta,
         opts.desktop_template,
+        fallback_comment,
     )?;
     write_file(&app_dir.join("share/applications").join(&name), &content)?;
 
@@ -361,6 +366,7 @@ mod tests {
 [package]
 name = "aacode"
 version = "1.23.2"
+description = "A coding agent built with Rust and GPUI"
 license = "Apache-2.0"
 
 [package.metadata.bundle-stable]
@@ -431,6 +437,11 @@ icon = ["resources/app-icon@2x.png", "resources/app-icon.png"]
         assert!(desktop.contains("Exec=aacode"), "tar.gz 的 Exec 用裸 bin 名：{desktop}");
         assert!(desktop.contains("Icon=aacode"), "{desktop}");
         assert!(desktop.contains("Categories=Development;"), "{desktop}");
+        // Comment 回退到 package.description（targz 侧接线验证）
+        assert!(
+            desktop.contains("Comment=A coding agent built with Rust and GPUI"),
+            "{desktop}"
+        );
 
         let _ = std::fs::remove_dir_all(&dir);
     }

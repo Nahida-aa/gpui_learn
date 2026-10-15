@@ -377,12 +377,26 @@ pub fn derive_identifier(repo_name: &str, bin_name: Option<&str>) -> Option<Stri
 /// `icon` 是**安装名**（hicolor `apps/<名字>.png`），与 `bin` 分开传：
 /// `--icon-name` 可覆盖它，覆盖后 `Icon=` 必须跟着变，否则桌面环境
 /// 按 bin 名找不到装好的图标。
-pub fn render_desktop_entry(meta: &BundleMeta, bin: &str, icon: &str, desktop_id: &str) -> String {
+///
+/// `fallback_comment` 是 `Comment=` 的回退值（Cargo.toml 的
+/// `[package].description`，由调用方读入）：`short_description` 缺省时用它，
+/// 两者都空则整行省略（与 `MimeType` 同理）。
+pub fn render_desktop_entry(
+    meta: &BundleMeta,
+    bin: &str,
+    icon: &str,
+    desktop_id: &str,
+    fallback_comment: &str,
+) -> String {
     use std::fmt::Write;
     let mut out = String::new();
 
     let app_name = meta.name.as_deref().unwrap_or(bin);
-    let comment = meta.short_description.as_deref().unwrap_or("");
+    let comment = meta
+        .short_description
+        .as_deref()
+        .filter(|s| !s.is_empty())
+        .unwrap_or(fallback_comment);
     // category 认不出时回退 Utility;（调用方已告警）
     let categories = meta
         .category
@@ -509,8 +523,15 @@ pub fn render_template(template: &str, vars: &[(&str, &str)]) -> String {
 /// 安装路径（`/usr/bin/<bin>`），tar.gz 用裸 bin 名（可重定位，解包位置由
 /// 安装脚本决定，zed 同款）。自动生成路径的 `Exec=` 恒为裸 bin 名（靠 PATH）。
 ///
+/// `fallback_comment` 是 `Comment=` 的回退值（Cargo.toml 的
+/// `[package].description`）：`short_description` 缺省时用它，见
+/// [`render_desktop_entry`]。
+///
 /// category 缺失或认不出时告警并回退 `Utility;`（cargo-bundle
 /// desktop.rs:161-170 同款）。
+// 参数多是「一个字段一个来源」的代价（身份/路径/模板/回退值各自独立），
+// 拆参数结构体只会把调用方搞累；同名 &str 传串的风险由单测的行为断言兜底。
+#[allow(clippy::too_many_arguments)]
 pub fn resolve_desktop_entry(
     meta: &BundleMeta,
     bin: &str,
@@ -519,6 +540,7 @@ pub fn resolve_desktop_entry(
     project_dir: &Path,
     meta_ref: &str,
     template_override: Option<&Path>,
+    fallback_comment: &str,
 ) -> Result<(String, String)> {
     let desktop_id = resolve_desktop_id(meta, project_dir, bin, meta_ref)?;
     let app_name = meta.name.as_deref().unwrap_or(bin);
@@ -559,7 +581,7 @@ pub fn resolve_desktop_entry(
     }
     Ok((
         format!("{desktop_id}.desktop"),
-        render_desktop_entry(meta, bin, icon, &desktop_id),
+        render_desktop_entry(meta, bin, icon, &desktop_id, fallback_comment),
     ))
 }
 
