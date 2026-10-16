@@ -223,6 +223,10 @@ pub struct PkgbuildOptions<'a> {
     pub license: Option<&'a str>,
     /// 覆盖安装前缀
     pub prefix: Option<&'a str>,
+    /// 要打包的 cargo 构建 profile（默认 `release`）。用于安装**已编好**的产物：
+    /// 如 `release-quick` → PKGBUILD 里 `cargo build --profile release-quick`，
+    /// 且取 `target/release-quick/<bin>`。`dev` 映射到 cargo 的 `debug` 目录。
+    pub profile: Option<&'a str>,
 }
 
 /// bin 名的推导链（对齐 cargo 的自动发现规则）：
@@ -319,6 +323,16 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     // cargo 包名直接从 crate 的 Cargo.toml 取 —— 已经指了目录，不需要再让人传一遍
     let cargo_pkg_flag = format!(" -p {}", info.name);
 
+    // 要打包的 profile：默认 release。`dev` 在 cargo 里落 target/debug，其余同名。
+    // release 用简写 `--release`（保持与旧输出一致），其余走 `--profile <name>`。
+    let profile = opts.profile.unwrap_or("release");
+    let profile_dir = if profile == "dev" { "debug" } else { profile };
+    let profile_flag = if profile == "release" {
+        "--release".to_string()
+    } else {
+        format!("--profile {profile}")
+    };
+
     // .desktop（文件名 + 内容）：模板 > aa-bundle 自动生成，见 resolve_desktop_entry。
     // `$APP_CLI` 用绝对安装路径——PKGBUILD 装完二进制就在 <prefix>/bin/<bin>。
     // Comment 回退值取 Cargo.toml 的 [package].description。
@@ -408,7 +422,7 @@ build() {{
   # 被 CFLAGS 的 -O2 覆盖后必挂。用户 shell 里这些变量本来就不存在，卸掉
   # 正好让包内构建与直接 `cargo build` 一致。
   unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
-  cargo build --release{cargo_pkg_flag}
+  cargo build {profile_flag}{cargo_pkg_flag}
 }}
 
 package() {{
@@ -423,7 +437,7 @@ package() {{
     echo "aa-bundle: 无法从 cargo metadata 解析 target_directory" >&2
     return 1
   fi
-  install -Dm755 "$_target_dir/release/{bin}" "$pkgdir{prefix}/bin/{bin}"
+  install -Dm755 "$_target_dir/{profile_dir}/{bin}" "$pkgdir{prefix}/bin/{bin}"
 
   # 图标路径来自 bundle 元数据的 icon 字段，安装目录来自 [bundle.arch].icon_dir
 {icon_install}{desktop_install}}}
@@ -442,6 +456,8 @@ package() {{
         prefix = prefix,
         bundle_meta = meta_ref,
         cargo_pkg_flag = cargo_pkg_flag,
+        profile_flag = profile_flag,
+        profile_dir = profile_dir,
         desktop_install = desktop_install,
     );
 
@@ -493,6 +509,7 @@ name = "AaCode"
             url: None,
             license: None,
             prefix: None,
+            profile: None,
         };
         let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
 
@@ -548,6 +565,67 @@ name = "AaCode"
         );
     }
 
+    /// `--profile` 决定 PKGBUILD 的构建命令与产物目录：非 release 走
+    /// `--profile <name>` + `target/<name>/<bin>`；`dev` 映射到 cargo 的 `debug`。
+    #[test]
+    fn pkgbuild_profile_flag_controls_build_and_artifact_dir() {
+        let dir = test_dir("profile");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[[bin]]
+name = "aacode"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+
+        fn opts<'a>(dir: &'a Path, profile: Option<&'a str>) -> PkgbuildOptions<'a> {
+            PkgbuildOptions {
+                project_dir: dir,
+                bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
+                bin_name: None,
+                desktop_template: None,
+                icon_name: None,
+                depends: None,
+                makedepends: None,
+                arch: None,
+                url: None,
+                license: None,
+                prefix: None,
+                profile,
+            }
+        }
+
+        let (pkgbuild, _) = generate_pkgbuild(&opts(&dir, Some("release-quick"))).unwrap();
+        assert!(
+            pkgbuild.contains("cargo build --profile release-quick -p aacode"),
+            "{pkgbuild}"
+        );
+        assert!(
+            pkgbuild.contains("$_target_dir/release-quick/aacode"),
+            "{pkgbuild}"
+        );
+
+        let (pkgbuild, _) = generate_pkgbuild(&opts(&dir, Some("dev"))).unwrap();
+        assert!(
+            pkgbuild.contains("cargo build --profile dev -p aacode"),
+            "{pkgbuild}"
+        );
+        assert!(
+            pkgbuild.contains("$_target_dir/debug/aacode"),
+            "{pkgbuild}"
+        );
+    }
+
     #[test]
     fn pkgbuild_settings_come_from_bundle_arch_subtable() {
         let dir = test_dir("arch_subtable");
@@ -593,6 +671,7 @@ depends = ["gcc-libs", "glibc", "gtk3"]
             url: None,
             license: None,
             prefix: None,
+            profile: None,
         };
         let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
 
@@ -648,6 +727,7 @@ name = "AaCode"
             url: None,
             license: None,
             prefix: None,
+            profile: None,
         };
         let (pkgbuild, _) = generate_pkgbuild(&opts).unwrap();
         assert!(
@@ -726,6 +806,7 @@ name = "AaCode"
             url: None,
             license: None,
             prefix: None,
+            profile: None,
         };
         let err = generate_pkgbuild(&opts).unwrap_err().to_string();
         assert!(
@@ -808,6 +889,7 @@ icon_dir = "share/icons/hicolor"
             url: None,
             license: None,
             prefix: None,
+            profile: None,
         };
         let (pkgbuild, _) = generate_pkgbuild(&opts).unwrap();
         // 两个图标都装，路径来自 icon 列表而非硬编码；目录来自 [bundle.arch].icon_dir
@@ -864,6 +946,7 @@ name = "AaCode"
             url: None,
             license: None,
             prefix: None,
+            profile: None,
         };
         let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
         assert!(

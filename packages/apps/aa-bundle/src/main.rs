@@ -66,6 +66,11 @@ struct CommonArgs {
     /// tar.gz 为文件（默认 <workspace target>/aa-bundle/targz/<bin>-linux-<arch>.tar.gz）
     #[arg(long)]
     out: Option<PathBuf>,
+    /// 要打包的 cargo 构建 profile（默认 release）。安装**已编好**的产物时用，
+    /// 如 `--profile release-quick`：pkgbuild 的 build() 会变成
+    /// `cargo build --profile release-quick`，package() 取 target/release-quick/<bin>。
+    #[arg(long, default_value = "release")]
+    profile: String,
 }
 
 fn main() -> Result<()> {
@@ -85,6 +90,7 @@ fn main() -> Result<()> {
                 url: None,
                 license: None,
                 prefix: None,
+                profile: Some(cli.common.profile.as_str()),
             };
             let (pkgbuild, desktop) = aa_bundle::pkgbuild::generate_pkgbuild(&opts)?;
 
@@ -115,6 +121,7 @@ fn main() -> Result<()> {
                 desktop_template: cli.common.desktop_template.as_deref(),
                 out: cli.common.out.as_deref(),
                 bin_path: None,
+                profile: Some(cli.common.profile.as_str()),
             };
             aa_bundle::targz::generate(&opts)?;
         }
