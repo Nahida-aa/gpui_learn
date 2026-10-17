@@ -1704,7 +1704,7 @@ mod tests {
     // drain must too. Rather than silently ending the turn without the tool
     // call, it fails with `InvalidProviderOutput` naming the missing field.
     #[test]
-    fn rejects_tool_calls_with_empty_id_or_name_on_finish() {
+    fn issue_65655_rejects_tool_calls_with_empty_id_or_name_on_finish() {
         for (id, name, expected) in [
             (
                 "",
@@ -1755,7 +1755,7 @@ mod tests {
     // A well-formed call in the same response as a malformed one is still
     // emitted, but the malformed one fails the response.
     #[test]
-    fn rejects_malformed_call_but_keeps_well_formed_siblings() {
+    fn issue_65655_keeps_well_formed_tool_calls_alongside_rejected_ones() {
         let mapped = map_completion_results(vec![
             tool_call_chunk_event(vec![
                 ToolCallChunk {
