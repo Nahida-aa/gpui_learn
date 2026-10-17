@@ -6,6 +6,12 @@ license.workspace = true
 publish.workspace = true
 
 [dependencies]
+# 版本必须与使用方（aa_term）一致：iced 的 `Element` / `Message` 类型要能互通，
+# 两份不同版本的 iced 拼不到一起。features 是并集，aa_term 那边额外开 canvas/tokio。
+iced = "0.14.0"
+
+[dev-dependencies]
+iced_test = "0.14.0"
 
 [lints]
 workspace = true
