@@ -540,24 +540,36 @@ impl ChatCompletionEventMapper {
             }
             Some("tool_calls") => {
                 if !self.tool_call_accumulation_failed {
-                    events.extend(self.tool_calls.drain().filter_map(|tool_call| {
-                        // A tool call whose id or name never arrived cannot be
-                        // replayed: an empty id serializes to an invalid
-                        // `tool_call_id` that providers reject on every
-                        // subsequent request (#65655). Drop it here, mirroring
-                        // the guard on the per-delta emit above, rather than
-                        // persisting a call that poisons the thread.
+                    // A tool call whose id or name never arrived cannot be
+                    // replayed: an empty id serializes to an invalid
+                    // `tool_call_id` that OpenAI-compatible servers reject on
+                    // every subsequent request (#65655). Mirror the guard on
+                    // the per-delta emit above, drop the call, and fail the
+                    // response with a specific error instead of silently
+                    // ending the turn without the tool call the model asked
+                    // for. Modeled on opencode's `InvalidProviderOutputError`.
+                    let mut malformed: Option<LanguageModelCompletionError> = None;
+                    for tool_call in self.tool_calls.drain() {
                         if tool_call.id.is_empty() || tool_call.name.is_empty() {
                             log::error!(
-                                "Discarding streamed tool call with empty id or name (id: {:?}, name: {:?})",
+                                "Provider returned a tool call with an empty id or name (id: {:?}, name: {:?}, raw_input: {:?})",
                                 tool_call.id,
                                 tool_call.name,
+                                tool_call.arguments,
                             );
-                            return None;
+                            malformed.get_or_insert_with(|| {
+                                LanguageModelCompletionError::InvalidProviderOutput {
+                                    message: malformed_tool_call_message(
+                                        &tool_call.id,
+                                        &tool_call.name,
+                                    ),
+                                }
+                            });
+                            continue;
                         }
 
-                        Some(match parse_tool_arguments(&tool_call.arguments) {
-                            Ok(input) => Ok(LanguageModelCompletionEvent::ToolUse(
+                        events.push(Ok(match parse_tool_arguments(&tool_call.arguments) {
+                            Ok(input) => LanguageModelCompletionEvent::ToolUse(
                                 LanguageModelToolUse {
                                     id: tool_call.id.clone().into(),
                                     name: tool_call.name.as_str().into(),
@@ -566,15 +578,20 @@ impl ChatCompletionEventMapper {
                                     raw_input: tool_call.arguments.clone(),
                                     thought_signature: tool_call.thought_signature.clone(),
                                 },
-                            )),
-                            Err(error) => Ok(LanguageModelCompletionEvent::ToolUseJsonParseError {
+                            ),
+                            Err(error) => LanguageModelCompletionEvent::ToolUseJsonParseError {
                                 id: tool_call.id.into(),
                                 tool_name: tool_call.name.into(),
                                 raw_input: tool_call.arguments.clone().into(),
                                 json_parse_error: error.to_string(),
-                            }),
-                        })
-                    }));
+                            },
+                        }));
+                    }
+
+                    if let Some(error) = malformed {
+                        events.push(Err(error));
+                        return events;
+                    }
                 }
 
                 events.push(Ok(LanguageModelCompletionEvent::Stop(StopReason::ToolUse)));
@@ -604,6 +621,28 @@ fn push_thinking_event(
             text,
             signature: None,
         }));
+    }
+}
+
+/// Builds the user-facing message for a streamed tool call whose identity never
+/// arrived. Which of `id`/`name` matters is provider-specific (OpenAI requires
+/// both, Mistral only a name, Gemini has no id), so name the missing field
+/// explicitly to keep the diagnostic unambiguous.
+fn malformed_tool_call_message(id: &str, name: &str) -> String {
+    match (id.is_empty(), name.is_empty()) {
+        (true, true) => {
+            "The provider returned a tool call with neither an id nor a name, so it cannot be replayed."
+                .to_string()
+        }
+        (true, false) => format!(
+            "The provider returned a tool call ({name}) with no id, so it cannot be replayed."
+        ),
+        (false, true) => format!(
+            "The provider returned a tool call ({id}) with no name, so it cannot be replayed."
+        ),
+        (false, false) => {
+            "The provider returned an invalid tool call, so it cannot be replayed.".to_string()
+        }
     }
 }
 
@@ -805,12 +844,21 @@ mod tests {
     fn map_completion_events(
         events: Vec<ResponseStreamEvent>,
     ) -> Vec<LanguageModelCompletionEvent> {
+        map_completion_results(events)
+            .into_iter()
+            .filter_map(|e| e.ok())
+            .collect()
+    }
+
+    fn map_completion_results(
+        events: Vec<ResponseStreamEvent>,
+    ) -> Vec<Result<LanguageModelCompletionEvent, LanguageModelCompletionError>> {
         let mut mapper = ChatCompletionEventMapper::new();
         let mut all_events = Vec::new();
         for event in events {
             all_events.extend(mapper.map_event(event));
         }
-        all_events.into_iter().filter_map(|e| e.ok()).collect()
+        all_events
     }
 
     #[test]
@@ -1651,12 +1699,30 @@ mod tests {
 
     // A streamed tool call whose id or name never becomes non-empty must not be
     // emitted on the finish drain: replaying an empty id serializes to an
-    // invalid `tool_call_id`, which providers reject on every later request
-    // (#65655). The partial emit already guards on this; the drain must too.
+    // invalid `tool_call_id`, which OpenAI-compatible servers reject on every
+    // later request (#65655). The partial emit already guards on this; the
+    // drain must too. Rather than silently ending the turn without the tool
+    // call, it fails with `InvalidProviderOutput` naming the missing field.
     #[test]
-    fn drops_tool_calls_with_empty_id_or_name_on_finish() {
-        for (id, name) in [("", ""), ("", "list_directory"), ("call_a", "")] {
-            let mapped = map_completion_events(vec![
+    fn rejects_tool_calls_with_empty_id_or_name_on_finish() {
+        for (id, name, expected) in [
+            (
+                "",
+                "",
+                "The provider returned a tool call with neither an id nor a name, so it cannot be replayed.",
+            ),
+            (
+                "",
+                "list_directory",
+                "The provider returned a tool call (list_directory) with no id, so it cannot be replayed.",
+            ),
+            (
+                "call_a",
+                "",
+                "The provider returned a tool call (call_a) with no name, so it cannot be replayed.",
+            ),
+        ] {
+            let mapped = map_completion_results(vec![
                 tool_call_chunk_event(vec![ToolCallChunk {
                     index: Some(0),
                     id: Some(id.into()),
@@ -1672,16 +1738,61 @@ mod tests {
             assert!(
                 !mapped
                     .iter()
-                    .any(|event| matches!(event, LanguageModelCompletionEvent::ToolUse(_))),
+                    .any(|event| matches!(event, Ok(LanguageModelCompletionEvent::ToolUse(_)))),
                 "expected no tool call for id={id:?} name={name:?}, got: {mapped:?}"
             );
             assert!(
                 mapped.iter().any(|event| matches!(
                     event,
-                    LanguageModelCompletionEvent::Stop(StopReason::ToolUse)
+                    Err(LanguageModelCompletionError::InvalidProviderOutput { message })
+                        if message == expected
                 )),
-                "expected Stop(ToolUse) for id={id:?} name={name:?}"
+                "expected InvalidProviderOutput({expected:?}) for id={id:?} name={name:?}, got: {mapped:?}"
             );
         }
+    }
+
+    // A well-formed call in the same response as a malformed one is still
+    // emitted, but the malformed one fails the response.
+    #[test]
+    fn rejects_malformed_call_but_keeps_well_formed_siblings() {
+        let mapped = map_completion_results(vec![
+            tool_call_chunk_event(vec![
+                ToolCallChunk {
+                    index: Some(0),
+                    id: Some("call_a".into()),
+                    function: Some(FunctionChunk {
+                        name: Some("list_directory".into()),
+                        arguments: Some(r#"{"path":"src"}"#.into()),
+                        thought_signature: None,
+                    }),
+                },
+                ToolCallChunk {
+                    index: Some(1),
+                    id: Some(String::new()),
+                    function: Some(FunctionChunk {
+                        name: Some(String::new()),
+                        arguments: Some("{}".into()),
+                        thought_signature: None,
+                    }),
+                },
+            ]),
+            finish_tool_calls_event(),
+        ]);
+
+        assert!(
+            mapped.iter().any(|event| matches!(
+                event,
+                Ok(LanguageModelCompletionEvent::ToolUse(tool_use))
+                    if tool_use.is_input_complete && tool_use.id.to_string() == "call_a"
+            )),
+            "expected the well-formed call to survive, got: {mapped:?}"
+        );
+        assert!(
+            mapped
+                .iter()
+                .any(|event| matches!(event, Err(LanguageModelCompletionError::InvalidProviderOutput { .. }))),
+            "expected the malformed call to fail the response, got: {mapped:?}"
+        );
     }
 }

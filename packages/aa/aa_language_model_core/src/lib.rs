@@ -256,6 +256,17 @@ pub enum LanguageModelCompletionError {
         provider: LanguageModelProviderName,
         model: LanguageModelId,
     },
+    /// The provider streamed a structurally invalid response, for example a
+    /// tool call whose `id` or `name` never arrived.
+    ///
+    /// Unlike a transport failure this is deterministic: the same request
+    /// streams the same malformed output, so it must never be retried
+    /// automatically. It also cannot be repaired locally — replaying an empty
+    /// `tool_call_id` is rejected by OpenAI-compatible servers on every later
+    /// request (#65655), so the offending call is dropped and the turn fails
+    /// with this error rather than poisoning the thread.
+    #[error("{message}")]
+    InvalidProviderOutput { message: String },
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
@@ -411,6 +422,7 @@ impl LanguageModelCompletionError {
             | Self::DeserializeResponse { .. }
             | Self::StreamEndedUnexpectedly { .. }
             | Self::ModelUnavailable { .. }
+            | Self::InvalidProviderOutput { .. }
             | Self::Other(_) => false,
         }
     }
@@ -441,6 +453,7 @@ impl LanguageModelCompletionError {
             | Self::DeserializeResponse { .. }
             | Self::StreamEndedUnexpectedly { .. }
             | Self::ModelUnavailable { .. }
+            | Self::InvalidProviderOutput { .. }
             | Self::Other(_) => None,
         }
     }
