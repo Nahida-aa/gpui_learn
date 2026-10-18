@@ -205,7 +205,6 @@ macro_rules! __fs_embed {
 /// | crate location | `crate_relative` |
 /// |---|---|
 /// | `packages/aa/aa_assets/aa_assets_core/` (depth 3) | `"../../../../assets"` |
-/// | `packages/zed/zed_settings/` (depth 2) | `"../../../assets"` |
 /// | `crates/settings/` (depth 1) | `"../../assets"` |
 ///
 /// 注意第一行用的是 `RustEmbed` 的 `#[folder]` 而不是 `crate_relative`；
@@ -219,11 +218,13 @@ macro_rules! __fs_embed {
 /// assuming it. `debug-embed` is a default feature of this crate, so a plain
 /// `cargo build` embeds exactly what a release build does; a test like
 /// `assert!(!default_settings().is_empty())` covers the release path even in
-/// debug. `packages/zed/zed_settings/src/lib.rs` has three such regression tests,
-/// added after this exact bug shipped.
+/// debug. 触发本条目的 settings 包（曾在本仓库 `packages/zed/zed_settings/`，
+/// depth 2，用 `"../../../assets"`）已于 2026-10 搬去 aacode 的
+/// `packages/setting/settings/`（同为 depth 2，层级数不变），那边的
+/// `src/lib.rs` 保留着三个此类回归测试，都是这个 bug 上线后才补的。
 ///
 /// ```ignore
-/// // In packages/zed/zed_settings/ (two levels below the repo root):
+/// // In aacode's packages/setting/settings/ (two levels below the repo root):
 /// util::fs_embed! {
 ///     pub struct SettingsAssets,
 ///     crate_relative = "../../../assets", // ← three levels, not two
