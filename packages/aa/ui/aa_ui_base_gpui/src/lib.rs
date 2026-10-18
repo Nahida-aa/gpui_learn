@@ -1,11 +1,11 @@
-//! # aa_gpui_base —— 自研基础控件层
+//! # aa_ui_base_gpui —— 自研基础控件层
 //!
 //! ## 它和 `aa_ui_zed` 的分工
 //!
 //! | 包 | 定位 | 和 zed 的关系 |
 //! |---|---|---|
 //! | `aa_ui_zed` | 复合控件库 | **对齐 zed `crates/ui` 的 API 面** |
-//! | `aa_gpui_base`（本包） | 基础控件 + 通用数学 | **zed 没有对应物**，自己实现 |
+//! | `aa_ui_base_gpui`（本包） | 基础控件 + 通用数学 | **zed 没有对应物**，自己实现 |
 //!
 //! 拆开的目的：让 `ui` 能专心做「与 zed 逐字段对齐」，不必迁就我们自研件的形状；
 //! 反过来 `base` 也能自由演化，不受 zed API 的约束。
@@ -13,10 +13,9 @@
 //! ## 依赖方向
 //!
 //! ```text
-//!   aa_gpui_base          ← 本包：geometry / slider（只依赖 gpui）
+//!   aa_ui_base_gpui     ← 本包：geometry / slider（只依赖 gpui）
 //!        ▲
-//!        │
-//!   aa_ui_zed        ← 复合件；用本包的 Slider / geometry
+//!        └── 调用方直接依赖（如 apps/ug_03_slider）
 //! ```
 //!
 //! **单向**：本包不依赖 `ui`，也不依赖 `theme`（slider 的颜色是调用方传入或
@@ -27,6 +26,10 @@
 //! `Icon` / `IconName` / `IconSize` / `Transformable` 原先也在这里，2026-09
 //! 归位到 `ui`（对齐 zed：`Icon` 与 `Transformable` 都在 `crates/ui`，且
 //! `Icon::color` 收 ui 的语义 `Color`）。
+//!
+//! 2026-10：`aa_ui_zed` 对本包的依赖与 re-export 已移除（此前是 ui → base
+//! 单向依赖 + crate 根/prelude 两级转发）。需要 Slider / geometry 的调用方
+//! 请直接依赖本包。
 //!
 //! ## 目录
 //!

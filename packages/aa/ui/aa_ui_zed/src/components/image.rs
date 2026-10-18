@@ -1,6 +1,6 @@
 //! 矢量图（对齐 zed `crates/ui/src/components/image.rs`）。
 //!
-//! [`Vector`] 与 [`Icon`](aa_gpui_base::Icon) 的区别：图标有「标准尺寸」的概念
+//! [`Vector`] 与 `aa_ui_base_gpui::Icon` 的区别：图标有「标准尺寸」的概念
 //! （`IconSize` 那几档），而矢量图是**按具体尺寸**展示的（logo、印章、插画）。
 //! 资源在 `assets/images/*.svg`，由 assets 包统一 RustEmbed。
 //!
@@ -41,7 +41,7 @@ impl VectorName {
 
 /// A vector image, such as an SVG.
 ///
-/// A [`Vector`] is different from an [`Icon`](aa_gpui_base::Icon) in that it is
+/// A [`Vector`] is different from an `aa_ui_base_gpui::Icon` in that it is
 /// intended to be displayed at a specific size, or series of sizes, rather
 /// than conforming to the standard size of an icon.
 #[derive(IntoElement, RegisterComponent)]

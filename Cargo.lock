@@ -360,13 +360,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_gpui_base"
-version = "0.1.0"
-dependencies = [
- "gpui",
-]
-
-[[package]]
 name = "aa_gpui_fuzzy"
 version = "0.1.0"
 dependencies = [
@@ -774,6 +767,13 @@ name = "aa_theme_settings_gpui_zed"
 version = "0.1.0"
 
 [[package]]
+name = "aa_ui_base_gpui"
+version = "0.1.0"
+dependencies = [
+ "gpui",
+]
+
+[[package]]
 name = "aa_ui_core"
 version = "0.1.0"
 dependencies = [
@@ -804,7 +804,6 @@ version = "0.1.0"
 dependencies = [
  "aa_assets_gpui",
  "aa_component_zed",
- "aa_gpui_base",
  "aa_icons",
  "aa_theme_gpui",
  "aa_ui_macros_zed",
@@ -9972,7 +9971,7 @@ dependencies = [
 name = "ug_03_slider"
 version = "0.1.0"
 dependencies = [
- "aa_ui_zed",
+ "aa_ui_base_gpui",
  "gpui",
  "gpui_platform",
  "wasm-bindgen",

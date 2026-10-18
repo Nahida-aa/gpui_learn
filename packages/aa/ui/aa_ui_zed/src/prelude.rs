@@ -2,7 +2,7 @@
 //!
 //! 对齐 zed `crates/ui/src/prelude.rs`：把最常用的 trait、组件与 gpui 原语
 //! 聚合到一个 `use aa_ui_zed::prelude::*;` 里。只收拢**高频**项，
-//! 低频 API（如 `Slider` 内部类型）仍按需从包根导入。
+//! 低频 API 仍按需从包根或各自子模块导入。
 //!
 //! ```ignore
 //! use aa_ui_zed::prelude::*;
@@ -68,7 +68,7 @@ pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use crate::components::label::{
     HighlightedLabel, Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle, LoadingLabel,
 };
-pub use crate::{Button, Slider, SliderEvent, SliderState};
+pub use crate::Button;
 
 pub use crate::styles::{
     Color, DynamicSpacing, Headline, HeadlineSize, PlatformStyle, Severity, StyledTypography,

@@ -8,7 +8,7 @@
 //!   以及用它的 [`IconButton`]；
 //! - [`split_button`]：对齐 zed 的 `SplitButton`。
 //!
-//! 图标来自 `aa_gpui_base`（独立的基础控件包，见本 crate 顶部文档）。
+//! 图标走本包 `components::icon`（名字枚举 `IconName` 来自 `aa_icons`）。
 
 /// 按键提示在按钮上的位置（对齐 zed `KeybindingPosition`）。
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Default)]

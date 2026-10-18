@@ -4,22 +4,17 @@
 //! Avatar / Checkbox / Switch / Tooltip / PopoverMenu …。目标是外部代码能
 //! **原样 import** zed 的写法（见 `packages/aa/ui/aa_ui_zed/tests/prelude.rs`）。
 //!
-//! ## 与 `aa_gpui_base` 的分工（2026-09 拆出）
+//! ## 与 `aa_ui_base_gpui` 的关系（2026-09 拆出，2026-10 解除依赖）
 //!
-//! | 包 | 定位 |
-//! |---|---|
-//! | `aa_ui_zed`（本包） | 对齐 zed，API 面以 zed 为准 |
-//! | `aa_gpui_base` | **zed 没有对应物**的自研基础件（geometry / icon / slider） |
-//!
-//! 依赖方向是**单向** `ui → base`：base 只管几何与图元，不认识主题、不认识
-//! 复合控件；ui 在它之上搭 zed 那套。这样两边互不干扰 —— base 可以自由演化，
-//! ui 也能专心对齐。拆分的完整理由见 `docs/zed/ui-input-analysis.md` 同级的分析。
+//! 自研基础件（geometry / slider，**zed 没有对应物**）住在独立包
+//! `aa_ui_base_gpui`（`packages/aa/ui/aa_ui_base_gpui`）。本包**不再依赖、
+//! 不再转发**它 —— 需要 `Slider` / `Scale` 一类类型的调用方请直接依赖那个包。
+//! 拆分的完整理由见 `docs/zed/ui-input-analysis.md` 同级的分析。
 //!
 //! ## 相关 workspace 包（不在本 crate 内）
 //!
-//! - `aa_gpui_base`（`packages/base`）：图标 / 滑块 / 几何数学
-//! - `aa_theme_gpui`（`packages/theme`）：主题系统，组件用它取色
-//! - `aa_assets_gpui`（`packages/aa/aa_assets/aa_assets_gpui`）：图标等资源内嵌的 gpui 适配层
+//! - `aa_theme_gpui`（`packages/aa/theme/aa_theme_gpui`）：主题系统，组件用它取色
+//! - `aa_assets_gpui`（`packages/aa/assets/aa_assets_gpui`）：图标等资源内嵌的 gpui 适配层
 //! - `aa_gpui_kit_ui_input`（`packages/ui_input`）：需要编辑器的表单件
 
 pub mod animation;
@@ -49,11 +44,6 @@ pub mod traits;
 /// `ui::Assets` 路径；实际类型是 `aa_assets_gpui::GpuiAssets`。
 pub use aa_assets_gpui::GpuiAssets as Assets;
 
-// ---- 基础控件层：来自 aa_gpui_base（原 packages/ui/src/base，2026-09 拆出）----
-pub use aa_gpui_base::{
-    DragSlider, Scale, Slider, SliderEvent, SliderState, SliderValue, ThumbMode, position_to_value,
-    quantize, value_to_percentage,
-};
 pub use components::button::Button;
 pub use styles::*;
 // 主题系统在独立包 `aa-gpui-kit-theme`（原 `base/theme`）：组件从那里取色，
@@ -98,5 +88,6 @@ pub use traits::{
     VisibleOnHover,
 };
 
-/// 复用 gpui 的轴方向类型，方便调用方设置 `SliderState::axis`。
+/// 复用 gpui 的轴方向类型（`SliderState::axis` 等滑块轴向字段的类型；
+/// `SliderState` 在 `aa_ui_base_gpui`，本包不转发）。
 pub use gpui::Axis;

@@ -1,6 +1,6 @@
 #![cfg_attr(target_family = "wasm", no_main)]
 
-use aa_ui_zed::{Scale, Slider, SliderEvent, SliderState};
+use aa_ui_base_gpui::{Scale, Slider, SliderEvent, SliderState};
 use gpui::{
     App, Axis, Bounds, Context, Entity, FocusHandle, Focusable, MouseButton, MouseUpEvent, Render,
     SharedString, Window, WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
