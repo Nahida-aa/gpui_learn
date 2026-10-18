@@ -2,3 +2,4 @@
 
 pub mod ai;
 pub mod context_menu;
+pub mod title_bar;

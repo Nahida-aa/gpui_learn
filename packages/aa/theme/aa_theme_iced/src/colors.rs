@@ -114,6 +114,8 @@ pub struct Colors {
     pub status_bar_background: Color,
     /// crust
     pub title_bar_background: Color,
+    /// mantle-darker（窗口失焦时的标题栏底）
+    pub title_bar_inactive_background: Color,
     /// base (CTP base #24273a)
     pub toolbar_background: Color,
     /// mantle
@@ -204,12 +206,13 @@ pub(crate) fn macchiato() -> Colors {
         icon_placeholder: rgb(0x5b6078),
 
         // 面板 / 窗口框架
-        status_bar_background: rgb(0x181926),    // crust
-        title_bar_background: rgb(0x181926),     // crust
-        toolbar_background: rgb(0x24273a),       // base (CTP base #24273a)
-        panel_background: rgb(0x1e2030),         // mantle
-        panel_focused_border: rgb(0xcad3f5),     // text
-        panel_overlay_background: rgb(0x1e2030), // mantle
+        status_bar_background: rgb(0x181926),         // crust
+        title_bar_background: rgb(0x181926),          // crust
+        title_bar_inactive_background: rgb(0x1e1f30), // mantle-darker
+        toolbar_background: rgb(0x24273a),            // base (CTP base #24273a)
+        panel_background: rgb(0x1e2030),              // mantle
+        panel_focused_border: rgb(0xcad3f5),          // text
+        panel_overlay_background: rgb(0x1e2030),      // mantle
 
         // 滚动条
         scrollbar_thumb_background: rgba(0x5b6078, 0.50), // surface2 @50%
@@ -269,6 +272,7 @@ pub(crate) fn latte() -> Colors {
         // 面板 / 窗口框架
         status_bar_background: rgb(0xdce0e8),
         title_bar_background: rgb(0xdce0e8),
+        title_bar_inactive_background: rgb(0xe6e9ee),
         toolbar_background: rgb(0xeff1f5),
         panel_background: rgb(0xe6e9ef),
         panel_focused_border: rgb(0x4c4f69),
