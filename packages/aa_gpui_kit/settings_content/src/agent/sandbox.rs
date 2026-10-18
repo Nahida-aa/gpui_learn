@@ -91,7 +91,9 @@ impl<'de> Deserialize<'de> for GrantedWritePathContent {
 }
 
 impl JsonSchema for GrantedWritePathContent {
-    fn schema_name() -> Cow<'static, str> { "GrantedWritePathContent".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "GrantedWritePathContent".into()
+    }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         json_schema!({

@@ -68,23 +68,35 @@ pub use crate::{
         JournalSettingsContent, MarkdownPreviewSettingsContent, OutlinePanelSettingsContent,
         PanelSettingsContent, RemoteSettingsContent, ReplSettingsContent, SshConnection,
         SshPortForwardOption, TelemetrySettingsContent, VimSettingsContent,
-        WhichKeySettingsContent, WslConnection  ,
+        WhichKeySettingsContent, WslConnection,
     },
-    extension::{ExtensionSettingsContent, ExtensionCapabilityContent},
+    extension::{ExtensionCapabilityContent, ExtensionSettingsContent},
     feature_flags::FeatureFlagsMap,
-    language_model::{AllLanguageModelSettingsContent, OpenAiReasoningEffort, ollama::{KeepAlive, OllamaAvailableModel}, open_router::{DataCollection, OpenRouterAvailableModel, OpenRouterProvider},
-        bedrock::{BedrockMantleProtocolContent,BedrockAuthMethodContent, BedrockMantleAvailableModel, BedrockAvailableModel},
-        opencode::{OpenCodeModelSubscription, OpenCodeApiProtocol, OpenCodeAvailableModel},
+    language_model::{
+        AllLanguageModelSettingsContent, OpenAiReasoningEffort,
+        anthropic::{
+            AnthropicAvailableModel, AnthropicCompatibleAvailableModel,
+            AnthropicCompatibleModelCapabilities, AnthropicCompatibleSettingsContent,
+        },
+        bedrock::{
+            BedrockAuthMethodContent, BedrockAvailableModel, BedrockMantleAvailableModel,
+            BedrockMantleProtocolContent,
+        },
+        deepseek::DeepseekAvailableModel,
+        google::GoogleAvailableModel,
+        llama_cpp::LlamaCppAvailableModel,
+        lmstudio::LmStudioAvailableModel,
+        mistral::MistralAvailableModel,
+        ollama::{KeepAlive, OllamaAvailableModel},
+        open_router::{DataCollection, OpenRouterAvailableModel, OpenRouterProvider},
+        openai::{
+            OpenAiAvailableModel, OpenAiCompatibleAvailableModel,
+            OpenAiCompatibleModelCapabilities, OpenAiCompatibleSettingsContent,
+        },
+        opencode::{OpenCodeApiProtocol, OpenCodeAvailableModel, OpenCodeModelSubscription},
         vercel_ai_gateway::VercelAiGatewayAvailableModel,
         x_ai::XaiAvailableModel,
-        openai::{OpenAiCompatibleModelCapabilities, OpenAiAvailableModel, OpenAiCompatibleAvailableModel, OpenAiCompatibleSettingsContent},
-        mistral::MistralAvailableModel,
-        deepseek::DeepseekAvailableModel,
-        lmstudio::LmStudioAvailableModel,
-        llama_cpp::LlamaCppAvailableModel,
-        google::GoogleAvailableModel,
         zed_dot_dev::{ZedDotDevAvailableModel, ZedDotDevAvailableProvider},
-        anthropic::{AnthropicCompatibleAvailableModel, AnthropicAvailableModel, AnthropicCompatibleModelCapabilities, AnthropicCompatibleSettingsContent},
     },
     profiles::SettingsProfile,
     project::{
@@ -93,14 +105,15 @@ pub use crate::{
         SemanticTokenFontStyle, SemanticTokenFontWeight, SemanticTokenRule, SessionSettingsContent,
         WorktreeSettingsContent,
     },
-    title_bar::{TitleBarSettingsContent, WindowButtonLayoutContent, WindowButtonLayoutContentDiscriminants},
+    title_bar::{
+        TitleBarSettingsContent, WindowButtonLayoutContent, WindowButtonLayoutContentDiscriminants,
+    },
     ui::{HideMouseMode, LineIndicatorFormat, ReduceMotionMode, StatusStyle},
     workspace::{
-        ActivePaneModifiers, AutosaveSetting, AutosaveSettingDiscriminants,
-        CenteredLayoutSettings, CloseWindowWhenNoItems, CliDefaultOpenBehavior, FullscreenMode,
-        OnLastWindowClosed, OnNewWindow, PaneSplitDirectionHorizontal,
-        PaneSplitDirectionVertical, PreviewTabsSettingsContent, TextRenderingMode,
-        WindowDecorations, WorkspaceSettingsContent,
+        ActivePaneModifiers, AutosaveSetting, AutosaveSettingDiscriminants, CenteredLayoutSettings,
+        CliDefaultOpenBehavior, CloseWindowWhenNoItems, FullscreenMode, OnLastWindowClosed,
+        OnNewWindow, PaneSplitDirectionHorizontal, PaneSplitDirectionVertical,
+        PreviewTabsSettingsContent, TextRenderingMode, WindowDecorations, WorkspaceSettingsContent,
         bar::{EncodingDisplayOptions, StatusBarSettingsContent, TabBarSettingsContent},
         item::{
             ActivateOnClose, ClosePosition, ItemSettingsContent, ShowCloseButton, ShowDiagnostics,
@@ -358,20 +371,26 @@ pub trait RootUserSettings: Sized + DeserializeOwned {
 }
 
 impl RootUserSettings for SettingsContent {
-    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) { fallible_options::parse_json(json) }
+    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) {
+        fallible_options::parse_json(json)
+    }
     fn parse_json_with_comments(json: &str) -> anyhow::Result<Self> {
         parse_json_with_comments(json)
     }
 }
 // Explicit opt-in instead of blanket impl to avoid monomorphizing downstream. Just a hunch though.
 impl RootUserSettings for Option<SettingsContent> {
-    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) { fallible_options::parse_json(json) }
+    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) {
+        fallible_options::parse_json(json)
+    }
     fn parse_json_with_comments(json: &str) -> anyhow::Result<Self> {
         parse_json_with_comments(json)
     }
 }
 impl RootUserSettings for UserSettingsContent {
-    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) { fallible_options::parse_json(json) }
+    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) {
+        fallible_options::parse_json(json)
+    }
     fn parse_json_with_comments(json: &str) -> anyhow::Result<Self> {
         parse_json_with_comments(json)
     }

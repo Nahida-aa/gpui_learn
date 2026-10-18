@@ -212,7 +212,9 @@ impl BufferSnapshot {
         (edit_op, edits_patch)
     }
 
-    pub fn as_rope(&self) -> &Rope { &self.visible_text }
+    pub fn as_rope(&self) -> &Rope {
+        &self.visible_text
+    }
 
     pub fn rope_for_version(&self, version: &clock::Global) -> Rope {
         let mut rope = Rope::new();
@@ -257,17 +259,29 @@ impl BufferSnapshot {
         rope
     }
 
-    pub fn remote_id(&self) -> BufferId { self.remote_id }
+    pub fn remote_id(&self) -> BufferId {
+        self.remote_id
+    }
 
-    pub fn replica_id(&self) -> ReplicaId { self.replica_id }
+    pub fn replica_id(&self) -> ReplicaId {
+        self.replica_id
+    }
 
-    pub fn row_count(&self) -> u32 { self.max_point().row + 1 }
+    pub fn row_count(&self) -> u32 {
+        self.max_point().row + 1
+    }
 
-    pub fn len(&self) -> usize { self.visible_text.len() }
+    pub fn len(&self) -> usize {
+        self.visible_text.len()
+    }
 
-    pub fn is_empty(&self) -> bool { self.len() == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
-    pub fn chars(&self) -> impl Iterator<Item = char> + '_ { self.chars_at(0) }
+    pub fn chars(&self) -> impl Iterator<Item = char> + '_ {
+        self.chars_at(0)
+    }
 
     pub fn chars_for_range<T: ToOffset>(&self, range: Range<T>) -> impl Iterator<Item = char> + '_ {
         self.text_for_range(range).flat_map(str::chars)
@@ -319,21 +333,33 @@ impl BufferSnapshot {
         start..position
     }
 
-    pub fn text(&self) -> String { self.visible_text.to_string() }
+    pub fn text(&self) -> String {
+        self.visible_text.to_string()
+    }
 
     pub fn text_with_line_endings(&self) -> String {
         chunks_with_line_ending(&self.visible_text, self.line_ending).collect()
     }
 
-    pub fn line_ending(&self) -> LineEnding { self.line_ending }
+    pub fn line_ending(&self) -> LineEnding {
+        self.line_ending
+    }
 
-    pub fn deleted_text(&self) -> String { self.deleted_text.to_string() }
+    pub fn deleted_text(&self) -> String {
+        self.deleted_text.to_string()
+    }
 
-    pub fn text_summary(&self) -> TextSummary { self.visible_text.summary() }
+    pub fn text_summary(&self) -> TextSummary {
+        self.visible_text.summary()
+    }
 
-    pub fn max_point(&self) -> Point { self.visible_text.max_point() }
+    pub fn max_point(&self) -> Point {
+        self.visible_text.max_point()
+    }
 
-    pub fn max_point_utf16(&self) -> PointUtf16 { self.visible_text.max_point_utf16() }
+    pub fn max_point_utf16(&self) -> PointUtf16 {
+        self.visible_text.max_point_utf16()
+    }
 
     pub fn point_to_offset(&self, point: Point) -> usize {
         self.visible_text.point_to_offset(point)
@@ -383,7 +409,9 @@ impl BufferSnapshot {
         self.visible_text.point_utf16_to_point(point)
     }
 
-    pub fn version(&self) -> &clock::Global { &self.version }
+    pub fn version(&self) -> &clock::Global {
+        &self.version
+    }
 
     pub fn chars_at<T: ToOffset>(&self, position: T) -> impl Iterator<Item = char> + '_ {
         let offset = position.to_offset(self);

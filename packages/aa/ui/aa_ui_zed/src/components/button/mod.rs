@@ -48,8 +48,8 @@ pub use copy_button::CopyButton;
 pub type ClickHandler = Box<dyn Fn(&ClickEvent, &mut Window, &mut App)>;
 pub use split_button::{SplitButton, SplitButtonKind, SplitButtonStyle};
 pub use toggle_button::{
-    ButtonBuilder, ButtonConfiguration, ToggleButtonGroup, ToggleButtonGroupSize, ToggleButtonGroupStyle,
-    ToggleButtonPosition, ToggleButtonSimple, ToggleButtonWithIcon,
+    ButtonBuilder, ButtonConfiguration, ToggleButtonGroup, ToggleButtonGroupSize,
+    ToggleButtonGroupStyle, ToggleButtonPosition, ToggleButtonSimple, ToggleButtonWithIcon,
 };
 
 /// 按钮视觉语义（对齐 zed `ButtonStyle`，去掉需主题扩展的部分）。
@@ -413,7 +413,9 @@ impl RenderOnce for IconButton {
         // ButtonLike —— 尺寸直接给 `IconSize`，由 `Icon::size` 存成 `Rems`，
         // 渲染时再乘 `window.rem_size()`。中途不经过 `Pixels`，否则 rem_size
         // 会被算两次（`IconSize::rems() * rem_size` 再除回 16）。
-        let icon_element = Icon::new(icon).size(self.icon_size).color(icon_color.into());
+        let icon_element = Icon::new(icon)
+            .size(self.icon_size)
+            .color(icon_color.into());
 
         let mut like = ButtonLike::new(self.id)
             .style(self.style)
@@ -432,7 +434,9 @@ impl RenderOnce for IconButton {
             .selected(selected)
             // zed：`IconButton::selected_style` 同时喂给 base（zed icon_button.rs:157）
             // 和自己的 `selected_style` 字段；我们只有一个下游，直接转发。
-            .when_some(self.selected_style, |this, style| this.selected_style(style))
+            .when_some(self.selected_style, |this, style| {
+                this.selected_style(style)
+            })
             // 底色覆盖（对齐 zed icon_button.rs:88-97 直接写 base 的字段；
             // 我们的 ButtonLike 在渲染时才建，这里用 when_some 转发）。
             .when_some(self.hover_background, |this, background| {

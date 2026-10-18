@@ -28,9 +28,8 @@ use std::{cell::RefCell, rc::Rc};
 use gpui::{
     Anchor, AnyElement, AnyView, App, Bounds, DismissEvent, DispatchPhase, Element, ElementId,
     Entity, Focusable as _, GlobalElementId, HitboxBehavior, HitboxId, InteractiveElement,
-    IntoElement,
-    LayoutId, Length, ManagedView, MouseDownEvent, ParentElement, Pixels, Point, Style, Window,
-    anchored, deferred, div, point, prelude::FluentBuilder, px, relative, size,
+    IntoElement, LayoutId, Length, ManagedView, MouseDownEvent, ParentElement, Pixels, Point,
+    Style, Window, anchored, deferred, div, point, prelude::FluentBuilder, px, relative, size,
 };
 
 use crate::ButtonCommon;
@@ -378,9 +377,7 @@ impl<M: ManagedView> PopoverMenu<M> {
                 Anchor::TopRight | Anchor::BottomRight | Anchor::RightCenter => {
                     point(offset, px(0.))
                 }
-                Anchor::TopLeft | Anchor::BottomLeft | Anchor::LeftCenter => {
-                    point(-offset, px(0.))
-                }
+                Anchor::TopLeft | Anchor::BottomLeft | Anchor::LeftCenter => point(-offset, px(0.)),
                 Anchor::TopCenter | Anchor::BottomCenter => point(px(0.), px(0.)),
             }
         })
@@ -464,15 +461,9 @@ impl<M: ManagedView> Element for PopoverMenu<M> {
 
                 // trigger：闭包接收 (menu 状态, builder)，自行挂 on_click /
                 // toggle_state（见 trigger 方法）。
-                let mut child_element = self
-                    .child_builder
-                    .take()
-                    .map(|child_builder| {
-                        (child_builder)(
-                            element_state.menu.clone(),
-                            self.menu_builder.clone(),
-                        )
-                    });
+                let mut child_element = self.child_builder.take().map(|child_builder| {
+                    (child_builder)(element_state.menu.clone(), self.menu_builder.clone())
+                });
 
                 // 把运行时状态注入 handle（外部代码由此获得 show/hide 能力）。
                 if let Some(trigger_handle) = self.trigger_handle.take()
@@ -536,22 +527,18 @@ impl<M: ManagedView> Element for PopoverMenu<M> {
 
         // 记录 trigger 的 bounds（菜单锚定要用），并取其 hitbox
         // （"点击 trigger 关闭菜单"要用）。
-        let hitbox = request_layout
-            .child_layout_id
-            .map(|layout_id| {
-                let bounds = window.layout_bounds(layout_id);
-                window.with_element_state(id.unwrap(), |element_state, _cx| {
-                    let mut element_state: PopoverMenuElementState<M> =
-                        element_state.unwrap_or_default();
-                    element_state.child_bounds = Some(bounds);
-                    ((), element_state)
-                });
-                window.insert_hitbox(bounds, HitboxBehavior::Normal).id
+        let hitbox = request_layout.child_layout_id.map(|layout_id| {
+            let bounds = window.layout_bounds(layout_id);
+            window.with_element_state(id.unwrap(), |element_state, _cx| {
+                let mut element_state: PopoverMenuElementState<M> =
+                    element_state.unwrap_or_default();
+                element_state.child_bounds = Some(bounds);
+                ((), element_state)
             });
+            window.insert_hitbox(bounds, HitboxBehavior::Normal).id
+        });
 
-        PrepaintState {
-            hitbox,
-        }
+        PrepaintState { hitbox }
     }
 
     fn paint(
@@ -614,7 +601,11 @@ mod tests {
 
             let popover = PopoverMenu::new("test-popover")
                 .menu(|window, cx| {
-                    Some(crate::ContextMenu::build(window, cx, |menu, _window, _cx| menu))
+                    Some(crate::ContextMenu::build(
+                        window,
+                        cx,
+                        |menu, _window, _cx| menu,
+                    ))
                 })
                 .with_handle(handle.clone())
                 .anchor(Anchor::BottomLeft)

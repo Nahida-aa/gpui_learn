@@ -213,11 +213,9 @@ impl RenderOnce for Checkbox {
                     )
                 }
             }
-            ToggleState::Indeterminate => Some(
-                Icon::new(IconName::Dash)
-                    .size(IconSize::Small)
-                    .color(color),
-            ),
+            ToggleState::Indeterminate => {
+                Some(Icon::new(IconName::Dash).size(IconSize::Small).color(color))
+            }
             ToggleState::Unselected => None,
         };
 
@@ -277,16 +275,23 @@ impl RenderOnce for Checkbox {
             .gap(DynamicSpacing::Base06.rems(cx))
             .child(checkbox)
             .when_some(self.label, |this, label| {
-                this.child(Label::new(label).color(self.label_color).size(self.label_size))
+                this.child(
+                    Label::new(label)
+                        .color(self.label_color)
+                        .size(self.label_size),
+                )
             })
             .when_some(self.tooltip, |this, tooltip| {
                 this.tooltip(move |window, cx| tooltip(window, cx))
             })
-            .when_some(self.on_click.filter(|_| !self.disabled), |this, on_click| {
-                this.on_click(move |click, window, cx| {
-                    on_click(&self.toggle_state.inverse(), click, window, cx)
-                })
-            })
+            .when_some(
+                self.on_click.filter(|_| !self.disabled),
+                |this, on_click| {
+                    this.on_click(move |click, window, cx| {
+                        on_click(&self.toggle_state.inverse(), click, window, cx)
+                    })
+                },
+            )
     }
 }
 
@@ -514,11 +519,14 @@ impl RenderOnce for Switch {
                     })
                 },
             )
-            .when_some(self.on_click.clone().filter(|_| !self.disabled), |this, on_click| {
-                this.on_click(move |_, window, cx| {
-                    on_click(&self.toggle_state.inverse(), window, cx)
-                })
-            })
+            .when_some(
+                self.on_click.clone().filter(|_| !self.disabled),
+                |this, on_click| {
+                    this.on_click(move |_, window, cx| {
+                        on_click(&self.toggle_state.inverse(), window, cx)
+                    })
+                },
+            )
             .child(
                 h_flex()
                     .w(DynamicSpacing::Base32.rems(cx))
@@ -556,7 +564,11 @@ impl RenderOnce for Switch {
                 self.label_position == Some(SwitchLabelPosition::Start),
                 |this| {
                     this.when_some(label.clone(), |this, label| {
-                        this.child(Label::new(label).size(self.label_size).color(self.label_color))
+                        this.child(
+                            Label::new(label)
+                                .size(self.label_size)
+                                .color(self.label_color),
+                        )
                     })
                 },
             )
@@ -565,15 +577,22 @@ impl RenderOnce for Switch {
                 self.label_position == Some(SwitchLabelPosition::End),
                 |this| {
                     this.when_some(label, |this, label| {
-                        this.child(Label::new(label).size(self.label_size).color(self.label_color))
+                        this.child(
+                            Label::new(label)
+                                .size(self.label_size)
+                                .color(self.label_color),
+                        )
                     })
                 },
             )
-            .when_some(self.on_click.filter(|_| !self.disabled), |this, on_click| {
-                this.on_click(move |_, window, cx| {
-                    on_click(&self.toggle_state.inverse(), window, cx)
-                })
-            })
+            .when_some(
+                self.on_click.filter(|_| !self.disabled),
+                |this, on_click| {
+                    this.on_click(move |_, window, cx| {
+                        on_click(&self.toggle_state.inverse(), window, cx)
+                    })
+                },
+            )
     }
 }
 

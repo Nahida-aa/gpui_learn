@@ -281,7 +281,6 @@ mod sticky_items {
     }
 }
 
-
 struct IndentGuidesElement {
     colors: IndentGuideColors,
     indent_guides: Rc<SmallVec<[RenderedIndentGuide; 12]>>,

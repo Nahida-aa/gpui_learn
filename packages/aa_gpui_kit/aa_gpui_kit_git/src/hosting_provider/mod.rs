@@ -35,7 +35,9 @@ impl std::fmt::Debug for GitRemote {
 }
 
 impl GitRemote {
-    pub fn host_supports_avatars(&self) -> bool { self.host.supports_avatars() }
+    pub fn host_supports_avatars(&self) -> bool {
+        self.host.supports_avatars()
+    }
 
     pub async fn avatar_url(
         &self,

@@ -25,7 +25,7 @@ pub use constants::{
     HOOKS_DIR, INFO_DIR, LFS_DIR, LOGS_DIR, LOGS_REF_STASH, OBJECTS_DIR, ORIG_HEAD,
     REBASE_APPLY_DIR, REBASE_MERGE_DIR, REFS_DIR, REFTABLE_DIR, REPO_EXCLUDE, SEQUENCER_DIR,
 };
-pub use oid::{Oid, SHORT_SHA_LENGTH, SHA256_HEX_LENGTH};
+pub use oid::{Oid, SHA256_HEX_LENGTH, SHORT_SHA_LENGTH};
 pub use repository::RemoteCommandOutput;
 pub use run_hook::RunHook;
 

@@ -8,10 +8,10 @@ use std::sync::Arc;
 
 use gpui::{App, Global, SharedString, WindowAppearance, WindowBackgroundAppearance};
 
+use crate::scale::ColorScales;
 use crate::styles::{
     AccentColors, PlayerColors, StatusColors, SyntaxTheme, SystemColors, ThemeColors,
 };
-use crate::scale::ColorScales;
 
 /// 主题适配的明暗形态(对齐 zed `theme.rs` 的 `Appearance`)。
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -23,7 +23,9 @@ pub enum Appearance {
 
 impl Appearance {
     /// 是否为亮色形态(对齐 zed `theme::Appearance::is_light`)。
-    pub fn is_light(self) -> bool { matches!(self, Appearance::Light) }
+    pub fn is_light(self) -> bool {
+        matches!(self, Appearance::Light)
+    }
 
     /// 映射到 gpui 的窗口外观(供 `set_window_appearance` 用)。
     pub fn to_window_appearance(self) -> WindowAppearance {
@@ -278,11 +280,7 @@ impl ActiveTheme for App {
         static DEFAULT: std::sync::OnceLock<Arc<Theme>> = std::sync::OnceLock::new();
         match self.try_global::<GlobalTheme>() {
             Some(global) => &global.theme,
-            None => DEFAULT.get_or_init(|| {
-                Arc::new(
-                    crate::fallback_themes::ctp_default_dark(),
-                )
-            }),
+            None => DEFAULT.get_or_init(|| Arc::new(crate::fallback_themes::ctp_default_dark())),
         }
     }
 }

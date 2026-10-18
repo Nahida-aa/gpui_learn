@@ -20,7 +20,9 @@ impl Clone for Locator {
         }
     }
 
-    fn clone_from(&mut self, source: &Self) { self.0.clone_from(&source.0); }
+    fn clone_from(&mut self, source: &Self) {
+        self.0.clone_from(&source.0);
+    }
 }
 
 impl Locator {
@@ -34,9 +36,13 @@ impl Locator {
         Self(unsafe { SmallVec::from_const_with_len_unchecked([u64::MAX; 2], 1) })
     }
 
-    pub const fn min_ref() -> &'static Self { const { &Self::min() } }
+    pub const fn min_ref() -> &'static Self {
+        const { &Self::min() }
+    }
 
-    pub const fn max_ref() -> &'static Self { const { &Self::max() } }
+    pub const fn max_ref() -> &'static Self {
+        const { &Self::max() }
+    }
 
     pub fn assign(&mut self, other: &Self) {
         self.0.resize(other.0.len(), 0);
@@ -58,31 +64,45 @@ impl Locator {
         Self(location)
     }
 
-    pub fn len(&self) -> usize { self.0.len() }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 
-    pub fn is_empty(&self) -> bool { self.len() == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Default for Locator {
-    fn default() -> Self { Self::min() }
+    fn default() -> Self {
+        Self::min()
+    }
 }
 
 impl sum_tree::Item for Locator {
     type Summary = Locator;
 
-    fn summary(&self, _cx: ()) -> Self::Summary { self.clone() }
+    fn summary(&self, _cx: ()) -> Self::Summary {
+        self.clone()
+    }
 }
 
 impl sum_tree::KeyedItem for Locator {
     type Key = Locator;
 
-    fn key(&self) -> Self::Key { self.clone() }
+    fn key(&self) -> Self::Key {
+        self.clone()
+    }
 }
 
 impl sum_tree::ContextLessSummary for Locator {
-    fn zero() -> Self { Default::default() }
+    fn zero() -> Self {
+        Default::default()
+    }
 
-    fn add_summary(&mut self, summary: &Self) { self.assign(summary); }
+    fn add_summary(&mut self, summary: &Self) {
+        self.assign(summary);
+    }
 }
 
 #[cfg(test)]

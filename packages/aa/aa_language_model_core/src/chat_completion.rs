@@ -569,16 +569,16 @@ impl ChatCompletionEventMapper {
                         }
 
                         events.push(Ok(match parse_tool_arguments(&tool_call.arguments) {
-                            Ok(input) => LanguageModelCompletionEvent::ToolUse(
-                                LanguageModelToolUse {
+                            Ok(input) => {
+                                LanguageModelCompletionEvent::ToolUse(LanguageModelToolUse {
                                     id: tool_call.id.clone().into(),
                                     name: tool_call.name.as_str().into(),
                                     is_input_complete: true,
                                     input: LanguageModelToolUseInput::Json(input),
                                     raw_input: tool_call.arguments.clone(),
                                     thought_signature: tool_call.thought_signature.clone(),
-                                },
-                            ),
+                                })
+                            }
                             Err(error) => LanguageModelCompletionEvent::ToolUseJsonParseError {
                                 id: tool_call.id.into(),
                                 tool_name: tool_call.name.into(),
@@ -1789,9 +1789,10 @@ mod tests {
             "expected the well-formed call to survive, got: {mapped:?}"
         );
         assert!(
-            mapped
-                .iter()
-                .any(|event| matches!(event, Err(LanguageModelCompletionError::InvalidProviderOutput { .. }))),
+            mapped.iter().any(|event| matches!(
+                event,
+                Err(LanguageModelCompletionError::InvalidProviderOutput { .. })
+            )),
             "expected the malformed call to fail the response, got: {mapped:?}"
         );
     }

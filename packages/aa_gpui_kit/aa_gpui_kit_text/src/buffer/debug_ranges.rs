@@ -79,7 +79,9 @@ impl GlobalDebugRanges {
         });
     }
 
-    pub fn remove<K: Hash + 'static>(&mut self, key: &K) { self.remove_impl(&Key::new(key)); }
+    pub fn remove<K: Hash + 'static>(&mut self, key: &K) {
+        self.remove_impl(&Key::new(key));
+    }
 
     fn remove_impl(&mut self, key: &Key) {
         let existing = self

@@ -35,11 +35,15 @@ impl Display for FontSize {
 }
 
 impl From<f32> for FontSize {
-    fn from(v: f32) -> Self { Self(v) }
+    fn from(v: f32) -> Self {
+        Self(v)
+    }
 }
 
 impl From<FontSize> for f32 {
-    fn from(v: FontSize) -> Self { v.0 }
+    fn from(v: FontSize) -> Self {
+        v.0
+    }
 }
 
 /// 字体族名称（包 `Arc<str>`）。
@@ -49,17 +53,25 @@ impl From<FontSize> for f32 {
 pub struct FontFamilyName(pub Arc<str>);
 
 impl AsRef<str> for FontFamilyName {
-    fn as_ref(&self) -> &str { &self.0 }
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
 }
 
 impl From<String> for FontFamilyName {
-    fn from(s: String) -> Self { Self(Arc::from(s)) }
+    fn from(s: String) -> Self {
+        Self(Arc::from(s))
+    }
 }
 impl From<FontFamilyName> for String {
-    fn from(value: FontFamilyName) -> Self { value.0.to_string() }
+    fn from(value: FontFamilyName) -> Self {
+        value.0.to_string()
+    }
 }
 impl From<&str> for FontFamilyName {
-    fn from(s: &str) -> Self { Self(Arc::from(s)) }
+    fn from(s: &str) -> Self {
+        Self(Arc::from(s))
+    }
 }
 
 // ---------- FontWeightContent ----------
@@ -79,15 +91,21 @@ impl From<&str> for FontFamilyName {
 #[serde(transparent)]
 pub struct FontWeightContent(pub f32);
 impl Display for FontWeightContent {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self.0) }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl From<f32> for FontWeightContent {
-    fn from(weight: f32) -> Self { FontWeightContent(weight) }
+    fn from(weight: f32) -> Self {
+        FontWeightContent(weight)
+    }
 }
 
 impl Default for FontWeightContent {
-    fn default() -> Self { Self::NORMAL }
+    fn default() -> Self {
+        Self::NORMAL
+    }
 }
 impl FontWeightContent {
     pub const THIN: Self = Self(100.0);
@@ -101,7 +119,9 @@ impl FontWeightContent {
     pub const BLACK: Self = Self(900.0);
 }
 impl schemars::JsonSchema for FontWeightContent {
-    fn schema_name() -> std::borrow::Cow<'static, str> { "FontWeightContent".into() }
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "FontWeightContent".into()
+    }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         use schemars::json_schema;
@@ -122,7 +142,9 @@ impl schemars::JsonSchema for FontWeightContent {
 pub struct FontFeaturesContent(pub IndexMap<String, u32>);
 
 impl FontFeaturesContent {
-    pub fn new() -> Self { Self(IndexMap::default()) }
+    pub fn new() -> Self {
+        Self(IndexMap::default())
+    }
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -196,7 +218,9 @@ impl<'de> Deserialize<'de> for FontFeaturesContent {
 }
 
 impl JsonSchema for FontFeaturesContent {
-    fn schema_name() -> Cow<'static, str> { "FontFeaturesContent".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "FontFeaturesContent".into()
+    }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         use schemars::json_schema;
@@ -236,7 +260,9 @@ impl Display for CodeFade {
 }
 
 impl From<f32> for CodeFade {
-    fn from(x: f32) -> Self { Self(x) }
+    fn from(x: f32) -> Self {
+        Self(x)
+    }
 }
 
 /// 字体样式（serif / italic / oblique）。

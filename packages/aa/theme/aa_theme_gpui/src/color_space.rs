@@ -100,9 +100,18 @@ mod tests {
         let original = hsla(0.6, 0.7, 0.5, 1.0);
         let oklch = hsla_to_oklch(original);
         let back = oklch_to_hsla(oklch, 1.0);
-        assert!(close(original.h, back.h, 1e-2), "色相: {original:?} vs {back:?}");
-        assert!(close(original.s, back.s, 1e-2), "饱和度: {original:?} vs {back:?}");
-        assert!(close(original.l, back.l, 1e-2), "明度: {original:?} vs {back:?}");
+        assert!(
+            close(original.h, back.h, 1e-2),
+            "色相: {original:?} vs {back:?}"
+        );
+        assert!(
+            close(original.s, back.s, 1e-2),
+            "饱和度: {original:?} vs {back:?}"
+        );
+        assert!(
+            close(original.l, back.l, 1e-2),
+            "明度: {original:?} vs {back:?}"
+        );
     }
 
     #[test]

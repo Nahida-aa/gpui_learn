@@ -6,8 +6,8 @@ mod role;
 pub mod tool_schema;
 pub mod util;
 
-use anyhow::{Context as _, Result, anyhow};
 use aa_cloud_llm_client::CompletionRequestStatus;
+use anyhow::{Context as _, Result, anyhow};
 use http_client::{StatusCode, http};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};

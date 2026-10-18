@@ -108,7 +108,9 @@ fn test_truncate_to_bottom_n_sorted_by() {
 
 #[test]
 fn test_iife() {
-    fn option_returning_function() -> Option<()> { None }
+    fn option_returning_function() -> Option<()> {
+        None
+    }
 
     let foo = maybe!({
         option_returning_function()?;

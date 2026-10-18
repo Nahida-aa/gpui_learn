@@ -5,8 +5,8 @@
 use gpui::{AnyElement, StyleRefinement};
 use smallvec::SmallVec;
 
-use crate::components::avatar::Avatar;
 use crate::component_prelude::*;
+use crate::components::avatar::Avatar;
 use crate::prelude::*;
 
 /// An element that displays a collection of (usually) faces stacked

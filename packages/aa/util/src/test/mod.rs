@@ -25,7 +25,9 @@ impl TempTree {
         }
     }
 
-    pub fn path(&self) -> &Path { self.path.as_path() }
+    pub fn path(&self) -> &Path {
+        self.path.as_path()
+    }
 }
 
 fn write_tree(path: &Path, tree: serde_json::Value) {

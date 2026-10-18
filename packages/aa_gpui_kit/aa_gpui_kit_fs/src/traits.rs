@@ -76,10 +76,14 @@ pub trait Fs: Send + Sync {
 
     /// Creates the native file watcher now rather than on the first `watch`, so a
     /// failure to start it (e.g. inotify instance limits) can be reported at startup.
-    fn start_native_watcher(&self) -> Result<()> { Ok(()) }
+    fn start_native_watcher(&self) -> Result<()> {
+        Ok(())
+    }
 
     /// Records raw local watcher notifications until the returned recording is dropped.
-    fn record_watcher_diagnostics(&self) -> Option<fs_watcher::WatchRecording> { None }
+    fn record_watcher_diagnostics(&self) -> Option<fs_watcher::WatchRecording> {
+        None
+    }
 
     /// Whether `path` exists, without following a final symlink. Synchronous
     /// because watches are registered synchronously by the worktree scanner.

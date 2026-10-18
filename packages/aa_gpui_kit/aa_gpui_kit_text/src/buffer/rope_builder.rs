@@ -1,4 +1,3 @@
-
 use rope::{Cursor, Rope};
 
 use super::fragment::{Fragment, FragmentTextSummary};
@@ -45,7 +44,9 @@ impl<'a> RopeBuilder<'a> {
         }
     }
 
-    pub(crate) fn push_str(&mut self, text: &str) { self.new_visible.push(text); }
+    pub(crate) fn push_str(&mut self, text: &str) {
+        self.new_visible.push(text);
+    }
 
     pub(crate) fn finish(mut self) -> (Rope, Rope) {
         self.new_visible.append(self.old_visible_cursor.suffix());

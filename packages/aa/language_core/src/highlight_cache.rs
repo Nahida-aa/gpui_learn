@@ -143,7 +143,9 @@ impl ChunkHighlightCache {
         self.0.lock().insert(chunk_id, highlights, cost);
     }
 
-    pub fn clear(&mut self) { self.0.get_mut().clear(); }
+    pub fn clear(&mut self) {
+        self.0.get_mut().clear();
+    }
 }
 
 struct CostBudgetedLru<K: Hash + Eq, V> {
@@ -166,7 +168,9 @@ impl<K: Hash + Eq, V> CostBudgetedLru<K, V> {
         }
     }
 
-    fn get(&mut self, key: &K) -> Option<&V> { self.entries.get(key).map(|(value, _)| value) }
+    fn get(&mut self, key: &K) -> Option<&V> {
+        self.entries.get(key).map(|(value, _)| value)
+    }
 
     fn insert(&mut self, key: K, value: V, cost: usize) {
         if cost > self.max_entry_cost {

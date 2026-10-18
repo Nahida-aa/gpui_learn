@@ -8,15 +8,13 @@
 
 use std::sync::Arc;
 
-use gpui::{
-    App, IntoElement, Rems, RenderOnce, Size, Styled, Transformation, Window, svg,
-};
+use gpui::{App, IntoElement, Rems, RenderOnce, Size, Styled, Transformation, Window, svg};
 use serde::{Deserialize, Serialize};
 use strum::{EnumIter, EnumString, IntoStaticStr};
 
 use crate::prelude::*;
-use crate::traits::Transformable;
 use crate::rems_from_px;
+use crate::traits::Transformable;
 
 #[derive(
     Debug, PartialEq, Eq, Copy, Clone, EnumIter, EnumString, IntoStaticStr, Serialize, Deserialize,

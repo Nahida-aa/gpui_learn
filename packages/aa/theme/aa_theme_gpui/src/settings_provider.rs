@@ -58,11 +58,9 @@ pub struct DefaultThemeSettingsProvider;
 
 impl ThemeSettingsProvider for DefaultThemeSettingsProvider {
     fn ui_font<'a>(&'a self, _cx: &'a App) -> &'a Font {
-        static FONT: std::sync::LazyLock<Font> = std::sync::LazyLock::new(|| {
-            Font {
-                family: ".SystemUIFont".into(),
-                ..Default::default()
-            }
+        static FONT: std::sync::LazyLock<Font> = std::sync::LazyLock::new(|| Font {
+            family: ".SystemUIFont".into(),
+            ..Default::default()
         });
         &FONT
     }

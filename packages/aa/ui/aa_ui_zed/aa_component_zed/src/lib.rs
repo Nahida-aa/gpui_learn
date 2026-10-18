@@ -13,9 +13,9 @@ use std::sync::LazyLock;
 
 pub use component_layout::*;
 
-use std::collections::HashMap;
 use gpui::{AnyElement, App, SharedString, Window};
 use parking_lot::RwLock;
+use std::collections::HashMap;
 use strum::{Display, EnumString};
 
 pub fn components() -> ComponentRegistry {

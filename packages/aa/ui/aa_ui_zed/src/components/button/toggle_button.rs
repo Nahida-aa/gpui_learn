@@ -11,8 +11,8 @@ use std::rc::Rc;
 
 use gpui::{AnyView, ClickEvent, Rems, relative};
 
-use crate::traits::FixedWidth;
 use crate::button::button_like::ButtonLikeRounding;
+use crate::traits::FixedWidth;
 use crate::{ButtonLike, TintColor, prelude::*};
 
 /// The position of a [`ToggleButton`] within a group of buttons.

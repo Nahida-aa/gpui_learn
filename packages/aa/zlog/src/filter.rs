@@ -322,7 +322,9 @@ impl ScopeMap {
         this
     }
 
-    pub fn is_empty(&self) -> bool { self.entries.is_empty() && self.modules.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty() && self.modules.is_empty()
+    }
 
     pub fn is_enabled<S>(
         &self,

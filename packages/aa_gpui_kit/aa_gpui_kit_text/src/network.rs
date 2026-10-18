@@ -23,7 +23,9 @@ impl<T: Clone, R: rand::Rng> Network<T, R> {
         }
     }
 
-    pub fn add_peer(&mut self, id: ReplicaId) { self.inboxes.insert(id, Vec::new()); }
+    pub fn add_peer(&mut self, id: ReplicaId) {
+        self.inboxes.insert(id, Vec::new());
+    }
 
     pub fn disconnect_peer(&mut self, id: ReplicaId) {
         self.disconnected_peers.insert(id);
@@ -35,16 +37,22 @@ impl<T: Clone, R: rand::Rng> Network<T, R> {
         self.replicate(replicate_from, id);
     }
 
-    pub fn is_disconnected(&self, id: ReplicaId) -> bool { self.disconnected_peers.contains(&id) }
+    pub fn is_disconnected(&self, id: ReplicaId) -> bool {
+        self.disconnected_peers.contains(&id)
+    }
 
-    pub fn contains_disconnected_peers(&self) -> bool { !self.disconnected_peers.is_empty() }
+    pub fn contains_disconnected_peers(&self) -> bool {
+        !self.disconnected_peers.is_empty()
+    }
 
     pub fn replicate(&mut self, old_replica_id: ReplicaId, new_replica_id: ReplicaId) {
         self.inboxes
             .insert(new_replica_id, self.inboxes[&old_replica_id].clone());
     }
 
-    pub fn is_idle(&self) -> bool { self.inboxes.values().all(|i| i.is_empty()) }
+    pub fn is_idle(&self) -> bool {
+        self.inboxes.values().all(|i| i.is_empty())
+    }
 
     pub fn broadcast(&mut self, sender: ReplicaId, messages: Vec<T>) {
         // Drop messages from disconnected peers.

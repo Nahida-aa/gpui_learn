@@ -9,8 +9,6 @@ use super::common::{
     LanguageModelCacheConfiguration, ModelMode, OpenAiReasoningEffort, default_true,
 };
 
-
-
 #[with_fallible_options]
 #[derive(Default, Clone, Debug, Serialize, Deserialize, PartialEq, JsonSchema, MergeFrom)]
 pub struct MistralSettingsContent {

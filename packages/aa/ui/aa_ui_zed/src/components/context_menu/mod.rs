@@ -29,7 +29,9 @@
 pub mod menu;
 pub mod right_click_menu;
 
-pub use menu::{ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide};
+pub use menu::{
+    ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide,
+};
 // zed 的 `IconPosition` 定义在 `components/button/button_like.rs`（不是
 // context_menu），菜单条目复用同一个枚举；这里转出只为兼容旧导入路径。
 pub use crate::IconPosition;

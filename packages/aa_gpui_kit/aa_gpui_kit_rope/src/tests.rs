@@ -6,7 +6,9 @@ use sum_tree::Bias;
 use util::RandomCharIter;
 
 #[ctor::ctor(unsafe)]
-fn init_logger() { zlog::init_test(); }
+fn init_logger() {
+    zlog::init_test();
+}
 
 #[test]
 fn test_all_4_byte_chars() {

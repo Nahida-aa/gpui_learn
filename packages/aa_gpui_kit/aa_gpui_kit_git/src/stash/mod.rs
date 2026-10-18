@@ -17,7 +17,9 @@ pub struct GitStash {
 }
 
 impl GitStash {
-    pub fn apply(&mut self, other: GitStash) { self.entries = other.entries; }
+    pub fn apply(&mut self, other: GitStash) {
+        self.entries = other.entries;
+    }
 }
 
 impl FromStr for GitStash {

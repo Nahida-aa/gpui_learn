@@ -22,5 +22,7 @@ pub struct PathEvent {
 }
 
 impl From<PathEvent> for PathBuf {
-    fn from(event: PathEvent) -> Self { event.path }
+    fn from(event: PathEvent) -> Self {
+        event.path
+    }
 }

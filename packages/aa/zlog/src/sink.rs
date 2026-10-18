@@ -48,7 +48,9 @@ pub fn init_output_stdout() {
     ENABLED_SINKS_STDOUT.store(true, Ordering::Release);
 }
 
-pub fn init_output_stderr() { ENABLED_SINKS_STDERR.store(true, Ordering::Release); }
+pub fn init_output_stderr() {
+    ENABLED_SINKS_STDERR.store(true, Ordering::Release);
+}
 
 pub fn init_output_file(
     path: &'static PathBuf,
@@ -165,7 +167,9 @@ pub fn submit(mut record: Record) {
                 Ok(buf.len())
             }
 
-            fn flush(&mut self) -> io::Result<()> { self.file.flush() }
+            fn flush(&mut self) -> io::Result<()> {
+                self.file.flush()
+            }
         }
         let file_size_bytes = {
             let mut writer = SizedWriter { file, written: 0 };

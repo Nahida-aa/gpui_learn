@@ -9,7 +9,6 @@
 
 use gpui::{AnyView, App, ElementId, Window};
 
-
 /// 所有按钮类元素共有的配置接口（builder 风格，方法消费 self 返回 Self）。
 pub trait ButtonCommon {
     /// A unique element ID to identify the button.

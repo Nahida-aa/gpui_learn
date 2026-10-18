@@ -59,20 +59,30 @@ impl LineIndent {
     }
 
     /// Indicates whether the line is empty.
-    pub fn is_line_empty(&self) -> bool { self.tabs == 0 && self.spaces == 0 && self.line_blank }
+    pub fn is_line_empty(&self) -> bool {
+        self.tabs == 0 && self.spaces == 0 && self.line_blank
+    }
 
     /// Indicates whether the line is blank (contains only whitespace).
-    pub fn is_line_blank(&self) -> bool { self.line_blank }
+    pub fn is_line_blank(&self) -> bool {
+        self.line_blank
+    }
 
     /// Returns the number of indentation characters (tabs or spaces).
-    pub fn raw_len(&self) -> u32 { self.tabs + self.spaces }
+    pub fn raw_len(&self) -> u32 {
+        self.tabs + self.spaces
+    }
 
     /// Returns the number of indentation characters (tabs or spaces), taking tab size into account.
-    pub fn len(&self, tab_size: u32) -> u32 { self.tabs * tab_size + self.spaces }
+    pub fn len(&self, tab_size: u32) -> u32 {
+        self.tabs * tab_size + self.spaces
+    }
 }
 
 impl From<&str> for LineIndent {
-    fn from(value: &str) -> Self { Self::from_iter(value.chars()) }
+    fn from(value: &str) -> Self {
+        Self::from_iter(value.chars())
+    }
 }
 
 impl FromIterator<char> for LineIndent {

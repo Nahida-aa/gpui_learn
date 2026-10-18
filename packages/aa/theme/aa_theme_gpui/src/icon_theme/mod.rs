@@ -113,7 +113,11 @@ impl IconTheme {
     /// 目录的图标资源路径。先按目录名查,再回退通用文件夹图标。
     ///
     /// `expanded` 选择展开态还是折叠态图标。
-    pub fn icon_for_directory(&self, directory_name: &str, expanded: bool) -> Option<&SharedString> {
+    pub fn icon_for_directory(
+        &self,
+        directory_name: &str,
+        expanded: bool,
+    ) -> Option<&SharedString> {
         let icons = self
             .named_directory_icons
             .get(directory_name)
@@ -185,9 +189,7 @@ impl IconTheme {
 }
 
 /// 解析一个图标主题家族文件。
-pub fn parse_icon_theme_family(
-    bytes: &[u8],
-) -> serde_json::Result<IconThemeFamily> {
+pub fn parse_icon_theme_family(bytes: &[u8]) -> serde_json::Result<IconThemeFamily> {
     let content: IconThemeFamilyContent = serde_json::from_slice(bytes)?;
     Ok(IconThemeFamily {
         id: content.name.clone(),
@@ -200,7 +202,6 @@ pub fn parse_icon_theme_family(
             .collect(),
     })
 }
-
 
 const FILE_STEMS_BY_ICON_KEY: &[(&str, &[&str])] = &[
     ("docker", &["Containerfile", "Dockerfile", ".dockerignore"]),
@@ -851,7 +852,9 @@ mod tests {
             "普通 .toml 走 file_suffixes"
         );
         assert_eq!(
-            theme.icon_for_directory("anything", false).map(|s| s.to_string()),
+            theme
+                .icon_for_directory("anything", false)
+                .map(|s| s.to_string()),
             Some("icon_themes/catppuccin/macchiato/_folder.svg".to_string())
         );
         assert!(

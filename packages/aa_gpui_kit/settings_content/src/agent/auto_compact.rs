@@ -14,15 +14,21 @@ use std::borrow::Cow;
 pub struct AutoCompactThreshold(pub String);
 
 impl From<String> for AutoCompactThreshold {
-    fn from(value: String) -> Self { Self(value) }
+    fn from(value: String) -> Self {
+        Self(value)
+    }
 }
 
 impl From<AutoCompactThreshold> for String {
-    fn from(value: AutoCompactThreshold) -> Self { value.0 }
+    fn from(value: AutoCompactThreshold) -> Self {
+        value.0
+    }
 }
 
 impl AsRef<str> for AutoCompactThreshold {
-    fn as_ref(&self) -> &str { &self.0 }
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
 }
 impl Serialize for AutoCompactThreshold {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
@@ -70,7 +76,9 @@ impl<'de> Deserialize<'de> for AutoCompactThreshold {
 }
 
 impl JsonSchema for AutoCompactThreshold {
-    fn schema_name() -> Cow<'static, str> { "AutoCompactThreshold".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "AutoCompactThreshold".into()
+    }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         json_schema!({

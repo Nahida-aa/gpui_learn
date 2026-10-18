@@ -618,16 +618,22 @@ impl FakeFs {
         entry.file_content(&path).cloned()
     }
 
-    pub fn pause_events(&self) { self.state.lock().events_paused = true; }
+    pub fn pause_events(&self) {
+        self.state.lock().events_paused = true;
+    }
 
     pub fn unpause_events_and_flush(&self) {
         self.state.lock().events_paused = false;
         self.flush_events(usize::MAX);
     }
 
-    pub fn buffered_event_count(&self) -> usize { self.state.lock().buffered_events.len() }
+    pub fn buffered_event_count(&self) -> usize {
+        self.state.lock().buffered_events.len()
+    }
 
-    pub fn clear_buffered_events(&self) { self.state.lock().buffered_events.clear(); }
+    pub fn clear_buffered_events(&self) {
+        self.state.lock().buffered_events.clear();
+    }
 
     /// Simulates the kernel's watch queue overflowing: all buffered
     /// (undelivered) events are lost, and the watcher reports only a single
@@ -645,9 +651,13 @@ impl FakeFs {
 
     /// Every path the watcher backend has been asked to watch, in order,
     /// including paths that were later unwatched.
-    pub fn watch_calls(&self) -> Vec<PathBuf> { self.state.lock().watches.watch_calls.clone() }
+    pub fn watch_calls(&self) -> Vec<PathBuf> {
+        self.state.lock().watches.watch_calls.clone()
+    }
 
-    pub fn flush_events(&self, count: usize) { self.state.lock().flush_events(count); }
+    pub fn flush_events(&self, count: usize) {
+        self.state.lock().flush_events(count);
+    }
 
     pub(crate) fn entry(&self, target: &Path) -> Result<FakeFsEntry> {
         self.state.lock().entry(target).cloned()
@@ -1330,7 +1340,9 @@ impl FakeFs {
     }
 
     /// How many `read_dir` calls have been issued.
-    pub fn read_dir_call_count(&self) -> usize { self.state.lock().read_dir_call_count }
+    pub fn read_dir_call_count(&self) -> usize {
+        self.state.lock().read_dir_call_count
+    }
 
     /// The roots passed to `Fs::watch` whose watchers are still alive.
     pub fn watched_paths(&self) -> Vec<PathBuf> {
@@ -1343,7 +1355,9 @@ impl FakeFs {
     }
 
     /// How many `metadata` calls have been issued.
-    pub fn metadata_call_count(&self) -> usize { self.state.lock().metadata_call_count }
+    pub fn metadata_call_count(&self) -> usize {
+        self.state.lock().metadata_call_count
+    }
 
     /// How many write operations have been issued for a specific path.
     pub fn write_count_for_path(&self, path: impl AsRef<Path>) -> usize {
@@ -1463,9 +1477,13 @@ impl FakeFs {
 
 #[cfg(feature = "test-support")]
 impl FakeFsEntry {
-    fn is_file(&self) -> bool { matches!(self, Self::File { .. }) }
+    fn is_file(&self) -> bool {
+        matches!(self, Self::File { .. })
+    }
 
-    fn is_symlink(&self) -> bool { matches!(self, Self::Symlink { .. }) }
+    fn is_symlink(&self) -> bool {
+        matches!(self, Self::Symlink { .. })
+    }
 
     fn file_content(&self, path: &Path) -> Result<&Vec<u8>> {
         if let Self::File { content, .. } = self {
@@ -1805,7 +1823,9 @@ impl Fs for FakeFs {
         Ok(String::from_utf8(content)?)
     }
 
-    async fn load_bytes(&self, path: &Path) -> Result<Vec<u8>> { self.load_internal(path).await }
+    async fn load_bytes(&self, path: &Path) -> Result<Vec<u8>> {
+        self.load_internal(path).await
+    }
 
     async fn atomic_write(&self, path: PathBuf, data: String) -> Result<()> {
         self.simulate_random_delay().await;
@@ -2022,13 +2042,21 @@ impl Fs for FakeFs {
             .is_some()
     }
 
-    fn is_path_case_sensitive(&self, _path: &Path) -> bool { self.state.lock().case_sensitive }
+    fn is_path_case_sensitive(&self, _path: &Path) -> bool {
+        self.state.lock().case_sensitive
+    }
 
-    fn requires_poll_watcher(&self, _path: &Path) -> bool { false }
+    fn requires_poll_watcher(&self, _path: &Path) -> bool {
+        false
+    }
 
-    fn is_fake(&self) -> bool { true }
+    fn is_fake(&self) -> bool {
+        true
+    }
 
-    async fn is_case_sensitive(&self) -> bool { self.state.lock().case_sensitive }
+    async fn is_case_sensitive(&self) -> bool {
+        self.state.lock().case_sensitive
+    }
 
     fn subscribe_to_jobs(&self) -> JobEventReceiver {
         let (sender, receiver) = futures::channel::mpsc::unbounded();
@@ -2082,5 +2110,7 @@ impl Fs for FakeFs {
     }
 
     #[cfg(feature = "test-support")]
-    fn as_fake(&self) -> Arc<FakeFs> { self.this.upgrade().unwrap() }
+    fn as_fake(&self) -> Arc<FakeFs> {
+        self.this.upgrade().unwrap()
+    }
 }

@@ -218,12 +218,16 @@ impl AskPassSession {
 
     /// This will return the password that was last set by the askpass script.
     #[cfg(target_os = "windows")]
-    pub fn get_password(&self) -> Option<EncryptedPassword> { self.secret.lock().ok()?.clone() }
+    pub fn get_password(&self) -> Option<EncryptedPassword> {
+        self.secret.lock().ok()?.clone()
+    }
 
     /// Returns the value to set as SSH_ASKPASS.
     /// On Unix this is the path to the generated shell script.
     /// On Windows this is the path to cli.exe directly — no script needed.
-    pub fn script_path(&self) -> impl AsRef<OsStr> { self.askpass_task.script_path() }
+    pub fn script_path(&self) -> impl AsRef<OsStr> {
+        self.askpass_task.script_path()
+    }
 
     /// Path to a script suitable for git's `gpg.program`, routing GnuPG
     /// passphrase prompts through Zed's askpass UI. `None` if unavailable.
@@ -241,7 +245,9 @@ impl AskPassSession {
     /// so the socket path is communicated via this environment variable instead.
     /// cli.exe must check ZED_ASKPASS_SOCKET before clap parses args.
     #[cfg(target_os = "windows")]
-    pub fn socket_path(&self) -> impl AsRef<OsStr> { self.askpass_task.socket_path() }
+    pub fn socket_path(&self) -> impl AsRef<OsStr> {
+        self.askpass_task.socket_path()
+    }
 }
 
 pub struct PasswordProxy {
@@ -389,10 +395,14 @@ impl PasswordProxy {
         })
     }
 
-    pub fn script_path(&self) -> impl AsRef<OsStr> { &self.askpass_script_path }
+    pub fn script_path(&self) -> impl AsRef<OsStr> {
+        &self.askpass_script_path
+    }
 
     #[cfg(target_os = "windows")]
-    pub fn socket_path(&self) -> impl AsRef<OsStr> { &self.askpass_socket_path }
+    pub fn socket_path(&self) -> impl AsRef<OsStr> {
+        &self.askpass_socket_path
+    }
 
     #[cfg(not(target_os = "windows"))]
     pub fn gpg_wrapper_path(&self) -> Option<&std::path::Path> {

@@ -14,7 +14,9 @@ pub struct FeatureFlagsMap(pub HashMap<String, String>);
 // `SettingsContent`. A named placeholder lets `json_schema_store` find and
 // replace just this field's schema at runtime without clobbering the others.
 impl JsonSchema for FeatureFlagsMap {
-    fn schema_name() -> std::borrow::Cow<'static, str> { "FeatureFlagsMap".into() }
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "FeatureFlagsMap".into()
+    }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         schemars::json_schema!({
@@ -26,9 +28,13 @@ impl JsonSchema for FeatureFlagsMap {
 
 impl std::ops::Deref for FeatureFlagsMap {
     type Target = HashMap<String, String>;
-    fn deref(&self) -> &Self::Target { &self.0 }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl std::ops::DerefMut for FeatureFlagsMap {
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }

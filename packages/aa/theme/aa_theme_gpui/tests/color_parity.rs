@@ -20,7 +20,12 @@ use aa_theme_core::{
 };
 
 fn core(color: gpui::Hsla) -> CoreHsla {
-    CoreHsla { h: color.h, s: color.s, l: color.l, a: color.a }
+    CoreHsla {
+        h: color.h,
+        s: color.s,
+        l: color.l,
+        a: color.a,
+    }
 }
 
 /// 双向 + 命名常量的逐位比对。`to_bits()` 而非 `==`：HSL→RGB→HSL 的往返在
@@ -42,9 +47,21 @@ fn assert_same(name: &str, gpui_color: gpui::Hsla, core_color: CoreHsla) {
     // Rgba -> Hsla（回程同样要逐位一致，不能只测去程）
     let gpui_back: gpui::Hsla = gpui_rgb.into();
     let core_back: CoreHsla = core_rgb.into();
-    assert_eq!(gpui_back.h.to_bits(), core_back.h.to_bits(), "{name}: 回程 h");
-    assert_eq!(gpui_back.s.to_bits(), core_back.s.to_bits(), "{name}: 回程 s");
-    assert_eq!(gpui_back.l.to_bits(), core_back.l.to_bits(), "{name}: 回程 l");
+    assert_eq!(
+        gpui_back.h.to_bits(),
+        core_back.h.to_bits(),
+        "{name}: 回程 h"
+    );
+    assert_eq!(
+        gpui_back.s.to_bits(),
+        core_back.s.to_bits(),
+        "{name}: 回程 s"
+    );
+    assert_eq!(
+        gpui_back.l.to_bits(),
+        core_back.l.to_bits(),
+        "{name}: 回程 l"
+    );
 }
 
 /// 9 个命名常量全部纳入 —— 早期版本只采样了其中 4 个，恰好漏掉了 `green`
@@ -58,12 +75,32 @@ fn named_colors_match_gpui() {
         ("blue", gpui::blue(), blue()),
         ("green", gpui::green(), green()),
         ("yellow", gpui::yellow(), yellow()),
-        ("transparent_black", gpui::transparent_black(), transparent_black()),
-        ("transparent_white", gpui::transparent_white(), transparent_white()),
-        ("opaque_grey", gpui::opaque_grey(0.42, 0.75), opaque_grey(0.42, 0.75)),
+        (
+            "transparent_black",
+            gpui::transparent_black(),
+            transparent_black(),
+        ),
+        (
+            "transparent_white",
+            gpui::transparent_white(),
+            transparent_white(),
+        ),
+        (
+            "opaque_grey",
+            gpui::opaque_grey(0.42, 0.75),
+            opaque_grey(0.42, 0.75),
+        ),
         // clamp 边界也要一致
-        ("opaque_grey 超界", gpui::opaque_grey(2.0, -1.0), opaque_grey(2.0, -1.0)),
-        ("hsla 超界", gpui::hsla(1.5, 2.0, -0.5, 3.0), hsla(1.5, 2.0, -0.5, 3.0)),
+        (
+            "opaque_grey 超界",
+            gpui::opaque_grey(2.0, -1.0),
+            opaque_grey(2.0, -1.0),
+        ),
+        (
+            "hsla 超界",
+            gpui::hsla(1.5, 2.0, -0.5, 3.0),
+            hsla(1.5, 2.0, -0.5, 3.0),
+        ),
     ];
     for (name, gpui_color, core_color) in pairs {
         assert_same(name, gpui_color, core_color);
@@ -93,7 +130,11 @@ fn color_methods_match_gpui() {
     let other_core = core(other_gpui);
 
     // other 保持半透明：a>=1.0 时 blend 直接短路返回 other，走不到混合逻辑。
-    assert_same("blend", base_gpui.blend(other_gpui), base_core.blend(other_core));
+    assert_same(
+        "blend",
+        base_gpui.blend(other_gpui),
+        base_core.blend(other_core),
+    );
     assert_same("grayscale", base_gpui.grayscale(), base_core.grayscale());
     assert_same("opacity", base_gpui.opacity(0.33), base_core.opacity(0.33));
     assert_same("alpha", base_gpui.alpha(0.77), base_core.alpha(0.77));
@@ -106,7 +147,11 @@ fn color_methods_match_gpui() {
     assert_same("fade_out", gpui_faded, core_faded);
 
     // blend 的短路分支同样要一致
-    assert_same("blend 不透明", base_gpui.blend(gpui::white()), base_core.blend(white()));
+    assert_same(
+        "blend 不透明",
+        base_gpui.blend(gpui::white()),
+        base_core.blend(white()),
+    );
     assert_same(
         "blend 全透明",
         base_gpui.blend(gpui::transparent_black()),
@@ -116,7 +161,15 @@ fn color_methods_match_gpui() {
 
 #[test]
 fn hex_parsing_agrees_on_accepted_and_rejected_input() {
-    for input in ["#abc", "#abcd", "#ff8000", "#ff800080", "#00000000", "#ffffff", "#000"] {
+    for input in [
+        "#abc",
+        "#abcd",
+        "#ff8000",
+        "#ff800080",
+        "#00000000",
+        "#ffffff",
+        "#000",
+    ] {
         let gpui_rgba = gpui::Rgba::try_from(input)
             .unwrap_or_else(|err| panic!("gpui 应接受 {input:?}: {err}"));
         let core_rgba: CoreRgba = input
@@ -130,21 +183,19 @@ fn hex_parsing_agrees_on_accepted_and_rejected_input() {
 
     // 注意 "#ff80" 不在此列：4 位是合法的 #rgba。
     for input in ["", "ff8000", "#ff80000", "#ggg", "rgb(1,2,3)"] {
-        assert!(gpui::Rgba::try_from(input).is_err(), "gpui 应拒绝 {input:?}");
         assert!(
-            CoreRgba::try_from(input).is_err(),
-            "core 应拒绝 {input:?}"
+            gpui::Rgba::try_from(input).is_err(),
+            "gpui 应拒绝 {input:?}"
         );
+        assert!(CoreRgba::try_from(input).is_err(), "core 应拒绝 {input:?}");
     }
 }
 
 #[test]
 fn serde_representation_agrees() {
     for input in ["#abc", "#ff8000", "#ff800080", "#cad3f5"] {
-        let gpui_color: gpui::Hsla =
-            serde_json::from_str(&format!("\"{input}\"")).unwrap();
-        let core_color: CoreHsla =
-            serde_json::from_str(&format!("\"{input}\"")).unwrap();
+        let gpui_color: gpui::Hsla = serde_json::from_str(&format!("\"{input}\"")).unwrap();
+        let core_color: CoreHsla = serde_json::from_str(&format!("\"{input}\"")).unwrap();
         assert_eq!(gpui_color.h.to_bits(), core_color.h.to_bits(), "{input}: h");
         assert_eq!(
             serde_json::to_string(&gpui_color).unwrap(),
@@ -167,9 +218,23 @@ fn try_parse_color_agrees_with_gpui_side() {
     // 推不出「Rgba::try_from 两边一样」—— 只能靠这份语料逐位验证。
     // 色值取 0x00 / 0x7f / 0x80 / 0xff 等易在整除与舍入上分叉的边界。
     let mut corpus: Vec<String> = [
-        "#24273a", "#cad3f5", "#ed8796", "#1e1e2e", "#89b4fa", "#f38ba8",
-        "#000000", "#ffffff", "#ff0000", "#00ff00", "#0000ff", "#010203",
-        "#00000000", "#ffffffff", "#7f7f7f80", "#80808080", "#ff00007f",
+        "#24273a",
+        "#cad3f5",
+        "#ed8796",
+        "#1e1e2e",
+        "#89b4fa",
+        "#f38ba8",
+        "#000000",
+        "#ffffff",
+        "#ff0000",
+        "#00ff00",
+        "#0000ff",
+        "#010203",
+        "#00000000",
+        "#ffffffff",
+        "#7f7f7f80",
+        "#80808080",
+        "#ff00007f",
     ]
     .iter()
     .map(|s| s.to_string())
@@ -196,7 +261,16 @@ fn try_parse_color_agrees_with_gpui_side() {
 /// 那会让上游主题文件在某个后端下悄悄解析出意料之外的值。
 #[test]
 fn try_parse_color_rejects_the_same_invalid_inputs() {
-    for bad in ["", "rgb(1,2,3)", "24273a", "#", "#12", "#1234567", "#gggggg", " # "] {
+    for bad in [
+        "",
+        "rgb(1,2,3)",
+        "24273a",
+        "#",
+        "#12",
+        "#1234567",
+        "#gggggg",
+        " # ",
+    ] {
         assert!(
             aa_theme_gpui::try_parse_color(bad).is_err(),
             "gpui 侧本应拒绝 {bad:?}"

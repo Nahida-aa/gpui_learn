@@ -263,7 +263,9 @@ impl Ord for LanguageMatcher {
 }
 
 impl PartialOrd for LanguageMatcher {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Eq for LanguageMatcher {}
@@ -391,7 +393,9 @@ pub enum Override<T> {
 }
 
 impl<T> Default for Override<T> {
-    fn default() -> Self { Override::Remove { remove: false } }
+    fn default() -> Self {
+        Override::Remove { remove: false }
+    }
 }
 
 impl<T> Override<T> {
@@ -480,7 +484,9 @@ pub struct WrapCharactersConfig {
     pub end_suffix: String,
 }
 
-pub fn default_true() -> bool { true }
+pub fn default_true() -> bool {
+    true
+}
 
 pub fn deserialize_regex<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Regex>, D::Error> {
     let source = Option::<String>::deserialize(d)?;

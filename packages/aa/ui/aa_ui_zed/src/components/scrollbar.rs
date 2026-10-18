@@ -1,6 +1,7 @@
 use std::time::Instant;
 use std::{any::Any, fmt::Debug, ops::Not, time::Duration};
 
+use aa_theme_gpui::ActiveTheme as _;
 use gpui::{
     Along, Anchor, AnyElement, App, AppContext as _, Axis as ScrollbarAxis, BorderStyle, Bounds,
     ContentMask, Context, Corners, CursorStyle, DispatchPhase, Div, Edges, Element, ElementId,
@@ -11,7 +12,6 @@ use gpui::{
     UniformListScrollHandle, Window, ease_in_out, prelude::FluentBuilder as _, px, quad, relative,
     size,
 };
-use aa_theme_gpui::ActiveTheme as _;
 use smallvec::SmallVec;
 
 use std::ops::Range;

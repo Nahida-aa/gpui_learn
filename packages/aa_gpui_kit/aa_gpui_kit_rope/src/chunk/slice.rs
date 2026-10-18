@@ -29,7 +29,9 @@ impl Into<Chunk> for ChunkSlice<'_> {
 
 impl<'a> ChunkSlice<'a> {
     #[inline(always)]
-    pub fn is_empty(&self) -> bool { self.text.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.text.is_empty()
+    }
 
     #[inline(always)]
     pub fn is_char_boundary(&self, offset: usize) -> bool {
@@ -122,11 +124,15 @@ impl<'a> ChunkSlice<'a> {
 
     /// Get length in bytes
     #[inline(always)]
-    pub fn len(&self) -> usize { self.text.len() }
+    pub fn len(&self) -> usize {
+        self.text.len()
+    }
 
     /// Get length in UTF-16 code units
     #[inline(always)]
-    pub fn len_utf16(&self) -> OffsetUtf16 { OffsetUtf16(self.chars_utf16.count_ones() as usize) }
+    pub fn len_utf16(&self) -> OffsetUtf16 {
+        OffsetUtf16(self.chars_utf16.count_ones() as usize)
+    }
 
     /// Get point representing number of lines and length of last line
     #[inline(always)]

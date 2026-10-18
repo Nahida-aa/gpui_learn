@@ -16,9 +16,9 @@ mod actions;
 // Editor 动作切到 display 空间在阶段 C 渲染度量接入时完成。
 #[allow(dead_code)]
 mod display_map;
+pub mod element;
 /// 把 Editor 擦除成 `ui_input::ErasedEditor`(运行时注入的那半边)。
 pub mod erased;
-pub mod element;
 /// 输入控件 facade(`InputState` / `Textarea` / `bind_input_keys`)。
 pub mod input;
 #[allow(dead_code)]
@@ -29,9 +29,9 @@ mod undo;
 use std::ops::Range;
 
 use gpui::{
-    div, prelude::*, px, App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter,
-    FocusHandle, Hsla, KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
-    Pixels, Render, ScrollWheelEvent, ShapedLine, SharedString, UTF16Selection, Window,
+    App, Bounds, Context, CursorStyle, EntityInputHandler, EventEmitter, FocusHandle, Hsla,
+    KeyBinding, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Render,
+    ScrollWheelEvent, ShapedLine, SharedString, UTF16Selection, Window, div, prelude::*, px,
 };
 
 pub use actions::*;
@@ -537,7 +537,10 @@ impl Editor {
     ///
     /// 对齐 zed `Editor::erased`:`ui_input` 编译期不能依赖本包,于是把实例
     /// 包一层实现它的 `ErasedEditor` trait,由工厂在运行时交给输入字段。
-    pub fn erased(&self, cx: &Context<Self>) -> std::sync::Arc<dyn aa_gpui_kit_ui_input::ErasedEditor> {
+    pub fn erased(
+        &self,
+        cx: &Context<Self>,
+    ) -> std::sync::Arc<dyn aa_gpui_kit_ui_input::ErasedEditor> {
         std::sync::Arc::new(ErasedEditorImpl(cx.entity()))
     }
 

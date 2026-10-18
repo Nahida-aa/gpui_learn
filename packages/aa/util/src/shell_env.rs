@@ -14,4 +14,3 @@ pub fn print_env() {
     });
     println!("{}", json);
 }
-

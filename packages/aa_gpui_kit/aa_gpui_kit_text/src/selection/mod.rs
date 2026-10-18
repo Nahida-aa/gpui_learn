@@ -64,7 +64,9 @@ impl<T: Clone> Selection<T> {
 }
 
 impl<T: Copy + Ord> Selection<T> {
-    pub fn is_empty(&self) -> bool { self.start == self.end }
+    pub fn is_empty(&self) -> bool {
+        self.start == self.end
+    }
 
     pub fn set_head(&mut self, head: T, new_goal: SelectionGoal) {
         if head.cmp(&self.tail()) < Ordering::Equal {
@@ -123,11 +125,15 @@ impl<T: Copy + Ord> Selection<T> {
 }
 
 impl<T: Copy> Selection<T> {
-    pub fn range(&self) -> Range<T> { self.start..self.end }
+    pub fn range(&self) -> Range<T> {
+        self.start..self.end
+    }
 }
 
 impl<T: std::ops::Sub + Copy> Selection<T> {
-    pub fn len(&self) -> <T as std::ops::Sub>::Output { self.end - self.start }
+    pub fn len(&self) -> <T as std::ops::Sub>::Output {
+        self.end - self.start
+    }
 }
 
 impl<T: Copy + Eq> Selection<T> {

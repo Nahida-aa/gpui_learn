@@ -8,7 +8,9 @@
 use serde::{Deserialize, Serialize};
 
 /// UI 密度。
-#[derive(Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Serialize, Deserialize)]
+#[derive(
+    Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Serialize, Deserialize,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum UiDensity {
     /// 更紧凑:间距收紧、元素更小。

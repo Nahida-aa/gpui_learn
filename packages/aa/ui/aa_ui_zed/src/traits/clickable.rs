@@ -1,4 +1,4 @@
-use gpui::{ClickEvent, CursorStyle, Window, App};
+use gpui::{App, ClickEvent, CursorStyle, Window};
 
 /// A trait for elements that can be clicked. Enables the use of the `on_click` method.
 ///

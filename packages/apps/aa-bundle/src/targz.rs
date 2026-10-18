@@ -164,15 +164,22 @@ pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
 
     // staging 放系统临时目录：tar 完就删，不污染 target/；中途失败也清
     // （下面的闭包无论成败都走到 remove_dir_all）。
-    let staging = std::env::temp_dir().join(format!(
-        "aa-bundle-targz-{}-{app_name}",
-        std::process::id()
-    ));
+    let staging =
+        std::env::temp_dir().join(format!("aa-bundle-targz-{}-{app_name}", std::process::id()));
     if staging.exists() {
         std::fs::remove_dir_all(&staging).ok();
     }
     let result = (|| {
-        stage_app(opts, &meta, bin, &icon, &bin_path, &staging, &app_name, &info.description)?;
+        stage_app(
+            opts,
+            &meta,
+            bin,
+            &icon,
+            &bin_path,
+            &staging,
+            &app_name,
+            &info.description,
+        )?;
         pack_targz(&staging, &app_name, &out)
     })();
     std::fs::remove_dir_all(&staging).ok();
@@ -218,12 +225,13 @@ fn stage_app(
         Vec::new()
     };
     for lib in &libs {
-        anyhow::ensure!(
-            lib.exists(),
-            "ldd 报告的依赖 {} 不存在",
-            lib.display()
-        );
-        copy_file(lib, &app_dir.join("lib").join(lib.file_name().context("依赖路径没有文件名")?))?;
+        anyhow::ensure!(lib.exists(), "ldd 报告的依赖 {} 不存在", lib.display());
+        copy_file(
+            lib,
+            &app_dir
+                .join("lib")
+                .join(lib.file_name().context("依赖路径没有文件名")?),
+        )?;
     }
 
     // 3. 图标 → share/icons/hicolor/<size>/apps/<icon>.png
@@ -330,17 +338,28 @@ mod tests {
             names.contains(&"/usr/lib/libstdc++.so.6"),
             "libstdc++ 要打包（CI 的比用户机器新）：{names:?}"
         );
-        assert!(names.contains(&"/usr/lib/libzstd.so.1"), "zstd 要打包：{names:?}");
+        assert!(
+            names.contains(&"/usr/lib/libzstd.so.1"),
+            "zstd 要打包：{names:?}"
+        );
         // 排除的
-        assert!(!names.iter().any(|n| n.contains("libc.so")), "glibc 排除：{names:?}");
-        assert!(!names.iter().any(|n| n.contains("libz.so")), "zlib 排除：{names:?}");
+        assert!(
+            !names.iter().any(|n| n.contains("libc.so")),
+            "glibc 排除：{names:?}"
+        );
+        assert!(
+            !names.iter().any(|n| n.contains("libz.so")),
+            "zlib 排除：{names:?}"
+        );
         assert!(
             !names.iter().any(|n| n.contains("libgcc_s")),
             "libgcc_s 排除：{names:?}"
         );
         // 没有 => 的行（vdso）与动态 loader 都不该出现
         assert!(
-            !names.iter().any(|n| n.contains("vdso") || n.contains("ld-linux")),
+            !names
+                .iter()
+                .any(|n| n.contains("vdso") || n.contains("ld-linux")),
             "vdso 与 loader 行应跳过/排除：{names:?}"
         );
     }
@@ -420,7 +439,10 @@ icon = ["resources/app-icon@2x.png", "resources/app-icon.png"]
             .output()
             .unwrap();
         let entries = String::from_utf8_lossy(&listing.stdout);
-        assert!(entries.contains("aacode.app/bin/aacode"), "二进制进 bin/：{entries}");
+        assert!(
+            entries.contains("aacode.app/bin/aacode"),
+            "二进制进 bin/：{entries}"
+        );
         assert!(
             entries.contains("aacode.app/share/applications/dev.aa.AaCode.desktop"),
             ".desktop 进 share/applications/：{entries}"
@@ -433,13 +455,21 @@ icon = ["resources/app-icon@2x.png", "resources/app-icon.png"]
             entries.contains("aacode.app/share/icons/hicolor/1024x1024/apps/aacode.png"),
             "1024 图标：{entries}"
         );
-        assert!(!entries.contains("lib/"), "ldd 失败时不该有 lib/ 条目：{entries}");
+        assert!(
+            !entries.contains("lib/"),
+            "ldd 失败时不该有 lib/ 条目：{entries}"
+        );
 
         // 解出来看 .desktop 内容（Exec 裸 bin 名——可重定位）
         let extract = dir.join("extract");
         std::fs::create_dir_all(&extract).unwrap();
         Command::new("tar")
-            .args(["-xzf", out.to_str().unwrap(), "-C", extract.to_str().unwrap()])
+            .args([
+                "-xzf",
+                out.to_str().unwrap(),
+                "-C",
+                extract.to_str().unwrap(),
+            ])
             .status()
             .unwrap();
         let desktop = std::fs::read_to_string(
@@ -447,7 +477,10 @@ icon = ["resources/app-icon@2x.png", "resources/app-icon.png"]
         )
         .unwrap();
         assert!(desktop.contains("Name=AaCode"), "{desktop}");
-        assert!(desktop.contains("Exec=aacode"), "tar.gz 的 Exec 用裸 bin 名：{desktop}");
+        assert!(
+            desktop.contains("Exec=aacode"),
+            "tar.gz 的 Exec 用裸 bin 名：{desktop}"
+        );
         assert!(desktop.contains("Icon=aacode"), "{desktop}");
         assert!(desktop.contains("Categories=Development;"), "{desktop}");
         // Comment 回退到 package.description（targz 侧接线验证）
@@ -461,10 +494,8 @@ icon = ["resources/app-icon@2x.png", "resources/app-icon.png"]
 
     #[test]
     fn missing_binary_is_a_clear_error() {
-        let dir = std::env::temp_dir().join(format!(
-            "aa-bundle-targz-test-{}-nobin",
-            std::process::id()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("aa-bundle-targz-test-{}-nobin", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(

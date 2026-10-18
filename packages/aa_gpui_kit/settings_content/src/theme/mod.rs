@@ -139,11 +139,17 @@ pub struct ThemeSettingsContent {
     pub theme_overrides: HashMap<String, ThemeStyleContent>,
 }
 
-fn default_font_features() -> Option<FontFeaturesContent> { Some(FontFeaturesContent::default()) }
+fn default_font_features() -> Option<FontFeaturesContent> {
+    Some(FontFeaturesContent::default())
+}
 
-fn default_font_fallbacks() -> Option<Vec<FontFamilyName>> { Some(Vec::new()) }
+fn default_font_fallbacks() -> Option<Vec<FontFamilyName>> {
+    Some(Vec::new())
+}
 
-fn default_buffer_font_weight() -> Option<FontWeightContent> { Some(FontWeightContent::NORMAL) }
+fn default_buffer_font_weight() -> Option<FontWeightContent> {
+    Some(FontWeightContent::NORMAL)
+}
 
 #[cfg(test)]
 mod tests {

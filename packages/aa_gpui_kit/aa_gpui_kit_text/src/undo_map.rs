@@ -1,5 +1,5 @@
 use crate::UndoOperation;
-use clock::{Lamport};
+use clock::Lamport;
 use std::cmp;
 use sum_tree::{Bias, SumTree};
 
@@ -12,13 +12,17 @@ struct UndoMapEntry {
 impl sum_tree::Item for UndoMapEntry {
     type Summary = UndoMapKey;
 
-    fn summary(&self, _cx: ()) -> Self::Summary { self.key }
+    fn summary(&self, _cx: ()) -> Self::Summary {
+        self.key
+    }
 }
 
 impl sum_tree::KeyedItem for UndoMapEntry {
     type Key = UndoMapKey;
 
-    fn key(&self) -> Self::Key { self.key }
+    fn key(&self) -> Self::Key {
+        self.key
+    }
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -35,7 +39,9 @@ impl sum_tree::ContextLessSummary for UndoMapKey {
         }
     }
 
-    fn add_summary(&mut self, summary: &Self) { *self = cmp::max(*self, *summary); }
+    fn add_summary(&mut self, summary: &Self) {
+        *self = cmp::max(*self, *summary);
+    }
 }
 
 #[derive(Clone, Default)]
@@ -59,7 +65,9 @@ impl UndoMap {
         self.0.edit(edits, ());
     }
 
-    pub fn is_undone(&self, edit_id: clock::Lamport) -> bool { self.undo_count(edit_id) % 2 == 1 }
+    pub fn is_undone(&self, edit_id: clock::Lamport) -> bool {
+        self.undo_count(edit_id) % 2 == 1
+    }
     pub fn was_undone(&self, edit_id: clock::Lamport, version: &clock::Global) -> bool {
         let mut cursor = self.0.cursor::<UndoMapKey>(());
         cursor.seek(

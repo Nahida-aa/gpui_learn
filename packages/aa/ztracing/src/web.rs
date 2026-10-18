@@ -98,7 +98,9 @@ pub fn performance_layer() -> (PerformanceLayer, PerformanceReporter) {
 }
 
 impl PerformanceLayer {
-    pub fn dropped_event_count(&self) -> usize { self.dropped_event_count.load(Ordering::Relaxed) }
+    pub fn dropped_event_count(&self) -> usize {
+        self.dropped_event_count.load(Ordering::Relaxed)
+    }
 
     fn send(&self, event: Event) {
         if self.event_sender.try_send(event).is_err() {
@@ -273,7 +275,9 @@ fn source_thread_id() -> u32 {
     })
 }
 
-fn performance() -> Option<Performance> { with_performance(Clone::clone) }
+fn performance() -> Option<Performance> {
+    with_performance(Clone::clone)
+}
 
 fn with_performance<T>(callback: impl FnOnce(&Performance) -> T) -> Option<T> {
     PERFORMANCE.with(|performance| {

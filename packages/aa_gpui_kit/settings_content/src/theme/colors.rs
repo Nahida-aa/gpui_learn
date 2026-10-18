@@ -21,7 +21,9 @@ use settings_macros::{MergeFrom, with_fallible_options};
 pub struct ThemeColor(String);
 
 impl JsonSchema for ThemeColor {
-    fn schema_name() -> Cow<'static, str> { "Color".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "Color".into()
+    }
 
     fn json_schema(_generator: &mut schemars::SchemaGenerator) -> schemars::Schema {
         use schemars::json_schema;
@@ -34,24 +36,34 @@ impl JsonSchema for ThemeColor {
 }
 
 impl From<String> for ThemeColor {
-    fn from(value: String) -> Self { ThemeColor(value) }
+    fn from(value: String) -> Self {
+        ThemeColor(value)
+    }
 }
 
 impl From<&str> for ThemeColor {
-    fn from(value: &str) -> Self { ThemeColor(value.to_string()) }
+    fn from(value: &str) -> Self {
+        ThemeColor(value.to_string())
+    }
 }
 
 impl Deref for ThemeColor {
     type Target = str;
-    fn deref(&self) -> &Self::Target { &self.0 }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl From<ThemeColor> for String {
-    fn from(value: ThemeColor) -> Self { value.0 }
+    fn from(value: ThemeColor) -> Self {
+        value.0
+    }
 }
 
 impl Display for ThemeColor {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result { write!(f, "{}", self.0) }
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl TryFrom<&ThemeColor> for gpui::Rgba {
@@ -64,7 +76,9 @@ impl TryFrom<&ThemeColor> for gpui::Rgba {
 }
 
 impl ThemeColor {
-    pub fn as_str(&self) -> &str { &self.0 }
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
 }
 
 /// 主题颜色完整集合（UI + Editor + Terminal + VCS + Vim）。

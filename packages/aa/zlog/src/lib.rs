@@ -97,7 +97,9 @@ impl log::Log for Zlog {
         });
     }
 
-    fn flush(&self) { sink::flush(); }
+    fn flush(&self) {
+        sink::flush();
+    }
 }
 
 #[macro_export]
@@ -250,7 +252,9 @@ pub mod private {
         crate_name
     }
 
-    pub const fn scope_new(scopes: &[&'static str]) -> Scope { scope_ref_new(scopes) }
+    pub const fn scope_new(scopes: &[&'static str]) -> Scope {
+        scope_ref_new(scopes)
+    }
 
     pub const fn scope_ref_new<'a>(scopes: &[&'a str]) -> ScopeRef<'a> {
         assert!(scopes.len() <= SCOPE_DEPTH_MAX);
@@ -270,7 +274,9 @@ pub mod private {
         scope.map(|s| s.to_string())
     }
 
-    pub fn scope_to_alloc(scope: &Scope) -> ScopeAlloc { scope.map(|s| s.to_string()) }
+    pub fn scope_to_alloc(scope: &Scope) -> ScopeAlloc {
+        scope.map(|s| s.to_string())
+    }
 }
 
 pub type Scope = [&'static str; SCOPE_DEPTH_MAX];
@@ -306,7 +312,9 @@ impl log::Log for Logger {
         });
     }
 
-    fn flush(&self) { sink::flush(); }
+    fn flush(&self) {
+        sink::flush();
+    }
 }
 
 pub struct Timer {
@@ -318,7 +326,9 @@ pub struct Timer {
 }
 
 impl Drop for Timer {
-    fn drop(&mut self) { self.finish(); }
+    fn drop(&mut self) {
+        self.finish();
+    }
 }
 
 impl Timer {
@@ -338,7 +348,9 @@ impl Timer {
         self
     }
 
-    pub fn end(mut self) { self.finish(); }
+    pub fn end(mut self) {
+        self.finish();
+    }
 
     fn finish(&mut self) {
         if self.done {

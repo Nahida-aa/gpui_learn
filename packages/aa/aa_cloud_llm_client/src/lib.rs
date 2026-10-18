@@ -239,7 +239,9 @@ pub struct WebSearchResult {
 pub struct LanguageModelId(pub Arc<str>);
 
 impl std::fmt::Display for LanguageModelId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self.0) }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

@@ -6,13 +6,17 @@ pub struct OffsetUtf16(pub usize);
 impl<'a> Add<&'a Self> for OffsetUtf16 {
     type Output = Self;
 
-    fn add(self, other: &'a Self) -> Self::Output { Self(self.0 + other.0) }
+    fn add(self, other: &'a Self) -> Self::Output {
+        Self(self.0 + other.0)
+    }
 }
 
 impl Add for OffsetUtf16 {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self::Output { Self(self.0 + other.0) }
+    fn add(self, other: Self) -> Self::Output {
+        Self(self.0 + other.0)
+    }
 }
 
 impl<'a> Sub<&'a Self> for OffsetUtf16 {
@@ -27,13 +31,19 @@ impl<'a> Sub<&'a Self> for OffsetUtf16 {
 impl Sub for OffsetUtf16 {
     type Output = OffsetUtf16;
 
-    fn sub(self, other: Self) -> Self::Output { Self(self.0 - other.0) }
+    fn sub(self, other: Self) -> Self::Output {
+        Self(self.0 - other.0)
+    }
 }
 
 impl<'a> AddAssign<&'a Self> for OffsetUtf16 {
-    fn add_assign(&mut self, other: &'a Self) { self.0 += other.0; }
+    fn add_assign(&mut self, other: &'a Self) {
+        self.0 += other.0;
+    }
 }
 
 impl AddAssign<Self> for OffsetUtf16 {
-    fn add_assign(&mut self, other: Self) { self.0 += other.0; }
+    fn add_assign(&mut self, other: Self) {
+        self.0 += other.0;
+    }
 }

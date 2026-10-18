@@ -2,7 +2,7 @@ use collections::HashMap;
 use std::ops::{Range, Sub};
 use std::sync::Arc;
 
-use clock::{Lamport};
+use clock::Lamport;
 
 use super::dimensions::FullOffset;
 
@@ -46,7 +46,9 @@ impl Operation {
         }
     }
 
-    pub fn is_edit(&self) -> bool { matches!(self, Operation::Edit { .. }) }
+    pub fn is_edit(&self) -> bool {
+        matches!(self, Operation::Edit { .. })
+    }
 }
 
 impl crate::operation_queue::Operation for Operation {

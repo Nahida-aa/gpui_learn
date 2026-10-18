@@ -91,9 +91,9 @@ impl RenderOnce for KeybindingHint {
         let colors = cx.theme().colors();
         let is_light = cx.theme().appearance() == Appearance::Light;
 
-        let border_color = self
-            .background_color
-            .blend(colors.text.alpha(if is_light { 0.08 } else { 0.16 }));
+        let border_color =
+            self.background_color
+                .blend(colors.text.alpha(if is_light { 0.08 } else { 0.16 }));
 
         let bg_color = self
             .background_color

@@ -40,18 +40,9 @@ impl<'a> PathMatchCandidate<'a> {
         if let Some(prefix) = path_prefix
             && !prefix.is_empty()
         {
-            char_bag.extend(
-                prefix
-                    .as_unix_str()
-                    .chars()
-                    .map(|c| c.to_ascii_lowercase()),
-            );
+            char_bag.extend(prefix.as_unix_str().chars().map(|c| c.to_ascii_lowercase()));
         }
-        char_bag.extend(
-            path.as_unix_str()
-                .chars()
-                .map(|c| c.to_ascii_lowercase()),
-        );
+        char_bag.extend(path.as_unix_str().chars().map(|c| c.to_ascii_lowercase()));
         Self {
             is_dir,
             path,

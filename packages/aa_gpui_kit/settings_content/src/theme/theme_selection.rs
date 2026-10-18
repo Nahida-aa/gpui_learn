@@ -22,11 +22,15 @@ pub const DEFAULT_DARK_THEME: &str = "Catppuccin Macchiato";
 pub struct ThemeName(pub Arc<str>);
 
 impl From<String> for ThemeName {
-    fn from(s: String) -> Self { Self(Arc::from(s)) }
+    fn from(s: String) -> Self {
+        Self(Arc::from(s))
+    }
 }
 
 impl From<&str> for ThemeName {
-    fn from(s: &str) -> Self { Self(Arc::from(s)) }
+    fn from(s: &str) -> Self {
+        Self(Arc::from(s))
+    }
 }
 
 // ---------- IconThemeName ----------
@@ -38,11 +42,15 @@ impl From<&str> for ThemeName {
 pub struct IconThemeName(pub Arc<str>);
 
 impl From<String> for IconThemeName {
-    fn from(s: String) -> Self { Self(Arc::from(s)) }
+    fn from(s: String) -> Self {
+        Self(Arc::from(s))
+    }
 }
 
 impl From<&str> for IconThemeName {
-    fn from(s: &str) -> Self { Self(Arc::from(s)) }
+    fn from(s: &str) -> Self {
+        Self(Arc::from(s))
+    }
 }
 
 // ---------- ThemeAppearanceMode ----------
@@ -138,5 +146,7 @@ pub enum IconThemeSelection {
 }
 
 impl Default for IconThemeSelection {
-    fn default() -> Self { Self::Static(IconThemeName::default()) }
+    fn default() -> Self {
+        Self::Static(IconThemeName::default())
+    }
 }

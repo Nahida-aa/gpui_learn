@@ -17,7 +17,9 @@ impl EnvVar {
         }
     }
 
-    pub fn or(self, other: EnvVar) -> EnvVar { if self.value.is_some() { self } else { other } }
+    pub fn or(self, other: EnvVar) -> EnvVar {
+        if self.value.is_some() { self } else { other }
+    }
 }
 
 /// Creates a `LazyLock<EnvVar>` expression for use in a `static` declaration.

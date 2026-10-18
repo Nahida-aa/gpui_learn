@@ -13,7 +13,9 @@ const CREATE_NO_WINDOW: u32 = 0x0800_0000_u32;
 
 pub use gpui_util::new_std_command;
 
-pub fn new_command(program: impl AsRef<OsStr>) -> Command { Command::new(program) }
+pub fn new_command(program: impl AsRef<OsStr>) -> Command {
+    Command::new(program)
+}
 
 #[cfg(not(target_os = "macos"))]
 pub type Child = smol::process::Child;
@@ -54,7 +56,9 @@ impl Command {
         self
     }
 
-    pub fn get_args(&self) -> impl Iterator<Item = &OsStr> { self.0.get_args() }
+    pub fn get_args(&self) -> impl Iterator<Item = &OsStr> {
+        self.0.get_args()
+    }
 
     pub fn env(&mut self, key: impl AsRef<OsStr>, val: impl AsRef<OsStr>) -> &mut Self {
         self.0.env(key, val);
@@ -106,7 +110,9 @@ impl Command {
         self
     }
 
-    pub fn spawn(&mut self) -> std::io::Result<Child> { self.0.spawn() }
+    pub fn spawn(&mut self) -> std::io::Result<Child> {
+        self.0.spawn()
+    }
 
     pub async fn output(&mut self) -> std::io::Result<std::process::Output> {
         self.0.output().await
@@ -116,5 +122,7 @@ impl Command {
         self.0.status().await
     }
 
-    pub fn get_program(&self) -> &OsStr { self.0.get_program() }
+    pub fn get_program(&self) -> &OsStr {
+        self.0.get_program()
+    }
 }

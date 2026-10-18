@@ -261,7 +261,9 @@ impl Branch {
             .unwrap_or(self.ref_name.as_ref())
     }
 
-    pub fn is_remote(&self) -> bool { self.ref_name.starts_with("refs/remotes/") }
+    pub fn is_remote(&self) -> bool {
+        self.ref_name.starts_with("refs/remotes/")
+    }
 
     pub fn remote_name(&self) -> Option<&str> {
         self.ref_name
@@ -432,7 +434,9 @@ pub struct Upstream {
 }
 
 impl Upstream {
-    pub fn is_remote(&self) -> bool { self.remote_name().is_some() }
+    pub fn is_remote(&self) -> bool {
+        self.remote_name().is_some()
+    }
 
     pub fn remote_name(&self) -> Option<&str> {
         self.ref_name
@@ -440,7 +444,9 @@ impl Upstream {
             .and_then(|stripped| stripped.split("/").next())
     }
 
-    pub fn stripped_ref_name(&self) -> Option<&str> { self.ref_name.strip_prefix("refs/remotes/") }
+    pub fn stripped_ref_name(&self) -> Option<&str> {
+        self.ref_name.strip_prefix("refs/remotes/")
+    }
 
     pub fn branch_name(&self) -> Option<&str> {
         self.ref_name
@@ -466,11 +472,15 @@ pub enum UpstreamTracking {
 }
 
 impl From<UpstreamTrackingStatus> for UpstreamTracking {
-    fn from(status: UpstreamTrackingStatus) -> Self { UpstreamTracking::Tracked(status) }
+    fn from(status: UpstreamTrackingStatus) -> Self {
+        UpstreamTracking::Tracked(status)
+    }
 }
 
 impl UpstreamTracking {
-    pub fn is_gone(&self) -> bool { matches!(self, UpstreamTracking::Gone) }
+    pub fn is_gone(&self) -> bool {
+        matches!(self, UpstreamTracking::Gone)
+    }
 
     pub fn status(&self) -> Option<UpstreamTrackingStatus> {
         match self {
@@ -487,7 +497,9 @@ pub struct RemoteCommandOutput {
 }
 
 impl RemoteCommandOutput {
-    pub fn is_empty(&self) -> bool { self.stdout.is_empty() && self.stderr.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.stdout.is_empty() && self.stderr.is_empty()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
@@ -552,7 +564,9 @@ impl CommitFile {
 }
 
 impl CommitDetails {
-    pub fn short_sha(&self) -> SharedString { self.sha[..SHORT_SHA_LENGTH].to_string().into() }
+    pub fn short_sha(&self) -> SharedString {
+        self.sha[..SHORT_SHA_LENGTH].to_string().into()
+    }
 }
 
 /// Detects if content is binary by checking for NUL bytes in the first 8000 bytes.
@@ -833,7 +847,9 @@ pub trait GitRepository: Send + Sync {
 
     fn stash_entries(&self) -> BoxFuture<'static, Result<GitStash>>;
 
-    fn check_access(&self) -> BoxFuture<'_, Result<()>> { async move { Ok(()) }.boxed() }
+    fn check_access(&self) -> BoxFuture<'_, Result<()>> {
+        async move { Ok(()) }.boxed()
+    }
 
     fn branches(&self) -> BoxFuture<'_, Result<BranchesScanResult>>;
 
@@ -1384,9 +1400,13 @@ fn parse_remote_urls(stdout: &str) -> HashMap<String, String> {
 }
 
 impl GitRepository for RealGitRepository {
-    fn path(&self) -> PathBuf { self.git_dir.clone() }
+    fn path(&self) -> PathBuf {
+        self.git_dir.clone()
+    }
 
-    fn main_repository_path(&self) -> PathBuf { self.common_dir.clone() }
+    fn main_repository_path(&self) -> PathBuf {
+        self.common_dir.clone()
+    }
 
     fn show(&self, commit: String) -> BoxFuture<'_, Result<CommitDetails>> {
         let git = self.git_binary();
@@ -3569,7 +3589,9 @@ impl GitRepository for RealGitRepository {
             .store(trusted, std::sync::atomic::Ordering::Release);
     }
 
-    fn is_trusted(&self) -> bool { self.is_trusted.load(std::sync::atomic::Ordering::Acquire) }
+    fn is_trusted(&self) -> bool {
+        self.is_trusted.load(std::sync::atomic::Ordering::Acquire)
+    }
 }
 
 async fn run_commit_data_reader(
@@ -3773,7 +3795,11 @@ async fn untracked_files_for_checkpoint(git: &GitBinary) -> Result<Vec<String>> 
         }
     });
 
-    smol::fs::write(&excludes_file_path, include_str!("../blame/checkpoint.gitignore")).await?;
+    smol::fs::write(
+        &excludes_file_path,
+        include_str!("../blame/checkpoint.gitignore"),
+    )
+    .await?;
 
     let mut exclude_from_arg = OsString::from("--exclude-from=");
     exclude_from_arg.push(&excludes_file_path);
@@ -4087,7 +4113,9 @@ async fn run_askpass_command(
 pub struct RepoPath(Arc<RelPath>);
 
 impl std::fmt::Debug for RepoPath {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { self.0.fmt(f) }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
 }
 
 impl RepoPath {
@@ -4106,7 +4134,9 @@ impl RepoPath {
         Ok(Self(rel_path))
     }
 
-    pub fn from_rel_path(path: &RelPath) -> RepoPath { Self(Arc::from(path)) }
+    pub fn from_rel_path(path: &RelPath) -> RepoPath {
+        Self(Arc::from(path))
+    }
 
     pub fn as_std_path(&self) -> &Path {
         if self.is_empty() {
@@ -4123,13 +4153,17 @@ pub fn repo_path<S: AsRef<str> + ?Sized>(s: &S) -> RepoPath {
 }
 
 impl AsRef<Arc<RelPath>> for RepoPath {
-    fn as_ref(&self) -> &Arc<RelPath> { &self.0 }
+    fn as_ref(&self) -> &Arc<RelPath> {
+        &self.0
+    }
 }
 
 impl std::ops::Deref for RepoPath {
     type Target = RelPath;
 
-    fn deref(&self) -> &Self::Target { &self.0 }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 #[derive(Debug)]

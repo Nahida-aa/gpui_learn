@@ -123,7 +123,9 @@ fn test_prepend_random_strings(mut rng: StdRng) {
 /// Return the byte offsets for each character in a string.
 ///
 /// These are valid offsets to split the string.
-fn char_offsets(text: &str) -> Vec<usize> { text.char_indices().map(|(i, _c)| i).collect() }
+fn char_offsets(text: &str) -> Vec<usize> {
+    text.char_indices().map(|(i, _c)| i).collect()
+}
 
 /// Return the byte offsets for each character in a string, plus the offset
 /// past the end of the string.

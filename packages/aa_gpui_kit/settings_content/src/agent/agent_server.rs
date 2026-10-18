@@ -13,11 +13,15 @@ pub struct AllAgentServersSettings(pub HashMap<String, CustomAgentServerSettings
 impl std::ops::Deref for AllAgentServersSettings {
     type Target = HashMap<String, CustomAgentServerSettings>;
 
-    fn deref(&self) -> &Self::Target { &self.0 }
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
 }
 
 impl std::ops::DerefMut for AllAgentServersSettings {
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }
 
 /// The value of a session config option.
@@ -56,15 +60,21 @@ impl std::fmt::Display for AgentConfigOptionValue {
 }
 
 impl From<String> for AgentConfigOptionValue {
-    fn from(value: String) -> Self { Self::ValueId(value) }
+    fn from(value: String) -> Self {
+        Self::ValueId(value)
+    }
 }
 
 impl From<&str> for AgentConfigOptionValue {
-    fn from(value: &str) -> Self { Self::ValueId(value.to_string()) }
+    fn from(value: &str) -> Self {
+        Self::ValueId(value.to_string())
+    }
 }
 
 impl From<bool> for AgentConfigOptionValue {
-    fn from(value: bool) -> Self { Self::Boolean(value) }
+    fn from(value: bool) -> Self {
+        Self::Boolean(value)
+    }
 }
 
 #[with_fallible_options]

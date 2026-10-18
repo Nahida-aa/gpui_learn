@@ -16,5 +16,7 @@ impl<O> ConnectionResult<O> {
 }
 
 impl<O> From<anyhow::Result<O>> for ConnectionResult<O> {
-    fn from(result: anyhow::Result<O>) -> Self { ConnectionResult::Result(result) }
+    fn from(result: anyhow::Result<O>) -> Self {
+        ConnectionResult::Result(result)
+    }
 }

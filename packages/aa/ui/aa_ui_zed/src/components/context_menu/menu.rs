@@ -23,20 +23,20 @@ use crate::{
     ButtonCommon, ButtonStyle, IconButtonShape, KeyBinding, List, ListItem, ListSeparator,
     ListSubHeader, Tooltip, prelude::*, utils::WithRemSize,
 };
+use aa_theme_gpui::BufferLineHeight;
 use gpui::{
     Action, Anchor, AnyElement, App, Bounds, DismissEvent, Entity, EventEmitter, FocusHandle,
     Focusable, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Point, Role,
     Size, Subscription, TaskExt, anchored, canvas, prelude::*, px, relative,
 };
 use menu::{SelectChild, SelectFirst, SelectLast, SelectNext, SelectParent, SelectPrevious};
+use std::time::Instant;
 use std::{
     cell::{Cell, RefCell},
     collections::HashMap,
     rc::Rc,
     time::Duration,
 };
-use aa_theme_gpui::BufferLineHeight;
-use std::time::Instant;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 enum SubmenuOpenTrigger {

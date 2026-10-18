@@ -18,12 +18,13 @@ use std::{ops::Range, rc::Rc};
 
 use crate::{
     ActiveTheme as _, AnyElement, App, Context, Div, DraggedColumn, ElementId, FluentBuilder as _,
-    HeaderResizeInfo, InteractiveElement, IntoElement, ParentElement, Pixels,
-    RESIZE_DIVIDER_WIDTH, RedistributableColumnsState, RenderOnce, ScrollAxes,
-    ScrollableHandle, Scrollbars, SharedString, StatefulInteractiveElement, Styled, StyledExt as _,
-    StyledTypography, TableResizeBehavior, Window, WithScrollbar, bind_redistributable_columns,
-    div, h_flex, px, redistribute_hidden_widths, render_column_resize_divider,
-    render_redistributable_columns_resize_handles, table_row::{IntoTableRow as _, TableRow},
+    HeaderResizeInfo, InteractiveElement, IntoElement, ParentElement, Pixels, RESIZE_DIVIDER_WIDTH,
+    RedistributableColumnsState, RenderOnce, ScrollAxes, ScrollableHandle, Scrollbars,
+    SharedString, StatefulInteractiveElement, Styled, StyledExt as _, StyledTypography,
+    TableResizeBehavior, Window, WithScrollbar, bind_redistributable_columns, div, h_flex, px,
+    redistribute_hidden_widths, render_column_resize_divider,
+    render_redistributable_columns_resize_handles,
+    table_row::{IntoTableRow as _, TableRow},
 };
 use gpui::{
     AbsoluteLength, DefiniteLength, DragMoveEvent, Entity, EntityId, FocusHandle, Length,

@@ -7,9 +7,9 @@
 //! 适配点见文件内 `// 与 zed 的差异` 注释。
 
 use aa_component_zed::{example_group, single_example};
+use aa_ui_zed::IconSize;
 use aa_ui_zed::Tooltip;
 use aa_ui_zed::prelude::*;
-use aa_ui_zed::IconSize;
 
 use gpui::{App, FocusHandle, Focusable, Hsla, Length};
 use std::sync::Arc;
@@ -211,11 +211,8 @@ impl Render for InputField {
                     )
                     .when(has_error, |this| this.border_color(error_border))
                     .when_some(self.start_icon, |this, icon| {
-                        this.gap_1().child(
-                            Icon::new(icon)
-                                .size(IconSize::Small)
-                                .color(Color::Muted),
-                        )
+                        this.gap_1()
+                            .child(Icon::new(icon).size(IconSize::Small).color(Color::Muted))
                     })
                     .child(self.editor.render(window, cx))
                     .when_some(self.masked, |this, is_masked| {
@@ -231,13 +228,15 @@ impl Render for InputField {
                             .icon_size(IconSize::Small)
                             .icon_color(Color::Muted)
                             .tooltip(Tooltip::text(if is_masked { "Show" } else { "Hide" }))
-                            .on_click(cx.listener(|this, _, window, cx| {
-                                if let Some(ref mut masked) = this.masked {
-                                    *masked = !*masked;
-                                    this.editor.set_masked(*masked, window, cx);
-                                    cx.notify();
-                                }
-                            })),
+                            .on_click(cx.listener(
+                                |this, _, window, cx| {
+                                    if let Some(ref mut masked) = this.masked {
+                                        *masked = !*masked;
+                                        this.editor.set_masked(*masked, window, cx);
+                                        cx.notify();
+                                    }
+                                },
+                            )),
                         )
                     }),
             )

@@ -79,7 +79,11 @@ impl From<trash::Error> for TrashRestoreError {
 slotmap::new_key_type! { pub struct TrashId; }
 
 impl TrashId {
-    pub fn from_proto(value: u64) -> Self { KeyData::from_ffi(value).into() }
+    pub fn from_proto(value: u64) -> Self {
+        KeyData::from_ffi(value).into()
+    }
 
-    pub fn to_proto(self) -> u64 { self.0.as_ffi() }
+    pub fn to_proto(self) -> u64 {
+        self.0.as_ffi()
+    }
 }

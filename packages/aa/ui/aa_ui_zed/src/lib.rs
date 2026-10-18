@@ -35,11 +35,11 @@ pub use components::*;
 pub use prelude::*;
 
 // 布局 helper 与 rem 换算（typography/color 等模块经 crate:: 根路径引用）。
-pub use components::stack::{h_flex, v_flex};
 pub use components::label::{
     HighlightedLabel, Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle,
 };
-pub use styles::units::{vh, vw, BASE_REM_SIZE_IN_PX, rems_from_px};
+pub use components::stack::{h_flex, v_flex};
+pub use styles::units::{BASE_REM_SIZE_IN_PX, rems_from_px, vh, vw};
 mod styles;
 pub mod traits;
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `aa_assets_core` 统一加载。
@@ -51,31 +51,25 @@ pub use aa_assets_gpui::GpuiAssets as Assets;
 
 // ---- 基础控件层：来自 aa_gpui_base（原 packages/ui/src/base，2026-09 拆出）----
 pub use aa_gpui_base::{
-    DragSlider, Scale, Slider, SliderEvent, SliderState, SliderValue, ThumbMode,
-    position_to_value, quantize, value_to_percentage,
+    DragSlider, Scale, Slider, SliderEvent, SliderState, SliderValue, ThumbMode, position_to_value,
+    quantize, value_to_percentage,
 };
 pub use components::button::Button;
 pub use styles::*;
 // 主题系统在独立包 `aa-gpui-kit-theme`（原 `base/theme`）：组件从那里取色，
 // 调用方也用 `theme_settings::init`（装配在 theme-settings 包）。这里**不做**别名 re-export——
 // 「主题不隶属控件库」这件事在代码里应当可见。
-pub use components::button::{
-    ButtonCommon, ButtonLike, ButtonRadius, ButtonSize, ButtonStyle, CopyButton, IconButton,
-    KeybindingPosition,
-    SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
-};
-pub use components::scrollbar::{
-    EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollbarRevealPolicy, ScrollbarStyle,
-    ScrollableHandle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
-};
-pub use components::context_menu::{
-    ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide,
-    IconPosition, RightClickMenu,
-    right_click_menu,
-};
 pub use components::avatar::{
     AudioStatus, Avatar, AvatarAudioStatusIndicator, AvatarAvailabilityIndicator,
     CollaboratorAvailability,
+};
+pub use components::button::{
+    ButtonCommon, ButtonLike, ButtonRadius, ButtonSize, ButtonStyle, CopyButton, IconButton,
+    KeybindingPosition, SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
+};
+pub use components::context_menu::{
+    ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide,
+    IconPosition, RightClickMenu, right_click_menu,
 };
 pub use components::divider::{Divider, DividerColor, DividerDirection};
 pub use components::facepile::{EXAMPLE_FACES, Facepile};
@@ -87,14 +81,18 @@ pub use components::image::{Vector, VectorName};
 pub use components::indicator::Indicator;
 pub use components::keybinding::{
     Key, KeyBinding, KeyBindingStyle, KeyIcon, render_keybinding_keystroke, render_modifiers,
-    text_for_action, text_for_keystroke, text_for_keystrokes, text_for_keybinding_keystrokes,
+    text_for_action, text_for_keybinding_keystrokes, text_for_keystroke, text_for_keystrokes,
 };
 pub use components::keybinding_hint::KeybindingHint;
 pub use components::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
-pub use components::tooltip::{Tooltip, TooltipHost, tooltip_container, tooltip_host};
+pub use components::scrollbar::{
+    EDITOR_SCROLLBAR_WIDTH, ReservedSpace, ScrollAxes, ScrollableHandle, ScrollbarRevealPolicy,
+    ScrollbarStyle, Scrollbars, ShowBehavior, WithScrollbar, scrollbars,
+};
 pub use components::toggle::{
     Checkbox, Switch, SwitchColor, SwitchLabelPosition, ToggleStyle, checkbox, switch,
 };
+pub use components::tooltip::{Tooltip, TooltipHost, tooltip_container, tooltip_host};
 pub use traits::{
     Clickable, CommonAnimationExt, Disableable, StyledExt, ToggleState, Toggleable, Transformable,
     VisibleOnHover,

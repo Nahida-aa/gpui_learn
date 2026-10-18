@@ -28,7 +28,9 @@ pub struct EventRequestBody {
 }
 
 impl EventRequestBody {
-    pub fn semver(&self) -> Option<Version> { self.app_version.parse().ok() }
+    pub fn semver(&self) -> Option<Version> {
+        self.app_version.parse().ok()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

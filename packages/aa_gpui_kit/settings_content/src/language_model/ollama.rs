@@ -49,9 +49,13 @@ pub enum KeepAlive {
 
 impl KeepAlive {
     /// Keep model alive until a new model is loaded or until Ollama shuts down
-    pub fn indefinite() -> Self { Self::Seconds(-1) }
+    pub fn indefinite() -> Self {
+        Self::Seconds(-1)
+    }
 }
 
 impl Default for KeepAlive {
-    fn default() -> Self { Self::indefinite() }
+    fn default() -> Self {
+        Self::indefinite()
+    }
 }

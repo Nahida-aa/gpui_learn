@@ -229,11 +229,9 @@ impl Element for EditorElement {
                     // 第三参数 `IndentAdjustment` 是 gpui 新增的软换行缩进
                     // （zed #63468）。默认 `SameIndent` 就是旧行为；本 editor
                     // 还没有「可配置软换行缩进」的设置项，先走默认值。
-                    for boundary in wrapper.wrap_line(
-                        &fragments,
-                        wrap_width,
-                        gpui::IndentAdjustment::default(),
-                    ) {
+                    for boundary in
+                        wrapper.wrap_line(&fragments, wrap_width, gpui::IndentAdjustment::default())
+                    {
                         if boundary.ix > prev {
                             segments.push(prev..boundary.ix);
                             prev = boundary.ix;

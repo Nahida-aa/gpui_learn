@@ -333,7 +333,9 @@ fn construct_json_value(
 }
 
 #[cfg(feature = "editing")]
-fn parse_index_key(index_key: &str) -> Option<usize> { index_key.strip_prefix('#')?.parse().ok() }
+fn parse_index_key(index_key: &str) -> Option<usize> {
+    index_key.strip_prefix('#')?.parse().ok()
+}
 
 #[cfg(feature = "editing")]
 fn handle_possible_array_value(

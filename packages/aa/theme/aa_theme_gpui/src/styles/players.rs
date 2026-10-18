@@ -142,7 +142,6 @@ impl PlayerColors {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

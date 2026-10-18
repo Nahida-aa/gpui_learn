@@ -28,7 +28,11 @@ pub enum FolderIndicator {
 }
 
 impl FolderIndicator {
-    pub fn shows_chevron(self) -> bool { matches!(self, Self::Chevron | Self::Both) }
+    pub fn shows_chevron(self) -> bool {
+        matches!(self, Self::Chevron | Self::Both)
+    }
 
-    pub fn shows_icon(self) -> bool { matches!(self, Self::Icon | Self::Both) }
+    pub fn shows_icon(self) -> bool {
+        matches!(self, Self::Icon | Self::Both)
+    }
 }

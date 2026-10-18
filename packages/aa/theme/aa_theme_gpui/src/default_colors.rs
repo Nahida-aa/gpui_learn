@@ -1,9 +1,9 @@
 use gpui::{FontStyle, FontWeight, HighlightStyle, Hsla, Rgba, hsla};
 
 use crate::ColorScale;
+use crate::ThemeColors;
 use crate::scale::{ColorScaleSet, ColorScales};
 use crate::styles::{StatusColors, SyntaxTheme};
-use crate::ThemeColors;
 
 pub(crate) fn neutral() -> ColorScaleSet {
     sand()
@@ -53,7 +53,6 @@ impl ThemeColors {
         theme_colors_macchiato()
     }
 }
-
 
 type StaticColorScale = [&'static str; 12];
 
@@ -2465,74 +2464,74 @@ pub fn theme_colors_macchiato() -> ThemeColors {
     let system = crate::styles::SystemColors::default();
 
     ThemeColors {
-        border: h(0x363a4f),  // surface0
+        border: h(0x363a4f),          // surface0
         border_variant: h(0x313148),  // surface0-darker
         border_focused: h(0xb7bdf8),  // lavender
-        border_selected: h(0xc6a0f6),  // mauve
-        border_disabled: h(0x6e738d),  // overlay0
+        border_selected: h(0xc6a0f6), // mauve
+        border_disabled: h(0x6e738d), // overlay0
         border_transparent: hsla(0., 0., 0., 0.),
-        background: h(0x2c2f46),  // base — Zed JSON "background"
-        surface_background: h(0x1e2030),  // mantle
-        elevated_surface_background: h(0x1e2030),  // mantle (同 surface)
-        element_background: h(0x181926),  // crust
-        element_hover: ha(0x363a4f, 1.0),  // surface0
-        element_active: ha(0x5b6078, 0.30),  // surface2 @30%
-        element_selected: ha(0x363a4f, 0.30),  // surface0 @30%
+        background: h(0x2c2f46),         // base — Zed JSON "background"
+        surface_background: h(0x1e2030), // mantle
+        elevated_surface_background: h(0x1e2030), // mantle (同 surface)
+        element_background: h(0x181926), // crust
+        element_hover: ha(0x363a4f, 1.0), // surface0
+        element_active: ha(0x5b6078, 0.30), // surface2 @30%
+        element_selected: ha(0x363a4f, 0.30), // surface0 @30%
         element_disabled: h(0x6e738d),
         ghost_element_background: hsla(0., 0., 0., 0.),
-        ghost_element_hover: ha(0x494d64, 0.30),  // surface1 @30%
-        ghost_element_active: ha(0x5b6078, 0.60),  // surface2 @60%
-        ghost_element_selected: ha(0x737995, 0.40),  // overlay2 @40%
+        ghost_element_hover: ha(0x494d64, 0.30), // surface1 @30%
+        ghost_element_active: ha(0x5b6078, 0.60), // surface2 @60%
+        ghost_element_selected: ha(0x737995, 0.40), // overlay2 @40%
         ghost_element_disabled: h(0x6e738d),
-        text: h(0xcad3f5),  // text
-        text_muted: h(0xb8c0e0),  // subtext0
-        text_placeholder: h(0x5b6078),  // surface2
-        text_disabled: h(0x6e738d),  // overlay0
-        text_accent: h(0xc6a0f6),  // mauve
+        text: h(0xcad3f5),             // text
+        text_muted: h(0xb8c0e0),       // subtext0
+        text_placeholder: h(0x5b6078), // surface2
+        text_disabled: h(0x6e738d),    // overlay0
+        text_accent: h(0xc6a0f6),      // mauve
         icon: h(0xcad3f5),
-        icon_muted: h(0x8087a2),  // overlay2
+        icon_muted: h(0x8087a2), // overlay2
         icon_disabled: h(0x6e738d),
         icon_placeholder: h(0x5b6078),
         icon_accent: h(0xc6a0f6),
         // — Zed JSON 显式设置的状态/标题栏/Tab/toolbar（之前缺失！）——
-        status_bar_background: h(0x181926),  // crust
-        title_bar_background: h(0x181926),  // crust
+        status_bar_background: h(0x181926),          // crust
+        title_bar_background: h(0x181926),           // crust
         title_bar_inactive_background: h(0x1e1f30),  // mantle-darker
-        toolbar_background: h(0x24273a),  // base (CTP base #24273a)
-        tab_bar_background: h(0x181926),  // crust
-        tab_inactive_background: h(0x12121c),  // base-darker
-        tab_active_background: h(0x24273a),  // base
-        search_match_background: ha(0x8bd5ca, 0.30),  // teal @30%
-        search_active_match_background: ha(0xed8796, 0.30),  // red @30%
-        panel_background: h(0x1e2030),  // mantle
-        panel_focused_border: h(0xcad3f5),  // text
-        panel_indent_guide: ha(0x363a4f, 0.60),  // surface0 @60%
-        panel_indent_guide_active: h(0x5b6078),  // surface2
-        panel_indent_guide_hover: h(0xc6a0f6),  // mauve
-        panel_overlay_background: h(0x1e2030),  // mantle
-        pane_focused_border: h(0xcad3f5),  // text
-        pane_group_border: h(0x363a4f),  // surface0
-        scrollbar_thumb_background: ha(0x5b6078, 0.50),  // surface2 @50%
-        scrollbar_thumb_hover_background: h(0x6e738d),  // overlay0
-        scrollbar_track_background: h(0x181926),  // crust
+        toolbar_background: h(0x24273a),             // base (CTP base #24273a)
+        tab_bar_background: h(0x181926),             // crust
+        tab_inactive_background: h(0x12121c),        // base-darker
+        tab_active_background: h(0x24273a),          // base
+        search_match_background: ha(0x8bd5ca, 0.30), // teal @30%
+        search_active_match_background: ha(0xed8796, 0.30), // red @30%
+        panel_background: h(0x1e2030),               // mantle
+        panel_focused_border: h(0xcad3f5),           // text
+        panel_indent_guide: ha(0x363a4f, 0.60),      // surface0 @60%
+        panel_indent_guide_active: h(0x5b6078),      // surface2
+        panel_indent_guide_hover: h(0xc6a0f6),       // mauve
+        panel_overlay_background: h(0x1e2030),       // mantle
+        pane_focused_border: h(0xcad3f5),            // text
+        pane_group_border: h(0x363a4f),              // surface0
+        scrollbar_thumb_background: ha(0x5b6078, 0.50), // surface2 @50%
+        scrollbar_thumb_hover_background: h(0x6e738d), // overlay0
+        scrollbar_track_background: h(0x181926),     // crust
         scrollbar_track_border: ha(0xcad3f5, 0.07),  // text @7%
         editor_foreground: h(0xcad3f5),
-        editor_background: h(0x24273a),  // base
+        editor_background: h(0x24273a), // base
         editor_gutter_background: h(0x24273a),
-        editor_subheader_background: h(0x1e2030),  // mantle
-        editor_active_line_background: ha(0xcad3f5, 0.07),  // text @7%
-        editor_line_number: h(0x8087a2),  // overlay2
-        editor_active_line_number: h(0xc6a0f6),  // mauve
-        editor_wrap_guide: h(0x5b6078),  // surface2
+        editor_subheader_background: h(0x1e2030), // mantle
+        editor_active_line_background: ha(0xcad3f5, 0.07), // text @7%
+        editor_line_number: h(0x8087a2),          // overlay2
+        editor_active_line_number: h(0xc6a0f6),   // mauve
+        editor_wrap_guide: h(0x5b6078),           // surface2
         editor_indent_guide: ha(0x363a4f, 0.60),  // surface0 @60%
         editor_indent_guide_active: h(0x5b6078),  // surface2
-        editor_invisible: ha(0x939ab7, 0.40),  // overlay1 @40%
-        editor_debugger_active_line_background: ha(0xf5a97f, 0.07),  // peach @7%
-        selection_background: ha(0x939ab7, 0.25),  // overlay1 @25%
-        editor_cursor: h(0xf4dbd6),  // rosewater
-        editor_document_highlight_read_background: ha(0xa5adcb, 0.16),  // subtext1 @16%
-        editor_document_highlight_write_background: ha(0xa5adcb, 0.16),  // subtext1 @16%
-        editor_document_highlight_bracket_background: ha(0xc6a0f6, 0.09),  // mauve @9%
+        editor_invisible: ha(0x939ab7, 0.40),     // overlay1 @40%
+        editor_debugger_active_line_background: ha(0xf5a97f, 0.07), // peach @7%
+        selection_background: ha(0x939ab7, 0.25), // overlay1 @25%
+        editor_cursor: h(0xf4dbd6),               // rosewater
+        editor_document_highlight_read_background: ha(0xa5adcb, 0.16), // subtext1 @16%
+        editor_document_highlight_write_background: ha(0xa5adcb, 0.16), // subtext1 @16%
+        editor_document_highlight_bracket_background: ha(0xc6a0f6, 0.09), // mauve @9%
         terminal_background: h(0x24273a),
         terminal_foreground: h(0xcad3f5),
         terminal_dim_foreground: h(0x8087a2),
@@ -2546,7 +2545,7 @@ pub fn theme_colors_macchiato() -> ThemeColors {
         terminal_ansi_blue: h(0x8aadf4),
         terminal_ansi_magenta: h(0xf5bde6),
         terminal_ansi_cyan: h(0x8bd5ca),
-        link: h(0x91d7e3),  // teal-light
+        link: h(0x91d7e3), // teal-light
         // — Zed JSON 的 debugger / version_control / minimap / terminal ansi（之前缺失！）—
         debugger_accent: h(0xed8796),
         version_control_added: h(0xa6da95),
@@ -2581,44 +2580,43 @@ pub fn theme_colors_macchiato() -> ThemeColors {
         terminal_ansi_dim_cyan: h(0x8bd5ca),
         // ── 以下字段 CTP 调色板未定义，取自 zed 默认配色 ──
         // （ThemeColors::zed_dark() 的同名值，显式写出便于审阅/微调）
-        drop_target_border: neutral().dark().step_12(),  // zed 默认（CTP 调色板未定义）
+        drop_target_border: neutral().dark().step_12(), // zed 默认（CTP 调色板未定义）
         editor_code_lens_foreground: None,
-        editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.12),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.06),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.36),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.12),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.06),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.36),  // zed 默认（CTP 调色板未定义）
-        editor_highlighted_line_background: yellow().dark_alpha().step_4(),  // zed 默认（CTP 调色板未定义）
-        editor_hover_line_number: neutral().dark_alpha().step_12(),  // zed 默认（CTP 调色板未定义）
-        element_selection_background: blue().dark().step_3().alpha(0.25),  // zed 默认（CTP 调色板未定义）
-        minimap_thumb_border: gpui::transparent_black(),  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.12), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.06), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.36), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.12), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.06), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.36), // zed 默认（CTP 调色板未定义）
+        editor_highlighted_line_background: yellow().dark_alpha().step_4(), // zed 默认（CTP 调色板未定义）
+        editor_hover_line_number: neutral().dark_alpha().step_12(), // zed 默认（CTP 调色板未定义）
+        element_selection_background: blue().dark().step_3().alpha(0.25), // zed 默认（CTP 调色板未定义）
+        minimap_thumb_border: gpui::transparent_black(), // zed 默认（CTP 调色板未定义）
         panel_overlay_hover: neutral().dark().step_4(),  // zed 默认（CTP 调色板未定义）
-        scrollbar_thumb_active_background: neutral().dark_alpha().step_5(),  // zed 默认（CTP 调色板未定义）
-        scrollbar_thumb_border: gpui::transparent_black(),  // zed 默认（CTP 调色板未定义）
-        version_control_word_added: WORD_ADDED_COLOR,  // zed 默认（CTP 调色板未定义）
+        scrollbar_thumb_active_background: neutral().dark_alpha().step_5(), // zed 默认（CTP 调色板未定义）
+        scrollbar_thumb_border: gpui::transparent_black(), // zed 默认（CTP 调色板未定义）
+        version_control_word_added: WORD_ADDED_COLOR,      // zed 默认（CTP 调色板未定义）
         version_control_word_deleted: WORD_DELETED_COLOR,  // zed 默认（CTP 调色板未定义）
-        vim_helix_jump_label_foreground: red().dark().step_9(),  // zed 默认（CTP 调色板未定义）
-        vim_helix_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_helix_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_helix_select_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_helix_select_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_insert_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_insert_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_replace_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_replace_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_block_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_block_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_line_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_line_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_yank_background: neutral().dark_alpha().step_4(),  // zed 默认（CTP 调色板未定义）
+        vim_helix_jump_label_foreground: red().dark().step_9(), // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_background: system.transparent,   // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_foreground: system.transparent,   // zed 默认（CTP 调色板未定义）
+        vim_helix_select_background: system.transparent,   // zed 默认（CTP 调色板未定义）
+        vim_helix_select_foreground: system.transparent,   // zed 默认（CTP 调色板未定义）
+        vim_insert_background: system.transparent,         // zed 默认（CTP 调色板未定义）
+        vim_insert_foreground: system.transparent,         // zed 默认（CTP 调色板未定义）
+        vim_normal_background: system.transparent,         // zed 默认（CTP 调色板未定义）
+        vim_normal_foreground: system.transparent,         // zed 默认（CTP 调色板未定义）
+        vim_replace_background: system.transparent,        // zed 默认（CTP 调色板未定义）
+        vim_replace_foreground: system.transparent,        // zed 默认（CTP 调色板未定义）
+        vim_visual_background: system.transparent,         // zed 默认（CTP 调色板未定义）
+        vim_visual_block_background: system.transparent,   // zed 默认（CTP 调色板未定义）
+        vim_visual_block_foreground: system.transparent,   // zed 默认（CTP 调色板未定义）
+        vim_visual_foreground: system.transparent,         // zed 默认（CTP 调色板未定义）
+        vim_visual_line_background: system.transparent,    // zed 默认（CTP 调色板未定义）
+        vim_visual_line_foreground: system.transparent,    // zed 默认（CTP 调色板未定义）
+        vim_yank_background: neutral().dark_alpha().step_4(), // zed 默认（CTP 调色板未定义）
     }
 }
-
 
 /// Catppuccin Macchiato 兜底主题(= 深色基底 [`ThemeColors::dark`])。
 ///
@@ -2626,7 +2624,6 @@ pub fn theme_colors_macchiato() -> ThemeColors {
 
 // ── Catppuccin Latte（浅色内置主题，= 基底 ThemeColors::light()）───────────
 // 色值来源: https://github.com/catppuccin/palette (latte)
-
 
 pub fn status_colors_latte() -> StatusColors {
     // 同 `status_colors_macchiato`（浅色版用 Latte 的 red）。
@@ -2819,39 +2816,39 @@ pub fn theme_colors_latte() -> ThemeColors {
         terminal_ansi_dim_cyan: h(0x179299),
         // ── 以下字段 CTP 调色板未定义，取自 zed 默认配色 ──
         // （ThemeColors::zed_light() 的同名值，显式写出便于审阅/微调）
-        drop_target_border: neutral().light().step_12(),  // zed 默认（CTP 调色板未定义）
+        drop_target_border: neutral().light().step_12(), // zed 默认（CTP 调色板未定义）
         editor_code_lens_foreground: None,
-        editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.16),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.08),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.48),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.16),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.08),  // zed 默认（CTP 调色板未定义）
-        editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.48),  // zed 默认（CTP 调色板未定义）
-        editor_highlighted_line_background: neutral().light_alpha().step_3(),  // zed 默认（CTP 调色板未定义）
-        editor_hover_line_number: neutral().light().step_12(),  // zed 默认（CTP 调色板未定义）
-        element_selection_background: blue().light().step_3().alpha(0.25),  // zed 默认（CTP 调色板未定义）
-        minimap_thumb_border: gpui::transparent_black(),  // zed 默认（CTP 调色板未定义）
-        panel_overlay_hover: neutral().light().step_4(),  // zed 默认（CTP 调色板未定义）
-        version_control_word_added: WORD_ADDED_COLOR,  // zed 默认（CTP 调色板未定义）
-        version_control_word_deleted: WORD_DELETED_COLOR,  // zed 默认（CTP 调色板未定义）
-        vim_helix_jump_label_foreground: red().light().step_9(),  // zed 默认（CTP 调色板未定义）
-        vim_helix_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_helix_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_helix_select_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_helix_select_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_insert_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_insert_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_normal_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_normal_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_replace_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_replace_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_block_background: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_block_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_visual_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_background: ADDED_COLOR.opacity(0.16), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_background: ADDED_COLOR.opacity(0.08), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_added_hollow_border: ADDED_COLOR.opacity(0.48), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_background: REMOVED_COLOR.opacity(0.16), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_background: REMOVED_COLOR.opacity(0.08), // zed 默认（CTP 调色板未定义）
+        editor_diff_hunk_deleted_hollow_border: REMOVED_COLOR.opacity(0.48), // zed 默认（CTP 调色板未定义）
+        editor_highlighted_line_background: neutral().light_alpha().step_3(), // zed 默认（CTP 调色板未定义）
+        editor_hover_line_number: neutral().light().step_12(), // zed 默认（CTP 调色板未定义）
+        element_selection_background: blue().light().step_3().alpha(0.25), // zed 默认（CTP 调色板未定义）
+        minimap_thumb_border: gpui::transparent_black(), // zed 默认（CTP 调色板未定义）
+        panel_overlay_hover: neutral().light().step_4(), // zed 默认（CTP 调色板未定义）
+        version_control_word_added: WORD_ADDED_COLOR,    // zed 默认（CTP 调色板未定义）
+        version_control_word_deleted: WORD_DELETED_COLOR, // zed 默认（CTP 调色板未定义）
+        vim_helix_jump_label_foreground: red().light().step_9(), // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_background: system.transparent, // zed 默认（CTP 调色板未定义）
+        vim_helix_normal_foreground: system.transparent, // zed 默认（CTP 调色板未定义）
+        vim_helix_select_background: system.transparent, // zed 默认（CTP 调色板未定义）
+        vim_helix_select_foreground: system.transparent, // zed 默认（CTP 调色板未定义）
+        vim_insert_background: system.transparent,       // zed 默认（CTP 调色板未定义）
+        vim_insert_foreground: system.transparent,       // zed 默认（CTP 调色板未定义）
+        vim_normal_background: system.transparent,       // zed 默认（CTP 调色板未定义）
+        vim_normal_foreground: system.transparent,       // zed 默认（CTP 调色板未定义）
+        vim_replace_background: system.transparent,      // zed 默认（CTP 调色板未定义）
+        vim_replace_foreground: system.transparent,      // zed 默认（CTP 调色板未定义）
+        vim_visual_background: system.transparent,       // zed 默认（CTP 调色板未定义）
+        vim_visual_block_background: system.transparent, // zed 默认（CTP 调色板未定义）
+        vim_visual_block_foreground: system.transparent, // zed 默认（CTP 调色板未定义）
+        vim_visual_foreground: system.transparent,       // zed 默认（CTP 调色板未定义）
         vim_visual_line_background: system.transparent,  // zed 默认（CTP 调色板未定义）
         vim_visual_line_foreground: system.transparent,  // zed 默认（CTP 调色板未定义）
-        vim_yank_background: neutral().light_alpha().step_3(),  // zed 默认（CTP 调色板未定义）
+        vim_yank_background: neutral().light_alpha().step_3(), // zed 默认（CTP 调色板未定义）
     }
 }
 

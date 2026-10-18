@@ -62,10 +62,7 @@ pub use json::{
     union_json_value_into,
 };
 pub use misc::default;
-pub use os::{
-    increase_open_file_limit, parse_os_release,
-    set_pre_exec_to_start_new_session,
-};
+pub use os::{increase_open_file_limit, parse_os_release, set_pre_exec_to_start_new_session};
 pub use ranges::{RangeExt, expanded_and_wrapped_usize_range, wrapped_usize_outward_from};
 pub use sort::{NumericPrefixWithSuffix, extend_sorted};
 pub use text::{split_str_with_ranges, word_consists_of_emojis};

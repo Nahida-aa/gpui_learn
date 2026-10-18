@@ -29,9 +29,15 @@ pub enum CodeLens {
 }
 
 impl CodeLens {
-    pub fn enabled(&self) -> bool { self != &Self::Off }
+    pub fn enabled(&self) -> bool {
+        self != &Self::Off
+    }
 
-    pub fn inline(&self) -> bool { *self == Self::On }
+    pub fn inline(&self) -> bool {
+        *self == Self::On
+    }
 
-    pub fn show_in_menu(&self) -> bool { *self == Self::Menu }
+    pub fn show_in_menu(&self) -> bool {
+        *self == Self::Menu
+    }
 }

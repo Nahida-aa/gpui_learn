@@ -25,10 +25,10 @@ pub use crate::{
     workspace::{
         centered_layout::CenteredLayoutSettings,
         focus_follows_mouse::FocusFollowsMouse,
+        item::{ActivateOnClose, ClosePosition, ShowCloseButton, ShowDiagnostics},
         opening::{CliDefaultOpenBehavior, DefaultOpenBehavior, RestoreOnStartupBehavior},
         pane_split::{BottomDockLayout, PaneSplitDirectionHorizontal, PaneSplitDirectionVertical},
         text_rendering::TextRenderingMode,
-        item::{ActivateOnClose, ClosePosition,  ShowCloseButton, ShowDiagnostics},
     },
 };
 pub use active_pane::ActivePaneModifiers;

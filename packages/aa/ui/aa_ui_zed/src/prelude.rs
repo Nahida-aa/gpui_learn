@@ -17,8 +17,8 @@ pub use gpui::prelude::*;
 pub use gpui::{
     AbsoluteLength, Anchor, AnyElement, App, BoxShadow, ClickEvent, Context, CursorStyle,
     DefiniteLength, DismissEvent, Div, Element, ElementId, Entity, Hsla, InteractiveElement,
-    IntoElement, ManagedView, ParentElement, Pixels, Point, RenderOnce, Rems, SharedString,
-    Stateful, Styled, Window, div, hsla, percentage, px, rems, relative, rgb, rgba,
+    IntoElement, ManagedView, ParentElement, Pixels, Point, Rems, RenderOnce, SharedString,
+    Stateful, Styled, Window, div, hsla, percentage, px, relative, rems, rgb, rgba,
 };
 
 pub use crate::animation::{AnimationDirection, AnimationDuration, DefaultAnimations};
@@ -40,21 +40,18 @@ pub use crate::components::avatar::{
 };
 pub use crate::components::button::{
     ButtonCommon, ButtonLike, ButtonLink, ButtonRadius, ButtonSize, ButtonStyle, IconButton,
-    IconButtonShape,
-    KeybindingPosition,
-    SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
+    IconButtonShape, KeybindingPosition, SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
 };
 pub use crate::components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide,
-    IconPosition, RightClickMenu,
-    right_click_menu,
+    IconPosition, RightClickMenu, right_click_menu,
 };
 pub use crate::components::divider::{Divider, DividerColor, DividerDirection};
 // 与 zed prelude 同：`h_group*` / `v_group*` 也在里面（`ui::prelude::*` 直接写裸名）。
+pub use crate::components::facepile::Facepile;
 pub use crate::components::group::{
     h_group, h_group_lg, h_group_sm, h_group_xl, v_group, v_group_lg, v_group_sm, v_group_xl,
 };
-pub use crate::components::facepile::Facepile;
 pub use crate::components::icon::{
     AnyIcon, DecoratedIcon, Icon, IconDecoration, IconName, IconSize, IconWithIndicator,
     KnockoutIconName,
@@ -65,15 +62,13 @@ pub use crate::components::keybinding::{Key, KeyBinding, KeyBindingStyle, KeyIco
 pub use crate::components::keybinding_hint::KeybindingHint;
 pub use crate::components::popover_menu::{PopoverMenu, PopoverMenuHandle, PopoverTrigger};
 pub use crate::components::stack::{h_flex, v_flex};
-pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 pub use crate::components::toggle::{Checkbox, Switch, SwitchColor, SwitchLabelPosition};
+pub use crate::components::tooltip::{Tooltip, TooltipHost, tooltip_host};
 // 与 zed prelude 同：LoadingLabel 也在里面（recent_projects 一类地方直接用）。
 pub use crate::components::label::{
     HighlightedLabel, Label, LabelCommon, LabelLike, LabelSize, LineHeightStyle, LoadingLabel,
 };
-pub use crate::{
-    Button, Slider, SliderEvent, SliderState,
-};
+pub use crate::{Button, Slider, SliderEvent, SliderState};
 
 pub use crate::styles::{
     Color, DynamicSpacing, Headline, HeadlineSize, PlatformStyle, Severity, StyledTypography,

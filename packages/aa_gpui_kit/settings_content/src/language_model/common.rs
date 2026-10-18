@@ -8,14 +8,20 @@ pub use language_model_core::ReasoningEffort as OpenAiReasoningEffort;
 use crate::merge_from::MergeFrom as MergeFromTrait;
 
 impl MergeFromTrait for ModelMode {
-    fn merge_from(&mut self, other: &Self) { *self = *other; }
+    fn merge_from(&mut self, other: &Self) {
+        *self = *other;
+    }
 }
 
 impl MergeFromTrait for OpenAiReasoningEffort {
-    fn merge_from(&mut self, other: &Self) { *self = *other; }
+    fn merge_from(&mut self, other: &Self) {
+        *self = *other;
+    }
 }
 
-pub(crate) fn default_true() -> bool { true }
+pub(crate) fn default_true() -> bool {
+    true
+}
 
 /// Configuration for caching language model messages.
 #[with_fallible_options]

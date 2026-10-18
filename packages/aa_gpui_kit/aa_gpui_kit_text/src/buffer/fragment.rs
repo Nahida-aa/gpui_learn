@@ -85,7 +85,9 @@ impl Ord for InsertionSlice {
 }
 
 impl PartialOrd for InsertionSlice {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl InsertionSlice {
@@ -157,7 +159,9 @@ impl sum_tree::Item for Fragment {
 impl sum_tree::Summary for FragmentSummary {
     type Context<'a> = &'a Option<clock::Global>;
 
-    fn zero(_cx: Self::Context<'_>) -> Self { Default::default() }
+    fn zero(_cx: Self::Context<'_>) -> Self {
+        Default::default()
+    }
     fn add_summary(&mut self, other: &Self, _: Self::Context<'_>) {
         self.max_id.assign(&other.max_id);
         self.text.visible += &other.text.visible;
@@ -194,7 +198,9 @@ impl sum_tree::Item for InsertionFragment {
 
 impl sum_tree::KeyedItem for InsertionFragment {
     type Key = InsertionFragmentKey;
-    fn key(&self) -> Self::Key { sum_tree::Item::summary(self, ()) }
+    fn key(&self) -> Self::Key {
+        sum_tree::Item::summary(self, ())
+    }
 }
 
 impl InsertionFragment {
@@ -218,7 +224,9 @@ impl sum_tree::ContextLessSummary for InsertionFragmentKey {
             split_offset: 0,
         }
     }
-    fn add_summary(&mut self, summary: &Self) { *self = *summary; }
+    fn add_summary(&mut self, summary: &Self) {
+        *self = *summary;
+    }
 }
 
 /// `FragmentBuilder` / `FragmentChunk`
@@ -275,12 +283,16 @@ impl FragmentBuilder {
         }
         tree
     }
-    pub(crate) fn summary(&self) -> &FragmentSummary { &self.summary }
+    pub(crate) fn summary(&self) -> &FragmentSummary {
+        &self.summary
+    }
 }
 
 // 下面这些 impl 之前被分散在 lib.rs 顶部与底部，现在集中到 fragment.rs
 impl<'a> sum_tree::Dimension<'a, FragmentSummary> for FragmentTextSummary {
-    fn zero(_: &Option<clock::Global>) -> Self { Default::default() }
+    fn zero(_: &Option<clock::Global>) -> Self {
+        Default::default()
+    }
     fn add_summary(&mut self, summary: &'a FragmentSummary, _: &Option<clock::Global>) {
         self.visible += summary.text.visible;
         self.deleted += summary.text.deleted;

@@ -44,7 +44,9 @@ pub struct Span;
 
 #[cfg(not(any(ztracing, all(target_family = "wasm", feature = "web"))))]
 impl Span {
-    pub fn current() -> Self { Self }
+    pub fn current() -> Self {
+        Self
+    }
 
     pub fn enter(&self) {}
 
@@ -64,11 +66,17 @@ pub fn init() {
     impl tracing_tracy::Config for TracyLayerConfig {
         type Formatter = DefaultFields;
 
-        fn formatter(&self) -> &Self::Formatter { &self.fmt }
+        fn formatter(&self) -> &Self::Formatter {
+            &self.fmt
+        }
 
-        fn stack_depth(&self, _: &tracing::Metadata) -> u16 { MAX_CALLSTACK_DEPTH }
+        fn stack_depth(&self, _: &tracing::Metadata) -> u16 {
+            MAX_CALLSTACK_DEPTH
+        }
 
-        fn format_fields_in_zone_name(&self) -> bool { true }
+        fn format_fields_in_zone_name(&self) -> bool {
+            true
+        }
 
         fn on_error(&self, client: &tracy_client::Client, error: &'static str) {
             client.color_message(error, 0xFF000000, 0);

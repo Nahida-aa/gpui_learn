@@ -79,10 +79,14 @@ impl Chunk {
     }
 
     #[inline(always)]
-    pub fn push_str(&mut self, text: &str) { self.append(Chunk::new(text).as_slice()); }
+    pub fn push_str(&mut self, text: &str) {
+        self.append(Chunk::new(text).as_slice());
+    }
 
     #[inline(always)]
-    pub fn prepend_str(&mut self, text: &str) { self.prepend(Chunk::new(text).as_slice()); }
+    pub fn prepend_str(&mut self, text: &str) {
+        self.prepend(Chunk::new(text).as_slice());
+    }
 
     #[inline(always)]
     pub fn append(&mut self, slice: ChunkSlice) {
@@ -132,16 +136,24 @@ impl Chunk {
     }
 
     #[inline(always)]
-    pub fn slice(&self, range: Range<usize>) -> ChunkSlice<'_> { self.as_slice().slice(range) }
+    pub fn slice(&self, range: Range<usize>) -> ChunkSlice<'_> {
+        self.as_slice().slice(range)
+    }
 
     #[inline(always)]
-    pub fn chars(&self) -> Bitmap { self.chars }
+    pub fn chars(&self) -> Bitmap {
+        self.chars
+    }
 
     #[inline(always)]
-    pub fn tabs(&self) -> Bitmap { self.tabs }
+    pub fn tabs(&self) -> Bitmap {
+        self.tabs
+    }
 
     #[inline(always)]
-    pub fn newlines(&self) -> Bitmap { self.newlines }
+    pub fn newlines(&self) -> Bitmap {
+        self.newlines
+    }
 
     #[inline(always)]
     pub fn is_char_boundary(&self, offset: usize) -> bool {

@@ -545,7 +545,9 @@ enum WatchKey {
 }
 
 impl WatchKey {
-    fn exact(path: &SanitizedPath) -> Self { Self::Exact(Arc::from(path.as_path())) }
+    fn exact(path: &SanitizedPath) -> Self {
+        Self::Exact(Arc::from(path.as_path()))
+    }
 
     fn folded(path: &SanitizedPath) -> Self {
         let lossy = path.as_path().to_string_lossy();
@@ -781,7 +783,9 @@ struct PathRegistrationState {
 struct WatchPaths(HashMap<WatchKey, PathRegistrationState>);
 
 impl WatchPaths {
-    fn contains(&self, key: &WatchKey) -> bool { self.0.contains_key(key) }
+    fn contains(&self, key: &WatchKey) -> bool {
+        self.0.contains_key(key)
+    }
 
     fn get_mut(&mut self, key: &WatchKey) -> Option<&mut PathRegistrationState> {
         self.0.get_mut(key)
@@ -794,7 +798,9 @@ impl WatchPaths {
         self.0.entry(key)
     }
 
-    fn remove(&mut self, key: &WatchKey) { self.0.remove(key); }
+    fn remove(&mut self, key: &WatchKey) {
+        self.0.remove(key);
+    }
 
     /// True if a recursive registration on a strict ancestor already covers
     /// `path`. Only poll watches and native macOS/Windows watches are recursive.
@@ -947,7 +953,9 @@ impl OsWatcher {
         }
     }
 
-    pub(crate) fn is_recursive(&self) -> bool { self.recursive }
+    pub(crate) fn is_recursive(&self) -> bool {
+        self.recursive
+    }
 
     #[must_use]
     fn add(
@@ -1294,7 +1302,9 @@ static NATIVE_WATCH_LIMIT_COOLDOWN: LazyLock<Duration> = LazyLock::new(|| {
     Duration::from_secs(cooldown_seconds)
 });
 
-pub fn poll_interval() -> Duration { *POLL_INTERVAL }
+pub fn poll_interval() -> Duration {
+    *POLL_INTERVAL
+}
 
 #[cfg(test)]
 mod tests {

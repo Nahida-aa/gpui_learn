@@ -29,7 +29,9 @@ impl Display for MinimumContrast {
     }
 }
 impl From<f32> for MinimumContrast {
-    fn from(x: f32) -> Self { Self(x) }
+    fn from(x: f32) -> Self {
+        Self(x)
+    }
 }
 
 // InactiveOpacity 同理
@@ -61,7 +63,9 @@ impl Display for InactiveOpacity {
 }
 
 impl From<f32> for InactiveOpacity {
-    fn from(x: f32) -> Self { Self(x) }
+    fn from(x: f32) -> Self {
+        Self(x)
+    }
 }
 
 #[derive(
@@ -93,15 +97,21 @@ impl Display for CenteredPaddingSettings {
 }
 
 impl From<f32> for CenteredPaddingSettings {
-    fn from(x: f32) -> Self { Self(x) }
+    fn from(x: f32) -> Self {
+        Self(x)
+    }
 }
 
 impl Default for CenteredPaddingSettings {
-    fn default() -> Self { Self(Self::DEFAULT_PADDING as f32) }
+    fn default() -> Self {
+        Self(Self::DEFAULT_PADDING as f32)
+    }
 }
 
 impl schemars::JsonSchema for CenteredPaddingSettings {
-    fn schema_name() -> std::borrow::Cow<'static, str> { "CenteredPaddingSettings".into() }
+    fn schema_name() -> std::borrow::Cow<'static, str> {
+        "CenteredPaddingSettings".into()
+    }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         use schemars::json_schema;

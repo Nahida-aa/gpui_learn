@@ -11,7 +11,9 @@ pub const KEYMAP_PATTERNS: MigrationPatterns = &[(
     action_argument_snake_case,
 )];
 
-fn to_snake_case(text: &str) -> String { text.to_case(Case::Snake) }
+fn to_snake_case(text: &str) -> String {
+    text.to_case(Case::Snake)
+}
 
 fn action_argument_snake_case(
     contents: &str,

@@ -18,7 +18,10 @@ const APP_ID: &str = "dev.zed.Zed";
 
 /// 编译期回退时读 Zed 专有 env var（aa_ 已做了 ZED_RELEASE_CHANNEL → RELEASE_CHANNEL 回退）。
 fn compile_time_release_channel_name() -> String {
-    option_env!("ZED_RELEASE_CHANNEL").unwrap_or("dev").trim().to_string()
+    option_env!("ZED_RELEASE_CHANNEL")
+        .unwrap_or("dev")
+        .trim()
+        .to_string()
 }
 
 // ---- Zed 专有薄壳函数 ----
@@ -53,8 +56,7 @@ const APP_IDENTIFIER_PREFIX: &str = "Zed-Editor";
 /// Windows app identifier。
 #[cfg(target_os = "windows")]
 pub fn app_identifier(cx: &gpui::App) -> String {
-    let channel = ReleaseChannel::try_global(cx)
-        .unwrap_or(*RELEASE_CHANNEL);
+    let channel = ReleaseChannel::try_global(cx).unwrap_or(*RELEASE_CHANNEL);
     let suffix = match channel {
         ReleaseChannel::Dev => "Dev",
         ReleaseChannel::Nightly => "Nightly",

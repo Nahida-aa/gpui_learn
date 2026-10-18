@@ -256,10 +256,7 @@ mod tests {
     #[gpui::test]
     fn semantic_color_resolves_for_icon(cx: &mut TestAppContext) {
         cx.update(|cx| {
-            assert_eq!(
-                Color::Muted.color(cx),
-                cx.theme().colors().text_muted
-            );
+            assert_eq!(Color::Muted.color(cx), cx.theme().colors().text_muted);
         });
     }
 }

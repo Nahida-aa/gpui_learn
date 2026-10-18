@@ -30,9 +30,13 @@ impl<D, DDelta> Edit<D>
 where
     D: Sub<D, Output = DDelta> + Copy,
 {
-    pub fn old_len(&self) -> DDelta { self.old.end - self.old.start }
+    pub fn old_len(&self) -> DDelta {
+        self.old.end - self.old.start
+    }
 
-    pub fn new_len(&self) -> DDelta { self.new.end - self.new.start }
+    pub fn new_len(&self) -> DDelta {
+        self.new.end - self.new.start
+    }
 }
 
 impl<D1, D2> Edit<(D1, D2)> {

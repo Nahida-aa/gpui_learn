@@ -12,8 +12,8 @@ use std::ops::{Deref, Range};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use clock::{Global, Lamport, ReplicaId};
 use anyhow::Result;
+use clock::{Global, Lamport, ReplicaId};
 use postage::{oneshot, prelude::*};
 use sum_tree::{Bias, Dimensions, SumTree, TreeMap, TreeSet};
 
@@ -155,13 +155,19 @@ impl Buffer {
     }
 
     /// Returns the current version vector of the buffer.
-    pub fn version(&self) -> Global { self.version.clone() }
+    pub fn version(&self) -> Global {
+        self.version.clone()
+    }
 
     /// Returns a cheap, immutable snapshot of the buffer's current state.
-    pub fn snapshot(&self) -> &BufferSnapshot { &self.snapshot }
+    pub fn snapshot(&self) -> &BufferSnapshot {
+        &self.snapshot
+    }
 
     /// Consumes the buffer and returns its snapshot.
-    pub fn into_snapshot(self) -> BufferSnapshot { self.snapshot }
+    pub fn into_snapshot(self) -> BufferSnapshot {
+        self.snapshot
+    }
 
     /// Creates a branch of this buffer for speculative edits. Edits to the
     /// branch are not applied to this buffer until
@@ -180,17 +186,25 @@ impl Buffer {
     }
 
     /// Returns this buffer's replica id.
-    pub fn replica_id(&self) -> ReplicaId { self.lamport_clock.replica_id }
+    pub fn replica_id(&self) -> ReplicaId {
+        self.lamport_clock.replica_id
+    }
 
     /// Returns the (shared) remote id of this buffer.
-    pub fn remote_id(&self) -> BufferId { self.remote_id }
+    pub fn remote_id(&self) -> BufferId {
+        self.remote_id
+    }
 
     /// Returns the number of operations currently waiting to be applied.
-    pub fn deferred_ops_len(&self) -> usize { self.deferred_ops.len() }
+    pub fn deferred_ops_len(&self) -> usize {
+        self.deferred_ops.len()
+    }
 
     /// Returns the interval within which consecutive transactions are grouped
     /// into a single undo step.
-    pub fn transaction_group_interval(&self) -> Duration { self.history.group_interval }
+    pub fn transaction_group_interval(&self) -> Duration {
+        self.history.group_interval
+    }
 
     /// Applies a set of edits to the buffer and returns the resulting
     /// operation. Edits are specified as `(range, new_text)` pairs; adjacent
@@ -469,13 +483,19 @@ impl Buffer {
     }
 
     /// Whether any operations are currently deferred.
-    pub fn has_deferred_ops(&self) -> bool { !self.deferred_ops.is_empty() }
+    pub fn has_deferred_ops(&self) -> bool {
+        !self.deferred_ops.is_empty()
+    }
 
     /// Returns the transaction at the top of the undo stack, if any.
-    pub fn peek_undo_stack(&self) -> Option<&HistoryEntry> { self.history.undo_stack.last() }
+    pub fn peek_undo_stack(&self) -> Option<&HistoryEntry> {
+        self.history.undo_stack.last()
+    }
 
     /// Returns the transaction at the top of the redo stack, if any.
-    pub fn peek_redo_stack(&self) -> Option<&HistoryEntry> { self.history.redo_stack.last() }
+    pub fn peek_redo_stack(&self) -> Option<&HistoryEntry> {
+        self.history.redo_stack.last()
+    }
 
     /// Begins a new transaction. Nested transactions are collapsed into the
     /// outermost one.
@@ -520,10 +540,14 @@ impl Buffer {
     }
 
     /// Returns the buffer's original base text (before any edits).
-    pub fn base_text(&self) -> &Rope { &self.history.base_text }
+    pub fn base_text(&self) -> &Rope {
+        &self.history.base_text
+    }
 
     /// Returns the tree of every operation applied to this buffer.
-    pub fn operations(&self) -> &TreeMap<Lamport, Operation> { &self.history.operations }
+    pub fn operations(&self) -> &TreeMap<Lamport, Operation> {
+        &self.history.operations
+    }
 
     /// Undoes the most recent transaction.
     pub fn undo(&mut self) -> Option<(TransactionId, Operation)> {
@@ -734,7 +758,9 @@ impl Buffer {
     /// Subscribes to text edit patches. Each patch contains a sequence of
     /// `(old_range, new_range)` pairs in byte offsets, describing the diff
     /// between the pre-edit and post-edit text.
-    pub fn subscribe(&mut self) -> Subscription<usize> { self.subscriptions.subscribe() }
+    pub fn subscribe(&mut self) -> Subscription<usize> {
+        self.subscriptions.subscribe()
+    }
 
     /// Returns a future that resolves once all the given edit ids have been
     /// observed by this buffer.
@@ -881,5 +907,7 @@ impl Buffer {
 impl Deref for Buffer {
     type Target = BufferSnapshot;
 
-    fn deref(&self) -> &Self::Target { &self.snapshot }
+    fn deref(&self) -> &Self::Target {
+        &self.snapshot
+    }
 }

@@ -36,63 +36,105 @@ impl<D1: TextDimension, D2: TextDimension> TextDimension for Dimensions<D1, D2, 
 }
 
 impl<'a> sum_tree::Dimension<'a, ChunkSummary> for TextSummary {
-    fn zero(_cx: ()) -> Self { Default::default() }
+    fn zero(_cx: ()) -> Self {
+        Default::default()
+    }
 
-    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) { *self += &summary.text; }
+    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) {
+        *self += &summary.text;
+    }
 }
 
 impl TextDimension for TextSummary {
-    fn from_text_summary(summary: &TextSummary) -> Self { *summary }
+    fn from_text_summary(summary: &TextSummary) -> Self {
+        *summary
+    }
 
-    fn from_chunk(chunk: ChunkSlice) -> Self { chunk.text_summary() }
+    fn from_chunk(chunk: ChunkSlice) -> Self {
+        chunk.text_summary()
+    }
 
-    fn add_assign(&mut self, other: &Self) { *self += other; }
+    fn add_assign(&mut self, other: &Self) {
+        *self += other;
+    }
 }
 
 impl<'a> sum_tree::Dimension<'a, ChunkSummary> for usize {
-    fn zero(_cx: ()) -> Self { Default::default() }
+    fn zero(_cx: ()) -> Self {
+        Default::default()
+    }
 
-    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) { *self += summary.text.len; }
+    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) {
+        *self += summary.text.len;
+    }
 }
 
 impl TextDimension for usize {
-    fn from_text_summary(summary: &TextSummary) -> Self { summary.len }
+    fn from_text_summary(summary: &TextSummary) -> Self {
+        summary.len
+    }
 
-    fn from_chunk(chunk: ChunkSlice) -> Self { chunk.len() }
+    fn from_chunk(chunk: ChunkSlice) -> Self {
+        chunk.len()
+    }
 
-    fn add_assign(&mut self, other: &Self) { *self += other; }
+    fn add_assign(&mut self, other: &Self) {
+        *self += other;
+    }
 }
 
 impl<'a> sum_tree::Dimension<'a, ChunkSummary> for OffsetUtf16 {
-    fn zero(_cx: ()) -> Self { Default::default() }
+    fn zero(_cx: ()) -> Self {
+        Default::default()
+    }
 
-    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) { *self += summary.text.len_utf16; }
+    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) {
+        *self += summary.text.len_utf16;
+    }
 }
 
 impl TextDimension for OffsetUtf16 {
-    fn from_text_summary(summary: &TextSummary) -> Self { summary.len_utf16 }
+    fn from_text_summary(summary: &TextSummary) -> Self {
+        summary.len_utf16
+    }
 
-    fn from_chunk(chunk: ChunkSlice) -> Self { chunk.len_utf16() }
+    fn from_chunk(chunk: ChunkSlice) -> Self {
+        chunk.len_utf16()
+    }
 
-    fn add_assign(&mut self, other: &Self) { *self += other; }
+    fn add_assign(&mut self, other: &Self) {
+        *self += other;
+    }
 }
 
 impl<'a> sum_tree::Dimension<'a, ChunkSummary> for Point {
-    fn zero(_cx: ()) -> Self { Default::default() }
+    fn zero(_cx: ()) -> Self {
+        Default::default()
+    }
 
-    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) { *self += summary.text.lines; }
+    fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) {
+        *self += summary.text.lines;
+    }
 }
 
 impl TextDimension for Point {
-    fn from_text_summary(summary: &TextSummary) -> Self { summary.lines }
+    fn from_text_summary(summary: &TextSummary) -> Self {
+        summary.lines
+    }
 
-    fn from_chunk(chunk: ChunkSlice) -> Self { chunk.lines() }
+    fn from_chunk(chunk: ChunkSlice) -> Self {
+        chunk.lines()
+    }
 
-    fn add_assign(&mut self, other: &Self) { *self += other; }
+    fn add_assign(&mut self, other: &Self) {
+        *self += other;
+    }
 }
 
 impl<'a> sum_tree::Dimension<'a, ChunkSummary> for PointUtf16 {
-    fn zero(_cx: ()) -> Self { Default::default() }
+    fn zero(_cx: ()) -> Self {
+        Default::default()
+    }
 
     fn add_summary(&mut self, summary: &'a ChunkSummary, _: ()) {
         *self += summary.text.lines_utf16();
@@ -100,7 +142,9 @@ impl<'a> sum_tree::Dimension<'a, ChunkSummary> for PointUtf16 {
 }
 
 impl TextDimension for PointUtf16 {
-    fn from_text_summary(summary: &TextSummary) -> Self { summary.lines_utf16() }
+    fn from_text_summary(summary: &TextSummary) -> Self {
+        summary.lines_utf16()
+    }
 
     fn from_chunk(chunk: ChunkSlice) -> Self {
         PointUtf16 {
@@ -109,7 +153,9 @@ impl TextDimension for PointUtf16 {
         }
     }
 
-    fn add_assign(&mut self, other: &Self) { *self += other; }
+    fn add_assign(&mut self, other: &Self) {
+        *self += other;
+    }
 }
 
 /// A pair of text dimensions in which only the first dimension is used for comparison,
@@ -133,7 +179,9 @@ impl<K, V> cmp::Ord for DimensionPair<K, V>
 where
     K: cmp::Ord,
 {
-    fn cmp(&self, other: &Self) -> cmp::Ordering { self.key.cmp(&other.key) }
+    fn cmp(&self, other: &Self) -> cmp::Ordering {
+        self.key.cmp(&other.key)
+    }
 }
 
 impl<K, V> cmp::PartialOrd for DimensionPair<K, V>
@@ -149,7 +197,9 @@ impl<K, V> cmp::PartialEq for DimensionPair<K, V>
 where
     K: cmp::PartialEq,
 {
-    fn eq(&self, other: &Self) -> bool { self.key.eq(&other.key) }
+    fn eq(&self, other: &Self) -> bool {
+        self.key.eq(&other.key)
+    }
 }
 
 impl<R, R2, K, V> ops::Sub for DimensionPair<K, V>
@@ -185,7 +235,9 @@ where
 }
 
 impl<D> std::ops::AddAssign<DimensionPair<Point, D>> for Point {
-    fn add_assign(&mut self, rhs: DimensionPair<Point, D>) { *self += rhs.key; }
+    fn add_assign(&mut self, rhs: DimensionPair<Point, D>) {
+        *self += rhs.key;
+    }
 }
 
 impl<K, V> cmp::Eq for DimensionPair<K, V> where K: cmp::Eq {}

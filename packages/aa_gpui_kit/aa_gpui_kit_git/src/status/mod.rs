@@ -45,11 +45,15 @@ pub enum StatusCode {
 }
 
 impl From<UnmergedStatus> for FileStatus {
-    fn from(value: UnmergedStatus) -> Self { FileStatus::Unmerged(value) }
+    fn from(value: UnmergedStatus) -> Self {
+        FileStatus::Unmerged(value)
+    }
 }
 
 impl From<TrackedStatus> for FileStatus {
-    fn from(value: TrackedStatus) -> Self { FileStatus::Tracked(value) }
+    fn from(value: TrackedStatus) -> Self {
+        FileStatus::Tracked(value)
+    }
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -60,9 +64,13 @@ pub enum StageStatus {
 }
 
 impl StageStatus {
-    pub const fn is_fully_staged(&self) -> bool { matches!(self, StageStatus::Staged) }
+    pub const fn is_fully_staged(&self) -> bool {
+        matches!(self, StageStatus::Staged)
+    }
 
-    pub const fn is_fully_unstaged(&self) -> bool { matches!(self, StageStatus::Unstaged) }
+    pub const fn is_fully_unstaged(&self) -> bool {
+        matches!(self, StageStatus::Unstaged)
+    }
 
     pub const fn has_staged(&self) -> bool {
         matches!(self, StageStatus::Staged | StageStatus::PartiallyStaged)
@@ -146,9 +154,13 @@ impl FileStatus {
         }
     }
 
-    pub fn is_conflicted(self) -> bool { matches!(self, FileStatus::Unmerged { .. }) }
+    pub fn is_conflicted(self) -> bool {
+        matches!(self, FileStatus::Unmerged { .. })
+    }
 
-    pub fn is_ignored(self) -> bool { matches!(self, FileStatus::Ignored) }
+    pub fn is_ignored(self) -> bool {
+        matches!(self, FileStatus::Ignored)
+    }
 
     pub fn has_changes(&self) -> bool {
         self.is_modified()
@@ -187,7 +199,9 @@ impl FileStatus {
             || tracked.worktree_status == StatusCode::Deleted
     }
 
-    pub fn is_untracked(self) -> bool { matches!(self, FileStatus::Untracked) }
+    pub fn is_untracked(self) -> bool {
+        matches!(self, FileStatus::Untracked)
+    }
 
     pub fn summary(self) -> GitSummary {
         match self {
@@ -365,13 +379,19 @@ impl GitSummary {
 }
 
 impl From<FileStatus> for GitSummary {
-    fn from(status: FileStatus) -> Self { status.summary() }
+    fn from(status: FileStatus) -> Self {
+        status.summary()
+    }
 }
 
 impl sum_tree::ContextLessSummary for GitSummary {
-    fn zero() -> Self { Default::default() }
+    fn zero() -> Self {
+        Default::default()
+    }
 
-    fn add_summary(&mut self, rhs: &Self) { *self += *rhs; }
+    fn add_summary(&mut self, rhs: &Self) {
+        *self += *rhs;
+    }
 }
 
 impl std::ops::Add<Self> for GitSummary {

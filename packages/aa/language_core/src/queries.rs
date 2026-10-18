@@ -30,7 +30,9 @@ pub enum QueryFile {
 }
 
 impl QueryFile {
-    pub fn file_name(self) -> &'static str { self.into() }
+    pub fn file_name(self) -> &'static str {
+        self.into()
+    }
 }
 
 bitflags::bitflags! {

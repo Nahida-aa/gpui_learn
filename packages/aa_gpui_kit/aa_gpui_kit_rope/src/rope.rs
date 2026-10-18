@@ -6,10 +6,10 @@ use std::fmt;
 use std::mem;
 use std::ops::Range;
 
-use ztracing::instrument;
 use heapless::Vec as ArrayVec;
 use rayon::iter::{IntoParallelIterator, ParallelIterator as _};
 use sum_tree::{Bias, Dimension, Dimensions, SumTree};
+use ztracing::instrument;
 
 use crate::chunk::{Bitmap, Chunk, ChunkSlice};
 
@@ -19,7 +19,9 @@ pub struct Rope {
 }
 
 impl Rope {
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     /// Checks that `index`-th byte is the first byte in a UTF-8 code point
     /// sequence or the end of the string.
@@ -298,19 +300,33 @@ impl Rope {
         }
     }
 
-    pub fn summary(&self) -> TextSummary { self.chunks.summary().text }
+    pub fn summary(&self) -> TextSummary {
+        self.chunks.summary().text
+    }
 
-    pub fn len(&self) -> usize { self.chunks.extent(()) }
+    pub fn len(&self) -> usize {
+        self.chunks.extent(())
+    }
 
-    pub fn is_empty(&self) -> bool { self.len() == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
-    pub fn max_point(&self) -> Point { self.chunks.extent(()) }
+    pub fn max_point(&self) -> Point {
+        self.chunks.extent(())
+    }
 
-    pub fn max_point_utf16(&self) -> PointUtf16 { self.chunks.extent(()) }
+    pub fn max_point_utf16(&self) -> PointUtf16 {
+        self.chunks.extent(())
+    }
 
-    pub fn cursor(&self, offset: usize) -> Cursor<'_> { Cursor::new(self, offset) }
+    pub fn cursor(&self, offset: usize) -> Cursor<'_> {
+        Cursor::new(self, offset)
+    }
 
-    pub fn chars(&self) -> impl Iterator<Item = char> + '_ { self.chars_at(0) }
+    pub fn chars(&self) -> impl Iterator<Item = char> + '_ {
+        self.chars_at(0)
+    }
 
     pub fn chars_at(&self, start: usize) -> impl Iterator<Item = char> + '_ {
         self.chunks_in_range(start..self.len()).flat_map(str::chars)
@@ -329,7 +345,9 @@ impl Rope {
         Bytes::new(self, range, true)
     }
 
-    pub fn chunks(&self) -> Chunks<'_> { self.chunks_in_range(0..self.len()) }
+    pub fn chunks(&self) -> Chunks<'_> {
+        self.chunks_in_range(0..self.len())
+    }
 
     pub fn chunks_in_range(&self, range: Range<usize>) -> Chunks<'_> {
         Chunks::new(self, range, false)
@@ -611,12 +629,16 @@ impl<'a> FromIterator<&'a str> for Rope {
 
 impl From<String> for Rope {
     #[inline(always)]
-    fn from(text: String) -> Self { Rope::from(text.as_str()) }
+    fn from(text: String) -> Self {
+        Rope::from(text.as_str())
+    }
 }
 
 impl From<&String> for Rope {
     #[inline(always)]
-    fn from(text: &String) -> Self { Rope::from(text.as_str()) }
+    fn from(text: &String) -> Self {
+        Rope::from(text.as_str())
+    }
 }
 
 impl fmt::Display for Rope {

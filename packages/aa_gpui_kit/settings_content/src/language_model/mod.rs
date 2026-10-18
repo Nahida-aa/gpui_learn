@@ -268,7 +268,9 @@ fn config_paths() -> Vec<PathBuf> {
     paths
 }
 
-fn env(key: &str) -> Option<String> { std::env::var(key).ok().filter(|v| !v.is_empty()) }
+fn env(key: &str) -> Option<String> {
+    std::env::var(key).ok().filter(|v| !v.is_empty())
+}
 
 /// 返回第一个 `Some` 值，全部为 `None` 时返回 `default`。
 fn pick(

@@ -104,7 +104,9 @@ pub struct ToolchainList {
 }
 
 impl ToolchainList {
-    pub fn toolchains(&self) -> &[Toolchain] { &self.toolchains }
+    pub fn toolchains(&self) -> &[Toolchain] {
+        &self.toolchains
+    }
     pub fn default_toolchain(&self) -> Option<Toolchain> {
         self.default.and_then(|ix| self.toolchains.get(ix)).cloned()
     }

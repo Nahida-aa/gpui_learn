@@ -1,14 +1,15 @@
 use std::cmp;
 use std::ops;
 
-
 use crate::locator::Locator;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct FullOffset(pub usize);
 
 impl ops::AddAssign<usize> for FullOffset {
-    fn add_assign(&mut self, rhs: usize) { self.0 += rhs; }
+    fn add_assign(&mut self, rhs: usize) {
+        self.0 += rhs;
+    }
 }
 
 impl ops::Add<usize> for FullOffset {
@@ -23,7 +24,9 @@ impl ops::Add<usize> for FullOffset {
 impl ops::Sub for FullOffset {
     type Output = usize;
 
-    fn sub(self, rhs: Self) -> Self::Output { self.0 - rhs.0 }
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.0 - rhs.0
+    }
 }
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -43,7 +46,9 @@ impl VersionedFullOffset {
 }
 
 impl Default for VersionedFullOffset {
-    fn default() -> Self { Self::Offset(Default::default()) }
+    fn default() -> Self {
+        Self::Offset(Default::default())
+    }
 }
 
 // 下面这些 sum_tree::Dimension / SeekTarget impl 依赖 FragmentSummary，
@@ -51,7 +56,9 @@ impl Default for VersionedFullOffset {
 // fragment.rs，可以把这几个 impl 一起搬到 fragment.rs 里。
 
 impl<'a> sum_tree::Dimension<'a, super::fragment::FragmentSummary> for usize {
-    fn zero(_: &Option<clock::Global>) -> Self { Default::default() }
+    fn zero(_: &Option<clock::Global>) -> Self {
+        Default::default()
+    }
     fn add_summary(
         &mut self,
         summary: &super::fragment::FragmentSummary,
@@ -62,7 +69,9 @@ impl<'a> sum_tree::Dimension<'a, super::fragment::FragmentSummary> for usize {
 }
 
 impl<'a> sum_tree::Dimension<'a, super::fragment::FragmentSummary> for FullOffset {
-    fn zero(_: &Option<clock::Global>) -> Self { Default::default() }
+    fn zero(_: &Option<clock::Global>) -> Self {
+        Default::default()
+    }
     fn add_summary(
         &mut self,
         summary: &super::fragment::FragmentSummary,
@@ -73,7 +82,9 @@ impl<'a> sum_tree::Dimension<'a, super::fragment::FragmentSummary> for FullOffse
 }
 
 impl<'a> sum_tree::Dimension<'a, super::fragment::FragmentSummary> for Option<&'a Locator> {
-    fn zero(_: &Option<clock::Global>) -> Self { Default::default() }
+    fn zero(_: &Option<clock::Global>) -> Self {
+        Default::default()
+    }
     fn add_summary(
         &mut self,
         summary: &'a super::fragment::FragmentSummary,
@@ -84,7 +95,9 @@ impl<'a> sum_tree::Dimension<'a, super::fragment::FragmentSummary> for Option<&'
 }
 
 impl<'a> sum_tree::Dimension<'a, super::fragment::FragmentSummary> for VersionedFullOffset {
-    fn zero(_cx: &Option<clock::Global>) -> Self { Default::default() }
+    fn zero(_cx: &Option<clock::Global>) -> Self {
+        Default::default()
+    }
 
     fn add_summary(
         &mut self,

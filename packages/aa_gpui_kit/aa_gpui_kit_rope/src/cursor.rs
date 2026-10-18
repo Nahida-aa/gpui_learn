@@ -104,7 +104,11 @@ impl<'a> Cursor<'a> {
         summary
     }
 
-    pub fn suffix(mut self) -> Rope { self.slice(self.rope.chunks.extent(())) }
+    pub fn suffix(mut self) -> Rope {
+        self.slice(self.rope.chunks.extent(()))
+    }
 
-    pub fn offset(&self) -> usize { self.offset }
+    pub fn offset(&self) -> usize {
+        self.offset
+    }
 }

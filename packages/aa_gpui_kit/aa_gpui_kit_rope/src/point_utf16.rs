@@ -15,11 +15,17 @@ impl PointUtf16 {
         column: u32::MAX,
     };
 
-    pub fn new(row: u32, column: u32) -> Self { PointUtf16 { row, column } }
+    pub fn new(row: u32, column: u32) -> Self {
+        PointUtf16 { row, column }
+    }
 
-    pub fn zero() -> Self { PointUtf16::new(0, 0) }
+    pub fn zero() -> Self {
+        PointUtf16::new(0, 0)
+    }
 
-    pub fn is_zero(&self) -> bool { self.row == 0 && self.column == 0 }
+    pub fn is_zero(&self) -> bool {
+        self.row == 0 && self.column == 0
+    }
 
     pub fn saturating_sub(self, other: Self) -> Self {
         if self < other {
@@ -33,7 +39,9 @@ impl PointUtf16 {
 impl<'a> Add<&'a Self> for PointUtf16 {
     type Output = PointUtf16;
 
-    fn add(self, other: &'a Self) -> Self::Output { self + *other }
+    fn add(self, other: &'a Self) -> Self::Output {
+        self + *other
+    }
 }
 
 impl Add for PointUtf16 {
@@ -51,7 +59,9 @@ impl Add for PointUtf16 {
 impl<'a> Sub<&'a Self> for PointUtf16 {
     type Output = PointUtf16;
 
-    fn sub(self, other: &'a Self) -> Self::Output { self - *other }
+    fn sub(self, other: &'a Self) -> Self::Output {
+        self - *other
+    }
 }
 
 impl Sub for PointUtf16 {
@@ -69,7 +79,9 @@ impl Sub for PointUtf16 {
 }
 
 impl<'a> AddAssign<&'a Self> for PointUtf16 {
-    fn add_assign(&mut self, other: &'a Self) { *self += *other; }
+    fn add_assign(&mut self, other: &'a Self) {
+        *self += *other;
+    }
 }
 
 impl AddAssign<Self> for PointUtf16 {
@@ -84,7 +96,9 @@ impl AddAssign<Self> for PointUtf16 {
 }
 
 impl PartialOrd for PointUtf16 {
-    fn partial_cmp(&self, other: &PointUtf16) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &PointUtf16) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for PointUtf16 {

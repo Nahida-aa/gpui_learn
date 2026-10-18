@@ -7,14 +7,14 @@
 //! 外部代理 / MCP 页用）、[`thread_item`]（sidebar 的线程切换器用）。
 //! 还差 `agent_setup_button` / `skills_illustration`，等有调用方再搬。
 
-mod ai_setting_item;
 mod agent_setup_button;
+mod ai_setting_item;
 mod configured_api_card;
 mod skills_illustration;
 mod thread_item;
 
-pub use ai_setting_item::*;
 pub use agent_setup_button::*;
+pub use ai_setting_item::*;
 pub use configured_api_card::*;
 pub use skills_illustration::*;
 pub use thread_item::*;

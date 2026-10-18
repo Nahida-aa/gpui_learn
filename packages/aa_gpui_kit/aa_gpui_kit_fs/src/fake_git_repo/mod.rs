@@ -481,11 +481,17 @@ impl GitRepository for FakeGitRepository {
         unimplemented!()
     }
 
-    fn path(&self) -> PathBuf { self.repository_dir_path.clone() }
+    fn path(&self) -> PathBuf {
+        self.repository_dir_path.clone()
+    }
 
-    fn main_repository_path(&self) -> PathBuf { self.common_dir_path.clone() }
+    fn main_repository_path(&self) -> PathBuf {
+        self.common_dir_path.clone()
+    }
 
-    fn merge_message(&self) -> BoxFuture<'_, Option<String>> { async move { None }.boxed() }
+    fn merge_message(&self) -> BoxFuture<'_, Option<String>> {
+        async move { None }.boxed()
+    }
 
     fn status(&self, path_prefixes: &[RepoPath]) -> Task<Result<GitStatus>> {
         let workdir_path = self.dot_git_path.parent().unwrap();
@@ -1753,12 +1759,16 @@ impl GitRepository for FakeGitRepository {
         self.edit_ref(RefEdit::Delete { ref_name })
     }
 
-    fn repair_worktrees(&self) -> BoxFuture<'_, Result<()>> { async { Ok(()) }.boxed() }
+    fn repair_worktrees(&self) -> BoxFuture<'_, Result<()>> {
+        async { Ok(()) }.boxed()
+    }
 
     fn set_trusted(&self, trusted: bool) {
         self.is_trusted
             .store(trusted, std::sync::atomic::Ordering::Release);
     }
 
-    fn is_trusted(&self) -> bool { self.is_trusted.load(std::sync::atomic::Ordering::Acquire) }
+    fn is_trusted(&self) -> bool {
+        self.is_trusted.load(std::sync::atomic::Ordering::Acquire)
+    }
 }

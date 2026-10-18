@@ -19,11 +19,15 @@ pub struct AudioSettingsContent {
 pub struct AudioOutputDeviceName(pub Option<String>);
 
 impl AsRef<Option<String>> for AudioInputDeviceName {
-    fn as_ref(&self) -> &Option<String> { &self.0 }
+    fn as_ref(&self) -> &Option<String> {
+        &self.0
+    }
 }
 
 impl From<Option<String>> for AudioInputDeviceName {
-    fn from(value: Option<String>) -> Self { Self(value) }
+    fn from(value: Option<String>) -> Self {
+        Self(value)
+    }
 }
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize, JsonSchema, MergeFrom, PartialEq, Eq)]
@@ -31,9 +35,13 @@ impl From<Option<String>> for AudioInputDeviceName {
 pub struct AudioInputDeviceName(pub Option<String>);
 
 impl AsRef<Option<String>> for AudioOutputDeviceName {
-    fn as_ref(&self) -> &Option<String> { &self.0 }
+    fn as_ref(&self) -> &Option<String> {
+        &self.0
+    }
 }
 
 impl From<Option<String>> for AudioOutputDeviceName {
-    fn from(value: Option<String>) -> Self { Self(value) }
+    fn from(value: Option<String>) -> Self {
+        Self(value)
+    }
 }

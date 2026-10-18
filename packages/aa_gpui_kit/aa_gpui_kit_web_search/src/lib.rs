@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use anyhow::Result;
 use aa_cloud_llm_client::WebSearchResponse;
+use anyhow::Result;
 use collections::HashMap;
 use gpui::{App, AppContext as _, Context, Entity, Global, Task};
 use gpui_shared_string::SharedString;

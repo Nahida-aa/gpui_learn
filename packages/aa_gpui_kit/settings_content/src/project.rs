@@ -31,11 +31,15 @@ impl IntoIterator for LspSettingsMap {
     type Item = (Arc<str>, LspSettings);
     type IntoIter = std::collections::hash_map::IntoIter<Arc<str>, LspSettings>;
 
-    fn into_iter(self) -> Self::IntoIter { self.0.into_iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
 }
 
 impl RootUserSettings for ProjectSettingsContent {
-    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) { fallible_options::parse_json(json) }
+    fn parse_json(json: &str) -> (Option<Self>, ParseStatus) {
+        fallible_options::parse_json(json)
+    }
     fn parse_json_with_comments(json: &str) -> anyhow::Result<Self> {
         parse_json_with_comments(json)
     }
@@ -317,7 +321,9 @@ impl SemanticTokenRules {
 }
 
 impl crate::merge_from::MergeFrom for SemanticTokenRules {
-    fn merge_from(&mut self, other: &Self) { self.rules.splice(0..0, other.rules.iter().cloned()); }
+    fn merge_from(&mut self, other: &Self) {
+        self.rules.splice(0..0, other.rules.iter().cloned());
+    }
 }
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq, JsonSchema)]

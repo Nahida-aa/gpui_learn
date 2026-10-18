@@ -23,7 +23,9 @@ impl Point {
         column: u32::MAX,
     };
 
-    pub fn new(row: u32, column: u32) -> Self { Point { row, column } }
+    pub fn new(row: u32, column: u32) -> Self {
+        Point { row, column }
+    }
 
     pub fn row_range(range: Range<u32>) -> Range<Self> {
         Point {
@@ -35,7 +37,9 @@ impl Point {
         }
     }
 
-    pub fn zero() -> Self { Point::new(0, 0) }
+    pub fn zero() -> Self {
+        Point::new(0, 0)
+    }
 
     pub fn parse_str(s: &str) -> Self {
         let mut point = Self::zero();
@@ -46,7 +50,9 @@ impl Point {
         point
     }
 
-    pub fn is_zero(&self) -> bool { self.row == 0 && self.column == 0 }
+    pub fn is_zero(&self) -> bool {
+        self.row == 0 && self.column == 0
+    }
 
     pub fn saturating_sub(self, other: Self) -> Self {
         if self < other {
@@ -60,7 +66,9 @@ impl Point {
 impl<'a> Add<&'a Self> for Point {
     type Output = Point;
 
-    fn add(self, other: &'a Self) -> Self::Output { self + *other }
+    fn add(self, other: &'a Self) -> Self::Output {
+        self + *other
+    }
 }
 
 impl Add for Point {
@@ -78,7 +86,9 @@ impl Add for Point {
 impl<'a> Sub<&'a Self> for Point {
     type Output = Point;
 
-    fn sub(self, other: &'a Self) -> Self::Output { self - *other }
+    fn sub(self, other: &'a Self) -> Self::Output {
+        self - *other
+    }
 }
 
 impl Sub for Point {
@@ -96,7 +106,9 @@ impl Sub for Point {
 }
 
 impl<'a> AddAssign<&'a Self> for Point {
-    fn add_assign(&mut self, other: &'a Self) { *self += *other; }
+    fn add_assign(&mut self, other: &'a Self) {
+        *self += *other;
+    }
 }
 
 impl AddAssign<Self> for Point {
@@ -111,7 +123,9 @@ impl AddAssign<Self> for Point {
 }
 
 impl PartialOrd for Point {
-    fn partial_cmp(&self, other: &Point) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Point) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Ord for Point {

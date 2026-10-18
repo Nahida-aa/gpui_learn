@@ -24,7 +24,6 @@ use crate::ActiveTheme;
 #[derive(Refineable, Clone, Debug, PartialEq)]
 #[refineable(Debug)]
 pub struct ThemeColors {
-
     /// Border color. Used for most borders, is usually a high contrast color.
     pub border: Hsla,
     /// Border color. Used for deemphasized borders, like a visual divider between two sections
@@ -357,7 +356,6 @@ pub struct ThemeColors {
     pub version_control_conflict_marker_theirs: Hsla,
 
     // ---- 以下是我们相对 zed 增补的字段 ----
-
     /// 选区背景色。zed 的 v0.2.0 主题扩展里没有对应 key，由加载器派生于
     /// `element_selected`。
     pub selection_background: Hsla,
@@ -601,7 +599,9 @@ impl ThemeColors {
             ThemeColorField::PaneGroupBorder => self.pane_group_border,
             ThemeColorField::ScrollbarThumbBackground => self.scrollbar_thumb_background,
             ThemeColorField::ScrollbarThumbHoverBackground => self.scrollbar_thumb_hover_background,
-            ThemeColorField::ScrollbarThumbActiveBackground => self.scrollbar_thumb_active_background,
+            ThemeColorField::ScrollbarThumbActiveBackground => {
+                self.scrollbar_thumb_active_background
+            }
             ThemeColorField::ScrollbarThumbBorder => self.scrollbar_thumb_border,
             ThemeColorField::ScrollbarTrackBackground => self.scrollbar_track_background,
             ThemeColorField::ScrollbarTrackBorder => self.scrollbar_track_border,
@@ -628,13 +628,19 @@ impl ThemeColors {
             ThemeColorField::VimHelixNormalForeground => self.vim_helix_normal_foreground,
             ThemeColorField::VimHelixSelectForeground => self.vim_helix_select_foreground,
             ThemeColorField::EditorForeground => self.editor_foreground,
-            ThemeColorField::EditorCodeLensForeground => self.editor_code_lens_foreground.unwrap_or(self.text_muted),
+            ThemeColorField::EditorCodeLensForeground => {
+                self.editor_code_lens_foreground.unwrap_or(self.text_muted)
+            }
             ThemeColorField::EditorBackground => self.editor_background,
             ThemeColorField::EditorGutterBackground => self.editor_gutter_background,
             ThemeColorField::EditorSubheaderBackground => self.editor_subheader_background,
             ThemeColorField::EditorActiveLineBackground => self.editor_active_line_background,
-            ThemeColorField::EditorHighlightedLineBackground => self.editor_highlighted_line_background,
-            ThemeColorField::EditorDebuggerActiveLineBackground => self.editor_debugger_active_line_background,
+            ThemeColorField::EditorHighlightedLineBackground => {
+                self.editor_highlighted_line_background
+            }
+            ThemeColorField::EditorDebuggerActiveLineBackground => {
+                self.editor_debugger_active_line_background
+            }
             ThemeColorField::EditorLineNumber => self.editor_line_number,
             ThemeColorField::EditorActiveLineNumber => self.editor_active_line_number,
             ThemeColorField::EditorHoverLineNumber => self.editor_hover_line_number,
@@ -643,15 +649,33 @@ impl ThemeColors {
             ThemeColorField::EditorActiveWrapGuide => self.editor_active_wrap_guide,
             ThemeColorField::EditorIndentGuide => self.editor_indent_guide,
             ThemeColorField::EditorIndentGuideActive => self.editor_indent_guide_active,
-            ThemeColorField::EditorDocumentHighlightReadBackground => self.editor_document_highlight_read_background,
-            ThemeColorField::EditorDocumentHighlightWriteBackground => self.editor_document_highlight_write_background,
-            ThemeColorField::EditorDocumentHighlightBracketBackground => self.editor_document_highlight_bracket_background,
-            ThemeColorField::EditorDiffHunkAddedBackground => self.editor_diff_hunk_added_background,
-            ThemeColorField::EditorDiffHunkAddedHollowBackground => self.editor_diff_hunk_added_hollow_background,
-            ThemeColorField::EditorDiffHunkAddedHollowBorder => self.editor_diff_hunk_added_hollow_border,
-            ThemeColorField::EditorDiffHunkDeletedBackground => self.editor_diff_hunk_deleted_background,
-            ThemeColorField::EditorDiffHunkDeletedHollowBackground => self.editor_diff_hunk_deleted_hollow_background,
-            ThemeColorField::EditorDiffHunkDeletedHollowBorder => self.editor_diff_hunk_deleted_hollow_border,
+            ThemeColorField::EditorDocumentHighlightReadBackground => {
+                self.editor_document_highlight_read_background
+            }
+            ThemeColorField::EditorDocumentHighlightWriteBackground => {
+                self.editor_document_highlight_write_background
+            }
+            ThemeColorField::EditorDocumentHighlightBracketBackground => {
+                self.editor_document_highlight_bracket_background
+            }
+            ThemeColorField::EditorDiffHunkAddedBackground => {
+                self.editor_diff_hunk_added_background
+            }
+            ThemeColorField::EditorDiffHunkAddedHollowBackground => {
+                self.editor_diff_hunk_added_hollow_background
+            }
+            ThemeColorField::EditorDiffHunkAddedHollowBorder => {
+                self.editor_diff_hunk_added_hollow_border
+            }
+            ThemeColorField::EditorDiffHunkDeletedBackground => {
+                self.editor_diff_hunk_deleted_background
+            }
+            ThemeColorField::EditorDiffHunkDeletedHollowBackground => {
+                self.editor_diff_hunk_deleted_hollow_background
+            }
+            ThemeColorField::EditorDiffHunkDeletedHollowBorder => {
+                self.editor_diff_hunk_deleted_hollow_border
+            }
             ThemeColorField::TerminalBackground => self.terminal_background,
             ThemeColorField::TerminalForeground => self.terminal_foreground,
             ThemeColorField::TerminalBrightForeground => self.terminal_bright_foreground,
@@ -690,8 +714,12 @@ impl ThemeColors {
             ThemeColorField::VersionControlIgnored => self.version_control_ignored,
             ThemeColorField::VersionControlWordAdded => self.version_control_word_added,
             ThemeColorField::VersionControlWordDeleted => self.version_control_word_deleted,
-            ThemeColorField::VersionControlConflictMarkerOurs => self.version_control_conflict_marker_ours,
-            ThemeColorField::VersionControlConflictMarkerTheirs => self.version_control_conflict_marker_theirs,
+            ThemeColorField::VersionControlConflictMarkerOurs => {
+                self.version_control_conflict_marker_ours
+            }
+            ThemeColorField::VersionControlConflictMarkerTheirs => {
+                self.version_control_conflict_marker_theirs
+            }
             ThemeColorField::SelectionBackground => self.selection_background,
             ThemeColorField::EditorCursor => self.editor_cursor,
             ThemeColorField::Link => self.link,
@@ -765,7 +793,8 @@ mod tests {
         assert_eq!(
             ThemeColorField::iter().count(),
             THEME_COLOR_FIELD_COUNT,
-            "ThemeColorField 的变体数与 ThemeColors 的字段数不一致");
+            "ThemeColorField 的变体数与 ThemeColors 的字段数不一致"
+        );
     }
 
     #[test]
@@ -777,151 +806,610 @@ mod tests {
             .map(|f| f.as_ref().to_string())
             .collect();
         assert!(names.iter().any(|n| n == "border"), "缺少字段 border");
-        assert!(names.iter().any(|n| n == "border_variant"), "缺少字段 border_variant");
-        assert!(names.iter().any(|n| n == "border_focused"), "缺少字段 border_focused");
-        assert!(names.iter().any(|n| n == "border_selected"), "缺少字段 border_selected");
-        assert!(names.iter().any(|n| n == "border_transparent"), "缺少字段 border_transparent");
-        assert!(names.iter().any(|n| n == "border_disabled"), "缺少字段 border_disabled");
-        assert!(names.iter().any(|n| n == "elevated_surface_background"), "缺少字段 elevated_surface_background");
-        assert!(names.iter().any(|n| n == "surface_background"), "缺少字段 surface_background");
-        assert!(names.iter().any(|n| n == "background"), "缺少字段 background");
-        assert!(names.iter().any(|n| n == "element_background"), "缺少字段 element_background");
-        assert!(names.iter().any(|n| n == "element_hover"), "缺少字段 element_hover");
-        assert!(names.iter().any(|n| n == "element_active"), "缺少字段 element_active");
-        assert!(names.iter().any(|n| n == "element_selected"), "缺少字段 element_selected");
-        assert!(names.iter().any(|n| n == "element_selection_background"), "缺少字段 element_selection_background");
-        assert!(names.iter().any(|n| n == "element_disabled"), "缺少字段 element_disabled");
-        assert!(names.iter().any(|n| n == "drop_target_background"), "缺少字段 drop_target_background");
-        assert!(names.iter().any(|n| n == "drop_target_border"), "缺少字段 drop_target_border");
-        assert!(names.iter().any(|n| n == "ghost_element_background"), "缺少字段 ghost_element_background");
-        assert!(names.iter().any(|n| n == "ghost_element_hover"), "缺少字段 ghost_element_hover");
-        assert!(names.iter().any(|n| n == "ghost_element_active"), "缺少字段 ghost_element_active");
-        assert!(names.iter().any(|n| n == "ghost_element_selected"), "缺少字段 ghost_element_selected");
-        assert!(names.iter().any(|n| n == "ghost_element_disabled"), "缺少字段 ghost_element_disabled");
+        assert!(
+            names.iter().any(|n| n == "border_variant"),
+            "缺少字段 border_variant"
+        );
+        assert!(
+            names.iter().any(|n| n == "border_focused"),
+            "缺少字段 border_focused"
+        );
+        assert!(
+            names.iter().any(|n| n == "border_selected"),
+            "缺少字段 border_selected"
+        );
+        assert!(
+            names.iter().any(|n| n == "border_transparent"),
+            "缺少字段 border_transparent"
+        );
+        assert!(
+            names.iter().any(|n| n == "border_disabled"),
+            "缺少字段 border_disabled"
+        );
+        assert!(
+            names.iter().any(|n| n == "elevated_surface_background"),
+            "缺少字段 elevated_surface_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "surface_background"),
+            "缺少字段 surface_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "background"),
+            "缺少字段 background"
+        );
+        assert!(
+            names.iter().any(|n| n == "element_background"),
+            "缺少字段 element_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "element_hover"),
+            "缺少字段 element_hover"
+        );
+        assert!(
+            names.iter().any(|n| n == "element_active"),
+            "缺少字段 element_active"
+        );
+        assert!(
+            names.iter().any(|n| n == "element_selected"),
+            "缺少字段 element_selected"
+        );
+        assert!(
+            names.iter().any(|n| n == "element_selection_background"),
+            "缺少字段 element_selection_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "element_disabled"),
+            "缺少字段 element_disabled"
+        );
+        assert!(
+            names.iter().any(|n| n == "drop_target_background"),
+            "缺少字段 drop_target_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "drop_target_border"),
+            "缺少字段 drop_target_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "ghost_element_background"),
+            "缺少字段 ghost_element_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "ghost_element_hover"),
+            "缺少字段 ghost_element_hover"
+        );
+        assert!(
+            names.iter().any(|n| n == "ghost_element_active"),
+            "缺少字段 ghost_element_active"
+        );
+        assert!(
+            names.iter().any(|n| n == "ghost_element_selected"),
+            "缺少字段 ghost_element_selected"
+        );
+        assert!(
+            names.iter().any(|n| n == "ghost_element_disabled"),
+            "缺少字段 ghost_element_disabled"
+        );
         assert!(names.iter().any(|n| n == "text"), "缺少字段 text");
-        assert!(names.iter().any(|n| n == "text_muted"), "缺少字段 text_muted");
-        assert!(names.iter().any(|n| n == "text_placeholder"), "缺少字段 text_placeholder");
-        assert!(names.iter().any(|n| n == "text_disabled"), "缺少字段 text_disabled");
-        assert!(names.iter().any(|n| n == "text_accent"), "缺少字段 text_accent");
+        assert!(
+            names.iter().any(|n| n == "text_muted"),
+            "缺少字段 text_muted"
+        );
+        assert!(
+            names.iter().any(|n| n == "text_placeholder"),
+            "缺少字段 text_placeholder"
+        );
+        assert!(
+            names.iter().any(|n| n == "text_disabled"),
+            "缺少字段 text_disabled"
+        );
+        assert!(
+            names.iter().any(|n| n == "text_accent"),
+            "缺少字段 text_accent"
+        );
         assert!(names.iter().any(|n| n == "icon"), "缺少字段 icon");
-        assert!(names.iter().any(|n| n == "icon_muted"), "缺少字段 icon_muted");
-        assert!(names.iter().any(|n| n == "icon_disabled"), "缺少字段 icon_disabled");
-        assert!(names.iter().any(|n| n == "icon_placeholder"), "缺少字段 icon_placeholder");
-        assert!(names.iter().any(|n| n == "icon_accent"), "缺少字段 icon_accent");
-        assert!(names.iter().any(|n| n == "debugger_accent"), "缺少字段 debugger_accent");
-        assert!(names.iter().any(|n| n == "status_bar_background"), "缺少字段 status_bar_background");
-        assert!(names.iter().any(|n| n == "title_bar_background"), "缺少字段 title_bar_background");
-        assert!(names.iter().any(|n| n == "title_bar_inactive_background"), "缺少字段 title_bar_inactive_background");
-        assert!(names.iter().any(|n| n == "toolbar_background"), "缺少字段 toolbar_background");
-        assert!(names.iter().any(|n| n == "tab_bar_background"), "缺少字段 tab_bar_background");
-        assert!(names.iter().any(|n| n == "tab_inactive_background"), "缺少字段 tab_inactive_background");
-        assert!(names.iter().any(|n| n == "tab_active_background"), "缺少字段 tab_active_background");
-        assert!(names.iter().any(|n| n == "search_match_background"), "缺少字段 search_match_background");
-        assert!(names.iter().any(|n| n == "search_active_match_background"), "缺少字段 search_active_match_background");
-        assert!(names.iter().any(|n| n == "panel_background"), "缺少字段 panel_background");
-        assert!(names.iter().any(|n| n == "panel_focused_border"), "缺少字段 panel_focused_border");
-        assert!(names.iter().any(|n| n == "panel_indent_guide"), "缺少字段 panel_indent_guide");
-        assert!(names.iter().any(|n| n == "panel_indent_guide_hover"), "缺少字段 panel_indent_guide_hover");
-        assert!(names.iter().any(|n| n == "panel_indent_guide_active"), "缺少字段 panel_indent_guide_active");
-        assert!(names.iter().any(|n| n == "panel_overlay_background"), "缺少字段 panel_overlay_background");
-        assert!(names.iter().any(|n| n == "panel_overlay_hover"), "缺少字段 panel_overlay_hover");
-        assert!(names.iter().any(|n| n == "pane_focused_border"), "缺少字段 pane_focused_border");
-        assert!(names.iter().any(|n| n == "pane_group_border"), "缺少字段 pane_group_border");
-        assert!(names.iter().any(|n| n == "scrollbar_thumb_background"), "缺少字段 scrollbar_thumb_background");
-        assert!(names.iter().any(|n| n == "scrollbar_thumb_hover_background"), "缺少字段 scrollbar_thumb_hover_background");
-        assert!(names.iter().any(|n| n == "scrollbar_thumb_active_background"), "缺少字段 scrollbar_thumb_active_background");
-        assert!(names.iter().any(|n| n == "scrollbar_thumb_border"), "缺少字段 scrollbar_thumb_border");
-        assert!(names.iter().any(|n| n == "scrollbar_track_background"), "缺少字段 scrollbar_track_background");
-        assert!(names.iter().any(|n| n == "scrollbar_track_border"), "缺少字段 scrollbar_track_border");
-        assert!(names.iter().any(|n| n == "minimap_thumb_background"), "缺少字段 minimap_thumb_background");
-        assert!(names.iter().any(|n| n == "minimap_thumb_hover_background"), "缺少字段 minimap_thumb_hover_background");
-        assert!(names.iter().any(|n| n == "minimap_thumb_active_background"), "缺少字段 minimap_thumb_active_background");
-        assert!(names.iter().any(|n| n == "minimap_thumb_border"), "缺少字段 minimap_thumb_border");
-        assert!(names.iter().any(|n| n == "vim_normal_background"), "缺少字段 vim_normal_background");
-        assert!(names.iter().any(|n| n == "vim_insert_background"), "缺少字段 vim_insert_background");
-        assert!(names.iter().any(|n| n == "vim_replace_background"), "缺少字段 vim_replace_background");
-        assert!(names.iter().any(|n| n == "vim_visual_background"), "缺少字段 vim_visual_background");
-        assert!(names.iter().any(|n| n == "vim_visual_line_background"), "缺少字段 vim_visual_line_background");
-        assert!(names.iter().any(|n| n == "vim_visual_block_background"), "缺少字段 vim_visual_block_background");
-        assert!(names.iter().any(|n| n == "vim_yank_background"), "缺少字段 vim_yank_background");
-        assert!(names.iter().any(|n| n == "vim_helix_jump_label_foreground"), "缺少字段 vim_helix_jump_label_foreground");
-        assert!(names.iter().any(|n| n == "vim_helix_normal_background"), "缺少字段 vim_helix_normal_background");
-        assert!(names.iter().any(|n| n == "vim_helix_select_background"), "缺少字段 vim_helix_select_background");
-        assert!(names.iter().any(|n| n == "vim_normal_foreground"), "缺少字段 vim_normal_foreground");
-        assert!(names.iter().any(|n| n == "vim_insert_foreground"), "缺少字段 vim_insert_foreground");
-        assert!(names.iter().any(|n| n == "vim_replace_foreground"), "缺少字段 vim_replace_foreground");
-        assert!(names.iter().any(|n| n == "vim_visual_foreground"), "缺少字段 vim_visual_foreground");
-        assert!(names.iter().any(|n| n == "vim_visual_line_foreground"), "缺少字段 vim_visual_line_foreground");
-        assert!(names.iter().any(|n| n == "vim_visual_block_foreground"), "缺少字段 vim_visual_block_foreground");
-        assert!(names.iter().any(|n| n == "vim_helix_normal_foreground"), "缺少字段 vim_helix_normal_foreground");
-        assert!(names.iter().any(|n| n == "vim_helix_select_foreground"), "缺少字段 vim_helix_select_foreground");
-        assert!(names.iter().any(|n| n == "editor_foreground"), "缺少字段 editor_foreground");
-        assert!(names.iter().any(|n| n == "editor_code_lens_foreground"), "缺少字段 editor_code_lens_foreground");
-        assert!(names.iter().any(|n| n == "editor_background"), "缺少字段 editor_background");
-        assert!(names.iter().any(|n| n == "editor_gutter_background"), "缺少字段 editor_gutter_background");
-        assert!(names.iter().any(|n| n == "editor_subheader_background"), "缺少字段 editor_subheader_background");
-        assert!(names.iter().any(|n| n == "editor_active_line_background"), "缺少字段 editor_active_line_background");
-        assert!(names.iter().any(|n| n == "editor_highlighted_line_background"), "缺少字段 editor_highlighted_line_background");
-        assert!(names.iter().any(|n| n == "editor_debugger_active_line_background"), "缺少字段 editor_debugger_active_line_background");
-        assert!(names.iter().any(|n| n == "editor_line_number"), "缺少字段 editor_line_number");
-        assert!(names.iter().any(|n| n == "editor_active_line_number"), "缺少字段 editor_active_line_number");
-        assert!(names.iter().any(|n| n == "editor_hover_line_number"), "缺少字段 editor_hover_line_number");
-        assert!(names.iter().any(|n| n == "editor_invisible"), "缺少字段 editor_invisible");
-        assert!(names.iter().any(|n| n == "editor_wrap_guide"), "缺少字段 editor_wrap_guide");
-        assert!(names.iter().any(|n| n == "editor_active_wrap_guide"), "缺少字段 editor_active_wrap_guide");
-        assert!(names.iter().any(|n| n == "editor_indent_guide"), "缺少字段 editor_indent_guide");
-        assert!(names.iter().any(|n| n == "editor_indent_guide_active"), "缺少字段 editor_indent_guide_active");
-        assert!(names.iter().any(|n| n == "editor_document_highlight_read_background"), "缺少字段 editor_document_highlight_read_background");
-        assert!(names.iter().any(|n| n == "editor_document_highlight_write_background"), "缺少字段 editor_document_highlight_write_background");
-        assert!(names.iter().any(|n| n == "editor_document_highlight_bracket_background"), "缺少字段 editor_document_highlight_bracket_background");
-        assert!(names.iter().any(|n| n == "editor_diff_hunk_added_background"), "缺少字段 editor_diff_hunk_added_background");
-        assert!(names.iter().any(|n| n == "editor_diff_hunk_added_hollow_background"), "缺少字段 editor_diff_hunk_added_hollow_background");
-        assert!(names.iter().any(|n| n == "editor_diff_hunk_added_hollow_border"), "缺少字段 editor_diff_hunk_added_hollow_border");
-        assert!(names.iter().any(|n| n == "editor_diff_hunk_deleted_background"), "缺少字段 editor_diff_hunk_deleted_background");
-        assert!(names.iter().any(|n| n == "editor_diff_hunk_deleted_hollow_background"), "缺少字段 editor_diff_hunk_deleted_hollow_background");
-        assert!(names.iter().any(|n| n == "editor_diff_hunk_deleted_hollow_border"), "缺少字段 editor_diff_hunk_deleted_hollow_border");
-        assert!(names.iter().any(|n| n == "terminal_background"), "缺少字段 terminal_background");
-        assert!(names.iter().any(|n| n == "terminal_foreground"), "缺少字段 terminal_foreground");
-        assert!(names.iter().any(|n| n == "terminal_bright_foreground"), "缺少字段 terminal_bright_foreground");
-        assert!(names.iter().any(|n| n == "terminal_dim_foreground"), "缺少字段 terminal_dim_foreground");
-        assert!(names.iter().any(|n| n == "terminal_ansi_background"), "缺少字段 terminal_ansi_background");
-        assert!(names.iter().any(|n| n == "terminal_ansi_black"), "缺少字段 terminal_ansi_black");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_black"), "缺少字段 terminal_ansi_bright_black");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_black"), "缺少字段 terminal_ansi_dim_black");
-        assert!(names.iter().any(|n| n == "terminal_ansi_red"), "缺少字段 terminal_ansi_red");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_red"), "缺少字段 terminal_ansi_bright_red");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_red"), "缺少字段 terminal_ansi_dim_red");
-        assert!(names.iter().any(|n| n == "terminal_ansi_green"), "缺少字段 terminal_ansi_green");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_green"), "缺少字段 terminal_ansi_bright_green");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_green"), "缺少字段 terminal_ansi_dim_green");
-        assert!(names.iter().any(|n| n == "terminal_ansi_yellow"), "缺少字段 terminal_ansi_yellow");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_yellow"), "缺少字段 terminal_ansi_bright_yellow");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_yellow"), "缺少字段 terminal_ansi_dim_yellow");
-        assert!(names.iter().any(|n| n == "terminal_ansi_blue"), "缺少字段 terminal_ansi_blue");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_blue"), "缺少字段 terminal_ansi_bright_blue");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_blue"), "缺少字段 terminal_ansi_dim_blue");
-        assert!(names.iter().any(|n| n == "terminal_ansi_magenta"), "缺少字段 terminal_ansi_magenta");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_magenta"), "缺少字段 terminal_ansi_bright_magenta");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_magenta"), "缺少字段 terminal_ansi_dim_magenta");
-        assert!(names.iter().any(|n| n == "terminal_ansi_cyan"), "缺少字段 terminal_ansi_cyan");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_cyan"), "缺少字段 terminal_ansi_bright_cyan");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_cyan"), "缺少字段 terminal_ansi_dim_cyan");
-        assert!(names.iter().any(|n| n == "terminal_ansi_white"), "缺少字段 terminal_ansi_white");
-        assert!(names.iter().any(|n| n == "terminal_ansi_bright_white"), "缺少字段 terminal_ansi_bright_white");
-        assert!(names.iter().any(|n| n == "terminal_ansi_dim_white"), "缺少字段 terminal_ansi_dim_white");
-        assert!(names.iter().any(|n| n == "link_text_hover"), "缺少字段 link_text_hover");
-        assert!(names.iter().any(|n| n == "version_control_added"), "缺少字段 version_control_added");
-        assert!(names.iter().any(|n| n == "version_control_deleted"), "缺少字段 version_control_deleted");
-        assert!(names.iter().any(|n| n == "version_control_modified"), "缺少字段 version_control_modified");
-        assert!(names.iter().any(|n| n == "version_control_renamed"), "缺少字段 version_control_renamed");
-        assert!(names.iter().any(|n| n == "version_control_conflict"), "缺少字段 version_control_conflict");
-        assert!(names.iter().any(|n| n == "version_control_ignored"), "缺少字段 version_control_ignored");
-        assert!(names.iter().any(|n| n == "version_control_word_added"), "缺少字段 version_control_word_added");
-        assert!(names.iter().any(|n| n == "version_control_word_deleted"), "缺少字段 version_control_word_deleted");
-        assert!(names.iter().any(|n| n == "version_control_conflict_marker_ours"), "缺少字段 version_control_conflict_marker_ours");
-        assert!(names.iter().any(|n| n == "version_control_conflict_marker_theirs"), "缺少字段 version_control_conflict_marker_theirs");
-        assert!(names.iter().any(|n| n == "selection_background"), "缺少字段 selection_background");
-        assert!(names.iter().any(|n| n == "editor_cursor"), "缺少字段 editor_cursor");
+        assert!(
+            names.iter().any(|n| n == "icon_muted"),
+            "缺少字段 icon_muted"
+        );
+        assert!(
+            names.iter().any(|n| n == "icon_disabled"),
+            "缺少字段 icon_disabled"
+        );
+        assert!(
+            names.iter().any(|n| n == "icon_placeholder"),
+            "缺少字段 icon_placeholder"
+        );
+        assert!(
+            names.iter().any(|n| n == "icon_accent"),
+            "缺少字段 icon_accent"
+        );
+        assert!(
+            names.iter().any(|n| n == "debugger_accent"),
+            "缺少字段 debugger_accent"
+        );
+        assert!(
+            names.iter().any(|n| n == "status_bar_background"),
+            "缺少字段 status_bar_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "title_bar_background"),
+            "缺少字段 title_bar_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "title_bar_inactive_background"),
+            "缺少字段 title_bar_inactive_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "toolbar_background"),
+            "缺少字段 toolbar_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "tab_bar_background"),
+            "缺少字段 tab_bar_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "tab_inactive_background"),
+            "缺少字段 tab_inactive_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "tab_active_background"),
+            "缺少字段 tab_active_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "search_match_background"),
+            "缺少字段 search_match_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "search_active_match_background"),
+            "缺少字段 search_active_match_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "panel_background"),
+            "缺少字段 panel_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "panel_focused_border"),
+            "缺少字段 panel_focused_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "panel_indent_guide"),
+            "缺少字段 panel_indent_guide"
+        );
+        assert!(
+            names.iter().any(|n| n == "panel_indent_guide_hover"),
+            "缺少字段 panel_indent_guide_hover"
+        );
+        assert!(
+            names.iter().any(|n| n == "panel_indent_guide_active"),
+            "缺少字段 panel_indent_guide_active"
+        );
+        assert!(
+            names.iter().any(|n| n == "panel_overlay_background"),
+            "缺少字段 panel_overlay_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "panel_overlay_hover"),
+            "缺少字段 panel_overlay_hover"
+        );
+        assert!(
+            names.iter().any(|n| n == "pane_focused_border"),
+            "缺少字段 pane_focused_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "pane_group_border"),
+            "缺少字段 pane_group_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "scrollbar_thumb_background"),
+            "缺少字段 scrollbar_thumb_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "scrollbar_thumb_hover_background"),
+            "缺少字段 scrollbar_thumb_hover_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "scrollbar_thumb_active_background"),
+            "缺少字段 scrollbar_thumb_active_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "scrollbar_thumb_border"),
+            "缺少字段 scrollbar_thumb_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "scrollbar_track_background"),
+            "缺少字段 scrollbar_track_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "scrollbar_track_border"),
+            "缺少字段 scrollbar_track_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "minimap_thumb_background"),
+            "缺少字段 minimap_thumb_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "minimap_thumb_hover_background"),
+            "缺少字段 minimap_thumb_hover_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "minimap_thumb_active_background"),
+            "缺少字段 minimap_thumb_active_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "minimap_thumb_border"),
+            "缺少字段 minimap_thumb_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_normal_background"),
+            "缺少字段 vim_normal_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_insert_background"),
+            "缺少字段 vim_insert_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_replace_background"),
+            "缺少字段 vim_replace_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_visual_background"),
+            "缺少字段 vim_visual_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_visual_line_background"),
+            "缺少字段 vim_visual_line_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_visual_block_background"),
+            "缺少字段 vim_visual_block_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_yank_background"),
+            "缺少字段 vim_yank_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_helix_jump_label_foreground"),
+            "缺少字段 vim_helix_jump_label_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_helix_normal_background"),
+            "缺少字段 vim_helix_normal_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_helix_select_background"),
+            "缺少字段 vim_helix_select_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_normal_foreground"),
+            "缺少字段 vim_normal_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_insert_foreground"),
+            "缺少字段 vim_insert_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_replace_foreground"),
+            "缺少字段 vim_replace_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_visual_foreground"),
+            "缺少字段 vim_visual_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_visual_line_foreground"),
+            "缺少字段 vim_visual_line_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_visual_block_foreground"),
+            "缺少字段 vim_visual_block_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_helix_normal_foreground"),
+            "缺少字段 vim_helix_normal_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "vim_helix_select_foreground"),
+            "缺少字段 vim_helix_select_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_foreground"),
+            "缺少字段 editor_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_code_lens_foreground"),
+            "缺少字段 editor_code_lens_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_background"),
+            "缺少字段 editor_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_gutter_background"),
+            "缺少字段 editor_gutter_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_subheader_background"),
+            "缺少字段 editor_subheader_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_active_line_background"),
+            "缺少字段 editor_active_line_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_highlighted_line_background"),
+            "缺少字段 editor_highlighted_line_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_debugger_active_line_background"),
+            "缺少字段 editor_debugger_active_line_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_line_number"),
+            "缺少字段 editor_line_number"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_active_line_number"),
+            "缺少字段 editor_active_line_number"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_hover_line_number"),
+            "缺少字段 editor_hover_line_number"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_invisible"),
+            "缺少字段 editor_invisible"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_wrap_guide"),
+            "缺少字段 editor_wrap_guide"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_active_wrap_guide"),
+            "缺少字段 editor_active_wrap_guide"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_indent_guide"),
+            "缺少字段 editor_indent_guide"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_indent_guide_active"),
+            "缺少字段 editor_indent_guide_active"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_document_highlight_read_background"),
+            "缺少字段 editor_document_highlight_read_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_document_highlight_write_background"),
+            "缺少字段 editor_document_highlight_write_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_document_highlight_bracket_background"),
+            "缺少字段 editor_document_highlight_bracket_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_diff_hunk_added_background"),
+            "缺少字段 editor_diff_hunk_added_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_diff_hunk_added_hollow_background"),
+            "缺少字段 editor_diff_hunk_added_hollow_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_diff_hunk_added_hollow_border"),
+            "缺少字段 editor_diff_hunk_added_hollow_border"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_diff_hunk_deleted_background"),
+            "缺少字段 editor_diff_hunk_deleted_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_diff_hunk_deleted_hollow_background"),
+            "缺少字段 editor_diff_hunk_deleted_hollow_background"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "editor_diff_hunk_deleted_hollow_border"),
+            "缺少字段 editor_diff_hunk_deleted_hollow_border"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_background"),
+            "缺少字段 terminal_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_foreground"),
+            "缺少字段 terminal_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_bright_foreground"),
+            "缺少字段 terminal_bright_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_dim_foreground"),
+            "缺少字段 terminal_dim_foreground"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_background"),
+            "缺少字段 terminal_ansi_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_black"),
+            "缺少字段 terminal_ansi_black"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_black"),
+            "缺少字段 terminal_ansi_bright_black"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_black"),
+            "缺少字段 terminal_ansi_dim_black"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_red"),
+            "缺少字段 terminal_ansi_red"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_red"),
+            "缺少字段 terminal_ansi_bright_red"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_red"),
+            "缺少字段 terminal_ansi_dim_red"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_green"),
+            "缺少字段 terminal_ansi_green"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_green"),
+            "缺少字段 terminal_ansi_bright_green"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_green"),
+            "缺少字段 terminal_ansi_dim_green"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_yellow"),
+            "缺少字段 terminal_ansi_yellow"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_yellow"),
+            "缺少字段 terminal_ansi_bright_yellow"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_yellow"),
+            "缺少字段 terminal_ansi_dim_yellow"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_blue"),
+            "缺少字段 terminal_ansi_blue"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_blue"),
+            "缺少字段 terminal_ansi_bright_blue"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_blue"),
+            "缺少字段 terminal_ansi_dim_blue"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_magenta"),
+            "缺少字段 terminal_ansi_magenta"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_magenta"),
+            "缺少字段 terminal_ansi_bright_magenta"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_magenta"),
+            "缺少字段 terminal_ansi_dim_magenta"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_cyan"),
+            "缺少字段 terminal_ansi_cyan"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_cyan"),
+            "缺少字段 terminal_ansi_bright_cyan"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_cyan"),
+            "缺少字段 terminal_ansi_dim_cyan"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_white"),
+            "缺少字段 terminal_ansi_white"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_bright_white"),
+            "缺少字段 terminal_ansi_bright_white"
+        );
+        assert!(
+            names.iter().any(|n| n == "terminal_ansi_dim_white"),
+            "缺少字段 terminal_ansi_dim_white"
+        );
+        assert!(
+            names.iter().any(|n| n == "link_text_hover"),
+            "缺少字段 link_text_hover"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_added"),
+            "缺少字段 version_control_added"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_deleted"),
+            "缺少字段 version_control_deleted"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_modified"),
+            "缺少字段 version_control_modified"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_renamed"),
+            "缺少字段 version_control_renamed"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_conflict"),
+            "缺少字段 version_control_conflict"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_ignored"),
+            "缺少字段 version_control_ignored"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_word_added"),
+            "缺少字段 version_control_word_added"
+        );
+        assert!(
+            names.iter().any(|n| n == "version_control_word_deleted"),
+            "缺少字段 version_control_word_deleted"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "version_control_conflict_marker_ours"),
+            "缺少字段 version_control_conflict_marker_ours"
+        );
+        assert!(
+            names
+                .iter()
+                .any(|n| n == "version_control_conflict_marker_theirs"),
+            "缺少字段 version_control_conflict_marker_theirs"
+        );
+        assert!(
+            names.iter().any(|n| n == "selection_background"),
+            "缺少字段 selection_background"
+        );
+        assert!(
+            names.iter().any(|n| n == "editor_cursor"),
+            "缺少字段 editor_cursor"
+        );
         assert!(names.iter().any(|n| n == "link"), "缺少字段 link");
     }
 }

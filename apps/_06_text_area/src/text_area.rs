@@ -54,7 +54,9 @@ fn focus_and_show_keyboard(focus_handle: &gpui::FocusHandle, window: &mut Window
     window.focus(focus_handle, cx);
     #[cfg(target_os = "android")]
     {
-        aa_gpui_android::android::jni::show_keyboard_android(aa_gpui_android::KeyboardType::MultiLine);
+        aa_gpui_android::android::jni::show_keyboard_android(
+            aa_gpui_android::KeyboardType::MultiLine,
+        );
     }
     #[cfg(not(target_os = "android"))]
     {

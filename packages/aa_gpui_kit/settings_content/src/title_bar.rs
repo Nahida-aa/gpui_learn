@@ -44,7 +44,9 @@ impl WindowButtonLayoutContent {
     }
 
     #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
-    pub fn into_layout(self) -> Option<WindowButtonLayout> { None }
+    pub fn into_layout(self) -> Option<WindowButtonLayout> {
+        None
+    }
 }
 
 fn window_button_layout_schema(_: &mut SchemaGenerator) -> Schema {

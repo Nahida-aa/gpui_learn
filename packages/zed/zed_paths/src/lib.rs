@@ -484,10 +484,14 @@ pub fn devcontainer_dir() -> &'static PathBuf {
 }
 
 /// Returns the relative path to a `.zed` folder within a project.
-pub fn local_settings_folder_name() -> &'static str { ".zed" }
+pub fn local_settings_folder_name() -> &'static str {
+    ".zed"
+}
 
 /// Returns the relative path to a `.vscode` folder within a project.
-pub fn local_vscode_folder_name() -> &'static str { ".vscode" }
+pub fn local_vscode_folder_name() -> &'static str {
+    ".vscode"
+}
 
 /// Returns the relative path to a `settings.json` file within a project.
 pub fn local_settings_file_relative_path() -> &'static RelPath {
@@ -510,9 +514,13 @@ pub fn local_vscode_tasks_file_relative_path() -> &'static RelPath {
     *CACHED
 }
 
-pub fn debug_task_file_name() -> &'static str { "debug.json" }
+pub fn debug_task_file_name() -> &'static str {
+    "debug.json"
+}
 
-pub fn task_file_name() -> &'static str { "tasks.json" }
+pub fn task_file_name() -> &'static str {
+    "tasks.json"
+}
 
 /// Returns the relative path to a `debug.json` file within a project.
 /// .zed/debug.json
@@ -529,7 +537,9 @@ pub fn local_vscode_launch_file_relative_path() -> &'static RelPath {
     *CACHED
 }
 
-pub fn user_ssh_config_file() -> PathBuf { home_dir().join(".ssh/config") }
+pub fn user_ssh_config_file() -> PathBuf {
+    home_dir().join(".ssh/config")
+}
 
 pub fn global_ssh_config_file() -> Option<&'static Path> {
     if cfg!(windows) {

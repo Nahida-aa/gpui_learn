@@ -18,7 +18,9 @@ use settings_macros::MergeFrom;
 pub struct CommandAliasTarget(String);
 
 impl CommandAliasTarget {
-    pub fn new(name: impl Into<String>) -> Self { Self(name.into()) }
+    pub fn new(name: impl Into<String>) -> Self {
+        Self(name.into())
+    }
 
     /// Build the runtime schema, an `anyOf` whose entries are the same as the
     /// ones produced by [`ActionName::build_schema`] plus a final fallback for
@@ -65,15 +67,21 @@ impl CommandAliasTarget {
 }
 
 impl Display for CommandAliasTarget {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> Result { write!(formatter, "{}", self.0) }
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> Result {
+        write!(formatter, "{}", self.0)
+    }
 }
 
 impl AsRef<str> for CommandAliasTarget {
-    fn as_ref(&self) -> &str { &self.0 }
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
 }
 
 impl JsonSchema for CommandAliasTarget {
-    fn schema_name() -> Cow<'static, str> { "CommandAliasTarget".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "CommandAliasTarget".into()
+    }
 
     /// Returns `true` as a placeholder.
     ///
@@ -82,7 +90,9 @@ impl JsonSchema for CommandAliasTarget {
     /// cannot be produced here because `JsonSchema::json_schema` receives no
     /// runtime context. It is instead built by call sites that do have access
     /// to the GPUI action registry using [`CommandAliasTarget::build_schema`].
-    fn json_schema(_generator: &mut SchemaGenerator) -> Schema { json_schema!(true) }
+    fn json_schema(_generator: &mut SchemaGenerator) -> Schema {
+        json_schema!(true)
+    }
 }
 
 /// The name of a registered GPUI action, serialized as a plain JSON string, for
@@ -108,7 +118,9 @@ fn add_description(schema: &mut Schema, description: &str) {
 }
 
 impl ActionName {
-    pub fn new(name: impl Into<String>) -> Self { Self(name.into()) }
+    pub fn new(name: impl Into<String>) -> Self {
+        Self(name.into())
+    }
 
     /// Build the JSON schema to be used for `$defs/ActionName`, basically an
     /// `anyOf` of all of the available actions with per-action documentation
@@ -145,11 +157,15 @@ impl ActionName {
 }
 
 impl Display for ActionName {
-    fn fmt(&self, formatter: &mut Formatter<'_>) -> Result { write!(formatter, "{}", self.0) }
+    fn fmt(&self, formatter: &mut Formatter<'_>) -> Result {
+        write!(formatter, "{}", self.0)
+    }
 }
 
 impl AsRef<str> for ActionName {
-    fn as_ref(&self) -> &str { &self.0 }
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
 }
 
 impl JsonSchema for ActionName {
@@ -158,7 +174,9 @@ impl JsonSchema for ActionName {
     /// Keeping it stable as `"ActionName"` lets consumers reference it by
     /// `#/$defs/ActionName` and lets [`util::schemars::replace_subschema`] look
     /// it up at runtime to swap in the real schema.
-    fn schema_name() -> Cow<'static, str> { "ActionName".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "ActionName".into()
+    }
 
     /// Returns `true` as a placeholder.
     ///
@@ -167,7 +185,9 @@ impl JsonSchema for ActionName {
     /// `JsonSchema::json_schema` receives no runtime context. It is instead
     /// built by call sites that do have access to the GPUI action registry
     /// using [`ActionName::build_schema`].
-    fn json_schema(_: &mut SchemaGenerator) -> Schema { json_schema!(true) }
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        json_schema!(true)
+    }
 }
 
 /// A GPUI action together with its input data, serialized as a two-element JSON
@@ -184,7 +204,9 @@ impl JsonSchema for ActionWithArguments {
     /// by `#/$defs/ActionWithArguments` and lets
     /// [`util::schemars::replace_subschema`] look it up at runtime to swap in
     /// the real schema.
-    fn schema_name() -> Cow<'static, str> { "ActionWithArguments".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "ActionWithArguments".into()
+    }
 
     /// Returns `true` as a placeholder.
     ///
@@ -194,7 +216,9 @@ impl JsonSchema for ActionWithArguments {
     /// runtime context. At the time of writing, it is instead built by
     /// [`KeymapFile::generate_json_schema`], where all of the runtime
     /// information is available.
-    fn json_schema(_: &mut SchemaGenerator) -> Schema { json_schema!(true) }
+    fn json_schema(_: &mut SchemaGenerator) -> Schema {
+        json_schema!(true)
+    }
 }
 
 #[cfg(test)]

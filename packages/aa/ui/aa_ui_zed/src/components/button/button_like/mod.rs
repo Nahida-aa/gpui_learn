@@ -34,10 +34,10 @@ use aa_theme_gpui::ActiveTheme;
 use crate::components::button::ClickHandler;
 use crate::components::button::{ButtonRadius, ButtonStyle};
 use crate::components::indicator::Indicator;
-use crate::styles::{DynamicSpacing, ElevationIndex};
 use crate::components::tooltip::TooltipHost;
-use crate::traits::{Clickable, Disableable, StyledExt as _, Toggleable};
 use crate::styles::units::rems_from_px;
+use crate::styles::{DynamicSpacing, ElevationIndex};
+use crate::traits::{Clickable, Disableable, StyledExt as _, Toggleable};
 
 /// 图标在按钮 / 菜单条目里的哪一侧（对齐 zed `IconPosition`，
 /// zed `button_like.rs:49`）。
@@ -462,8 +462,6 @@ impl ButtonLike {
         self
     }
 
-
-
     /// 悬停提示（`Tooltip::text("...")` 等）。
     #[inline(always)]
     pub fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
@@ -579,9 +577,8 @@ impl RenderOnce for ButtonLike {
             button = button.aria_keyshortcuts(keyshortcuts);
         }
         if let Some((action, mut listener)) = self.on_a11y_action {
-            button = button.on_a11y_action(action, move |data, window, cx| {
-                listener(data, window, cx)
-            });
+            button =
+                button.on_a11y_action(action, move |data, window, cx| listener(data, window, cx));
         }
 
         // 焦点跟踪（ButtonCommon::track_focus）。
@@ -601,12 +598,12 @@ impl RenderOnce for ButtonLike {
         //
         // `gap` 也按 zed 取 `Base04`。
         button = button
-            .h(self.height.unwrap_or_else(|| self.button_size.rems().into()))
+            .h(self
+                .height
+                .unwrap_or_else(|| self.button_size.rems().into()))
             .gap(DynamicSpacing::Base04.rems(cx))
             .map(|this| match self.button_size {
-                ButtonSize::Large | ButtonSize::Medium => {
-                    this.px(DynamicSpacing::Base08.rems(cx))
-                }
+                ButtonSize::Large | ButtonSize::Medium => this.px(DynamicSpacing::Base08.rems(cx)),
                 ButtonSize::Default | ButtonSize::Compact => {
                     this.px(DynamicSpacing::Base04.rems(cx))
                 }
@@ -665,7 +662,8 @@ impl RenderOnce for ButtonLike {
         // 旧实现给 disabled 一律刷 `ghost_element_disabled`，于是禁用的
         // Subtle 图标按钮（如 tab bar 的前后导航）变成一整块纯色，且底色与
         // `icon_disabled` 前景接近到看不出图标。
-        let (bg, hover_bg, active_bg) = (style_colors.bg[0], style_colors.bg[1], style_colors.bg[2]);
+        let (bg, hover_bg, active_bg) =
+            (style_colors.bg[0], style_colors.bg[1], style_colors.bg[2]);
         // 对齐 zed：壳可以显式指定悬停 / 按下底色（`IconButton::hover_background`
         // / `active_background`），没指定才用样式本身的。
         let hover_bg = self.hover_background.unwrap_or(hover_bg);
@@ -715,30 +713,27 @@ impl RenderOnce for ButtonLike {
                     window.prevent_default();
                     cx.stop_propagation();
                 })
-                .on_mouse_up(
-                    MouseButton::Right,
-                    move |event, window, cx| {
-                        cx.stop_propagation();
-                        if let Some(handler) = self.on_right_click.as_ref() {
-                            let click_event = ClickEvent::Mouse(MouseClickEvent {
-                                down: MouseDownEvent {
-                                    button: MouseButton::Right,
-                                    position: event.position,
-                                    modifiers: event.modifiers,
-                                    click_count: 1,
-                                    first_mouse: false,
-                                },
-                                up: MouseUpEvent {
-                                    button: MouseButton::Right,
-                                    position: event.position,
-                                    modifiers: event.modifiers,
-                                    click_count: 1,
-                                },
-                            });
-                            handler(&click_event, window, cx);
-                        }
-                    },
-                );
+                .on_mouse_up(MouseButton::Right, move |event, window, cx| {
+                    cx.stop_propagation();
+                    if let Some(handler) = self.on_right_click.as_ref() {
+                        let click_event = ClickEvent::Mouse(MouseClickEvent {
+                            down: MouseDownEvent {
+                                button: MouseButton::Right,
+                                position: event.position,
+                                modifiers: event.modifiers,
+                                click_count: 1,
+                                first_mouse: false,
+                            },
+                            up: MouseUpEvent {
+                                button: MouseButton::Right,
+                                position: event.position,
+                                modifiers: event.modifiers,
+                                click_count: 1,
+                            },
+                        });
+                        handler(&click_event, window, cx);
+                    }
+                });
         }
 
         // 可悬浮提示：直接交给 gpui（zed 也是转发给
@@ -815,10 +810,7 @@ impl ButtonCommon for ButtonLike {
         self
     }
 
-    fn tooltip(
-        mut self,
-        tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static,
-    ) -> Self {
+    fn tooltip(mut self, tooltip: impl Fn(&mut Window, &mut App) -> AnyView + 'static) -> Self {
         self.tooltip = Some(Rc::new(tooltip));
         self
     }
@@ -828,8 +820,8 @@ impl ButtonCommon for ButtonLike {
 mod tests {
     use super::*;
     use crate::components::button::TintColor;
-    use gpui::{TestAppContext, hsla};
     use crate::{Icon, IconSize};
+    use gpui::{TestAppContext, hsla};
 
     /// 冒烟：builder 链（含 trait 方法）走一遍，字段确实被设置。
     #[test]
@@ -854,10 +846,7 @@ mod tests {
     #[gpui::test]
     fn tinted_style_resolves_status_colors(cx: &mut TestAppContext) {
         cx.update(|cx| {
-            let colors = button_like_colors(
-                ButtonStyle::Tinted(TintColor::Error),
-                cx.theme(),
-            );
+            let colors = button_like_colors(ButtonStyle::Tinted(TintColor::Error), cx.theme());
             let status = cx.theme().status();
             assert_eq!(colors.bg[0], status.error_background);
             assert_eq!(colors.border, status.error_border);

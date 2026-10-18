@@ -41,16 +41,24 @@ impl MTime {
     /// Returns the value wrapped by this `MTime`, for presentation to the user. The name including
     /// "_for_user" is to discourage misuse - this method should not be used when making decisions
     /// about file dirtiness.
-    pub fn timestamp_for_user(self) -> SystemTime { self.0 }
+    pub fn timestamp_for_user(self) -> SystemTime {
+        self.0
+    }
 
     /// Temporary method to split out the behavior changes from introduction of this newtype.
-    pub fn bad_is_greater_than(self, other: MTime) -> bool { self.0 > other.0 }
+    pub fn bad_is_greater_than(self, other: MTime) -> bool {
+        self.0 > other.0
+    }
 }
 
 impl From<proto::Timestamp> for MTime {
-    fn from(timestamp: proto::Timestamp) -> Self { MTime(timestamp.into()) }
+    fn from(timestamp: proto::Timestamp) -> Self {
+        MTime(timestamp.into())
+    }
 }
 
 impl From<MTime> for proto::Timestamp {
-    fn from(mtime: MTime) -> Self { mtime.0.into() }
+    fn from(mtime: MTime) -> Self {
+        mtime.0.into()
+    }
 }

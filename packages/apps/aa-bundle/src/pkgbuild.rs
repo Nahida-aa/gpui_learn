@@ -93,9 +93,9 @@ pub fn read_package_info(project_dir: &Path) -> Result<PackageInfo> {
         .with_context(|| format!("读取 {} 失败", manifest_path.display()))?;
     let manifest: CrateManifest =
         toml::from_str(&text).with_context(|| format!("解析 {} 失败", manifest_path.display()))?;
-    let package = manifest
-        .package
-        .context("Cargo.toml 没有 [package] 段（传的是 workspace 根？请用 -p 指向具体 crate 目录）")?;
+    let package = manifest.package.context(
+        "Cargo.toml 没有 [package] 段（传的是 workspace 根？请用 -p 指向具体 crate 目录）",
+    )?;
 
     let license = match package.license {
         Some(StringOrWorkspace::Literal(s)) => s,
@@ -181,12 +181,24 @@ impl Default for ArchSettings {
 fn arch_settings_from(arch: &Option<crate::ArchTable>) -> ArchSettings {
     let mut s = ArchSettings::default();
     if let Some(t) = arch {
-        if let Some(v) = &t.depends { s.depends = v.clone(); }
-        if let Some(v) = &t.makedepends { s.makedepends = v.clone(); }
-        if let Some(v) = &t.arch { s.arch = v.clone(); }
-        if let Some(v) = &t.url { s.url = v.clone(); }
-        if let Some(v) = &t.prefix { s.prefix = v.clone(); }
-        if let Some(v) = &t.icon_dir { s.icon_dir = v.clone(); }
+        if let Some(v) = &t.depends {
+            s.depends = v.clone();
+        }
+        if let Some(v) = &t.makedepends {
+            s.makedepends = v.clone();
+        }
+        if let Some(v) = &t.arch {
+            s.arch = v.clone();
+        }
+        if let Some(v) = &t.url {
+            s.url = v.clone();
+        }
+        if let Some(v) = &t.prefix {
+            s.prefix = v.clone();
+        }
+        if let Some(v) = &t.icon_dir {
+            s.icon_dir = v.clone();
+        }
     }
     s
 }
@@ -245,7 +257,10 @@ pub fn resolve_bin_name<'a>(
     }
     match info.bin_count {
         0 => Ok(info.name.as_str()),
-        1 => Ok(info.bin_name.as_deref().expect("bin_count==1 时必有 bin_name")),
+        1 => Ok(info
+            .bin_name
+            .as_deref()
+            .expect("bin_count==1 时必有 bin_name")),
         n => bail!(
             "{} 有 {n} 个 [[bin]] 目标，无法判断该装哪个。\
              请用 --bin-name 指定，或在 bundle 元数据里加 `[bundle.arch]` 后\
@@ -271,7 +286,8 @@ pub fn default_out_dir(project_dir: &Path, bin_name: Option<&str>) -> Result<Pat
 /// 返回 `(PKGBUILD 文本, Option<(desktop 文件名, desktop 内容)>)`。
 pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(String, String)>)> {
     let info = read_package_info(opts.project_dir)?;
-    let identity: BundleMeta = crate::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
+    let identity: BundleMeta =
+        crate::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
     // 错误消息 / PKGBUILD 注释里展示的「配置来源」：多引用按顺序用 + 连起来
     let meta_ref = opts.bundle_meta.join(" + ");
     let mut settings = arch_settings_from(&identity.arch);
@@ -300,7 +316,10 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     let license = opts.license.unwrap_or(&info.license);
     let prefix = settings.prefix.trim_end_matches('/');
     // pkgver：bundle 元数据的 version > Cargo.toml 的 version
-    let version = identity.version.clone().unwrap_or_else(|| info.version.clone());
+    let version = identity
+        .version
+        .clone()
+        .unwrap_or_else(|| info.version.clone());
     // pkgdesc 回退链：short_description > Cargo.toml description > name > crate 名
     // （与 cargo-bundle 的 short_description() 同思路）
     let pkgdesc = identity
@@ -369,7 +388,9 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
 
     let desktop_install = {
         let (name, _) = &desktop_rel;
-        format!("  install -Dm644 \"$startdir/{name}\" \"$pkgdir{prefix}/share/applications/{name}\"\n")
+        format!(
+            "  install -Dm644 \"$startdir/{name}\" \"$pkgdir{prefix}/share/applications/{name}\"\n"
+        )
     };
 
     // 图标安装行：路径来自 `[bundle].icon`（cargo-bundle 的字段），安装目录来自
@@ -446,7 +467,6 @@ package() {{
         version = version,
         pkgdesc = pkgdesc,
         arch = arch,
-
         license = license,
         depends_line = depends_line,
         makedepends_line = makedepends_line,
@@ -470,7 +490,8 @@ mod tests {
 
     /// 建一个本测试独有的临时目录（pid + tag 防相撞）。
     fn test_dir(tag: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("aa-bundle-pkgbuild-{}-{}", std::process::id(), tag));
+        let dir =
+            std::env::temp_dir().join(format!("aa-bundle-pkgbuild-{}-{}", std::process::id(), tag));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).expect("建临时目录失败");
         dir
@@ -548,9 +569,7 @@ name = "AaCode"
             "没声明依赖时不该写 depends= 行：{pkgbuild}"
         );
         assert!(
-            pkgbuild
-                .lines()
-                .any(|l| l == "makedepends=(cargo rust)"),
+            pkgbuild.lines().any(|l| l == "makedepends=(cargo rust)"),
             "构建 Rust crate 必然需要 cargo/rust，这不算猜：{pkgbuild}"
         );
         // 没配 desktop_template → 由 aa-bundle 自动生成（不再是不产出）
@@ -620,10 +639,7 @@ name = "AaCode"
             pkgbuild.contains("cargo build --profile dev -p aacode"),
             "{pkgbuild}"
         );
-        assert!(
-            pkgbuild.contains("$_target_dir/debug/aacode"),
-            "{pkgbuild}"
-        );
+        assert!(pkgbuild.contains("$_target_dir/debug/aacode"), "{pkgbuild}");
     }
 
     #[test]
@@ -838,13 +854,16 @@ name = "AaCode"
 
         // 没有 [bundle.arch] 子表 → 走默认值
         let identity =
-            crate::load_bundle_meta("Cargo.toml#[package, metadata, bundle-stable]", &dir)
-                .unwrap();
+            crate::load_bundle_meta("Cargo.toml#[package, metadata, bundle-stable]", &dir).unwrap();
         let settings = arch_settings_from(&identity.arch);
         assert_eq!(settings.makedepends, vec!["cargo", "rust"]);
         assert_eq!(settings.prefix, "/usr");
         // 与 cargo-bundle 一致：不声明就不给依赖（而不是塞一份猜的基线）
-        assert!(settings.depends.is_empty(), "默认依赖应为空：{:?}", settings.depends);
+        assert!(
+            settings.depends.is_empty(),
+            "默认依赖应为空：{:?}",
+            settings.depends
+        );
         // 未知字段被忽略（不像 cargo-bundle 那样 deny_unknown_fields）
         assert!(identity.desktop_template.is_none());
     }
@@ -968,7 +987,10 @@ name = "AaCode"
         );
         // 没配 category → 回退 Utility;
         assert!(content.contains("Categories=Utility;"), "{content}");
-        assert!(content.contains("StartupWMClass=dev.aa.AaCode"), "{content}");
+        assert!(
+            content.contains("StartupWMClass=dev.aa.AaCode"),
+            "{content}"
+        );
     }
 
     #[test]
@@ -994,7 +1016,10 @@ name = "AaCode"
         assert!(out.contains("Icon=my_icon"), "{out}");
         assert!(out.contains("MimeType=text/plain;"), "{out}");
         // 刻意不写的键
-        assert!(!out.contains("Version="), "Version 是 spec 版本不是 app 版本");
+        assert!(
+            !out.contains("Version="),
+            "Version 是 spec 版本不是 app 版本"
+        );
         assert!(!out.contains("Encoding="), "Encoding 已废弃");
     }
 
@@ -1002,7 +1027,11 @@ name = "AaCode"
     fn desktop_rendering_substitutes_only_known_vars() {
         let out = crate::render_template(
             "Name=$APP_NAME\nExec=$APP_CLI %F\nIcon=$APP_ICON\nX=$UNKNOWN",
-            &[("APP_NAME", "AaCode"), ("APP_CLI", "/usr/bin/aacode"), ("APP_ICON", "aacode")],
+            &[
+                ("APP_NAME", "AaCode"),
+                ("APP_CLI", "/usr/bin/aacode"),
+                ("APP_ICON", "aacode"),
+            ],
         );
         assert!(out.contains("Name=AaCode"));
         assert!(out.contains("Exec=/usr/bin/aacode %F"));

@@ -27,7 +27,9 @@ pub struct LanguageModelParameters {
 pub struct LanguageModelProviderSetting(pub String);
 
 impl JsonSchema for LanguageModelProviderSetting {
-    fn schema_name() -> Cow<'static, str> { "LanguageModelProviderSetting".into() }
+    fn schema_name() -> Cow<'static, str> {
+        "LanguageModelProviderSetting".into()
+    }
 
     fn json_schema(_: &mut schemars::SchemaGenerator) -> schemars::Schema {
         // list the builtin providers as a subset so that we still auto complete them in the settings
@@ -63,9 +65,13 @@ impl JsonSchema for LanguageModelProviderSetting {
 }
 
 impl From<String> for LanguageModelProviderSetting {
-    fn from(provider: String) -> Self { Self(provider) }
+    fn from(provider: String) -> Self {
+        Self(provider)
+    }
 }
 
 impl From<&str> for LanguageModelProviderSetting {
-    fn from(provider: &str) -> Self { Self(provider.to_string()) }
+    fn from(provider: &str) -> Self {
+        Self(provider.to_string())
+    }
 }

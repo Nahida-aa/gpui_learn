@@ -747,7 +747,9 @@ impl Fs for RealFs {
         Ok(Box::pin(iter(entries)))
     }
 
-    fn start_native_watcher(&self) -> Result<()> { self.native_watcher.ensure_backend() }
+    fn start_native_watcher(&self) -> Result<()> {
+        self.native_watcher.ensure_backend()
+    }
 
     fn record_watcher_diagnostics(&self) -> Option<fs_watcher::WatchRecording> {
         Some(fs_watcher::WatchRecording::new([
@@ -756,13 +758,17 @@ impl Fs for RealFs {
         ]))
     }
 
-    fn path_exists(&self, path: &Path) -> bool { std::fs::symlink_metadata(path).is_ok() }
+    fn path_exists(&self, path: &Path) -> bool {
+        std::fs::symlink_metadata(path).is_ok()
+    }
 
     fn is_path_case_sensitive(&self, path: &Path) -> bool {
         !fs_watcher::case_insensitive_path(path)
     }
 
-    fn requires_poll_watcher(&self, path: &Path) -> bool { fs_watcher::requires_poll_watcher(path) }
+    fn requires_poll_watcher(&self, path: &Path) -> bool {
+        fs_watcher::requires_poll_watcher(path)
+    }
 
     async fn watch(
         &self,
@@ -889,7 +895,9 @@ impl Fs for RealFs {
         String::from_utf8(output.stdout).map_err(Into::into)
     }
 
-    fn is_fake(&self) -> bool { false }
+    fn is_fake(&self) -> bool {
+        false
+    }
 
     fn subscribe_to_jobs(&self) -> crate::jobs::JobEventReceiver {
         let (sender, receiver) = futures::channel::mpsc::unbounded();
@@ -1007,7 +1015,11 @@ impl Fs for RealFs {
 
 #[cfg(not(any(target_os = "linux", target_os = "freebsd")))]
 impl Watcher for RealWatcher {
-    fn add(&self, _: &Path) -> Result<()> { Ok(()) }
+    fn add(&self, _: &Path) -> Result<()> {
+        Ok(())
+    }
 
-    fn remove(&self, _: &Path) -> Result<()> { Ok(()) }
+    fn remove(&self, _: &Path) -> Result<()> {
+        Ok(())
+    }
 }

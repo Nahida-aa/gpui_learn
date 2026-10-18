@@ -22,7 +22,10 @@ pub mod sidebar;
 pub mod thinking;
 pub mod tool_permissions;
 
-pub use agent_server::{AgentConfigOptionValue, AllAgentServersSettings, CustomAgentServerSettings};
+use crate::{DockPosition, common::ExtendingVec};
+pub use agent_server::{
+    AgentConfigOptionValue, AllAgentServersSettings, CustomAgentServerSettings,
+};
 pub use auto_compact::{AutoCompactSettingsContent, AutoCompactThreshold};
 pub use model_selection::{
     LanguageModelParameters, LanguageModelProviderSetting, LanguageModelSelection,
@@ -35,7 +38,6 @@ pub use thinking::ThinkingBlockDisplay;
 pub use tool_permissions::{
     ToolPermissionMode, ToolPermissionsContent, ToolRegexRule, ToolRulesContent,
 };
-use crate::{DockPosition, common::ExtendingVec};
 
 #[with_fallible_options]
 #[derive(Clone, PartialEq, Serialize, Deserialize, JsonSchema, MergeFrom, Debug, Default)]
@@ -234,7 +236,9 @@ pub struct AgentSettingsContent {
 }
 
 impl AgentSettingsContent {
-    pub fn set_dock(&mut self, dock: DockPosition) { self.dock = Some(dock); }
+    pub fn set_dock(&mut self, dock: DockPosition) {
+        self.dock = Some(dock);
+    }
 
     pub fn set_threads_sidebar_position(&mut self, position: Option<SidebarDockPosition>) {
         self.sidebar_side = None;
@@ -254,7 +258,9 @@ impl AgentSettingsContent {
         self.threads_sidebar.get_or_insert_default().auto_open = auto_open;
     }
 
-    pub fn set_flexible_size(&mut self, flexible: bool) { self.flexible = Some(flexible); }
+    pub fn set_flexible_size(&mut self, flexible: bool) {
+        self.flexible = Some(flexible);
+    }
 
     pub fn set_model(&mut self, language_model: LanguageModelSelection) {
         self.default_model = Some(language_model)
@@ -270,7 +276,9 @@ impl AgentSettingsContent {
         });
     }
 
-    pub fn set_profile(&mut self, profile_id: Arc<str>) { self.default_profile = Some(profile_id); }
+    pub fn set_profile(&mut self, profile_id: Arc<str>) {
+        self.default_profile = Some(profile_id);
+    }
 
     pub fn add_favorite_model(&mut self, model: LanguageModelSelection) {
         // Note: this is intentional to not compare using `PartialEq`here.

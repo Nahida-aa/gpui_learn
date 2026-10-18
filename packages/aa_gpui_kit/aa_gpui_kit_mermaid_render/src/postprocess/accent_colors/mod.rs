@@ -167,9 +167,13 @@ impl AccentStackEntry {
         }
     }
 
-    pub fn tracks_node(self) -> bool { self.tracks_node }
+    pub fn tracks_node(self) -> bool {
+        self.tracks_node
+    }
 
-    fn accent_idx(self) -> Option<usize> { self.accent_idx }
+    fn accent_idx(self) -> Option<usize> {
+        self.accent_idx
+    }
 }
 
 pub(crate) fn current_stack_accent(stack: &[AccentStackEntry]) -> Option<usize> {

@@ -11,8 +11,8 @@ mod icon;
 mod icon_decoration;
 mod icon_with_indicator;
 
+pub use aa_icons::IconName;
 pub use decorated_icon::DecoratedIcon;
 pub use icon::{AnyIcon, Icon, IconSize, git_hosting_provider_icon};
-pub use aa_icons::IconName;
 pub use icon_decoration::{IconDecoration, IconDecorationKind, KnockoutIconName};
 pub use icon_with_indicator::IconWithIndicator;

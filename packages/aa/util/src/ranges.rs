@@ -81,7 +81,9 @@ impl<T: Ord + Clone> RangeExt<T> for Range<T> {
         cmp::min(&self.start, &self.end).clone()..cmp::max(&self.start, &self.end).clone()
     }
 
-    fn to_inclusive(&self) -> RangeInclusive<T> { self.start.clone()..=self.end.clone() }
+    fn to_inclusive(&self) -> RangeInclusive<T> {
+        self.start.clone()..=self.end.clone()
+    }
 
     fn overlaps(&self, other: &Range<T>) -> bool {
         self.start < other.end && other.start < self.end
@@ -97,7 +99,9 @@ impl<T: Ord + Clone> RangeExt<T> for RangeInclusive<T> {
         cmp::min(self.start(), self.end()).clone()..=cmp::max(self.start(), self.end()).clone()
     }
 
-    fn to_inclusive(&self) -> RangeInclusive<T> { self.clone() }
+    fn to_inclusive(&self) -> RangeInclusive<T> {
+        self.clone()
+    }
 
     fn overlaps(&self, other: &Range<T>) -> bool {
         self.start() < &other.end && &other.start <= self.end()

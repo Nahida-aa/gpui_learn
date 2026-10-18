@@ -86,7 +86,10 @@ mod tests {
 
     #[test]
     fn from_any_and_all_covers_three_states() {
-        assert_eq!(ToggleState::from_any_and_all(true, true), ToggleState::Selected);
+        assert_eq!(
+            ToggleState::from_any_and_all(true, true),
+            ToggleState::Selected
+        );
         assert_eq!(
             ToggleState::from_any_and_all(false, false),
             ToggleState::Unselected

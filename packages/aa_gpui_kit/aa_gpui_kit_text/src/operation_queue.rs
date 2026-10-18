@@ -1,4 +1,4 @@
-use clock::{Lamport};
+use clock::Lamport;
 use std::{fmt::Debug, ops::Add};
 use sum_tree::{ContextLessSummary, Dimension, Edit, Item, KeyedItem, SumTree};
 
@@ -22,19 +22,29 @@ pub struct OperationSummary {
 }
 
 impl OperationKey {
-    pub fn new(timestamp: clock::Lamport) -> Self { Self(timestamp) }
+    pub fn new(timestamp: clock::Lamport) -> Self {
+        Self(timestamp)
+    }
 }
 
 impl<T: Operation> Default for OperationQueue<T> {
-    fn default() -> Self { OperationQueue::new() }
+    fn default() -> Self {
+        OperationQueue::new()
+    }
 }
 
 impl<T: Operation> OperationQueue<T> {
-    pub fn new() -> Self { OperationQueue(SumTree::default()) }
+    pub fn new() -> Self {
+        OperationQueue(SumTree::default())
+    }
 
-    pub fn len(&self) -> usize { self.0.summary().len }
+    pub fn len(&self) -> usize {
+        self.0.summary().len
+    }
 
-    pub fn is_empty(&self) -> bool { self.len() == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 
     pub fn insert(&mut self, mut ops: Vec<T>) {
         ops.sort_unstable_by_key(|op| op.lamport_timestamp());
@@ -53,7 +63,9 @@ impl<T: Operation> OperationQueue<T> {
         clone
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = &T> { self.0.iter().map(|i| &i.0) }
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.0.iter().map(|i| &i.0)
+    }
 }
 
 impl ContextLessSummary for OperationSummary {
@@ -84,7 +96,9 @@ impl Add<&Self> for OperationSummary {
 }
 
 impl Dimension<'_, OperationSummary> for OperationKey {
-    fn zero(_cx: ()) -> Self { OperationKey::new(Lamport::MIN) }
+    fn zero(_cx: ()) -> Self {
+        OperationKey::new(Lamport::MIN)
+    }
 
     fn add_summary(&mut self, summary: &OperationSummary, _: ()) {
         assert!(*self <= summary.key);
@@ -106,7 +120,9 @@ impl<T: Operation> Item for OperationItem<T> {
 impl<T: Operation> KeyedItem for OperationItem<T> {
     type Key = OperationKey;
 
-    fn key(&self) -> Self::Key { OperationKey::new(self.0.lamport_timestamp()) }
+    fn key(&self) -> Self::Key {
+        OperationKey::new(self.0.lamport_timestamp())
+    }
 }
 
 #[cfg(test)]
@@ -142,6 +158,8 @@ mod tests {
     struct TestOperation(clock::Lamport);
 
     impl Operation for TestOperation {
-        fn lamport_timestamp(&self) -> clock::Lamport { self.0 }
+        fn lamport_timestamp(&self) -> clock::Lamport {
+            self.0
+        }
     }
 }

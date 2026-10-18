@@ -19,8 +19,12 @@ impl sum_tree::Item for Chunk {
 }
 
 impl sum_tree::ContextLessSummary for ChunkSummary {
-    fn zero() -> Self { Default::default() }
-    fn add_summary(&mut self, summary: &Self) { self.text += &summary.text; }
+    fn zero() -> Self {
+        Default::default()
+    }
+    fn add_summary(&mut self, summary: &Self) {
+        self.text += &summary.text;
+    }
 }
 
 /// Summary of a string of text.
@@ -133,8 +137,12 @@ impl<'a> From<&'a str> for TextSummary {
 }
 
 impl sum_tree::ContextLessSummary for TextSummary {
-    fn zero() -> Self { Default::default() }
-    fn add_summary(&mut self, summary: &Self) { *self += summary; }
+    fn zero() -> Self {
+        Default::default()
+    }
+    fn add_summary(&mut self, summary: &Self) {
+        *self += summary;
+    }
 }
 
 impl ops::Add<Self> for TextSummary {
@@ -178,5 +186,7 @@ impl<'a> ops::AddAssign<&'a Self> for TextSummary {
 }
 
 impl ops::AddAssign<Self> for TextSummary {
-    fn add_assign(&mut self, other: Self) { *self += &other; }
+    fn add_assign(&mut self, other: Self) {
+        *self += &other;
+    }
 }

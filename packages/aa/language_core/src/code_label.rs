@@ -146,17 +146,25 @@ impl CodeLabel {
         }
     }
 
-    pub fn text(&self) -> &str { self.text.as_str() }
+    pub fn text(&self) -> &str {
+        self.text.as_str()
+    }
 
-    pub fn filter_text(&self) -> &str { &self.text[self.filter_range.clone()] }
+    pub fn filter_text(&self) -> &str {
+        &self.text[self.filter_range.clone()]
+    }
 }
 
 impl From<String> for CodeLabel {
-    fn from(value: String) -> Self { Self::plain(value, None) }
+    fn from(value: String) -> Self {
+        Self::plain(value, None)
+    }
 }
 
 impl From<&str> for CodeLabel {
-    fn from(value: &str) -> Self { Self::plain(value.to_string(), None) }
+    fn from(value: &str) -> Self {
+        Self::plain(value.to_string(), None)
+    }
 }
 
 impl CodeLabelBuilder {

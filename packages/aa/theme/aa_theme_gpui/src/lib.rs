@@ -52,23 +52,23 @@ pub mod ui_density;
 
 mod state;
 
-pub use schema::{AppearanceContent, try_parse_color};
 pub use buffer_line_height::BufferLineHeight;
 pub use color_space::{Oklab, Oklch, hsla_to_oklab, hsla_to_oklch, oklch_to_hsla};
+pub use default_colors::default_color_scales;
+pub use fallback_themes::DEFAULT_DARK_THEME;
 pub use font_family_cache::FontFamilyCache;
-pub use icon_theme::{
-    ChevronIcons, DirectoryIcons, IconDefinition, IconTheme, IconThemeFamily,
-    DEFAULT_ICON_THEME_NAME, DEFAULT_LIGHT_ICON_THEME_NAME, ZED_DEFAULT_ICON_THEME_NAME,
-    catppuccin_icon_theme_family, default_icon_theme, parse_icon_theme_family,
-};
 pub use icon_theme::schema::{
     ChevronIconsContent, DirectoryIconsContent, IconDefinitionContent, IconThemeContent,
     IconThemeFamilyContent,
 };
+pub use icon_theme::{
+    ChevronIcons, DEFAULT_ICON_THEME_NAME, DEFAULT_LIGHT_ICON_THEME_NAME, DirectoryIcons,
+    IconDefinition, IconTheme, IconThemeFamily, ZED_DEFAULT_ICON_THEME_NAME,
+    catppuccin_icon_theme_family, default_icon_theme, parse_icon_theme_family,
+};
 pub use registry::{ThemeMeta, ThemeNotFoundError, ThemeRegistry};
 pub use scale::{ColorScale, ColorScaleSet, ColorScaleStep, ColorScales};
-pub use default_colors::default_color_scales;
-pub use fallback_themes::DEFAULT_DARK_THEME;
+pub use schema::{AppearanceContent, try_parse_color};
 pub use settings_provider::{
     DefaultThemeSettingsProvider, ThemeSettingsProvider, buffer_font, buffer_font_size,
     scaled_spacing, set_theme_settings_provider, theme_settings, ui_density, ui_font, ui_font_size,

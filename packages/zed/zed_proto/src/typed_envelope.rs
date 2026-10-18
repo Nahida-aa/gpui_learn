@@ -97,19 +97,33 @@ pub enum MessagePriority {
 }
 
 impl<T: EnvelopedMessage> AnyTypedEnvelope for TypedEnvelope<T> {
-    fn payload_type_id(&self) -> TypeId { TypeId::of::<T>() }
+    fn payload_type_id(&self) -> TypeId {
+        TypeId::of::<T>()
+    }
 
-    fn payload_type_name(&self) -> &'static str { T::NAME }
+    fn payload_type_name(&self) -> &'static str {
+        T::NAME
+    }
 
-    fn into_any(self: Box<Self>) -> Box<dyn Any + Send + Sync> { self }
+    fn into_any(self: Box<Self>) -> Box<dyn Any + Send + Sync> {
+        self
+    }
 
-    fn is_background(&self) -> bool { matches!(T::PRIORITY, MessagePriority::Background) }
+    fn is_background(&self) -> bool {
+        matches!(T::PRIORITY, MessagePriority::Background)
+    }
 
-    fn original_sender_id(&self) -> Option<PeerId> { self.original_sender_id }
+    fn original_sender_id(&self) -> Option<PeerId> {
+        self.original_sender_id
+    }
 
-    fn sender_id(&self) -> PeerId { self.sender_id }
+    fn sender_id(&self) -> PeerId {
+        self.sender_id
+    }
 
-    fn message_id(&self) -> u32 { self.message_id }
+    fn message_id(&self) -> u32 {
+        self.message_id
+    }
 }
 
 impl PeerId {
@@ -119,7 +133,9 @@ impl PeerId {
         Self { owner_id, id }
     }
 
-    pub fn as_u64(self) -> u64 { ((self.owner_id as u64) << 32) | (self.id as u64) }
+    pub fn as_u64(self) -> u64 {
+        ((self.owner_id as u64) << 32) | (self.id as u64)
+    }
 }
 
 impl Ord for PeerId {
@@ -131,7 +147,9 @@ impl Ord for PeerId {
 }
 
 impl PartialOrd for PeerId {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl fmt::Display for PeerId {
@@ -147,7 +165,9 @@ pub struct Receipt<T> {
 }
 
 impl<T> Clone for Receipt<T> {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 
 impl<T> Copy for Receipt<T> {}

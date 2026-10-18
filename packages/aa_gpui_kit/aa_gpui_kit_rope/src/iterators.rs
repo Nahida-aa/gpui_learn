@@ -56,7 +56,9 @@ impl<'a> Chunks<'a> {
         true
     }
 
-    pub fn offset(&self) -> usize { self.offset }
+    pub fn offset(&self) -> usize {
+        self.offset
+    }
 
     pub fn seek(&mut self, mut offset: usize) {
         offset = offset.clamp(self.range.start, self.range.end);
@@ -465,5 +467,7 @@ impl<'a> Lines<'a> {
         self.done = false;
     }
 
-    pub fn offset(&self) -> usize { self.chunks.offset() }
+    pub fn offset(&self) -> usize {
+        self.chunks.offset()
+    }
 }

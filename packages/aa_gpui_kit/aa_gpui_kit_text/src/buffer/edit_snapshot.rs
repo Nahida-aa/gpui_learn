@@ -1,4 +1,3 @@
-
 use crate::buffer::BufferSnapshot;
 
 pub struct EditedBufferSnapshot {

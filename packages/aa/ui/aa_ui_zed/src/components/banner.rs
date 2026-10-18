@@ -5,8 +5,8 @@
 //! 出处：zed `crates/ui/src/components/banner.rs`（GPL-3.0-or-later）。
 //! 未搬 `Component`/preview（依赖 zed 的 preview 基础设施）。
 
-use crate::prelude::*;
 use crate::Severity;
+use crate::prelude::*;
 use gpui::{AnyElement, IntoElement, ParentElement, Styled};
 
 /// Banners provide informative and brief messages without interrupting the user.

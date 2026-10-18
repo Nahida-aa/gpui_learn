@@ -20,8 +20,8 @@
 
 use std::borrow::Cow;
 
-use anyhow::Result;
 use aa_assets_core::Assets as CoreAssets;
+use anyhow::Result;
 use gpui::{App, AssetSource};
 use gpui_shared_string::SharedString;
 
@@ -97,9 +97,11 @@ mod tests {
     #[test]
     fn asset_source_reads_embedded_files() {
         let assets = GpuiAssets;
-        assert!(AssetSource::load(&assets, "fonts/lilex/Lilex-Regular.ttf")
-            .unwrap()
-            .is_some());
+        assert!(
+            AssetSource::load(&assets, "fonts/lilex/Lilex-Regular.ttf")
+                .unwrap()
+                .is_some()
+        );
         assert!(!AssetSource::list(&assets, "icons").unwrap().is_empty());
     }
 
@@ -111,8 +113,10 @@ mod tests {
     /// unit struct 版顺手对齐到了 trait 契约。
     #[test]
     fn missing_asset_is_none_not_err() {
-        assert!(AssetSource::load(&GpuiAssets, "fonts/does-not-exist.ttf")
-            .unwrap()
-            .is_none());
+        assert!(
+            AssetSource::load(&GpuiAssets, "fonts/does-not-exist.ttf")
+                .unwrap()
+                .is_none()
+        );
     }
 }

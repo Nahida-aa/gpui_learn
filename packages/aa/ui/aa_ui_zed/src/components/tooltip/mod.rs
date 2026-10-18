@@ -26,18 +26,17 @@ use std::{
 
 use gpui::{
     Anchor, AnyElement, AnyView, App, AppContext, AsyncWindowContext, Bounds, Context, Div,
-    Element, ElementId, FocusHandle,
-    GlobalElementId, Hitbox, HitboxBehavior, InteractiveElement, IntoElement, LayoutId,
-    MouseDownEvent, MouseExitEvent, MouseMoveEvent, ParentElement, Pixels, Point, Render,
-    SharedString, Window, anchored, deferred, div, prelude::*, px,
+    Element, ElementId, FocusHandle, GlobalElementId, Hitbox, HitboxBehavior, InteractiveElement,
+    IntoElement, LayoutId, MouseDownEvent, MouseExitEvent, MouseMoveEvent, ParentElement, Pixels,
+    Point, Render, SharedString, Window, anchored, deferred, div, prelude::*, px,
 };
 
 use aa_theme_gpui::ActiveTheme;
 
 // `elevation_2` / `text_ui` 来自 crate 自己的 StyledExt / StyledTypography trait，
 // 这里是按需引入（本文件顶部用的是 gpui 的 prelude，不含它们）。
-use crate::traits::styled_ext::StyledExt as _;
 use crate::styles::StyledTypography as _;
+use crate::traits::styled_ext::StyledExt as _;
 // `Label::size` / `Label::color` 来自 `LabelCommon`（zed 的 prelude 里就有，
 // 本文件顶部用的是 gpui 的 prelude，所以单独引入）。
 use crate::LabelCommon as _;
@@ -99,7 +98,7 @@ impl Tooltip {
                 title: title.clone().into(),
                 meta: None,
                 key_binding: None,
-                })
+            })
             .into()
         }
     }
@@ -119,7 +118,7 @@ impl Tooltip {
                 title: Title::Str(title.clone()),
                 meta: None,
                 key_binding: Some(crate::KeyBinding::for_action(action.as_ref(), cx)),
-                })
+            })
             .into()
         }
     }
@@ -143,7 +142,7 @@ impl Tooltip {
                     &focus_handle,
                     cx,
                 )),
-                })
+            })
             .into()
         }
     }
@@ -162,7 +161,7 @@ impl Tooltip {
                 title,
                 meta: None,
                 key_binding: None,
-                })
+            })
             .into()
         }
     }
@@ -218,7 +217,7 @@ impl Tooltip {
                 title: title.clone().into(),
                 meta: None,
                 key_binding: Some(key_binding.clone()),
-                })
+            })
             .into()
         }
     }
@@ -316,13 +315,11 @@ impl Render for Tooltip {
             )
             .when_some(self.meta.clone(), |this, meta| {
                 this.child(
-                    div()
-                        .max_w_72()
-                        .child(
-                            crate::Label::new(meta)
-                                .size(crate::LabelSize::Small)
-                                .color(crate::Color::Muted),
-                        ),
+                    div().max_w_72().child(
+                        crate::Label::new(meta)
+                            .size(crate::LabelSize::Small)
+                            .color(crate::Color::Muted),
+                    ),
                 )
             })
         })

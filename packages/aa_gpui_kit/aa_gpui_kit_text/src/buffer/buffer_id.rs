@@ -8,11 +8,15 @@ use anyhow::{Context as _, Result};
 pub struct BufferId(NonZeroU64);
 
 impl Display for BufferId {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self.0) }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl From<NonZeroU64> for BufferId {
-    fn from(id: NonZeroU64) -> Self { BufferId(id) }
+    fn from(id: NonZeroU64) -> Self {
+        BufferId(id)
+    }
 }
 
 impl BufferId {
@@ -30,9 +34,13 @@ impl BufferId {
         old
     }
 
-    pub fn to_proto(self) -> u64 { self.into() }
+    pub fn to_proto(self) -> u64 {
+        self.into()
+    }
 }
 
 impl From<BufferId> for u64 {
-    fn from(id: BufferId) -> Self { id.0.get() }
+    fn from(id: BufferId) -> Self {
+        id.0.get()
+    }
 }

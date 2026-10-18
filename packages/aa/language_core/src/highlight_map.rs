@@ -25,7 +25,9 @@ impl HighlightId {
 }
 
 impl From<HighlightId> for usize {
-    fn from(value: HighlightId) -> Self { value.0.get() as usize - 1 }
+    fn from(value: HighlightId) -> Self {
+        value.0.get() as usize - 1
+    }
 }
 
 impl HighlightMap {
@@ -40,9 +42,13 @@ impl HighlightMap {
     }
 
     #[inline]
-    pub fn same(&self, other: &HighlightMap) -> bool { Arc::ptr_eq(&self.0, &other.0) }
+    pub fn same(&self, other: &HighlightMap) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
+    }
 }
 
 impl Default for HighlightMap {
-    fn default() -> Self { Self(Arc::new([])) }
+    fn default() -> Self {
+        Self(Arc::new([]))
+    }
 }

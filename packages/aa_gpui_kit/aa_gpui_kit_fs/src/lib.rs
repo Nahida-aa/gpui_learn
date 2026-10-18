@@ -41,8 +41,12 @@ impl Global for GlobalFs {}
 
 impl dyn Fs {
     /// Returns the global [`Fs`].
-    pub fn global(cx: &App) -> Arc<Self> { GlobalFs::global(cx).0.clone() }
+    pub fn global(cx: &App) -> Arc<Self> {
+        GlobalFs::global(cx).0.clone()
+    }
 
     /// Sets the global [`Fs`].
-    pub fn set_global(fs: Arc<Self>, cx: &mut App) { cx.set_global(GlobalFs(fs)); }
+    pub fn set_global(fs: Arc<Self>, cx: &mut App) {
+        cx.set_global(GlobalFs(fs));
+    }
 }

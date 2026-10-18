@@ -59,6 +59,8 @@ pub fn send_event(event: Event) {
     }
 }
 
-pub fn init(tx: mpsc::UnboundedSender<Event>) { TELEMETRY_QUEUE.set(tx).ok(); }
+pub fn init(tx: mpsc::UnboundedSender<Event>) {
+    TELEMETRY_QUEUE.set(tx).ok();
+}
 
 static TELEMETRY_QUEUE: OnceLock<mpsc::UnboundedSender<Event>> = OnceLock::new();

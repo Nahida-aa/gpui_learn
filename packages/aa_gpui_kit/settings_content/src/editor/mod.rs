@@ -1,8 +1,4 @@
-use crate::{
-    CursorShape, ShowScrollbar,
-    common::DelayMs,
-    project::DiagnosticSeverityContent,
-};
+use crate::{CursorShape, ShowScrollbar, common::DelayMs, project::DiagnosticSeverityContent};
 // 这里是 `pub use`：zed 的 settings_content.rs 用 `pub use editor::*;` 把 editor
 // 模块的公开项整批提到 crate 根，settings 再 `pub use ::settings_content::*;`
 // 转出去。我们把 editor.rs 拆成目录后，这些名字必须从这一层公开，调用方写
@@ -21,8 +17,8 @@ pub use crate::editor::{
     },
     minimap::{DisplayIn, MinimapThumbBorder},
     scalars::MinimumContrast,
-    scrolling::ScrollBeyondLastLine,
     scrollbar::ScrollbarDiagnostics,
+    scrolling::ScrollBeyondLastLine,
     toolbar::ToolbarContent,
 };
 pub use scalars::{CenteredPaddingSettings, InactiveOpacity};

@@ -238,7 +238,12 @@ pub fn load_bundle_meta_layered<S: AsRef<str>>(
     // 这里**不用** deny_unknown_fields：它将来加字段时老版本不该报错。
     let keys = merged
         .as_object()
-        .map(|m| m.keys().map(|k| format!("`{k}`")).collect::<Vec<_>>().join(", "))
+        .map(|m| {
+            m.keys()
+                .map(|k| format!("`{k}`"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        })
         .unwrap_or_default();
     let refs = references
         .iter()
@@ -542,7 +547,12 @@ pub fn resolve_icon_name(override_name: Option<&str>, bin: &str) -> String {
 /// `<仓库名>.<bin 名>`（两段蛇形规范化）。推导不出（不在 git 仓库内）
 /// 报错，不兜底假名。注意第二段用 bin 名而非 package 名——`[[bin]].name`
 /// 可以与 `package.name` 不同。
-pub fn resolve_desktop_id(meta: &BundleMeta, project_dir: &Path, bin: &str, meta_ref: &str) -> Result<String> {
+pub fn resolve_desktop_id(
+    meta: &BundleMeta,
+    project_dir: &Path,
+    bin: &str,
+    meta_ref: &str,
+) -> Result<String> {
     if let Some(id) = &meta.identifier {
         return Ok(id.clone());
     }
@@ -603,7 +613,10 @@ pub fn resolve_desktop_entry(
 
     let template_path = match template_override {
         Some(p) => Some(p.to_path_buf()),
-        None => meta.desktop_template.as_ref().map(|rel| project_dir.join(rel)),
+        None => meta
+            .desktop_template
+            .as_ref()
+            .map(|rel| project_dir.join(rel)),
     };
     if let Some(template_path) = &template_path {
         let template = std::fs::read_to_string(template_path)
@@ -651,7 +664,10 @@ impl BundleMeta {
     }
 
     pub fn terminal(&self) -> bool {
-        self.linux.as_ref().and_then(|l| l.use_terminal).unwrap_or(false)
+        self.linux
+            .as_ref()
+            .and_then(|l| l.use_terminal)
+            .unwrap_or(false)
     }
 
     pub fn mime_types(&self) -> &[String] {
@@ -829,11 +845,8 @@ mod tests {
 
     /// 建一个本测试独有的临时目录（pid + tag 防相撞）。
     fn identity_test_dir(tag: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!(
-            "aa-bundle-identity-{}-{}",
-            std::process::id(),
-            tag
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("aa-bundle-identity-{}-{}", std::process::id(), tag));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).expect("建临时目录失败");
         dir
@@ -976,7 +989,9 @@ use_terminal = true
     fn layered_meta_requires_at_least_one_reference() {
         let dir = identity_test_dir("layered_empty");
         let refs: Vec<String> = Vec::new();
-        let err = load_bundle_meta_layered(&refs, &dir).unwrap_err().to_string();
+        let err = load_bundle_meta_layered(&refs, &dir)
+            .unwrap_err()
+            .to_string();
         assert!(err.contains("至少"), "空列表应报错：{err}");
     }
 
@@ -1027,9 +1042,7 @@ icon = ["app-icon.png"]
         std::fs::write(dir.join("arr.json"), r#"["not", "an", "object"]"#).unwrap();
 
         // 文件缺失
-        let err = load_bundle_meta("nope.json", &dir)
-            .unwrap_err()
-            .to_string();
+        let err = load_bundle_meta("nope.json", &dir).unwrap_err().to_string();
         assert!(err.contains("nope.json"), "应指出文件：{err}");
 
         // 路径不存在

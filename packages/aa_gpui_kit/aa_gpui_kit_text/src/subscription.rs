@@ -37,7 +37,9 @@ where
 }
 
 impl<T: Default> Subscription<T> {
-    pub fn consume(&self) -> Patch<T> { mem::take(&mut *self.0.lock()) }
+    pub fn consume(&self) -> Patch<T> {
+        mem::take(&mut *self.0.lock())
+    }
 }
 
 fn publish<T, TDelta>(

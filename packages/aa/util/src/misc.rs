@@ -1,1 +1,3 @@
-pub fn default<D: Default>() -> D { Default::default() }
+pub fn default<D: Default>() -> D {
+    Default::default()
+}

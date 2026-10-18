@@ -72,12 +72,18 @@ impl Oid {
         }
     }
 
-    pub fn as_bytes(&self) -> &[u8] { &self.bytes[..self.format.byte_len()] }
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.bytes[..self.format.byte_len()]
+    }
 
-    pub fn is_zero(&self) -> bool { self.as_bytes().iter().all(|byte| *byte == 0) }
+    pub fn is_zero(&self) -> bool {
+        self.as_bytes().iter().all(|byte| *byte == 0)
+    }
 
     /// Returns this [`Oid`] as a short SHA.
-    pub fn display_short(&self) -> String { self.hex_string(SHORT_SHA_LENGTH) }
+    pub fn display_short(&self) -> String {
+        self.hex_string(SHORT_SHA_LENGTH)
+    }
 
     fn hex_string(&self, len: usize) -> String {
         let mut string = String::with_capacity(len);
@@ -110,7 +116,9 @@ impl Oid {
 impl TryFrom<&str> for Oid {
     type Error = anyhow::Error;
 
-    fn try_from(value: &str) -> std::result::Result<Self, Self::Error> { Oid::from_str(value) }
+    fn try_from(value: &str) -> std::result::Result<Self, Self::Error> {
+        Oid::from_str(value)
+    }
 }
 
 impl FromStr for Oid {
@@ -152,11 +160,15 @@ fn decode_hex_digit(byte: u8) -> Option<u8> {
 }
 
 impl fmt::Debug for Oid {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { fmt::Display::fmt(self, f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self, f)
+    }
 }
 
 impl fmt::Display for Oid {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { self.write_hex(f) }
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.write_hex(f)
+    }
 }
 
 impl Serialize for Oid {

@@ -11,7 +11,9 @@ impl<T> Patch<T>
 where
     T: 'static + Clone + Copy + Ord + Default,
 {
-    pub const fn empty() -> Self { Self(Vec::new()) }
+    pub const fn empty() -> Self {
+        Self(Vec::new())
+    }
 
     pub fn new(edits: Vec<Edit<T>>) -> Self {
         #[cfg(debug_assertions)]
@@ -28,9 +30,13 @@ where
         Self(edits)
     }
 
-    pub fn edits(&self) -> &[Edit<T>] { &self.0 }
+    pub fn edits(&self) -> &[Edit<T>] {
+        &self.0
+    }
 
-    pub fn into_inner(self) -> Vec<Edit<T>> { self.0 }
+    pub fn into_inner(self) -> Vec<Edit<T>> {
+        self.0
+    }
     pub fn invert(&mut self) -> &mut Self {
         for edit in &mut self.0 {
             mem::swap(&mut edit.old, &mut edit.new);
@@ -38,9 +44,13 @@ where
         self
     }
 
-    pub fn clear(&mut self) { self.0.clear(); }
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
 
-    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 
     pub fn push(&mut self, edit: Edit<T>) {
         if edit.is_empty() {
@@ -277,21 +287,27 @@ impl<T: Clone> IntoIterator for Patch<T> {
     type Item = Edit<T>;
     type IntoIter = std::vec::IntoIter<Edit<T>>;
 
-    fn into_iter(self) -> Self::IntoIter { self.0.into_iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
 }
 
 impl<'a, T: Clone> IntoIterator for &'a Patch<T> {
     type Item = Edit<T>;
     type IntoIter = std::iter::Cloned<std::slice::Iter<'a, Edit<T>>>;
 
-    fn into_iter(self) -> Self::IntoIter { self.0.iter().cloned() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter().cloned()
+    }
 }
 
 impl<'a, T: Clone> IntoIterator for &'a mut Patch<T> {
     type Item = Edit<T>;
     type IntoIter = std::iter::Cloned<std::slice::Iter<'a, Edit<T>>>;
 
-    fn into_iter(self) -> Self::IntoIter { self.0.iter().cloned() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.iter().cloned()
+    }
 }
 
 #[cfg(test)]

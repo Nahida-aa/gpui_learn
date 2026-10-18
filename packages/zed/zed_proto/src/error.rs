@@ -55,7 +55,9 @@ pub trait ErrorCodeExt {
 }
 
 impl ErrorCodeExt for ErrorCode {
-    fn anyhow(self) -> anyhow::Error { self.into() }
+    fn anyhow(self) -> anyhow::Error {
+        self.into()
+    }
 
     fn message(self, msg: String) -> RpcError {
         let err: RpcError = self.into();
@@ -159,7 +161,9 @@ pub struct RpcError {
 impl RpcError {
     /// Returns the raw server-provided error message without any RPC framing
     /// (e.g. without the "RPC request X failed: " prefix that `Display` adds).
-    pub fn raw_message(&self) -> &str { &self.msg }
+    pub fn raw_message(&self) -> &str {
+        &self.msg
+    }
 
     /// from_proto converts a crate::Error into an anyhow::Error containing
     /// an RpcError.
@@ -185,7 +189,9 @@ impl ErrorCodeExt for RpcError {
         self
     }
 
-    fn anyhow(self) -> anyhow::Error { self.into() }
+    fn anyhow(self) -> anyhow::Error {
+        self.into()
+    }
 }
 
 impl ErrorExt for RpcError {
@@ -201,7 +207,9 @@ impl ErrorExt for RpcError {
         None
     }
 
-    fn error_code(&self) -> ErrorCode { self.code }
+    fn error_code(&self) -> ErrorCode {
+        self.code
+    }
 
     fn to_proto(&self) -> crate::Error {
         crate::Error {
@@ -211,11 +219,15 @@ impl ErrorExt for RpcError {
         }
     }
 
-    fn cloned(&self) -> anyhow::Error { self.clone().into() }
+    fn cloned(&self) -> anyhow::Error {
+        self.clone().into()
+    }
 }
 
 impl std::error::Error for RpcError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> { None }
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        None
+    }
 }
 
 impl std::fmt::Display for RpcError {

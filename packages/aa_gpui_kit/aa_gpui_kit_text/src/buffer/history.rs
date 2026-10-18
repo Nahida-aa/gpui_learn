@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use clock::{Lamport};
+use clock::Lamport;
 use sum_tree::TreeMap;
 
 use super::operation::Operation;
@@ -23,11 +23,15 @@ pub struct Transaction {
 }
 
 impl Transaction {
-    pub fn merge_in(&mut self, other: Transaction) { self.edit_ids.extend(other.edit_ids); }
+    pub fn merge_in(&mut self, other: Transaction) {
+        self.edit_ids.extend(other.edit_ids);
+    }
 }
 
 impl HistoryEntry {
-    pub fn transaction_id(&self) -> TransactionId { self.transaction.id }
+    pub fn transaction_id(&self) -> TransactionId {
+        self.transaction.id
+    }
 }
 
 pub(crate) struct History {
@@ -56,7 +60,9 @@ impl History {
         }
     }
 
-    pub(crate) fn push(&mut self, op: Operation) { self.operations.insert(op.timestamp(), op); }
+    pub(crate) fn push(&mut self, op: Operation) {
+        self.operations.insert(op.timestamp(), op);
+    }
 
     pub(crate) fn start_transaction(
         &mut self,

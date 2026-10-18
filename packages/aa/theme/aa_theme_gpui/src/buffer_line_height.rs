@@ -43,4 +43,3 @@ mod tests {
         assert_eq!(BufferLineHeight::Custom(2.0).value(), 2.0);
     }
 }
-

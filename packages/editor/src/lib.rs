@@ -31,7 +31,7 @@ pub mod editor;
 pub mod engine;
 
 pub use editor::{
-    EDITOR_KEY_CONTEXT, INPUT_KEY_CONTEXT, Editor, EditorElement, EditorEvent, EditorMode,
-    ErasedEditorImpl, InputEvent, InputState, Textarea, TextareaState, bind_editor_keys,
+    EDITOR_KEY_CONTEXT, Editor, EditorElement, EditorEvent, EditorMode, ErasedEditorImpl,
+    INPUT_KEY_CONTEXT, InputEvent, InputState, Textarea, TextareaState, bind_editor_keys,
     bind_input_keys, register_erased_editor_factory,
 };

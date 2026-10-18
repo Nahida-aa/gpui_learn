@@ -460,7 +460,9 @@ mod tests {
     }
 
     #[test]
-    fn test_empty_content() { assert_migrate_settings("", None) }
+    fn test_empty_content() {
+        assert_migrate_settings("", None)
+    }
 
     #[test]
     fn test_replace_array_with_single_string() {

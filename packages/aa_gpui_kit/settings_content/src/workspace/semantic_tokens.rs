@@ -31,11 +31,15 @@ pub enum SemanticTokens {
 
 impl SemanticTokens {
     /// Returns true if semantic tokens should be requested from language servers.
-    pub fn enabled(&self) -> bool { self != &Self::Off }
+    pub fn enabled(&self) -> bool {
+        self != &Self::Off
+    }
 
     /// Returns true if tree-sitter syntax highlighting should be used.
     /// In `full` mode, tree-sitter is disabled in favor of LSP semantic tokens.
-    pub fn use_tree_sitter(&self) -> bool { self != &Self::Full }
+    pub fn use_tree_sitter(&self) -> bool {
+        self != &Self::Full
+    }
 }
 
 #[derive(
@@ -63,7 +67,9 @@ pub enum DocumentFoldingRanges {
 
 impl DocumentFoldingRanges {
     /// Returns true if LSP folding ranges should be requested from language servers.
-    pub fn enabled(&self) -> bool { self != &Self::Off }
+    pub fn enabled(&self) -> bool {
+        self != &Self::Off
+    }
 }
 
 #[derive(
@@ -94,5 +100,7 @@ pub enum DocumentSymbols {
 
 impl DocumentSymbols {
     /// Returns true if LSP document symbols should be used instead of tree-sitter.
-    pub fn lsp_enabled(&self) -> bool { self == &Self::On }
+    pub fn lsp_enabled(&self) -> bool {
+        self == &Self::On
+    }
 }

@@ -42,13 +42,13 @@ impl ErasedEditor for ErasedEditorImpl {
     }
 
     fn set_placeholder_text(&self, text: &str, _window: &mut Window, cx: &mut App) {
-        self.0
-            .update(cx, |this, cx| this.set_placeholder_text(text.to_string(), cx));
+        self.0.update(cx, |this, cx| {
+            this.set_placeholder_text(text.to_string(), cx)
+        });
     }
 
     fn move_selection_to_end(&self, _window: &mut Window, cx: &mut App) {
-        self.0
-            .update(cx, |this, cx| this.move_selection_to_end(cx));
+        self.0.update(cx, |this, cx| this.move_selection_to_end(cx));
     }
 
     fn select_all(&self, window: &mut Window, cx: &mut App) {

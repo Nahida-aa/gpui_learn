@@ -207,7 +207,10 @@ impl Component for ListHeader {
                 example_group_with_title(
                     "Basic Headers",
                     vec![
-                        single_example("Simple", ListHeader::new("Section Header").into_any_element()),
+                        single_example(
+                            "Simple",
+                            ListHeader::new("Section Header").into_any_element(),
+                        ),
                         single_example(
                             "With Icon",
                             ListHeader::new("Files")

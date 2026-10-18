@@ -23,10 +23,10 @@ use gpui_platform::application;
 // aa_theme_gpui 自带的 init。demo 不需要资产里的主题 JSON，用 JustBase
 // 拿到内置兜底主题即可（那套就是 Catppuccin 配色）。
 use aa_theme_gpui::{LoadThemes, init};
-use tracing_subscriber;
 use editor::{
     EDITOR_KEY_CONTEXT, Editor, EditorMode, InputState, bind_editor_keys, bind_input_keys,
 };
+use tracing_subscriber;
 
 actions!(editor_demo, [Quit]);
 

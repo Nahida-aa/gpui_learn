@@ -15,11 +15,15 @@ pub static NEXT_GRAMMAR_ID: AtomicUsize = AtomicUsize::new(0);
 pub struct GrammarId(pub usize);
 
 impl GrammarId {
-    pub fn new() -> Self { Self(NEXT_GRAMMAR_ID.fetch_add(1, SeqCst)) }
+    pub fn new() -> Self {
+        Self(NEXT_GRAMMAR_ID.fetch_add(1, SeqCst))
+    }
 }
 
 impl Default for GrammarId {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// A handle that can produce a parseable [`tree_sitter::Language`] on the
@@ -56,7 +60,9 @@ impl ParseableLanguage {
 
 #[cfg(not(target_family = "wasm"))]
 impl From<tree_sitter::Language> for ParseableLanguage {
-    fn from(language: tree_sitter::Language) -> Self { Self { language } }
+    fn from(language: tree_sitter::Language) -> Self {
+        Self { language }
+    }
 }
 
 #[cfg(target_family = "wasm")]
@@ -354,9 +360,13 @@ impl Grammar {
         }
     }
 
-    pub fn id(&self) -> GrammarId { self.id }
+    pub fn id(&self) -> GrammarId {
+        self.id
+    }
 
-    pub fn highlight_map(&self) -> HighlightMap { self.highlight_map.lock().clone() }
+    pub fn highlight_map(&self) -> HighlightMap {
+        self.highlight_map.lock().clone()
+    }
 
     pub fn highlight_map_matches(&self, highlight_map: &HighlightMap) -> bool {
         self.highlight_map.lock().same(highlight_map)

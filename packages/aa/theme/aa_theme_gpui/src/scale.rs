@@ -310,9 +310,11 @@ mod tests {
 
     #[test]
     fn steps_are_one_based() {
-        let scale = ColorScale::from_iter([1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]
-            .into_iter()
-            .map(|l| gpui::hsla(0., 0., l / 12., 1.)));
+        let scale = ColorScale::from_iter(
+            [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 11., 12.]
+                .into_iter()
+                .map(|l| gpui::hsla(0., 0., l / 12., 1.)),
+        );
         assert_eq!(scale.step_1().l, 1. / 12., "第 1 步应对应下标 0");
         assert_eq!(scale.step_12().l, 1.0);
     }
