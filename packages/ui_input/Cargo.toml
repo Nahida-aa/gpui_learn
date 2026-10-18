@@ -9,7 +9,7 @@ description = "基于编辑器内核的表单类输入组件（架构对齐 zed 
 [dependencies]
 gpui.workspace = true
 aa_ui_zed.workspace = true
-aa_gpui_kit_component.workspace = true
+aa_component_zed.workspace = true
 
 [lints]
 workspace = true

@@ -323,6 +323,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "aa_component_zed"
+version = "0.1.0"
+dependencies = [
+ "aa_theme_gpui",
+ "documented",
+ "gpui",
+ "inventory",
+ "parking_lot",
+ "strum 0.28.0",
+]
+
+[[package]]
 name = "aa_gpui_android"
 version = "0.9.3"
 dependencies = [
@@ -380,18 +392,6 @@ dependencies = [
  "which",
  "windows 0.58.0",
  "zeroize",
-]
-
-[[package]]
-name = "aa_gpui_kit_component"
-version = "0.1.0"
-dependencies = [
- "aa_theme_gpui",
- "documented",
- "gpui",
- "inventory",
- "parking_lot",
- "strum 0.28.0",
 ]
 
 [[package]]
@@ -628,7 +628,7 @@ dependencies = [
 name = "aa_gpui_kit_ui_input"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_component",
+ "aa_component_zed",
  "aa_ui_zed",
  "gpui",
 ]
@@ -803,8 +803,8 @@ name = "aa_ui_zed"
 version = "0.1.0"
 dependencies = [
  "aa_assets_gpui",
+ "aa_component_zed",
  "aa_gpui_base",
- "aa_gpui_kit_component",
  "aa_icons",
  "aa_theme_gpui",
  "aa_ui_macros_zed",

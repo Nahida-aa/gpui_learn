@@ -131,7 +131,7 @@ pub static ERASED_EDITOR_FACTORY: OnceLock<fn(&mut Window, &mut App) -> Arc<dyn 
 | 位置 | 改动 |
 |---|---|
 | `packages/aa/ui/aa_ui_zed` | 删除 `src/base/input/`；Cargo.toml 去掉 `editor`。**依赖树里已无 editor**（`cargo tree -p aa_ui_zed` 可验） |
-| `packages/ui_input`（新） | `ErasedEditor` + `ErasedEditorEvent` + `ERASED_EDITOR_FACTORY` + `InputField`。依赖只有 `gpui` / `aa_ui_zed` / `aa_gpui_kit_component`，**编译期无 editor** |
+| `packages/ui_input`（新） | `ErasedEditor` + `ErasedEditorEvent` + `ERASED_EDITOR_FACTORY` + `InputField`。依赖只有 `gpui` / `aa_ui_zed` / `aa_component_zed`，**编译期无 editor** |
 | `packages/editor` | 新增依赖 `aa_gpui_kit_ui_input`；加 `src/editor/erased.rs`（`ErasedEditorImpl`）+ `register_erased_editor_factory()`；`bind_editor_keys` / `bind_input_keys` 里幂等注册工厂 |
 | `packages/editor` | 新增 `src/editor/input.rs`：`InputState` / `Textarea` / `TextareaState` / `bind_input_keys`（从 ui 搬来） |
 | `packages/editor` | 为凑齐 trait 补了 `set_text` / `set_placeholder_text` / `set_masked` / `set_read_only` / `set_multiline` / `move_selection_to_end`，以及 `masked` 渲染与 `read_only` 编辑拦截 |

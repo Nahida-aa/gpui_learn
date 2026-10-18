@@ -5,7 +5,7 @@
 //! - [`derive_dynamic_spacing!`]：生成 `DynamicSpacing` 密度间距枚举
 //!   （消费方在 `aa_ui_zed` 的 `styles/spacing`）；
 //! - `#[derive(RegisterComponent)]`：把组件登记进组件示例库
-//!   （消费方为 `aa_gpui_kit_component` 的 inventory 注册表）。
+//!   （消费方为 `aa_component_zed` 的 inventory 注册表）。
 //!
 //! 授权说明：zed 的 `ui_macros` 为 GPL-3.0；本包是**等价功能的原创实现**
 //! （宏的输入/输出契约与 zed 一致，便于调用方代码对齐），实现细节独立撰写。
@@ -39,12 +39,12 @@ pub fn derive_dynamic_spacing(input: TokenStream) -> TokenStream {
     dynamic_spacing::expand(input)
 }
 
-/// 把组件登记进组件示例库（`aa_gpui_kit_component` 的 inventory 注册表）。
+/// 把组件登记进组件示例库（`aa_component_zed` 的 inventory 注册表）。
 ///
-/// 要求被标注类型实现 `aa_gpui_kit_component::Component`（宏内做编译期
+/// 要求被标注类型实现 `aa_component_zed::Component`（宏内做编译期
 /// 断言）。对齐 zed `ui_macros::RegisterComponent`。
 ///
-/// 生成代码里的路径默认写 crate 真名 `aa_gpui_kit_component`。若消费方把这个
+/// 生成代码里的路径默认写 crate 真名 `aa_component_zed`。若消费方把这个
 /// crate 起了 Cargo 别名（proc 宏看不见别名），用属性显式指过来：
 ///
 /// ```ignore

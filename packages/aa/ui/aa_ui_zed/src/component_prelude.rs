@@ -1,4 +1,4 @@
-pub use aa_gpui_kit_component::{
+pub use aa_component_zed::{
     Component, ComponentId, ComponentScope, ComponentStatus, example_group,
     example_group_with_title, single_example,
 };

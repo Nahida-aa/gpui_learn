@@ -6,7 +6,7 @@
 //! 出处：zed `crates/ui_input/src/input_field.rs`（GPL-3.0-or-later）。
 //! 适配点见文件内 `// 与 zed 的差异` 注释。
 
-use aa_gpui_kit_component::{example_group, single_example};
+use aa_component_zed::{example_group, single_example};
 use aa_ui_zed::Tooltip;
 use aa_ui_zed::prelude::*;
 use aa_ui_zed::IconSize;

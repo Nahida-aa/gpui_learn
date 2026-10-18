@@ -25,7 +25,7 @@ fn crate_path(input: &DeriveInput) -> syn::Result<Path> {
         })?;
     }
 
-    Ok(krate.unwrap_or_else(|| parse_quote!(aa_gpui_kit_component)))
+    Ok(krate.unwrap_or_else(|| parse_quote!(aa_component_zed)))
 }
 
 pub fn expand(input: TokenStream) -> TokenStream {
