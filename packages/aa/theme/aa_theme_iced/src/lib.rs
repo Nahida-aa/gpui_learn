@@ -26,7 +26,7 @@
 
 pub mod colors;
 
-pub use colors::{Colors, StatusColors};
+pub use colors::{Colors, StatusColors, TerminalColors};
 
 /// 主题类型。
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -153,6 +153,56 @@ mod tests {
                     assert_ne!(left, right, "{:?} 主题里有两条状态色相同", theme.kind());
                 }
             }
+        }
+    }
+
+    /// 终端底色要与侧边栏的 `surface` 区分开 —— 终端铺满主区（zed 用 `base`），
+    /// 侧边栏/标题栏用 `mantle`，写成同一个值两边就糊成一片了。
+    #[test]
+    fn the_terminal_background_differs_from_the_sidebar_surface() {
+        for theme in [Theme::dark(), Theme::light()] {
+            let colors = theme.colors();
+            assert_ne!(colors.terminal.background, colors.surface_background);
+        }
+    }
+
+    /// ANSI 16 色要齐全且两两可分辨（16 个槽位写错常表现为整排同色，
+    /// 或 normal 与 bright 抄反）。
+    #[test]
+    fn the_ansi_palette_is_complete_and_distinct() {
+        for theme in [Theme::dark(), Theme::light()] {
+            let terminal = theme.colors().terminal;
+            let all: Vec<_> = terminal
+                .ansi_normal
+                .iter()
+                .chain(&terminal.ansi_bright)
+                .collect();
+            for (index, left) in all.iter().enumerate() {
+                for right in &all[index + 1..] {
+                    assert_ne!(left, right, "{:?} 主题里有两条 ANSI 色相同", theme.kind());
+                }
+            }
+        }
+    }
+
+    /// 终端的光标 / 选区取自玩家色，得是这么回事：光标不透明，选区半透明
+    /// （选区要能透出底色，写不透明会盖掉文字底下的背景）。
+    #[test]
+    fn the_terminal_cursor_and_selection_are_sane() {
+        for theme in [Theme::dark(), Theme::light()] {
+            let terminal = theme.colors().terminal;
+            assert_eq!(
+                terminal.cursor.a,
+                1.0,
+                "{:?} 主题的光标不该是半透明的",
+                theme.kind()
+            );
+            assert!(
+                terminal.selection_background.a > 0.0 && terminal.selection_background.a < 1.0,
+                "{:?} 主题的选区底色应当是半透明的，实际 alpha={}",
+                theme.kind(),
+                terminal.selection_background.a
+            );
         }
     }
 }

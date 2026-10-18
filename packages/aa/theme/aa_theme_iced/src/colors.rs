@@ -9,6 +9,9 @@
 //!
 //! 本文件说白了就是数据：**不依赖 gpui、不依赖 iced 的控件层**，只用到
 //! `iced_core::Color`。
+//!
+//! 终端那一组令牌（`terminal.*`）单独放在 [`Colors::terminal`]，因为 zed 那边
+//! 它们也是独立的一坨（`TerminalPalette`），见 [`TerminalColors`]。
 
 use iced_core::Color;
 
@@ -41,6 +44,41 @@ pub struct StatusColors {
     pub info: Color,
     /// 成功。
     pub success: Color,
+}
+
+/// 终端配色令牌（zed `TerminalPalette` 的那一组）。
+///
+/// 底色 / 前景 / ANSI 16 色来自 zed 的 `ThemeColors::terminal_*`（字段名去掉
+/// `terminal_` 前缀）；`cursor` / `selection_*` 在 zed 里属于 `players().local()`
+/// （本地玩家的光标与选区），不在 `ThemeColors` 里，为方便起见放这儿。
+///
+/// 终端还有三个底色 zed 直接复用 `ThemeColors` 的同名令牌，这里不重复定义：
+/// 查找命中用 [`Colors::search_match_background`]、当前命中用
+/// [`Colors::search_active_match_background`]、滚动条拇指用
+/// [`Colors::scrollbar_thumb_background`]。
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct TerminalColors {
+    /// 底色（zed `terminal_background`，`terminal_ansi_background` 同值）
+    pub background: Color,
+    /// 前景（zed `terminal_foreground`）
+    pub foreground: Color,
+    /// 加亮前景 —— 粗体用（zed `terminal_bright_foreground`）
+    pub bright_foreground: Color,
+    /// 暗淡前景 —— 默认色的 SGR 2 用（zed `terminal_dim_foreground`）
+    pub dim_foreground: Color,
+    /// ANSI 0..=7：黑红绿黄蓝洋红青白（zed `terminal_ansi_black` … `terminal_ansi_white`）
+    pub ansi_normal: [Color; 8],
+    /// ANSI 8..=15（zed `terminal_ansi_bright_*`）
+    pub ansi_bright: [Color; 8],
+    /// ANSI 暗淡变体（zed `terminal_ansi_dim_*`）
+    pub ansi_dim: [Color; 8],
+    /// 光标（zed `players().local().cursor`）
+    pub cursor: Color,
+    /// 选区底色，半透明，叠在文字底下（zed `players().local().selection`）
+    pub selection_background: Color,
+    /// 选区里的文字色。zed 没有这一项（选区只叠底色，文字保持本色），
+    /// 这里给个显式的值是为了和 `aa_terminal_core::TerminalPalette` 的字段对齐。
+    pub selection_foreground: Color,
 }
 
 /// 界面语义色。
@@ -141,6 +179,9 @@ pub struct Colors {
 
     /// 错误 / 警告 / 成功 / 提示四态的前景色。
     pub status: StatusColors,
+
+    /// 终端配色（zed `TerminalPalette` 的那一组令牌）。
+    pub terminal: TerminalColors,
 }
 
 /// Macchiato 的四态前景色（与 `aa_theme_gpui::default_colors::status_colors_macchiato` 同值）。
@@ -161,6 +202,37 @@ fn latte_status() -> StatusColors {
         info: rgb(0x179299),    // teal
         success: rgb(0x40a02b), // green
     }
+}
+
+/// Macchiato 的 ANSI 0..=7。
+///
+/// `ansi_dim` 与它同值：catppuccin 的规范里 dim == normal（见 ctp-zed 的
+/// `zed.tera`，`terminal.ansi.dim_*` 全部照抄 normal）。
+fn macchiato_ansi_normal() -> [Color; 8] {
+    [
+        rgb(0x494d64), // 黑 — surface1
+        rgb(0xed8796), // 红
+        rgb(0xa6da95), // 绿
+        rgb(0xeed49f), // 黄
+        rgb(0x8aadf4), // 蓝
+        rgb(0xf5bde6), // 洋红 — pink
+        rgb(0x8bd5ca), // 青 — teal
+        rgb(0xa5adcb), // 白 — subtext0
+    ]
+}
+
+/// Latte 的 ANSI 0..=7（同 Macchiato，浅色版）。
+fn latte_ansi_normal() -> [Color; 8] {
+    [
+        rgb(0x5c5f77), // 黑 — subtext1
+        rgb(0xd20f39), // 红
+        rgb(0x40a02b), // 绿
+        rgb(0xdf8e1d), // 黄
+        rgb(0x1e66f5), // 蓝
+        rgb(0xea76cb), // 洋红 — pink
+        rgb(0x179299), // 青 — teal
+        rgb(0xacb0be), // 白 — surface2
+    ]
 }
 
 /// Catppuccin Macchiato（深色内置主题）。
@@ -224,6 +296,30 @@ pub(crate) fn macchiato() -> Colors {
         search_active_match_background: rgba(0xed8796, 0.30), // red @30%
 
         status: macchiato_status(),
+
+        // 终端（zed：底色/前景/16 色取自 ThemeColors::terminal_*，光标与选区
+        // 取自 players().local()，命中与滚动条拇指复用上面的同名令牌）
+        terminal: TerminalColors {
+            background: rgb(0x24273a),        // base
+            foreground: rgb(0xcad3f5),        // text
+            bright_foreground: rgb(0xcad3f5), // text（与前景同值）
+            dim_foreground: rgb(0x8087a2),    // overlay1
+            ansi_normal: macchiato_ansi_normal(),
+            ansi_bright: [
+                rgb(0x5b6078), // 亮黑 — surface2
+                rgb(0xec7486), // 亮红
+                rgb(0x8ccf7f), // 亮绿
+                rgb(0xe1c682), // 亮黄
+                rgb(0x78a1f6), // 亮蓝
+                rgb(0xf2a9dd), // 亮洋红
+                rgb(0x63cbc0), // 亮青
+                rgb(0xb8c0e0), // 亮白 — subtext1
+            ],
+            ansi_dim: macchiato_ansi_normal(), // 与 normal 同值
+            cursor: rgb(0xf4dbd6),             // rosewater
+            selection_background: rgba(0x6e738d, 0.25), // overlay2 @25%
+            selection_foreground: rgb(0xcad3f5), // text
+        },
     }
 }
 
@@ -288,5 +384,28 @@ pub(crate) fn latte() -> Colors {
         search_active_match_background: rgb(0xbcc0cc),
 
         status: latte_status(),
+
+        // 终端（同 Macchiato，浅色版）
+        terminal: TerminalColors {
+            background: rgb(0xeff1f5),        // base
+            foreground: rgb(0x4c4f69),        // text
+            bright_foreground: rgb(0x4c4f69), // text（与前景同值）
+            dim_foreground: rgb(0x8c8fa1),    // overlay1
+            ansi_normal: latte_ansi_normal(),
+            ansi_bright: [
+                rgb(0x6c6f85), // 亮黑 — subtext0
+                rgb(0xde293e), // 亮红
+                rgb(0x49af3d), // 亮绿
+                rgb(0xeea02d), // 亮黄
+                rgb(0x456eff), // 亮蓝
+                rgb(0xfe85d8), // 亮洋红
+                rgb(0x2d9fa8), // 亮青
+                rgb(0xbcc0cc), // 亮白 — surface1
+            ],
+            ansi_dim: latte_ansi_normal(), // 与 normal 同值
+            cursor: rgb(0xdc8a78),         // rosewater
+            selection_background: rgba(0x7c7f93, 0.30), // overlay2 @30%
+            selection_foreground: rgb(0x4c4f69), // text
+        },
     }
 }
