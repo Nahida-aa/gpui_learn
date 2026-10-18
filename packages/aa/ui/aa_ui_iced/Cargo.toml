@@ -9,6 +9,9 @@ publish.workspace = true
 # 版本必须与使用方（aa_term）一致：iced 的 `Element` / `Message` 类型要能互通，
 # 两份不同版本的 iced 拼不到一起。features 是并集，aa_term 那边额外开 canvas/tokio。
 iced = "0.14.0"
+# 取色走 zed 的语义令牌（`ghost_element_hover`、`text_muted`…），不再用 iced 内置
+# `extended_palette`。与本仓其它 theme crate 同一份色值。
+aa_theme_iced = { path = "../../theme/aa_theme_iced" }
 
 [dev-dependencies]
 iced_test = "0.14.0"

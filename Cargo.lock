@@ -774,6 +774,9 @@ dependencies = [
 [[package]]
 name = "aa_theme_iced"
 version = "0.1.0"
+dependencies = [
+ "iced_core",
+]
 
 [[package]]
 name = "aa_theme_settings_gpui_zed"
@@ -790,6 +793,7 @@ dependencies = [
 name = "aa_ui_iced"
 version = "0.1.0"
 dependencies = [
+ "aa_theme_iced",
  "iced",
  "iced_test",
 ]

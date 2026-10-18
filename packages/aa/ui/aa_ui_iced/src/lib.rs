@@ -4,10 +4,12 @@
 //! iced 的那一层**，gpui 侧对应的是 `aa_ui_zed`。两边组件**同名、同结构**，
 //! 只是把 gpui 的 `Div`/`Entity` 换成 iced 的 `Element`/消息。
 //!
-//! 目前只有线程侧边栏需要的 [`ThreadItem`]。其余组件（`IconButton`、`List`、
-//! `Divider`……）等真有消费方再搬 —— 提前搬只会留下一堆没有调用方的空壳。
+//! 目前有线程侧边栏需要的 [`ThreadItem`] 与 [`ContextMenu`]。其余组件
+//! （`IconButton`、`List`、`Divider`……）等真有消费方再搬 —— 提前搬只会留下一堆
+//! 没有调用方的空壳。
 #![warn(missing_docs)]
 
 pub mod components;
 
 pub use components::ai::{AgentThreadStatus, ThreadItem};
+pub use components::context_menu::{ContextMenu, ContextMenuEntry};
