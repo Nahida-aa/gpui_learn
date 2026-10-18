@@ -1,6 +1,6 @@
 //! styles/spacing：动态间距系统（对齐 zed `DynamicSpacing` / `UiDensity`）。
 //!
-//! [`DynamicSpacing`] 由 `aa_gpui_kit_ui_macros::derive_dynamic_spacing!`
+//! [`DynamicSpacing`] 由 `aa_ui_macros_zed::derive_dynamic_spacing!`
 //! 生成：每个变体的"Base 后数字"是该档在 **16px/rem、Default 密度**下的
 //! 像素值。三档密度（Compact / Default / Comfortable）的取值规则：
 //!
@@ -20,7 +20,7 @@
 
 use gpui::{Pixels, Rems, px, rems};
 
-use aa_gpui_kit_ui_macros::derive_dynamic_spacing;
+use aa_ui_macros_zed::derive_dynamic_spacing;
 
 /// UI 密度：**定义在 `aa_theme_gpui`**（对齐 zed `theme::UiDensity`），
 /// 这里原样转出，所以外部路径 `aa_ui_zed::UiDensity` 不变。

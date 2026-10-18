@@ -12,7 +12,7 @@
 2. **也不要自己写当前版本。** 我们是在 Linux 上开发、Linux 上跑测试，`path!` /
    `uri!` / `line_endings!` 在这三个宏在这里是**恒等变换**，抄过来也只会得到恒等函数。
 3. **真需要时：抄那一个宏（约 15 行），不要拉整个 crate。** Apache-2.0 允许抄。
-   落点是已有的 `packages/ui_macros`（对齐 zed 命名的话再建 `packages/util_macros`，
+   落点是已有的 `packages/aa/ui/aa_ui_zed/aa_ui_macros_zed`（对齐 zed 命名的话再建 `packages/util_macros`，
    但同样「不预建空壳」）。
 
 ## 解剖（单文件 286 行）
@@ -87,7 +87,7 @@ perf v0.1.0 (zed?rev=f6838a7c#f6838a7c)
 | 场景 | 怎么做 | 理由 |
 |---|---|---|
 | 现在 | **什么都不做** | 4 个宏全部无消费方；全仓无人写跨平台路径测试，也无人跑 zed 的 perf harness |
-| 将来 editor 测试里要断言 CRLF 行为 | **抄 `line_endings!` 一个宏**（~12 行）到 `ui_macros` | 12 行的宏不值得让自家 crate 多一个 git 依赖位点；且原版 `cfg(target_os)` 判的是 host（见下方陷阱），抄时可以顺手改对 |
+| 将来 editor 测试里要断言 CRLF 行为 | **抄 `line_endings!` 一个宏**（~12 行）到 `aa_ui_macros_zed` | 12 行的宏不值得让自家 crate 多一个 git 依赖位点；且原版 `cfg(target_os)` 判的是 host（见下方陷阱），抄时可以顺手改对 |
 | 将来要引入 zed 的 `#[perf]` | **整 crate git 依赖**（并同步把 `tooling/perf` 的 harness 也要过来） | 只拿 client 半边没意义，宏会退化成 `#[test]` |
 | 只是想要某个宏的「跨平台」能力 | 直接写 `#[cfg(target_os = "windows")]` 的普通函数 | proc-macro 不是必需的，见下方「陷阱」 |
 
@@ -117,8 +117,8 @@ proc-macro crate 是为 **host** 编译的，`target_os` 在它里面等于**编
 
 - 第 2 个以上的 crate 需要同一批「测试用字面量助手」（重复出现即该下沉）；
 - 开始写 **Windows CI**，且 editor/fs 测试里有大量绝对路径 / URI / CRLF 断言；
-- 需要写我们自己的第二个/第三个 proc-macro，且 `packages/ui_macros` 的定位装不下
-  （`ui_macros` 现在只放 UI 相关的宏，见它的 Cargo.toml）。
+- 需要写我们自己的第二个/第三个 proc-macro，且 `packages/aa/ui/aa_ui_zed/aa_ui_macros_zed` 的定位装不下
+  （`aa_ui_macros_zed` 现在只放 UI 相关的宏，见它的 Cargo.toml）。
 
 **建成形态**：包名 `aa_gpui_kit_util_macros`（下划线，全仓约定）；依赖上限
 `quote` + `syn` + `proc-macro2`；**禁止引入 `perf` 之类的运行时 crate** ——

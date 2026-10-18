@@ -48,7 +48,7 @@ aa_gpui_base.workspace = true
 # 组件示例库基建（packages/component）：Component trait / 注册 / 示例。
 aa_gpui_kit_component.workspace = true
 
-aa_gpui_kit_ui_macros.workspace = true
+aa_ui_macros_zed.workspace = true
 
 # 输入框按「字素簇」(grapheme) 移动光标，避免切断 emoji / 组合字符。
 unicode-segmentation = "1"

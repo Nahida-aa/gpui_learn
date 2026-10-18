@@ -1,5 +1,5 @@
 [package]
-name = "aa_gpui_kit_ui_macros"
+name = "aa_ui_macros_zed"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
