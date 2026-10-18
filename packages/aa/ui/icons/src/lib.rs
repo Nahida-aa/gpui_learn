@@ -325,7 +325,9 @@ mod tests {
 
     #[test]
     fn test_all_icons_exist() {
-        let asset_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets");
+        // 本包在 packages/aa/ui/icons（packages/ 之下三层），回仓库根要四级 ..——
+        // 别照抄别处调用点的层级数（embed.rs 里同款 bug 的记述）。
+        let asset_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../assets");
 
         for icon in IconName::iter() {
             let icon_path = asset_path.join(&*icon.path());
@@ -338,7 +340,7 @@ mod tests {
 
     #[test]
     fn test_no_dangling_icons() -> Result<(), ParseError> {
-        let icons_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../assets/icons");
+        let icons_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../../assets/icons");
 
         for entry in std::fs::read_dir(&icons_dir).expect("failed to read icons directory") {
             let path = entry.expect("failed to read icons directory entry").path();
