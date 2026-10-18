@@ -122,20 +122,20 @@ pub static ERASED_EDITOR_FACTORY: OnceLock<fn(&mut Window, &mut App) -> Arc<dyn 
 按本文档的结论把依赖方向翻过来了：
 
 ```text
-旧:  aa_gpui_kit_ui → editor        （ui 认识编辑器内核）
-新:  editor → aa_gpui_kit_ui_input → aa_gpui_kit_ui
+旧:  aa_ui_zed → editor        （ui 认识编辑器内核）
+新:  editor → aa_gpui_kit_ui_input → aa_ui_zed
 ```
 
 改动清单：
 
 | 位置 | 改动 |
 |---|---|
-| `packages/ui` | 删除 `src/base/input/`；Cargo.toml 去掉 `editor`。**依赖树里已无 editor**（`cargo tree -p aa_gpui_kit_ui` 可验） |
-| `packages/ui_input`（新） | `ErasedEditor` + `ErasedEditorEvent` + `ERASED_EDITOR_FACTORY` + `InputField`。依赖只有 `gpui` / `aa_gpui_kit_ui` / `aa_gpui_kit_component`，**编译期无 editor** |
+| `packages/aa/ui/aa_ui_zed` | 删除 `src/base/input/`；Cargo.toml 去掉 `editor`。**依赖树里已无 editor**（`cargo tree -p aa_ui_zed` 可验） |
+| `packages/ui_input`（新） | `ErasedEditor` + `ErasedEditorEvent` + `ERASED_EDITOR_FACTORY` + `InputField`。依赖只有 `gpui` / `aa_ui_zed` / `aa_gpui_kit_component`，**编译期无 editor** |
 | `packages/editor` | 新增依赖 `aa_gpui_kit_ui_input`；加 `src/editor/erased.rs`（`ErasedEditorImpl`）+ `register_erased_editor_factory()`；`bind_editor_keys` / `bind_input_keys` 里幂等注册工厂 |
 | `packages/editor` | 新增 `src/editor/input.rs`：`InputState` / `Textarea` / `TextareaState` / `bind_input_keys`（从 ui 搬来） |
 | `packages/editor` | 为凑齐 trait 补了 `set_text` / `set_placeholder_text` / `set_masked` / `set_read_only` / `set_multiline` / `move_selection_to_end`，以及 `masked` 渲染与 `read_only` 编辑拦截 |
-| `apps/ug_04`、`apps/ug_05` | import 从 `aa_gpui_kit_ui::{InputState…}` 改到 `editor::{…}` |
+| `apps/ug_04`、`apps/ug_05` | import 从 `aa_ui_zed::{InputState…}` 改到 `editor::{…}` |
 
 **注意运行时契约**：`ui_input::InputField::new()` 现在要求先调过
 `editor::bind_input_keys()` 或 `editor::bind_editor_keys()`，否则 panic。
@@ -145,7 +145,7 @@ pub static ERASED_EDITOR_FACTORY: OnceLock<fn(&mut Window, &mut App) -> Arc<dyn 
 
 | | zed | 我们 |
 |---|---|---|
-| `ui` 依赖 editor? | **否**（硬约束） | **是**（`Input` / `Textarea` facade 在 `packages/ui`） |
+| `ui` 依赖 editor? | **否**（硬约束） | **是**（`Input` / `Textarea` facade 在 `packages/aa/ui/aa_ui_zed`） |
 | `ui` 里有输入框组件? | 没有 | 有 |
 | 独立的 `ui_input` 层? | 有 | 没有 |
 | `editor` 依赖 `ui`? | **是** | **否**（自研 Rope 引擎，不取 ui 主题） |

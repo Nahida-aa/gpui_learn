@@ -625,40 +625,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_gpui_kit_ui"
-version = "0.1.0"
-dependencies = [
- "aa_assets_gpui",
- "aa_gpui_base",
- "aa_gpui_kit_component",
- "aa_gpui_kit_ui_macros",
- "aa_icons",
- "aa_theme_gpui",
- "documented",
- "futures",
- "gpui",
- "gpui_macros",
- "gpui_util",
- "itertools 0.14.0",
- "log",
- "menu",
- "num-format",
- "rand 0.9.5",
- "schemars",
- "serde",
- "serde_json",
- "smallvec",
- "strum 0.28.0",
- "tracing",
- "unicode-segmentation",
-]
-
-[[package]]
 name = "aa_gpui_kit_ui_input"
 version = "0.1.0"
 dependencies = [
  "aa_gpui_kit_component",
- "aa_gpui_kit_ui",
+ "aa_ui_zed",
  "gpui",
 ]
 
@@ -821,6 +792,35 @@ version = "0.1.0"
 dependencies = [
  "iced",
  "iced_test",
+]
+
+[[package]]
+name = "aa_ui_zed"
+version = "0.1.0"
+dependencies = [
+ "aa_assets_gpui",
+ "aa_gpui_base",
+ "aa_gpui_kit_component",
+ "aa_gpui_kit_ui_macros",
+ "aa_icons",
+ "aa_theme_gpui",
+ "documented",
+ "futures",
+ "gpui",
+ "gpui_macros",
+ "gpui_util",
+ "itertools 0.14.0",
+ "log",
+ "menu",
+ "num-format",
+ "rand 0.9.5",
+ "schemars",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "strum 0.28.0",
+ "tracing",
+ "unicode-segmentation",
 ]
 
 [[package]]
@@ -10051,7 +10051,7 @@ dependencies = [
 name = "ug_03_slider"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_ui",
+ "aa_ui_zed",
  "gpui",
  "gpui_platform",
  "wasm-bindgen",
@@ -10061,7 +10061,7 @@ dependencies = [
 name = "ug_04_input_button"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_ui",
+ "aa_ui_zed",
  "editor",
  "gpui",
  "gpui_platform",
@@ -10071,8 +10071,8 @@ dependencies = [
 name = "ug_05_editor"
 version = "0.1.0"
 dependencies = [
- "aa_gpui_kit_ui",
  "aa_theme_gpui",
+ "aa_ui_zed",
  "editor",
  "gpui",
  "gpui_platform",

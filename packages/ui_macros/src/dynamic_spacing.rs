@@ -11,7 +11,7 @@
 //!   UI 字号，调用方不传参数（与 zed 同形）。
 //!
 //! 生成的代码引用 `gpui::` / `aa_theme_gpui::`，因此**使用方的 Cargo.toml
-//! 必须同时有 gpui 与 aa_theme_gpui 两个依赖**（`aa_gpui_kit_ui` 两者都有）。
+//! 必须同时有 gpui 与 aa_theme_gpui 两个依赖**（`aa_ui_zed` 两者都有）。
 
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};

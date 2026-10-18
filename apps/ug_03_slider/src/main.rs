@@ -5,7 +5,7 @@ use gpui::{
     SharedString, Window, WindowBounds, WindowOptions, div, prelude::*, px, rgb, size,
 };
 use gpui_platform::application;
-use aa_gpui_kit_ui::{Scale, Slider, SliderEvent, SliderState};
+use aa_ui_zed::{Scale, Slider, SliderEvent, SliderState};
 
 /// 一行：标签 + 滑块 + 当前值文本。按滑块轴方向给合适尺寸：
 /// 水平滑块 → 高条横向铺满；垂直滑块 → 细长的竖条。

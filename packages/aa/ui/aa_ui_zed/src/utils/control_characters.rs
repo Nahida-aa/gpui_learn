@@ -48,7 +48,7 @@ fn printable_substitute(character: char) -> Option<char> {
 /// # Examples
 ///
 /// ```
-/// use aa_gpui_kit_ui::utils::replace_control_characters;
+/// use aa_ui_zed::utils::replace_control_characters;
 ///
 /// assert_eq!(replace_control_characters("main.rs"), "main.rs");
 /// assert_eq!(replace_control_characters("two\nlines.rs"), "two⏎lines.rs");
@@ -88,7 +88,7 @@ pub fn replace_control_characters(text: &str) -> Cow<'_, str> {
 /// # Examples
 ///
 /// ```
-/// use aa_gpui_kit_ui::utils::replace_control_characters_remapping_offsets;
+/// use aa_ui_zed::utils::replace_control_characters_remapping_offsets;
 ///
 /// // The offset of "b" moves from 2 to 4, the stand-in being three bytes wide.
 /// let mut offsets = vec![0, 2];

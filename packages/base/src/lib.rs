@@ -1,10 +1,10 @@
 //! # aa_gpui_base —— 自研基础控件层
 //!
-//! ## 它和 `aa_gpui_kit_ui` 的分工
+//! ## 它和 `aa_ui_zed` 的分工
 //!
 //! | 包 | 定位 | 和 zed 的关系 |
 //! |---|---|---|
-//! | `aa_gpui_kit_ui` | 复合控件库 | **对齐 zed `crates/ui` 的 API 面** |
+//! | `aa_ui_zed` | 复合控件库 | **对齐 zed `crates/ui` 的 API 面** |
 //! | `aa_gpui_base`（本包） | 基础控件 + 通用数学 | **zed 没有对应物**，自己实现 |
 //!
 //! 拆开的目的：让 `ui` 能专心做「与 zed 逐字段对齐」，不必迁就我们自研件的形状；
@@ -16,7 +16,7 @@
 //!   aa_gpui_base          ← 本包：geometry / slider（只依赖 gpui）
 //!        ▲
 //!        │
-//!   aa_gpui_kit_ui        ← 复合件；用本包的 Slider / geometry
+//!   aa_ui_zed        ← 复合件；用本包的 Slider / geometry
 //! ```
 //!
 //! **单向**：本包不依赖 `ui`，也不依赖 `theme`（slider 的颜色是调用方传入或

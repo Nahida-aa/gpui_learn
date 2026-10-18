@@ -1,6 +1,6 @@
 //! 临时探针：ButtonLike + 自定义 child + size/None + Transparent + tooltip。
-use aa_gpui_kit_ui::prelude::*;
-use aa_gpui_kit_ui::{ButtonLike, ButtonSize, ButtonStyle, Tooltip};
+use aa_ui_zed::prelude::*;
+use aa_ui_zed::{ButtonLike, ButtonSize, ButtonStyle, Tooltip};
 
 #[allow(dead_code)]
 fn probe(name: gpui::SharedString, color: gpui::Hsla, cx: &mut gpui::App) {

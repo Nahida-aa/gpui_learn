@@ -8,7 +8,7 @@ use crate::{ButtonLike, prelude::*};
 /// # Usage Example
 ///
 /// ```
-/// use aa_gpui_kit_ui::ButtonLink;
+/// use aa_ui_zed::ButtonLink;
 ///
 /// let button_link = ButtonLink::new("Click me", "https://example.com");
 /// ```

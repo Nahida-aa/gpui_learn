@@ -4,7 +4,7 @@
 //! 用法：
 //!
 //! ```ignore
-//! use aa_gpui_kit_ui::animation::DefaultAnimations;
+//! use aa_ui_zed::animation::DefaultAnimations;
 //!
 //! div()
 //!     .id("panel")

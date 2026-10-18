@@ -4,11 +4,11 @@ version = "0.1.0"
 license.workspace = true
 edition.workspace = true
 publish.workspace = true
-description = "ug_05_editor —— aa_gpui_kit_ui 的多行编辑器演示"
+description = "ug_05_editor —— aa_ui_zed 的多行编辑器演示"
 
 [dependencies]
 gpui = { workspace = true }
-aa_gpui_kit_ui.workspace = true
+aa_ui_zed.workspace = true
 # 编辑器内核已独立成包(demo 直接用内核的多行 Editor)
 editor.workspace = true
 aa_theme_gpui.workspace = true

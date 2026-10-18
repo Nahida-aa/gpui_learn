@@ -7,9 +7,9 @@
 //! 适配点见文件内 `// 与 zed 的差异` 注释。
 
 use aa_gpui_kit_component::{example_group, single_example};
-use aa_gpui_kit_ui::Tooltip;
-use aa_gpui_kit_ui::prelude::*;
-use aa_gpui_kit_ui::IconSize;
+use aa_ui_zed::Tooltip;
+use aa_ui_zed::prelude::*;
+use aa_ui_zed::IconSize;
 
 use gpui::{App, FocusHandle, Focusable, Hsla, Length};
 use std::sync::Arc;

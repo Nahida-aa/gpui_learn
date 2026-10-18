@@ -67,12 +67,12 @@
 我们的编译图里** —— `gpui` 自己就依赖 `util_macros`（proc-macro），后者拉进 `perf`:
 
 ```console
-$ cargo tree -p aa_gpui_kit_ui -i util_macros -i perf -e normal --target x86_64-unknown-linux-gnu
+$ cargo tree -p aa_ui_zed -i util_macros -i perf -e normal --target x86_64-unknown-linux-gnu
 perf v0.1.0 (zed?rev=f6838a7c#f6838a7c)
 └── util_macros v0.1.0 (proc-macro) (zed?rev=f6838a7c#f6838a7c)
     └── gpui v0.2.2 (zed?rev=f6838a7c#f6838a7c)
         ├── aa_gpui_kit_assets … ├── aa_gpui_kit_component … ├── aa_gpui_kit_theme …
-        ├── aa_gpui_kit_ui … └── editor …
+        ├── aa_ui_zed … └── editor …
 ```
 
 即：**git 依赖 `util_macros` 的边际成本是 0 个新包**（41 包 / 16 秒那个数字是空

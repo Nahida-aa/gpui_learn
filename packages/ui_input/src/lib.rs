@@ -1,12 +1,12 @@
 //! # ui_input —— 需要编辑器内核的表单类输入组件
 //!
 //! 架构对齐 zed `crates/ui_input`。本包存在的**唯一理由**是：
-//! **这里放的是「需要编辑器」的 UI 组件，而控件库 `aa_gpui_kit_ui` 不能依赖编辑器。**
+//! **这里放的是「需要编辑器」的 UI 组件，而控件库 `aa_ui_zed` 不能依赖编辑器。**
 //!
 //! ## 依赖方向（这是理解本包的钥匙）
 //!
 //! ```text
-//!   aa_gpui_kit_ui            ← 通用控件库：Label / Icon / Button / KeyBinding …
+//!   aa_ui_zed            ← 通用控件库：Label / Icon / Button / KeyBinding …
 //!        ▲                      它不认识 editor，也不认识本包
 //!        │
 //!   aa_gpui_kit_ui_input      ← 本包：InputField 等表单组件
@@ -21,7 +21,7 @@
 //! 注意 `editor` 在最上面还是最下面：它是**最下游**的包（`editor → ui_input → ui`）。
 //! 而 `ui` 是最上游，谁都可以依赖它，它谁也不依赖（指我们自研包里）。
 //!
-//! ## 为什么不能把这些组件放进 `aa_gpui_kit_ui`？
+//! ## 为什么不能把这些组件放进 `aa_ui_zed`？
 //!
 //! 因为 `InputField` 要一个真编辑器（光标、选区、IME、masked）。
 //! 如果它住在 `ui` 里，`ui` 就得依赖 `editor`；而反过来 `editor` 又要用 `ui`

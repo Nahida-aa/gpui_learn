@@ -58,7 +58,7 @@ Cargo.lock 里**（:3608 / :5797 / :3106），一个都不用下载。
 ## 关键事实：它已经在编译
 
 ```console
-$ cargo tree -p aa_gpui_kit_ui -i collections -e normal --target x86_64-unknown-linux-gnu
+$ cargo tree -p aa_ui_zed -i collections -e normal --target x86_64-unknown-linux-gnu
 collections v0.1.0 (zed?rev=f6838a7c#f6838a7c)
 ├── gpui v0.2.2 (zed?rev=f6838a7c#f6838a7c)
 └── zlog v0.1.0 (zed?rev=f6838a7c#f6838a7c)

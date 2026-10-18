@@ -1,6 +1,6 @@
 //! # ug_05_editor —— aa-gpui-kit-ui 的多行编辑器演示
 //!
-//! 基于 `aa_gpui_kit_ui::base::input::editor::Editor`(MultiLine 模式)。
+//! 基于 `aa_ui_zed::base::input::editor::Editor`(MultiLine 模式)。
 //!
 //! 验证清单(手动过一遍):
 //! - 多行输入、Enter 换行(继承行首缩进)、Backspace 跨行合并;

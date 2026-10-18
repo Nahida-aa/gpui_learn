@@ -23,7 +23,7 @@ use gpui::{Pixels, Rems, px, rems};
 use aa_gpui_kit_ui_macros::derive_dynamic_spacing;
 
 /// UI 密度：**定义在 `aa_theme_gpui`**（对齐 zed `theme::UiDensity`），
-/// 这里原样转出，所以外部路径 `aa_gpui_kit_ui::UiDensity` 不变。
+/// 这里原样转出，所以外部路径 `aa_ui_zed::UiDensity` 不变。
 ///
 /// 2026-09 合并：此前 `ui` 里另有一份同名 `UiDensity`，与 theme 的那份重复；
 /// 已删除只留 theme 的 —— `ThemeSettingsProvider::ui_density` 返回的就是它。

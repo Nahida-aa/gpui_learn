@@ -29,7 +29,7 @@ use crate::{Color, DynamicSpacing, ElevationIndex, Icon, KeyBinding, LabelSize};
 /// # Examples
 ///
 /// ```
-/// use aa_gpui_kit_ui::prelude::*;
+/// use aa_ui_zed::prelude::*;
 ///
 /// Button::new("button_id", "Click me!").on_click(|_, _, _| {
 ///     // Handle click event
@@ -39,8 +39,8 @@ use crate::{Color, DynamicSpacing, ElevationIndex, Icon, KeyBinding, LabelSize};
 /// 可切换的按钮用 `.toggle_state(..)` + `.selected_style(..)`：
 ///
 /// ```
-/// use aa_gpui_kit_ui::prelude::*;
-/// use aa_gpui_kit_ui::TintColor;
+/// use aa_ui_zed::prelude::*;
+/// use aa_ui_zed::TintColor;
 ///
 /// Button::new("button_id", "Click me!")
 ///     .start_icon(Icon::new(IconName::Check))

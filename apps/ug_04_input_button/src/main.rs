@@ -16,8 +16,8 @@ use gpui::{
 use gpui_platform::application;
 // 与 zed 一致：trait（Clickable / Disableable / ButtonCommon…）随 prelude 进来，
 // 否则 `.on_click(..)` / `.style(..)` 这类 trait 方法不可见。
-use aa_gpui_kit_ui::prelude::*;
-use aa_gpui_kit_ui::{ButtonStyle, TintColor};
+use aa_ui_zed::prelude::*;
+use aa_ui_zed::{ButtonStyle, TintColor};
 // 输入 facade 住在 editor 包（依赖方向已翻转，见 docs/zed/ui-input-analysis.md）。
 use editor::{InputEvent, InputState, bind_input_keys};
 

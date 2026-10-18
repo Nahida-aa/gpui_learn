@@ -36,7 +36,6 @@ members = [
     "packages/icons",
     "packages/aa/language_core",
     "packages/aa/theme/aa_theme_gpui",
-    "packages/ui",
     "packages/ui_input",
     "packages/ui_macros",
     "packages/zed/zed_cloud_llm_client",
@@ -47,7 +46,7 @@ members = [
     "packages/aa/util",
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
-    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/theme/aa_syntax_theme_gpui", "packages/aa/theme/aa_syntax_theme_iced", "packages/aa/theme/aa_theme_iced", "packages/aa/ui/aa_ui_iced", "packages/aa/theme/aa_theme_settings_gpui_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/theme/aa_theme_core", "packages/aa/ui/aa_ui_core", "packages/aa/util/aa_shared_string",
+    "packages/zed/zed_migrator", "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_settings", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/theme/aa_syntax_theme_gpui", "packages/aa/theme/aa_syntax_theme_iced", "packages/aa/theme/aa_theme_iced", "packages/aa/ui/aa_ui_iced", "packages/aa/ui/aa_ui_zed", "packages/aa/theme/aa_theme_settings_gpui_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/theme/aa_theme_core", "packages/aa/ui/aa_ui_core", "packages/aa/util/aa_shared_string",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -58,7 +57,7 @@ members = [
 #     `cargo run -- android init`）。
 #
 # 注意：`default-members` 同时决定裸 `cargo test` 的范围——收窄后
-# `cargo test` 只测 aa-gpui-cli。aa_gpui_kit_ui 的测试请用 `just test`，
+# `cargo test` 只测 aa-gpui-cli。aa_ui_zed 的测试请用 `just test`，
 # 全量用 `cargo test --workspace`；全量构建用 `cargo build --workspace`。
 default-members = [
     "packages/apps/aa-gpui-cli",
@@ -259,13 +258,13 @@ aa_clock = { path = "packages/clock" }
 # 位置统一在此声明，避免各包散写相对路径。
 
 # 基础控件层（packages/base）：geometry / icon / slider。
-# **zed 的 ui 里没有对应物** —— 这是我们自研的一层，`aa_gpui_kit_ui` 在它
+# **zed 的 ui 里没有对应物** —— 这是我们自研的一层，`aa_ui_zed` 在它
 # 之上对齐 zed，所以依赖方向是 ui → base（单向，base 不反向依赖 ui / theme）。
 aa_gpui_base = { path = "packages/base" }
 
 # 主题系统（packages/aa/theme/aa_theme_gpui）：对齐 zed crates/theme 的精简版，含语义色、
-# 语法色与主题注册表。独立成包是因为它不隶属控件库——aa_gpui_kit_ui 只是调用方，
-# 因此 aa_gpui_kit_ui 也通过 `aa_theme_gpui.workspace = true` 引用（不留 module 别名）。
+# 语法色与主题注册表。独立成包是因为它不隶属控件库——aa_ui_zed 只是调用方，
+# 因此 aa_ui_zed 也通过 `aa_theme_gpui.workspace = true` 引用（不留 module 别名）。
 aa_theme_gpui = { path = "packages/aa/theme/aa_theme_gpui" }
 # 前端无关的主题内核（颜色类型 / OKLab），gpui 与 iced 两个后端共享。
 aa_theme_core = { path = "packages/aa/theme/aa_theme_core" }
@@ -315,17 +314,18 @@ aa_gpui_android = { path = "packages/aa_gpui/gpui_android" }
 # （原 theme-settings 包：主题 JSON 的装载与装配。已删除——无消费者，装配
 # 实际在 AAgent 的 packages/theme_settings。）
 
-# 编辑器内核（packages/editor）：自研 Rope 引擎 + 多行编辑器，从 aa_gpui_kit_ui
-# 拆出（2026-09）。aa_gpui_kit_ui 的 InputState/Textarea 是它的薄 facade。
+# 编辑器内核（packages/editor）：自研 Rope 引擎 + 多行编辑器，从 aa_ui_zed
+# 拆出（2026-09）。aa_ui_zed 的 InputState/Textarea 是它的薄 facade。
 editor = { path = "packages/editor" }
 
-# 控件库（packages/ui，原 ui-gpui）：slider/icon/button/divider/tooltip/
-# context_menu 与 Label/KeyBinding。它**不依赖 editor**（2026-09 翻转，见
-# docs/zed/ui-input-analysis.md）：输入类组件住在 aa_gpui_kit_ui_input。
-aa_gpui_kit_ui = { path = "packages/ui" }
+# 控件库（packages/aa/ui/aa_ui_zed，原 packages/ui、包名原 aa_gpui_kit_ui）：
+# slider/icon/button/divider/tooltip/context_menu 与 Label/KeyBinding。
+# 它**不依赖 editor**（2026-09 翻转，见 docs/zed/ui-input-analysis.md）：
+# 输入类组件住在 aa_gpui_kit_ui_input。
+aa_ui_zed = { path = "packages/aa/ui/aa_ui_zed" }
 
 # 表单类输入组件（packages/ui_input）：需要编辑器内核的 UI 组件。
-# 对齐 zed crates/ui_input：依赖 aa_gpui_kit_ui，编译期**不**依赖 editor，
+# 对齐 zed crates/ui_input：依赖 aa_ui_zed，编译期**不**依赖 editor，
 # 对 editor 的依赖换成运行时注入（ErasedEditor + ERASED_EDITOR_FACTORY）。
 aa_gpui_kit_ui_input = { path = "packages/ui_input" }
 

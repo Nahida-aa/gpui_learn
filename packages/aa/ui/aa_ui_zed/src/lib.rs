@@ -1,14 +1,14 @@
-//! # aa_gpui_kit_ui —— GPUI 控件库，**API 面逐字段对齐 zed `crates/ui`**
+//! # aa_ui_zed —— GPUI 控件库，**API 面逐字段对齐 zed `crates/ui`**
 //!
 //! 这里放的是「zed 也有的那些控件」：Button / Icon / Label / KeyBinding /
 //! Avatar / Checkbox / Switch / Tooltip / PopoverMenu …。目标是外部代码能
-//! **原样 import** zed 的写法（见 `packages/ui/tests/prelude.rs`）。
+//! **原样 import** zed 的写法（见 `packages/aa/ui/aa_ui_zed/tests/prelude.rs`）。
 //!
 //! ## 与 `aa_gpui_base` 的分工（2026-09 拆出）
 //!
 //! | 包 | 定位 |
 //! |---|---|
-//! | `aa_gpui_kit_ui`（本包） | 对齐 zed，API 面以 zed 为准 |
+//! | `aa_ui_zed`（本包） | 对齐 zed，API 面以 zed 为准 |
 //! | `aa_gpui_base` | **zed 没有对应物**的自研基础件（geometry / icon / slider） |
 //!
 //! 依赖方向是**单向** `ui → base`：base 只管几何与图元，不认识主题、不认识
@@ -43,7 +43,7 @@ pub use styles::units::{vh, vw, BASE_REM_SIZE_IN_PX, rems_from_px};
 mod styles;
 pub mod traits;
 /// 图标等资源内嵌在仓库根 `assets/` 下，由工作区共享的 `aa_assets_core` 统一加载。
-/// aa_gpui_kit_ui 复用它，不自带资源目录。
+/// aa_ui_zed 复用它，不自带资源目录。
 ///
 /// 沿用 `Assets` 这个名字（而非 `GpuiAssets`）是为了不打断下游的
 /// `ui::Assets` 路径；实际类型是 `aa_assets_gpui::GpuiAssets`。

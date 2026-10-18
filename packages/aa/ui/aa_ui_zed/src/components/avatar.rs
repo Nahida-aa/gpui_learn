@@ -15,7 +15,7 @@ use crate::{IconSize, rems_from_px};
 /// # Examples
 ///
 /// ```ignore
-/// use aa_gpui_kit_ui::Avatar;
+/// use aa_ui_zed::Avatar;
 ///
 /// Avatar::new("path/to/image.png")
 ///     .grayscale(true)

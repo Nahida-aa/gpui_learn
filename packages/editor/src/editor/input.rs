@@ -4,8 +4,8 @@
 //! 而是**翻转依赖方向**:
 //!
 //! ```text
-//! 旧:  aa_gpui_kit_ui → editor      （ui 认识编辑器内核）
-//! 新:  editor → aa_gpui_kit_ui_input → aa_gpui_kit_ui
+//! 旧:  aa_ui_zed → editor      （ui 认识编辑器内核）
+//! 新:  editor → aa_gpui_kit_ui_input → aa_ui_zed
 //! ```
 //!
 //! 翻转后 `ui` 是纯粹的上游控件库,谁都可以依赖它、它谁也不依赖(自研包里);

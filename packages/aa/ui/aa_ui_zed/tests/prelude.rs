@@ -1,9 +1,9 @@
 //! prelude 集成测试：从**外部调用方**视角验证一行
-//! `use aa_gpui_kit_ui::prelude::*;` 即可获得常用 API。
+//! `use aa_ui_zed::prelude::*;` 即可获得常用 API。
 //!
 //! 缺符号会直接编译失败 —— 这份文件同时充当 API 面的调用方示例。
 
-use aa_gpui_kit_ui::prelude::*;
+use aa_ui_zed::prelude::*;
 
 #[test]
 fn layout_helpers_from_prelude() {

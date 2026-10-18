@@ -39,7 +39,7 @@ pub fn reveal_in_file_manager_label(is_remote: bool) -> &'static str {
 /// # Examples
 ///
 /// ```
-/// use aa_gpui_kit_ui::utils::capitalize;
+/// use aa_ui_zed::utils::capitalize;
 ///
 /// assert_eq!(capitalize("hello"), "Hello");
 /// assert_eq!(capitalize("WORLD"), "WORLD");

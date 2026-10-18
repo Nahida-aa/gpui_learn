@@ -1,11 +1,11 @@
 //! The prelude of this crate. When building UI you almost always want to import this.
 //!
 //! 对齐 zed `crates/ui/src/prelude.rs`：把最常用的 trait、组件与 gpui 原语
-//! 聚合到一个 `use aa_gpui_kit_ui::prelude::*;` 里。只收拢**高频**项，
+//! 聚合到一个 `use aa_ui_zed::prelude::*;` 里。只收拢**高频**项，
 //! 低频 API（如 `Slider` 内部类型）仍按需从包根导入。
 //!
 //! ```ignore
-//! use aa_gpui_kit_ui::prelude::*;
+//! use aa_ui_zed::prelude::*;
 //!
 //! // trait 方法、组件、布局 helper 一次到位
 //! let bar = h_flex().child(

@@ -3,7 +3,7 @@
 //! 两个宏：
 //!
 //! - [`derive_dynamic_spacing!`]：生成 `DynamicSpacing` 密度间距枚举
-//!   （消费方在 `aa_gpui_kit_ui` 的 `styles/spacing`）；
+//!   （消费方在 `aa_ui_zed` 的 `styles/spacing`）；
 //! - `#[derive(RegisterComponent)]`：把组件登记进组件示例库
 //!   （消费方为 `aa_gpui_kit_component` 的 inventory 注册表）。
 //!

@@ -24,17 +24,17 @@ build-all:
 check:
     cargo check --workspace
 
-# 运行 aa_gpui_kit_ui 库测试（需 test-support 特性）
+# 运行 aa_ui_zed 库测试（需 test-support 特性）
 test:
-    cargo test -p aa_gpui_kit_ui -F test-support
+    cargo test -p aa_ui_zed -F test-support
 
 # 运行整个工作区的测试（含各示例包）
 test-all:
     cargo test --workspace
 
-# 对 aa_gpui_kit_ui 跑 clippy
+# 对 aa_ui_zed 跑 clippy
 lint:
-    cargo clippy -p aa_gpui_kit_ui
+    cargo clippy -p aa_ui_zed
 
 # 把 aa-bundle 安装为本地 CLI（~/.cargo/bin/aa-bundle）。
 # 改了 aa-bundle 的代码后必须重跑才生效 —— cargo install 是快照式的。

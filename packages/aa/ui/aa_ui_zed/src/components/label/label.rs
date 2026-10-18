@@ -13,7 +13,7 @@ use gpui::{HighlightStyle, StyleRefinement, StyledText};
 /// # Examples
 ///
 /// ```
-/// use aa_gpui_kit_ui::prelude::*;
+/// use aa_ui_zed::prelude::*;
 ///
 /// Label::new("Hello, World!");
 /// ```
@@ -21,7 +21,7 @@ use gpui::{HighlightStyle, StyleRefinement, StyledText};
 /// **A colored label**, for example labeling a dangerous action:
 ///
 /// ```
-/// use aa_gpui_kit_ui::prelude::*;
+/// use aa_ui_zed::prelude::*;
 ///
 /// let my_label = Label::new("Delete").color(Color::Error);
 /// ```
@@ -29,7 +29,7 @@ use gpui::{HighlightStyle, StyleRefinement, StyledText};
 /// **A label with a strikethrough**, for example labeling something that has been deleted:
 ///
 /// ```
-/// use aa_gpui_kit_ui::prelude::*;
+/// use aa_ui_zed::prelude::*;
 ///
 /// let my_label = Label::new("Deleted").strikethrough();
 /// ```
@@ -46,7 +46,7 @@ impl Label {
     /// # Examples
     ///
     /// ```
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!");
     /// ```
@@ -135,7 +135,7 @@ impl LabelCommon for Label {
     /// # Examples
     ///
     /// ```
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!").size(LabelSize::Small);
     /// ```
@@ -150,7 +150,7 @@ impl LabelCommon for Label {
     ///
     /// ```
     /// use gpui::FontWeight;
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!").weight(FontWeight::BOLD);
     /// ```
@@ -164,7 +164,7 @@ impl LabelCommon for Label {
     /// # Examples
     ///
     /// ```
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!").line_height_style(LineHeightStyle::UiLabel);
     /// ```
@@ -178,7 +178,7 @@ impl LabelCommon for Label {
     /// # Examples
     ///
     /// ```
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!").color(Color::Accent);
     /// ```
@@ -192,7 +192,7 @@ impl LabelCommon for Label {
     /// # Examples
     ///
     /// ```
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!").strikethrough();
     /// ```
@@ -206,7 +206,7 @@ impl LabelCommon for Label {
     /// # Examples
     ///
     /// ```
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!").italic();
     /// ```
@@ -220,7 +220,7 @@ impl LabelCommon for Label {
     /// # Examples
     ///
     /// ```
-    /// use aa_gpui_kit_ui::prelude::*;
+    /// use aa_ui_zed::prelude::*;
     ///
     /// let my_label = Label::new("Hello, World!").alpha(0.5);
     /// ```
