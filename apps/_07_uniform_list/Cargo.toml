@@ -26,9 +26,9 @@ path = "src/main.rs"
 [dependencies]
 gpui = { workspace = true }
 # 桌面 / 通用依赖：log 给诊断日志用（env_logger 在 run() 里初始化后输出）。
-log = "0.4"
+log.workspace = true
 # 桌面端 logger backend（初始化后 log::info! 才能在终端输出；不初始化则静默丢弃）。
-env_logger = "0.11"
+env_logger.workspace = true
 
 # gpui_platform 提供桌面入口 application()，按平台开窗口后端。
 [target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
@@ -42,4 +42,4 @@ gpui_platform = { workspace = true }
 [target.'cfg(target_os = "android")'.dependencies]
 aa_gpui_android.workspace = true
 android-activity = { version = "0.6", features = ["native-activity"] }
-android_logger = "0.15"
+android_logger.workspace = true

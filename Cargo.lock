@@ -318,7 +318,7 @@ dependencies = [
  "anyhow",
  "serde",
  "serde_json",
- "strum 0.28.0",
+ "strum",
  "uuid",
 ]
 
@@ -331,7 +331,7 @@ dependencies = [
  "gpui",
  "inventory",
  "parking_lot",
- "strum 0.28.0",
+ "strum",
 ]
 
 [[package]]
@@ -510,7 +510,7 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec",
- "strum 0.28.0",
+ "strum",
  "toml 0.8.23",
  "tree-sitter",
 ]
@@ -592,7 +592,7 @@ dependencies = [
  "serde_json",
  "serde_json_lenient",
  "serde_path_to_error",
- "strum 0.28.0",
+ "strum",
  "tempfile",
 ]
 
@@ -642,7 +642,7 @@ name = "aa_icons"
 version = "0.1.0"
 dependencies = [
  "serde",
- "strum 0.28.0",
+ "strum",
 ]
 
 [[package]]
@@ -662,7 +662,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
- "strum 0.28.0",
+ "strum",
  "thiserror 2.0.21",
 ]
 
@@ -749,7 +749,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde_json",
- "strum 0.27.2",
+ "strum",
  "thiserror 2.0.21",
  "tracing",
  "uuid",
@@ -821,7 +821,7 @@ dependencies = [
  "serde",
  "serde_json",
  "smallvec",
- "strum 0.28.0",
+ "strum",
  "tracing",
  "unicode-segmentation",
 ]
@@ -3065,7 +3065,7 @@ dependencies = [
  "optfield",
  "proc-macro2",
  "quote",
- "strum 0.28.0",
+ "strum",
  "syn 2.0.119",
 ]
 
@@ -4043,7 +4043,7 @@ dependencies = [
  "slotmap",
  "smallvec",
  "spin 0.10.1",
- "strum 0.28.0",
+ "strum",
  "sum_tree",
  "taffy",
  "thiserror 2.0.21",
@@ -4111,7 +4111,7 @@ dependencies = [
  "raw-window-handle",
  "smallvec",
  "smol",
- "strum 0.28.0",
+ "strum",
  "url",
  "uuid",
  "wayland-backend",
@@ -4167,7 +4167,7 @@ dependencies = [
  "raw-window-handle",
  "semver",
  "smallvec",
- "strum 0.28.0",
+ "strum",
  "uuid",
  "zed-font-kit",
 ]
@@ -9044,32 +9044,11 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "strum"
-version = "0.27.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
-dependencies = [
- "strum_macros 0.27.2",
-]
-
-[[package]]
-name = "strum"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9628de9b8791db39ceda2b119bbe13134770b56c138ec1d3af810d045c04f9bd"
 dependencies = [
- "strum_macros 0.28.0",
-]
-
-[[package]]
-name = "strum_macros"
-version = "0.27.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7695ce3845ea4b33927c055a39dc438a45b059f7c1b3d91d38d10355fb8cbca7"
-dependencies = [
- "heck 0.5.0",
- "proc-macro2",
- "quote",
- "syn 2.0.119",
+ "strum_macros",
 ]
 
 [[package]]
@@ -12085,7 +12064,7 @@ dependencies = [
  "anyhow",
  "serde",
  "serde_json",
- "strum 0.28.0",
+ "strum",
  "uuid",
  "zeta_prompt",
 ]
@@ -12250,7 +12229,7 @@ dependencies = [
  "anyhow",
  "imara-diff",
  "serde",
- "strum 0.28.0",
+ "strum",
 ]
 
 [[package]]

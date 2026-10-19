@@ -16,7 +16,7 @@ gpui.workspace = true
 sum_tree.workspace = true
 tracing.workspace = true
 # 输入按「字素簇」(grapheme) 移动光标，避免切断 emoji / 组合字符。
-unicode-segmentation = "1"
+unicode-segmentation.workspace = true
 
 # 取当前主题色（选区背景、光标色）。编辑器内核不隶属控件库，
 # 主题是独立包（依赖方向 editor → theme）。
@@ -36,4 +36,4 @@ test-support = ["gpui/test-support"]
 [dev-dependencies]
 # display_map 的属性测试（随机 wrap/展开往返）需要它。之前一直缺这条声明，
 # 所以 `cargo test -p editor` 直接编不过 —— 补上。
-rand = "0.9"
+rand.workspace = true

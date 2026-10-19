@@ -1,7 +1,7 @@
 [package]
 name = "ug_03_slider"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
 license = "Apache-2.0"
 publish = false
 description = "ug_03_slider —— 自研 aa_ui_base_gpui 的 Slider 演示（进度条 / 音量 / 刻度 / 禁用 / 键盘）"
@@ -20,4 +20,4 @@ gpui_platform = { workspace = true }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 gpui_platform = { workspace = true }
-wasm-bindgen = "0.2.120"
+wasm-bindgen.workspace = true

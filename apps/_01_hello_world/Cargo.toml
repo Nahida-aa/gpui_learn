@@ -34,4 +34,4 @@ gpui_platform = { workspace = true }
 # cfg(target_family="wasm") 自动拉 gpui_web，是 wasm 入口必需的。
 [target.'cfg(target_family = "wasm")'.dependencies]
 gpui_platform = { workspace = true }
-wasm-bindgen = "0.2.120"
+wasm-bindgen.workspace = true

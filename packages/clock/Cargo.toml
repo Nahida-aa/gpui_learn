@@ -12,7 +12,7 @@ test-support = ["dep:parking_lot"]
 
 [dependencies]
 parking_lot = { workspace = true, optional = true }
-serde = { version = "1", features = ["derive"] }
+serde.workspace = true
 smallvec.workspace = true
 
 [lints]

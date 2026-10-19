@@ -1,7 +1,7 @@
 [package]
 name = "aa_gpui_android"
 version = "0.9.3"
-edition = "2024"
+edition.workspace = true
 description = "Android platform backend for GPUI (vendored into gpui_learn, pinned to zed d88f6821)"
 license = "Apache-2.0"
 publish = false
@@ -32,23 +32,23 @@ urlencoding = []
 # 同一依赖图里出现两份 gpui 时会报 E0463（类型不互通）。
 [dependencies]
 accesskit = "0.24.0"
-anyhow = "1.0"
-futures = "0.3"
+anyhow.workspace = true
+futures.workspace = true
 gpui.workspace = true
 gpui_wgpu.workspace = true
-log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
-parking_lot = "0.12"
+log.workspace = true
+parking_lot.workspace = true
 raw-window-handle = "0.6"
-smallvec = { version = "1.6", features = ["union", "const_new"] }
-serde_json = "1"
+smallvec.workspace = true
+serde_json.workspace = true
 
 [target.'cfg(target_os = "android")'.dependencies]
 android-activity = { version = "0.6", features = ["native-activity"] }
-android_logger = "0.15"
+android_logger.workspace = true
 jni = "0.22"
-libc = "0.2"
+libc.workspace = true
 ndk = { version = "0.9", features = ["nativewindow"] }
 ndk-context = "0.1"
 ndk-sys = "0.6"
 rustc-hash = "2"
-uuid = { version = "1", features = ["v5"] }
+uuid.workspace = true

@@ -1,6 +1,6 @@
 [package]
 name = "aa_ui_zed"
-version = "0.1.0"
+version.workspace = true
 edition.workspace = true
 # 含照搬自 zed crates/ui 的文件，继承 workspace 默认的 GPL-3.0-or-later。
 license.workspace = true
@@ -46,9 +46,9 @@ aa_component_zed.workspace = true
 aa_ui_macros_zed.workspace = true
 
 # 输入框按「字素簇」(grapheme) 移动光标，避免切断 emoji / 组合字符。
-unicode-segmentation = "1"
+unicode-segmentation.workspace = true
 # LabelLike 等组件的小向量（与 gpui 内部同源版本线）。
-smallvec = "1"
+smallvec.workspace = true
 
 # KeyBinding：itertools::intersperse（按键之间的分隔符）与 Itertools::join。
 itertools.workspace = true
@@ -60,8 +60,8 @@ itertools.workspace = true
 strum.workspace = true
 
 # 主题加载器：解析 zed 主题扩展 JSON（v0.2.0 扁平格式）进 ThemeRegistry。
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+serde.workspace = true
+serde_json.workspace = true
 # `scrollbars::ShowScrollbar` 等设置项枚举要能被放进调用方的
 # `#[derive(JsonSchema)]` 设置结构里（aacode 的 git_panel_settings 就是这么用的）。
 schemars.workspace = true
@@ -74,5 +74,5 @@ documented.workspace = true
 test-support = ["gpui/test-support"]
 
 [dev-dependencies]
-rand = "0.9"
-futures = "0.3"
+rand.workspace = true
+futures.workspace = true
