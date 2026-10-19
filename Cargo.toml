@@ -183,6 +183,12 @@ log = { version = "0.4", features = ["kv_unstable_serde", "serde"] }
 # Android / 桌面例子的日志后端（env_logger 与 zed 同版本 0.11）。
 env_logger = "0.11"
 android_logger = "0.15"
+# Android activity 绑定（gpui_android 与 6 个 android 例子逐字相同）。
+android-activity = { version = "0.6", features = ["native-activity"] }
+# 色彩空间换算（aa_theme_gpui / aa_theme_core 逐字相同；默认 features 含
+# std，两边都显式关掉后只开 std——注意别处用 default-features = false +
+# features = ["std"] 覆盖时写法不同，这里是条目本体）。
+palette = { version = "0.7.5", default-features = false, features = ["std"] }
 zeroize = "1"
 
 # 数字千分位格式化（DiffStat 的 `1,234` 行数显示，与 zed ui 同款）。

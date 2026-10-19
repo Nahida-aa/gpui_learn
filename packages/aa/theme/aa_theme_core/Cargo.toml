@@ -10,7 +10,7 @@ publish.workspace = true
 anyhow.workspace = true
 # OKLab/OKLCh 转换。与 aa_theme_gpui 保持同一实现，避免同一份调色板
 # 在两个后端下算出不同的感知亮度。
-palette = { version = "0.7.5", default-features = false, features = ["std"] }
+palette.workspace = true
 # 主题要序列化进 settings JSON / 主题文件。
 serde = { workspace = true }
 # AppearanceContent 的 JsonSchema derive（对齐 zed crates/theme）。

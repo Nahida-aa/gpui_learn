@@ -22,6 +22,9 @@ thiserror.workspace = true
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 # Workspace inheritance would re-enable defaults, including blocking synchronization.
+# （edition 2024 下成员**无法覆盖**继承来的 default-features ——
+#   `{ workspace = true, default-features = false }` 会被 cargo 拒绝，
+#   只有 features 能叠加。所以这里必须内联版本号。）
 async-lock = { version = "3.4.2", default-features = false }
 
 [target.'cfg(not(all(target_arch = "wasm32", target_os = "unknown")))'.dependencies]

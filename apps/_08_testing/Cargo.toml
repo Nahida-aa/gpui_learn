@@ -49,5 +49,5 @@ futures.workspace = true
 # android-activity 必须开 native-activity，android_logger 提供日志后端。
 [target.'cfg(target_os = "android")'.dependencies]
 aa_gpui_android.workspace = true
-android-activity = { version = "0.6", features = ["native-activity"] }
+android-activity.workspace = true
 android_logger.workspace = true
