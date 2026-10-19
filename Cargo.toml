@@ -349,6 +349,17 @@ smallvec = { version = "1.6", features = ["union", "const_new"] }
 toml = "0.8"
 # aa-bundle 与 aa-gpui-cli 的 CLI 框架（两处逐字相同，收进来去重）。
 clap = { version = "4", features = ["derive"] }
+# 以下按 zed 的放置方式收编：zed 把这些（含单消费方的）都放 workspace 条目，
+# 消费方需要额外 features / optional 时用 { workspace = true, ... } 叠加
+# （acp_thread / gpui_web / gpui_wgpu 同款）。规格沿用我们现有的值。
+nucleo = "0.5"
+web-sys = "0.3"
+accesskit = "0.24.0"
+rustc-hash = "2"
+raw-window-handle = "0.6"
+web-time = "1"
+is_executable = "1.0.5"
+merman = { version = "=0.8.0-alpha.5", default-features = false, features = ["layout-cytoscape", "svg"] }
 # tree-sitter（官方 fork）：language_core 做语法高亮和解析。
 tree-sitter = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }
 tree-sitter-language = { git = "https://github.com/tree-sitter/tree-sitter", rev = "43623ec9bf0eaaf7113285c46e8a09018f181b18" }

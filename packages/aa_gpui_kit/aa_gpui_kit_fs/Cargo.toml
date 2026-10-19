@@ -33,7 +33,7 @@ tempfile.workspace = true
 text.workspace = true
 util.workspace = true
 path.workspace = true
-is_executable = "1.0.5"
+is_executable.workspace = true
 notify = "9.0.0-rc.4"
 
 [target.'cfg(unix)'.dependencies]

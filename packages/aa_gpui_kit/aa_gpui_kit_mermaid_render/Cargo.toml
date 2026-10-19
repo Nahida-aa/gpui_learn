@@ -11,10 +11,7 @@ test-support = []
 [dependencies]
 anyhow.workspace = true
 gpui.workspace = true
-merman = { version = "=0.8.0-alpha.5", default-features = false, features = [
-    "layout-cytoscape",
-    "svg",
-] }
+merman.workspace = true
 # merman 全套 pin alpha.5，merman-core alpha.6 与 merman-render alpha.5 API 不兼容
 merman-core = "=0.8.0-alpha.5"
 quick-xml.workspace = true
