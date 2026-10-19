@@ -3,7 +3,7 @@ use std::ops::Range;
 
 use crate::utils::replace_control_characters;
 use crate::{LabelLike, prelude::*};
-use gpui::{HighlightStyle, StyleRefinement, StyledText};
+use gpui::{HighlightStyle, StyleRefinement, StyledText, SharedString, IntoElement};
 
 /// A struct representing a label element in the UI.
 ///
@@ -262,14 +262,15 @@ impl LabelCommon for Label {
 
 impl RenderOnce for Label {
     fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
-        if self.render_code_spans {
+        if self.render_code_spans { // 如 `use `zed` to open`
             if let Some((stripped, code_ranges)) = parse_backtick_spans(&self.label) {
-                // 走 ThemeSettingsProvider 取 buffer 字体族 —— 对齐 zed
+                // 走 ThemeSettingsProvider 取 buffer 字体族 —— buffer_font(cx)是便捷函数, 等价 zed
                 // `theme::theme_settings(cx).buffer_font(cx).family`。
                 // 原先硬编码 "monospace"（常量 BUFFER_FONT_FAMILY），绕过了
                 // provider，导致上层（如 aacode 的 theme_settings）覆盖 provider
                 // 后 Label 仍用旧硬编码值。provider 默认实现即返回 monospace，
                 // 故未配置时行为不回退。
+                // 从 theme 拿编辑器（buffer）的等宽字体
                 let buffer_font_family = aa_theme_gpui::buffer_font(cx).family;
                 let background_color = cx.theme().colors().element_background;
 
