@@ -39,6 +39,16 @@ use crate::styles::units::rems_from_px;
 use crate::styles::{DynamicSpacing, ElevationIndex};
 use crate::traits::{Clickable, Disableable, StyledExt as _, Toggleable};
 
+/// A trait for buttons that can be selected, and can have a distinct style when selected.
+///
+/// 定义位置对齐 zed：zed 把该 trait 放在 `button_like.rs` 顶部（`ButtonCommon`
+/// 之前），**不在** `traits/`——本包同样放在这里，经 button 模块与 prelude 导出。
+/// （本包曾有 `traits/selectable_button.rs`，注释引的 zed 路径不存在，已归位。）
+pub trait SelectableButton: Toggleable {
+    /// Set the style the button will use when it is selected.
+    fn selected_style(self, style: ButtonStyle) -> Self;
+}
+
 /// 图标在按钮 / 菜单条目里的哪一侧（对齐 zed `IconPosition`，
 /// zed `button_like.rs:49`）。
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy, Default)]

@@ -16,7 +16,6 @@ use gpui::{AnyElement, ElementId, SharedString};
 use crate::components::button::{ButtonLike, ButtonStyle, KeybindingPosition};
 use crate::components::label::LabelLike;
 use crate::prelude::*;
-use crate::traits::SelectableButton;
 use crate::{Color, DynamicSpacing, ElevationIndex, Icon, KeyBinding, LabelSize};
 
 /// An element that creates a button with a label and optional icons.

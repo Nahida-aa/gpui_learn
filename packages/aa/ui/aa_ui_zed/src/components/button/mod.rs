@@ -29,7 +29,7 @@ use gpui::{
 };
 
 use crate::styles::ElevationIndex;
-use crate::traits::{Clickable, Disableable, FixedWidth, SelectableButton, Toggleable};
+use crate::traits::{Clickable, Disableable, FixedWidth, Toggleable};
 use crate::{Color, Indicator};
 use aa_theme_gpui::ActiveTheme as _;
 pub mod button;
@@ -40,7 +40,7 @@ pub mod split_button;
 pub mod toggle_button;
 
 pub use button::Button;
-pub use button_like::{ButtonCommon, ButtonLike, ButtonSize, IconPosition};
+pub use button_like::{ButtonCommon, ButtonLike, ButtonSize, IconPosition, SelectableButton};
 pub use button_link::ButtonLink;
 pub use copy_button::CopyButton;
 

@@ -11,13 +11,14 @@
 //! | [`Toggleable`] + [`ToggleState`] | toggle 语义(含三态) | 同名 |
 //! | [`Transformable`] | transform | 同名 |
 //! | [`CommonAnimationExt`] | 常用动画(旋转等) | 同名 |
-//! | [`SelectableButton`] | selected_style | 同名 |
+//!
+//! 注：`SelectableButton` 不在这里——zed 把它定义在
+//! `components/button/button_like.rs`，本包 2026-10 同样归位到那里。
 
 pub mod animation_ext;
 pub mod clickable;
 pub mod disableable;
 pub mod fixed;
-pub mod selectable_button;
 pub mod styled_ext;
 pub mod toggleable;
 pub mod transformable;
@@ -27,7 +28,6 @@ pub use animation_ext::CommonAnimationExt;
 pub use clickable::Clickable;
 pub use disableable::Disableable;
 pub use fixed::FixedWidth;
-pub use selectable_button::SelectableButton;
 pub use styled_ext::StyledExt;
 pub use toggleable::{ToggleState, Toggleable};
 pub use transformable::Transformable;

@@ -26,7 +26,6 @@ pub use crate::traits::animation_ext::*;
 pub use crate::traits::clickable::*;
 pub use crate::traits::disableable::*;
 pub use crate::traits::fixed::*;
-pub use crate::traits::selectable_button::*;
 pub use crate::traits::styled_ext::*;
 pub use crate::traits::toggleable::*;
 pub use crate::traits::transformable::*;
@@ -40,7 +39,8 @@ pub use crate::components::avatar::{
 };
 pub use crate::components::button::{
     ButtonCommon, ButtonLike, ButtonLink, ButtonRadius, ButtonSize, ButtonStyle, IconButton,
-    IconButtonShape, KeybindingPosition, SplitButton, SplitButtonKind, SplitButtonStyle, TintColor,
+    IconButtonShape, KeybindingPosition, SelectableButton, SplitButton, SplitButtonKind,
+    SplitButtonStyle, TintColor,
 };
 pub use crate::components::context_menu::{
     ContextMenu, ContextMenuEntry, ContextMenuItem, DocumentationAside, DocumentationSide,
