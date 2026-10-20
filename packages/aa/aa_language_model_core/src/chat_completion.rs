@@ -548,6 +548,15 @@ impl ChatCompletionEventMapper {
                     // response with a specific error instead of silently
                     // ending the turn without the tool call the model asked
                     // for. Modeled on opencode's `InvalidProviderOutputError`.
+                    //
+                    // Deliberately not repaired by inventing an id: a
+                    // `call_{index}`-style id would make the call replayable,
+                    // but it persists fabricated data into the thread and can
+                    // collide with an id the provider did issue (indices are
+                    // reused; see `ToolCallAccumulator`). Reporting the
+                    // malformed response is the choice taken here;
+                    // synthesizing a unique id is a defensible alternative
+                    // left to upstream to decide (#65655).
                     let mut malformed: Option<LanguageModelCompletionError> = None;
                     for tool_call in self.tool_calls.drain() {
                         if tool_call.id.is_empty() || tool_call.name.is_empty() {
