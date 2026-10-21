@@ -5040,15 +5040,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "indoc"
-version = "2.0.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79cf5c93f93228cf8efb3ba362535fb11199ac548a09ce117c9b1adc3030d706"
-dependencies = [
- "rustversion",
-]
-
-[[package]]
 name = "inotify"
 version = "0.11.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -12061,25 +12052,6 @@ dependencies = [
  "strum",
  "uuid",
  "zeta_prompt",
-]
-
-[[package]]
-name = "zed_migrator"
-version = "0.1.0"
-dependencies = [
- "aa_gpui_kit_settings_content",
- "aa_settings_json",
- "anyhow",
- "collections",
- "convert_case 0.11.0",
- "indoc",
- "log",
- "pretty_assertions",
- "serde_json",
- "serde_json_lenient",
- "streaming-iterator",
- "tree-sitter",
- "tree-sitter-json",
 ]
 
 [[package]]
