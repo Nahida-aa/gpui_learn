@@ -658,7 +658,6 @@ dependencies = [
  "http_client 0.1.0",
  "log",
  "partial-json-fixer",
- "pretty_assertions",
  "schemars",
  "serde",
  "serde_json",
@@ -4500,11 +4499,8 @@ dependencies = [
 name = "http_client"
 version = "0.1.0"
 dependencies = [
- "aa_util",
  "anyhow",
  "async-compression",
- "async-fs",
- "async-tar",
  "bytes",
  "derive_more",
  "futures",
@@ -4515,8 +4511,6 @@ dependencies = [
  "serde",
  "serde_json",
  "serde_urlencoded",
- "sha2",
- "tempfile",
  "url",
 ]
 

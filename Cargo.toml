@@ -21,8 +21,8 @@ resolver = "3"
 members = [
     "apps/*",
     # 平铺 crate（packages/<name>/Cargo.toml）
-    "packages/aa/aa_cloud_llm_client",
-    "packages/aa/aa_language_model_core",
+    # aa_cloud_llm_client / aa_language_model_core 已迁出 members（单一事实源在
+    # aa-stack，workspace.dependencies 指向那边；留在 members 会同名撞车）。
     "packages/aa/aa_settings_json",
     "packages/aa/aa_settings_macros",
     "packages/clock",
@@ -35,7 +35,7 @@ members = [
     "packages/aa/theme/aa_theme_gpui",
     "packages/ui_input",
     "packages/zed/zed_cloud_llm_client",
-    "packages/zed/http_client",
+    # http_client 已迁出 members（单一事实源在 aa-stack，见 workspace.dependencies 注释）。
     # aa_gpui_kit 子 crate（packages/aa_gpui_kit/<name>/Cargo.toml）
     "packages/aa_gpui_kit/settings_content",
     # aa 子 crate（packages/aa/<name>/Cargo.toml）
@@ -84,7 +84,9 @@ aa_assets_gpui = { path = "packages/aa/assets/aa_assets_gpui" }
 # 语法高亮主题：zed `crates/syntax_theme` 的完整移植（逐字一致，见该 crate 头部）。
 # theme crate 只做重导出，不自带的残缺版本。
 aa_syntax_theme_gpui = { path = "packages/aa/theme/aa_syntax_theme_gpui" }
-aa_cloud_llm_client = { path = "packages/aa/aa_cloud_llm_client" }
+# 这两个 crate 的单一事实源已迁到 aa-stack（与 aacode/AAgent 共享同一份）。
+# aa-stack 路径下同名包不会与本工作区其他包撞名（本地副本已移出 members）。
+aa_cloud_llm_client = { path = "/home/aa/repos/lib_ls/aa-stack/packages/ai/aa_cloud_llm_client" }
 async-compression = { version = "0.4", features = ["bzip2", "gzip", "futures-io"] }
 async-lock = "3.4.2"
 async-tar = { git = "https://github.com/zed-industries/async-tar", rev = "bd3ad6f89df9a9da7a8535958756d6bf465936a0" }
@@ -286,7 +288,7 @@ aa_component_zed = { path = "packages/aa/ui/aa_ui_zed/aa_component_zed" }
 settings_content = { package = "aa_gpui_kit_settings_content", path = "packages/aa_gpui_kit/settings_content" }
 settings_macros = { package = "aa_settings_macros", path = "packages/aa/aa_settings_macros" }
 settings_json = { package = "aa_settings_json", path = "packages/aa/aa_settings_json", default-features = false }
-language_model_core = { package = "aa_language_model_core", path = "packages/aa/aa_language_model_core" }
+language_model_core = { package = "aa_language_model_core", path = "/home/aa/repos/lib_ls/aa-stack/packages/ai/aa_language_model_core" }
 
 # —— aa_gpui_kit_language_model 所需（本次随 language_model crate 迁入时新增）——
 # 这五个原先由 aacode 的 packages/language_model 直接声明 crates.io / zed git 源，
@@ -394,11 +396,10 @@ documented = "0.10"
 # ---- util / util_macros (aa_gpui_kit_util*) 依赖 ----
 # collections：zed 并发友好集合（publish=false，走 git），rev 与 gpui/path/perf 一致。
 collections = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5", version = "=0.1.0" }
-# 【有意偏离 zed】zed 用 git rev 直接引 crates/http_client；这里指向本地
-# packages/zed/http_client（源已逐字同步到同一个 rev c0199504）。
-# 目的：与本仓库其余 gpui_learn crate 一致地走本地路径，aacode 侧也只需一条
-# [patch] 即可让 http_client 走本地，不至于成为「全部走本地」原则下的唯一例外。
-http_client = { path = "packages/zed/http_client" }
+# 单一事实源在 aa-stack（packages/util/http_client，zed c019950 逐字搬运，
+# 与 aacode 共享同一份）。本仓库本地副本 packages/zed/http_client 不再参与构建：
+# 若同时留作 member，会与 aa-stack 路径版同名撞车（package collision in lockfile）。
+http_client = { path = "/home/aa/repos/lib_ls/aa-stack/packages/util/http_client" }
 streaming-iterator = "0.1"
 indoc = "2"
 async_zip = { version = "0.0.18", features = ["deflate", "deflate64"] }
