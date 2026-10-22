@@ -11,7 +11,7 @@ publish.workspace = true
 iced = "0.14.0"
 # 取色走 zed 的语义令牌（`ghost_element_hover`、`text_muted`…），不再用 iced 内置
 # `extended_palette`。与本仓其它 theme crate 同一份色值。
-aa_theme_iced = { path = "../../theme/aa_theme_iced" }
+aa_theme_iced = { path = "/home/aa/repos/lib_ls/aa-stack/packages/theme/aa_theme_iced" }
 
 [dev-dependencies]
 iced_test = "0.14.0"

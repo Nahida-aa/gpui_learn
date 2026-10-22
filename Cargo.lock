@@ -652,10 +652,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_syntax_theme_iced"
-version = "0.1.0"
-
-[[package]]
 name = "aa_theme_core"
 version = "0.1.0"
 dependencies = [
@@ -663,7 +659,6 @@ dependencies = [
  "palette",
  "schemars",
  "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -671,7 +666,6 @@ name = "aa_theme_gpui"
 version = "0.1.0"
 dependencies = [
  "aa_syntax_theme_gpui",
- "aa_theme_core",
  "anyhow",
  "gpui",
  "palette",
@@ -692,10 +686,6 @@ version = "0.1.0"
 dependencies = [
  "iced_core",
 ]
-
-[[package]]
-name = "aa_theme_settings_gpui_zed"
-version = "0.1.0"
 
 [[package]]
 name = "aa_ui_base_gpui"
@@ -3970,7 +3960,6 @@ dependencies = [
  "waker-fn",
  "web-time",
  "windows 0.62.2",
- "zed-font-kit",
  "zed-scap",
 ]
 
