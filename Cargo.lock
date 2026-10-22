@@ -516,29 +516,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_gpui_kit_language_model"
-version = "0.1.0"
-dependencies = [
- "aa_icons",
- "aa_language_model_core",
- "anyhow",
- "base64",
- "collections",
- "credentials_provider",
- "env_var",
- "futures",
- "gpui",
- "gpui_shared_string",
- "gpui_util",
- "http_client 0.1.0",
- "image",
- "log",
- "parking_lot",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "aa_gpui_kit_mermaid_render"
 version = "0.1.0"
 dependencies = [
@@ -620,26 +597,6 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "strum",
-]
-
-[[package]]
-name = "aa_language_model_core"
-version = "0.1.0"
-dependencies = [
- "aa_cloud_llm_client",
- "anyhow",
- "async-lock",
- "collections",
- "futures",
- "gpui_shared_string",
- "http_client 0.1.0",
- "log",
- "partial-json-fixer",
- "schemars",
- "serde",
- "serde_json",
- "strum",
- "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -2688,15 +2645,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "01a7799fd6b852db0e61728dde9a204c423b44d689dbd432522543614b490e78"
 dependencies = [
  "cfg-if",
-]
-
-[[package]]
-name = "credentials_provider"
-version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed?rev=c0199504b9cce79bc27524950022ed701bc3ebd5#c0199504b9cce79bc27524950022ed701bc3ebd5"
-dependencies = [
- "anyhow",
- "gpui",
 ]
 
 [[package]]
@@ -7150,12 +7098,6 @@ dependencies = [
  "smallvec",
  "windows-link 0.2.1",
 ]
-
-[[package]]
-name = "partial-json-fixer"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35ffd90b3f3b6477db7478016b9efb1b7e9d38eafd095f0542fe0ec2ea884a13"
 
 [[package]]
 name = "paste"

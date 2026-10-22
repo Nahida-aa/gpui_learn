@@ -43,7 +43,7 @@ members = [
     "packages/aa/util_macros",
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
     # zed_migrator 已迁往 aacode（AAgent/packages/setting/migrator），不再参与本工作区构建。
-    "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa_gpui_kit/aa_gpui_kit_language_model", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/theme/aa_syntax_theme_gpui", "packages/aa/theme/aa_syntax_theme_iced", "packages/aa/theme/aa_theme_iced", "packages/aa/ui/aa_ui_base_gpui", "packages/aa/ui/aa_ui_iced", "packages/aa/ui/aa_ui_zed", "packages/aa/ui/aa_ui_zed/aa_component_zed", "packages/aa/ui/aa_ui_zed/aa_ui_macros_zed", "packages/aa/ui/icons", "packages/aa/theme/aa_theme_settings_gpui_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/theme/aa_theme_core", "packages/aa/ui/aa_ui_core", "packages/aa/util/aa_shared_string",
+    "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/env_var", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_web_search", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/theme/aa_syntax_theme_gpui", "packages/aa/theme/aa_syntax_theme_iced", "packages/aa/theme/aa_theme_iced", "packages/aa/ui/aa_ui_base_gpui", "packages/aa/ui/aa_ui_iced", "packages/aa/ui/aa_ui_zed", "packages/aa/ui/aa_ui_zed/aa_component_zed", "packages/aa/ui/aa_ui_zed/aa_ui_macros_zed", "packages/aa/theme/aa_theme_settings_gpui_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/theme/aa_theme_core", "packages/aa/ui/aa_ui_core", "packages/aa/util/aa_shared_string",
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -249,10 +249,11 @@ schemars = { version = "1", features = ["derive"] }
 # 需要 BackgroundExecutor（并行分段 + 可取消）与 SharedString。
 aa_gpui_fuzzy = { path = "packages/aa_gpui/gpui_fuzzy" }
 
-# 图标名枚举（packages/aa/ui/icons，zed crates/icons 原样）。全仓库唯一的 IconName：
-# base::Icon、ui、aacode 的 `icons` 别名用的都是它，靠 snake_case 序列化拼出
-# assets/icons/ 下的 SVG 路径（`path()` + 双向测试也在这个包里）。
-aa_icons = { path = "packages/aa/ui/icons" }
+# 图标名枚举：单一事实源在 aa-stack（packages/ui/icons，zed crates/icons 原样）。
+# 全仓库唯一的 IconName：base::Icon、ui、aacode 的 `icons` 别名用的都是它，
+# 靠 snake_case 序列化拼出 assets/icons/ 下的 SVG 路径（`path()` + 双向测试
+# 也在这个包里）。
+aa_icons = { path = "/home/aa/repos/lib_ls/aa-stack/packages/ui/icons" }
 
 # 时钟（packages/clock）：逻辑时钟（Lamport / 版本向量）+ 可注入的系统时钟。
 # **零 gpui 依赖**（对齐 zed crates/clock 的自研版，见 docs/zed/clock-analysis.md），
@@ -287,18 +288,7 @@ aa_component_zed = { path = "packages/aa/ui/aa_ui_zed/aa_component_zed" }
 settings_macros = { package = "aa_settings_macros", path = "packages/aa/aa_settings_macros" }
 settings_json = { package = "aa_settings_json", path = "packages/aa/aa_settings_json", default-features = false }
 language_model_core = { package = "aa_language_model_core", path = "/home/aa/repos/lib_ls/aa-stack/packages/ai/aa_language_model_core" }
-
-# —— aa_gpui_kit_language_model 所需（本次随 language_model crate 迁入时新增）——
-# 这五个原先由 aacode 的 packages/language_model 直接声明 crates.io / zed git 源，
-# 迁入 gpui_learn 后改为 workspace 继承，故根清单需要补齐对应条目。
-base64 = "0.22"
-# credentials_provider / icons 沿用 zed 与本仓库既有的 crate：
-#   zed 叫 credentials_provider、icons，本仓库的 icons 包名是 aa_icons（与 aacode
-#   侧 `icons = { package = "aa_icons", ... }` 的别名写法一致）。
-credentials_provider = { git = "https://github.com/zed-industries/zed", rev = "c0199504b9cce79bc27524950022ed701bc3ebd5" }
-env_var = { path = "packages/aa/env_var" }
-icons = { package = "aa_icons", path = "packages/aa/ui/icons" }
-image = { version = "0.25.1", default-features = false }
+# aa_language_model_gpui（原 aa_gpui_kit_language_model）单一事实源已迁至 aa-stack。
 aa_release_channel = { path = "packages/aa/aa_release_channel" }
 release_channel = { package = "aa_release_channel", path = "packages/aa/aa_release_channel" }
 
