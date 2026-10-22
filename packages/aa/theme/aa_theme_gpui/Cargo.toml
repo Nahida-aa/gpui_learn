@@ -51,9 +51,10 @@ uuid.workspace = true
 # 让 147 个主题色字段能被遍历、并能取回 snake_case 字段名。
 strum.workspace = true
 
-# 语法高亮主题用 aa_syntax_theme_gpui（zed crates/syntax_theme 的逐字移植）。
+# 语法高亮主题用 aa_syntax_theme_gpui（zed crates/syntax_theme 的移植版），
+# 单一事实源在 aa-stack，本仓库不再保留副本（删本地包、改 path 依赖）。
 # 此前这里挂的是 zed git 的 syntax_theme，但从未被引用过 —— theme::SyntaxTheme
-# 实际来自本包内一份残缺的手写版（缺 merge / new_test / one_dark / JSON 解析）。
+# 实际来自本包内一份残缺的手写版（缺 merge / new_test / JSON 解析）。
 aa_syntax_theme_gpui.workspace = true
 
 [dev-dependencies]

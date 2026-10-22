@@ -649,8 +649,6 @@ name = "aa_syntax_theme_gpui"
 version = "0.1.0"
 dependencies = [
  "gpui",
- "serde",
- "serde_json",
 ]
 
 [[package]]
@@ -3972,6 +3970,7 @@ dependencies = [
  "waker-fn",
  "web-time",
  "windows 0.62.2",
+ "zed-font-kit",
  "zed-scap",
 ]
 
