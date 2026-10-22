@@ -312,17 +312,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_cloud_llm_client"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde",
- "serde_json",
- "strum",
- "uuid",
-]
-
-[[package]]
 name = "aa_component_zed"
 version = "0.1.0"
 dependencies = [
@@ -578,17 +567,6 @@ dependencies = [
  "aa_component_zed",
  "aa_ui_zed",
  "gpui",
-]
-
-[[package]]
-name = "aa_gpui_kit_web_search"
-version = "0.1.0"
-dependencies = [
- "aa_cloud_llm_client",
- "anyhow",
- "collections",
- "gpui",
- "gpui_shared_string",
 ]
 
 [[package]]
