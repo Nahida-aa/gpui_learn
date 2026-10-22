@@ -39,8 +39,7 @@ members = [
     # aa_gpui_kit 子 crate（packages/aa_gpui_kit/<name>/Cargo.toml）
     # settings_content 已迁出 aacode（AAgent/packages/setting/settings_content，zed 原名）。
     # aa 子 crate（packages/aa/<name>/Cargo.toml）
-    "packages/aa/util",
-    
+        
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
     # zed_migrator 已迁往 aacode（AAgent/packages/setting/migrator），不再参与本工作区构建。
     "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/ui/aa_ui_base_gpui", "packages/aa/ui/aa_ui_iced", "packages/aa/ui/aa_ui_zed", "packages/aa/ui/aa_ui_zed/aa_component_zed", "packages/aa/ui/aa_ui_zed/aa_ui_macros_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/ui/aa_ui_core"
@@ -451,7 +450,7 @@ take-until = "0.2.0"
 mach2 = "0.5"
 
 util_macros = { path = "/home/aa/repos/lib_ls/aa-stack/packages/util/util_macros" }
-util = { package = "aa_util", path = "packages/aa/util" }
+util = { package = "aa_util_gpui", path = "/home/aa/repos/lib_ls/aa-stack/packages/util/aa_util_gpui" }
 language_core = { package = "aa_gpui_kit_language_core", path = "packages/aa/language_core" }
 rustix = { version = "1.1", features = ["fs"] }
 prost = "0.14"

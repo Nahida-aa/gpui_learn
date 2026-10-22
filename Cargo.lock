@@ -363,7 +363,7 @@ dependencies = [
 name = "aa_gpui_kit_askpass"
 version = "0.1.0"
 dependencies = [
- "aa_util",
+ "aa_util_gpui",
  "anyhow",
  "futures",
  "gpui",
@@ -384,7 +384,7 @@ dependencies = [
  "aa_gpui_kit_git",
  "aa_gpui_kit_rope",
  "aa_gpui_kit_text",
- "aa_util",
+ "aa_util_gpui",
  "anyhow",
  "async-channel 2.5.0",
  "async-std",
@@ -423,7 +423,7 @@ dependencies = [
  "aa_gpui_kit_askpass",
  "aa_gpui_kit_rope",
  "aa_gpui_kit_text",
- "aa_util",
+ "aa_util_gpui",
  "anyhow",
  "async-channel 2.5.0",
  "async-trait",
@@ -458,7 +458,7 @@ name = "aa_gpui_kit_grammars"
 version = "0.1.0"
 dependencies = [
  "aa_gpui_kit_language_core",
- "aa_util",
+ "aa_util_gpui",
  "anyhow",
  "rust-embed",
  "tree-sitter",
@@ -524,7 +524,7 @@ dependencies = [
 name = "aa_gpui_kit_rope"
 version = "0.1.0"
 dependencies = [
- "aa_util",
+ "aa_util_gpui",
  "criterion",
  "ctor 1.0.13",
  "gpui",
@@ -545,7 +545,7 @@ version = "0.1.0"
 dependencies = [
  "aa_clock",
  "aa_gpui_kit_rope",
- "aa_util",
+ "aa_util_gpui",
  "anyhow",
  "collections",
  "ctor 1.0.13",
@@ -593,7 +593,7 @@ version = "0.1.0"
 name = "aa_settings_json"
 version = "0.1.0"
 dependencies = [
- "aa_util",
+ "aa_util_gpui",
  "anyhow",
  "pretty_assertions",
  "serde",
@@ -726,7 +726,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "aa_util"
+name = "aa_util_gpui"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -6088,7 +6088,7 @@ dependencies = [
 name = "node_runtime"
 version = "0.1.0"
 dependencies = [
- "aa_util",
+ "aa_util_gpui",
  "anyhow",
  "async-compression",
  "async-std",
@@ -11936,7 +11936,7 @@ dependencies = [
 name = "zed_paths"
 version = "0.1.0"
 dependencies = [
- "aa_util",
+ "aa_util_gpui",
  "const_format",
  "dirs",
  "ignore",
