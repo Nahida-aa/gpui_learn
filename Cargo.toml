@@ -42,7 +42,7 @@ members = [
         
     # zed 子 crate（packages/zed/<name>/Cargo.toml）
     # zed_migrator 已迁往 aacode（AAgent/packages/setting/migrator），不再参与本工作区构建。
-    "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/apps/aa-bundle", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/ui/aa_ui_base_gpui", "packages/aa/ui/aa_ui_iced", "packages/aa/ui/aa_ui_zed", "packages/aa/ui/aa_ui_zed/aa_component_zed", "packages/aa/ui/aa_ui_zed/aa_ui_macros_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/ui/aa_ui_core"
+    "packages/zed/zed_release_channel", "packages/aa/aa_release_channel", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/zed/zed_paths", "packages/aa/ztracing_macro", "packages/aa/zlog", "packages/zed/telemetry", "packages/zed/telemetry/telemetry_events", "packages/aa_gpui_kit/aa_gpui_kit_fs", "packages/zed/zed_proto", "packages/aa_gpui_kit/aa_gpui_kit_askpass", "packages/aa_gpui_kit/aa_gpui_kit_git", "packages/aa/ztracing", "packages/aa_gpui_kit/aa_gpui_kit_rope", "packages/aa_gpui_kit/aa_gpui_kit_text", "packages/aa/aa_search", "packages/aa/node_runtime", "packages/aa_gpui_kit/aa_gpui_kit_mermaid_render", "packages/aa/assets/aa_assets_core", "packages/aa/assets/aa_assets_gpui", "packages/aa/ui/aa_ui_base_gpui", "packages/aa/ui/aa_ui_iced", "packages/aa/ui/aa_ui_zed", "packages/aa/ui/aa_ui_zed/aa_component_zed", "packages/aa/ui/aa_ui_zed/aa_ui_macros_zed", "packages/aa/assets/aa_assets_iced", "packages/aa/ui/aa_ui_core"
 ]
 
 # default-members：当你只敲 `cargo build` / `cargo run`（不带 -p）时，
@@ -336,7 +336,7 @@ syn = { version = "2", features = ["full"] }
 # 组件示例库（packages/component）的依赖：inventory 做链接期静态注册。
 smallvec = { version = "1.6", features = ["union", "const_new"] }
 toml = "0.8"
-# aa-bundle 与 aa-gpui-cli 的 CLI 框架（两处逐字相同，收进来去重）。
+# aa-gpui-cli 的 CLI 框架（aa-bundle 的同款条目在 aa-stack 侧）。
 clap = { version = "4", features = ["derive"] }
 # 以下按 zed 的放置方式收编：zed 把这些（含单消费方的）都放 workspace 条目，
 # 消费方需要额外 features / optional 时用 { workspace = true, ... } 叠加

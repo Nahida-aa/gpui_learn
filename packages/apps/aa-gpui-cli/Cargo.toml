@@ -13,8 +13,9 @@ name = "aa-gpui-cli"
 path = "src/main.rs"
 
 [dependencies]
-# 打包基础设施（身份解析 / 文件写入）来自 aa-bundle 库侧，不重复实现
-aa-bundle = { path = "../aa-bundle" }
+# 打包基础设施（身份解析 / 文件写入）来自 aa-bundle 库侧，不重复实现。
+# 单一事实源在 aa-stack（2026-10 迁出），与 theme/icons 等同款本地路径依赖。
+aa-bundle = { path = "/home/aa/repos/lib_ls/aa-stack/packages/apps/aa-bundle" }
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
