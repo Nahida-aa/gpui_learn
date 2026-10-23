@@ -178,7 +178,11 @@ impl Default for ArchSettings {
 }
 
 /// 从 `[bundle.arch]` 子表取 Arch 设置（子表不存在 → 默认值）。
-fn arch_settings_from(arch: &Option<crate::ArchTable>) -> ArchSettings {
+///
+/// `prebuilt` 为真且子表未显式声明 `makedepends` 时，把默认的 `(cargo rust)`
+/// 清空——二进制打包的 PKGBUILD 既不在包内 `cargo build`，也不调 cargo metadata
+/// （路径生成期已钉死），构建依赖没有意义。显式声明仍然尊重（优先级见调用方）。
+fn arch_settings_from(arch: &Option<crate::ArchTable>, prebuilt: bool) -> ArchSettings {
     let mut s = ArchSettings::default();
     if let Some(t) = arch {
         if let Some(v) = &t.depends {
@@ -199,6 +203,9 @@ fn arch_settings_from(arch: &Option<crate::ArchTable>) -> ArchSettings {
         if let Some(v) = &t.icon_dir {
             s.icon_dir = v.clone();
         }
+    }
+    if prebuilt && arch.as_ref().and_then(|t| t.makedepends.as_ref()).is_none() {
+        s.makedepends = Vec::new();
     }
     s
 }
@@ -239,6 +246,13 @@ pub struct PkgbuildOptions<'a> {
     /// 如 `release-quick` → PKGBUILD 里 `cargo build --profile release-quick`，
     /// 且取 `target/release-quick/<bin>`。`dev` 映射到 cargo 的 `debug` 目录。
     pub profile: Option<&'a str>,
+    /// 二进制打包模式（AUR `-bin` 形态）：`build()` 不在包内编译，只校验生成期
+    /// 钉死的二进制路径；`package()` 直接 install 该路径。makedepends 默认清空
+    /// （包内不调 cargo）。默认 `false` = 源码打包（`build()` 里 `cargo build`）。
+    pub prebuilt: bool,
+    /// 直接指定二进制路径（仅 prebuilt 模式有意义）：生成时 canonicalize 成绝对
+    /// 路径、校验存在后钉死进 PKGBUILD。默认取 `target/<profile>/<bin>`。
+    pub bin_path: Option<&'a Path>,
 }
 
 /// bin 名的推导链（对齐 cargo 的自动发现规则）：
@@ -290,7 +304,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         crate::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
     // 错误消息 / PKGBUILD 注释里展示的「配置来源」：多引用按顺序用 + 连起来
     let meta_ref = opts.bundle_meta.join(" + ");
-    let mut settings = arch_settings_from(&identity.arch);
+    let mut settings = arch_settings_from(&identity.arch, opts.prebuilt);
     // 命令行覆盖优先于 Cargo.toml 的 [bundle.arch]
     if let Some(v) = opts.depends {
         settings.depends = v.to_vec();
@@ -344,12 +358,38 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
 
     // 要打包的 profile：默认 release。`dev` 在 cargo 里落 target/debug，其余同名。
     // release 用简写 `--release`（保持与旧输出一致），其余走 `--profile <name>`。
+    // （profile_dir / profile_flag 与 tar.gz 共用，见 lib.rs。）
     let profile = opts.profile.unwrap_or("release");
-    let profile_dir = if profile == "dev" { "debug" } else { profile };
-    let profile_flag = if profile == "release" {
-        "--release".to_string()
+    let profile_dir = crate::profile_dir(profile);
+    let profile_flag = crate::profile_flag(profile);
+
+    // prebuilt 模式：生成期就把二进制定位并钉死成绝对路径。canonicalize 一体
+    // 解决「相对→绝对」与存在性；`--bin-path` 覆盖优先于 target/<profile>/<bin>。
+    // 在进程内校验（而不是留给 makepkg）是为了早失败：缺产物时立刻告诉用户
+    // 先 cargo build，而不是等 makepkg 跑到 build() 才报错。
+    let pinned_bin = if opts.prebuilt {
+        let path = match opts.bin_path {
+            Some(p) => p.canonicalize().with_context(|| {
+                format!(
+                    "--bin-path 指向的二进制不存在或无法解析：{}",
+                    p.display()
+                )
+            })?,
+            None => {
+                let path = crate::resolve_binary_path(opts.project_dir, bin, profile);
+                anyhow::ensure!(
+                    path.exists(),
+                    "找不到二进制 {}：先 `cargo build {} -p {}`（prebuilt 模式不构建，只安装已编好的产物）",
+                    path.display(),
+                    profile_flag,
+                    info.name
+                );
+                path.canonicalize().unwrap_or(path)
+            }
+        };
+        Some(path)
     } else {
-        format!("--profile {profile}")
+        None
     };
 
     // .desktop（文件名 + 内容）：模板 > aa-bundle 自动生成，见 resolve_desktop_entry。
@@ -417,6 +457,96 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         println!("提示：bundle 元数据里没有 icon，将不安装应用图标。");
     }
 
+    // 模板按打包模式分叉的三段：头部注释+_srcdir、build() 主体、package() 的
+    // 二进制安装段。其余（包元信息、图标、.desktop）两模式共用。
+    // 分叉理由：prebuilt 的二进制路径在**生成期**钉死（pinned_bin），makepkg
+    // 侧零子进程、不读 makepkg 注入的环境；源码模式维持「现场 cargo build +
+    // 问 cargo metadata」的现状。
+    let (src_note, build_body, bin_install) = match &pinned_bin {
+        Some(pinned) => (
+            format!(
+                r#"# 二进制打包（prebuilt）：二进制不在包内编译。aa-bundle 生成时已把
+# {pinned} 钉死为安装源；重新构建后必须重新运行 aa-bundle --prebuilt
+# 生成本文件，否则装的是旧产物。图标 / .desktop 源文件仍在源码树里
+# （bundle 元数据的 icon 字段），按 $_srcdir 引用。
+_srcdir="{src}"
+"#,
+                pinned = pinned.display(),
+                src = src.display(),
+            ),
+            format!(
+                r#"  # prebuilt 模式：不编译。二进制由包外构建提供
+  # （cargo build {profile_flag} -p {cargo_pkg}），此处只校验生成期
+  # 钉死的路径仍在——cargo clean / 移动 target 后会失效，重新构建后
+  # 需重新运行 aa-bundle --prebuilt。
+  # 环境仍按源码模式卸掉：本函数虽不编译，保持环境一致以防将来加步骤。
+  unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS DEBUG_RUSTFLAGS
+  if [ ! -x "{pinned}" ]; then
+    echo "aa-bundle(prebuilt): 找不到可执行文件 {pinned}" >&2
+    echo "  请先在包外构建：cargo build {profile_flag} -p {cargo_pkg}" >&2
+    return 1
+  fi
+"#,
+                pinned = pinned.display(),
+                profile_flag = profile_flag,
+                cargo_pkg = info.name,
+            ),
+            format!(
+                r#"  # prebuilt：直接安装生成期钉死的二进制。路径生成时已定，makepkg
+  # 运行环境的 CARGO_TARGET_DIR 一概不影响。
+  install -Dm755 "{pinned}" "$pkgdir{prefix}/bin/{bin}"
+"#,
+                pinned = pinned.display(),
+                prefix = prefix,
+                bin = bin,
+            ),
+        ),
+        None => (
+            format!(
+                r#"# 源码树路径。本 PKGBUILD 不带 source=，直接在源码目录里构建以复用 target/ 的
+# 增量缓存 —— 代价是不能用于 AUR/分发，只适合本机安装。图标源文件也在源码树里
+# （bundle 元数据的 icon 字段），同样按 $_srcdir 引用。
+_srcdir="{src}"
+"#,
+                src = src.display(),
+            ),
+            format!(
+                r#"  cd "$_srcdir"
+  # 卸掉 makepkg 从 /etc/makepkg.conf 注入的编译器环境变量。rustc 不读它们，
+  # 但 cc-rs 会读，且**追加在命令行末尾**——覆盖 crate 为个别文件设的 -O0。
+  # 实例：aws-lc-sys 的 jitterentropy-base.c 禁用优化（源码 #error 强制），
+  # 被 CFLAGS 的 -O2 覆盖后必挂。用户 shell 里这些变量本来就不存在，卸掉
+  # 正好让包内构建与直接 `cargo build` 一致。
+  # DEBUG_RUSTFLAGS 同族：OPTIONS=(debug) 时 makepkg 的 buildenv/rust.sh
+  # 会往 RUSTFLAGS 追加 `-C debuginfo=2`（不卸就把调试符号编进产物，
+  # rustc 内存与二进制体积双双暴涨）。
+  unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS DEBUG_RUSTFLAGS
+  cargo build {profile_flag}{cargo_pkg_flag}
+"#,
+                profile_flag = profile_flag,
+                cargo_pkg_flag = cargo_pkg_flag,
+            ),
+            // 二进制路径不能硬编码「crate 目录下的 target/release」——cargo 的
+            // target_directory 由 **workspace 根**决定（多 crate workspace 下产物不在
+            // crate 目录），且 CARGO_TARGET_DIR 可改。直接问 cargo；--no-deps 只读
+            // manifest，不解析依赖、不联网。也顺带尊重 makepkg 运行环境的
+            // CARGO_TARGET_DIR。
+            format!(
+                r#"  _target_dir=$(cd "$_srcdir" && cargo metadata --no-deps --format-version 1 \
+    | sed -n 's/.*"target_directory": *"\([^"]*\)".*/\1/p')
+  if [ -z "$_target_dir" ]; then
+    echo "aa-bundle: 无法从 cargo metadata 解析 target_directory" >&2
+    return 1
+  fi
+  install -Dm755 "$_target_dir/{profile_dir}/{bin}" "$pkgdir{prefix}/bin/{bin}"
+"#,
+                profile_dir = profile_dir,
+                bin = bin,
+                prefix = prefix,
+            ),
+        ),
+    };
+
     let pkgbuild = format!(
         r#"# 由 aa-bundle 生成（本地开发安装用途，非分发版）—— 手写修改会在下次生成时被覆盖。
 # 配置来源：{bundle_meta}
@@ -429,37 +559,12 @@ arch=({arch})
 {depends_line}{makedepends_line}
 # 二进制体积大（strip 后仍 300MB+），开 LTO 链接会非常慢；与项目构建配置一致关掉。
 options=(!lto)
-
-# 源码树路径。本 PKGBUILD 不带 source=，直接在源码目录里构建以复用 target/ 的
-# 增量缓存 —— 代价是不能用于 AUR/分发，只适合本机安装。图标源文件也在源码树里
-# （bundle 元数据的 icon 字段），同样按 $_srcdir 引用。
-_srcdir="{src}"
-
+{src_note}
 build() {{
-  cd "$_srcdir"
-  # 卸掉 makepkg 从 /etc/makepkg.conf 注入的编译器环境变量。rustc 不读它们，
-  # 但 cc-rs 会读，且**追加在命令行末尾**——覆盖 crate 为个别文件设的 -O0。
-  # 实例：aws-lc-sys 的 jitterentropy-base.c 禁用优化（源码 #error 强制），
-  # 被 CFLAGS 的 -O2 覆盖后必挂。用户 shell 里这些变量本来就不存在，卸掉
-  # 正好让包内构建与直接 `cargo build` 一致。
-  unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
-  cargo build {profile_flag}{cargo_pkg_flag}
-}}
+{build_body}}}
 
 package() {{
-  # 二进制路径不能硬编码「crate 目录下的 target/release」——cargo 的
-  # target_directory 由 **workspace 根**决定（多 crate workspace 下产物不在
-  # crate 目录），且 CARGO_TARGET_DIR 可改。直接问 cargo；--no-deps 只读
-  # manifest，不解析依赖、不联网。也顺带尊重 makepkg 运行环境的
-  # CARGO_TARGET_DIR。
-  _target_dir=$(cd "$_srcdir" && cargo metadata --no-deps --format-version 1 \
-    | sed -n 's/.*"target_directory": *"\([^"]*\)".*/\1/p')
-  if [ -z "$_target_dir" ]; then
-    echo "aa-bundle: 无法从 cargo metadata 解析 target_directory" >&2
-    return 1
-  fi
-  install -Dm755 "$_target_dir/{profile_dir}/{bin}" "$pkgdir{prefix}/bin/{bin}"
-
+{bin_install}
   # 图标路径来自 bundle 元数据的 icon 字段，安装目录来自 [bundle.arch].icon_dir
 {icon_install}{desktop_install}}}
 "#,
@@ -470,14 +575,11 @@ package() {{
         license = license,
         depends_line = depends_line,
         makedepends_line = makedepends_line,
-        src = src.display(),
-        bin = bin,
+        src_note = src_note,
+        build_body = build_body,
+        bin_install = bin_install,
         icon_install = icon_install,
-        prefix = prefix,
         bundle_meta = meta_ref,
-        cargo_pkg_flag = cargo_pkg_flag,
-        profile_flag = profile_flag,
-        profile_dir = profile_dir,
         desktop_install = desktop_install,
     );
 
@@ -531,6 +633,8 @@ name = "AaCode"
             license: None,
             prefix: None,
             profile: None,
+            prebuilt: false,
+            bin_path: None,
         };
         let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
 
@@ -554,8 +658,9 @@ name = "AaCode"
         // C 编译命令行末尾，会覆盖 aws-lc-sys 等 crate 为个别文件设的 -O0
         // （jitterentropy-base.c 禁优化，被 CFLAGS 的 -O2 覆盖后 #error 挂死）
         assert!(
-            pkgbuild.contains("unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS"),
-            "build() 应卸掉 makepkg 的编译器环境变量：{pkgbuild}"
+            pkgbuild.contains("unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS DEBUG_RUSTFLAGS"),
+            "build() 应卸掉 makepkg 的编译器环境变量（含 DEBUG_RUSTFLAGS——\
+             OPTIONS=(debug) 时 rust.sh 会往 RUSTFLAGS 追加 -C debuginfo=2）：{pkgbuild}"
         );
         assert!(
             !pkgbuild.contains("install -Dm644") || !pkgbuild.contains("hicolor"),
@@ -584,6 +689,36 @@ name = "AaCode"
         );
     }
 
+    /// 测试共用的 Options 构造：默认源码模式。prebuilt / bin_path 见
+    /// [`opts_with`]。
+    fn opts<'a>(dir: &'a Path, profile: Option<&'a str>) -> PkgbuildOptions<'a> {
+        opts_with(dir, profile, false, None)
+    }
+
+    fn opts_with<'a>(
+        dir: &'a Path,
+        profile: Option<&'a str>,
+        prebuilt: bool,
+        bin_path: Option<&'a Path>,
+    ) -> PkgbuildOptions<'a> {
+        PkgbuildOptions {
+            project_dir: dir,
+            bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
+            bin_name: None,
+            desktop_template: None,
+            icon_name: None,
+            depends: None,
+            makedepends: None,
+            arch: None,
+            url: None,
+            license: None,
+            prefix: None,
+            profile,
+            prebuilt,
+            bin_path,
+        }
+    }
+
     /// `--profile` 决定 PKGBUILD 的构建命令与产物目录：非 release 走
     /// `--profile <name>` + `target/<name>/<bin>`；`dev` 映射到 cargo 的 `debug`。
     #[test]
@@ -606,23 +741,6 @@ name = "AaCode"
 "#,
         )
         .unwrap();
-
-        fn opts<'a>(dir: &'a Path, profile: Option<&'a str>) -> PkgbuildOptions<'a> {
-            PkgbuildOptions {
-                project_dir: dir,
-                bundle_meta: vec!["Cargo.toml#[package, metadata, bundle-stable]".to_string()],
-                bin_name: None,
-                desktop_template: None,
-                icon_name: None,
-                depends: None,
-                makedepends: None,
-                arch: None,
-                url: None,
-                license: None,
-                prefix: None,
-                profile,
-            }
-        }
 
         let (pkgbuild, _) = generate_pkgbuild(&opts(&dir, Some("release-quick"))).unwrap();
         assert!(
@@ -688,6 +806,8 @@ depends = ["gcc-libs", "glibc", "gtk3"]
             license: None,
             prefix: None,
             profile: None,
+            prebuilt: false,
+            bin_path: None,
         };
         let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
 
@@ -744,6 +864,8 @@ name = "AaCode"
             license: None,
             prefix: None,
             profile: None,
+            prebuilt: false,
+            bin_path: None,
         };
         let (pkgbuild, _) = generate_pkgbuild(&opts).unwrap();
         assert!(
@@ -823,6 +945,8 @@ name = "AaCode"
             license: None,
             prefix: None,
             profile: None,
+            prebuilt: false,
+            bin_path: None,
         };
         let err = generate_pkgbuild(&opts).unwrap_err().to_string();
         assert!(
@@ -855,7 +979,7 @@ name = "AaCode"
         // 没有 [bundle.arch] 子表 → 走默认值
         let identity =
             crate::load_bundle_meta("Cargo.toml#[package, metadata, bundle-stable]", &dir).unwrap();
-        let settings = arch_settings_from(&identity.arch);
+        let settings = arch_settings_from(&identity.arch, false);
         assert_eq!(settings.makedepends, vec!["cargo", "rust"]);
         assert_eq!(settings.prefix, "/usr");
         // 与 cargo-bundle 一致：不声明就不给依赖（而不是塞一份猜的基线）
@@ -866,6 +990,17 @@ name = "AaCode"
         );
         // 未知字段被忽略（不像 cargo-bundle 那样 deny_unknown_fields）
         assert!(identity.desktop_template.is_none());
+        // prebuilt 且未显式声明 → 清空：包内不 cargo build 也不 cargo metadata，
+        // (cargo rust) 没有意义
+        let prebuilt_settings = arch_settings_from(&identity.arch, true);
+        assert!(
+            prebuilt_settings.makedepends.is_empty(),
+            "prebuilt 模式默认 makedepends 应为空：{:?}",
+            prebuilt_settings.makedepends
+        );
+        // depends / prefix 等其余默认值不随模式变
+        assert!(prebuilt_settings.depends.is_empty());
+        assert_eq!(prebuilt_settings.prefix, "/usr");
     }
 
     #[test]
@@ -909,6 +1044,8 @@ icon_dir = "share/icons/hicolor"
             license: None,
             prefix: None,
             profile: None,
+            prebuilt: false,
+            bin_path: None,
         };
         let (pkgbuild, _) = generate_pkgbuild(&opts).unwrap();
         // 两个图标都装，路径来自 icon 列表而非硬编码；目录来自 [bundle.arch].icon_dir
@@ -966,6 +1103,8 @@ name = "AaCode"
             license: None,
             prefix: None,
             profile: None,
+            prebuilt: false,
+            bin_path: None,
         };
         let (pkgbuild, desktop) = generate_pkgbuild(&opts).unwrap();
         assert!(
@@ -1037,5 +1176,171 @@ name = "AaCode"
         assert!(out.contains("Exec=/usr/bin/aacode %F"));
         assert!(out.contains("Icon=aacode"));
         assert!(out.contains("X=$UNKNOWN"), "未提供的变量应原样保留");
+    }
+
+    /// prebuilt 模式测试共用的 fixture：临时目录 + 假 crate + 假产物
+    /// `target/release-quick/aacode`（targz 测试同款：写个非 ELF 文本即可，
+    /// 生成期只查存在性）。
+    fn prebuilt_fixture(tag: &str) -> (PathBuf, PathBuf) {
+        let dir = test_dir(tag);
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[[bin]]
+name = "aacode"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+        // resolve_target_dir 走 cargo metadata：临时目录里也能问出 target_directory
+        // （= <临时目录>/target），所以假产物放这里就能被默认路径定位到。
+        let bin = dir.join("target/release-quick/aacode");
+        std::fs::create_dir_all(bin.parent().unwrap()).unwrap();
+        std::fs::write(&bin, "not a real elf").unwrap();
+        (dir, bin)
+    }
+
+    #[test]
+    fn prebuilt_mode_installs_without_building() {
+        let (dir, bin) = prebuilt_fixture("prebuilt_basic");
+        let (pkgbuild, _) =
+            generate_pkgbuild(&opts_with(&dir, Some("release-quick"), true, None)).unwrap();
+
+        // build() 不编译：命令形态的 cargo build 不出现（echo 提示里的字符串不算）
+        assert!(
+            !pkgbuild.contains("\n  cargo build"),
+            "prebuilt 的 build() 不该现场编译：{pkgbuild}"
+        );
+        // build() 只做存在性校验
+        assert!(
+            pkgbuild.contains("[ ! -x"),
+            "prebuilt 的 build() 应校验钉死的二进制：{pkgbuild}"
+        );
+        // package() 直接 install 生成期钉死的绝对路径，不调 cargo metadata
+        let pinned = bin.canonicalize().unwrap();
+        assert!(
+            pkgbuild.contains(&format!(
+                "install -Dm755 \"{}\"",
+                pinned.display()
+            )),
+            "prebuilt 应直接 install 钉死路径：{pkgbuild}"
+        );
+        assert!(
+            !pkgbuild.contains("cargo metadata"),
+            "prebuilt 的 package() 不该调 cargo metadata：{pkgbuild}"
+        );
+        // 包内不调 cargo → makedepends 整行不写
+        assert!(
+            !pkgbuild.contains("makedepends="),
+            "prebuilt 默认 makedepends 应为空：{pkgbuild}"
+        );
+        // 头部注释写明「重编后需重新生成」
+        assert!(
+            pkgbuild.contains("重新构建后必须重新运行 aa-bundle --prebuilt"),
+            "{pkgbuild}"
+        );
+        // 两模式共用的 unset 行（含 DEBUG_RUSTFLAGS）
+        assert!(pkgbuild.contains("unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS DEBUG_RUSTFLAGS"));
+    }
+
+    #[test]
+    fn prebuilt_mode_requires_existing_binary() {
+        let dir = test_dir("prebuilt_missing");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[[bin]]
+name = "aacode"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+"#,
+        )
+        .unwrap();
+        // 不建 target/release-quick/aacode → 生成期就报错（不留给 makepkg）
+        let err = generate_pkgbuild(&opts_with(&dir, Some("release-quick"), true, None))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains("cargo build --profile release-quick -p aacode"),
+            "错误消息应告诉用户先构建什么：{err}"
+        );
+        assert!(
+            err.contains("prebuilt 模式不构建"),
+            "错误消息应说明 prebuilt 语义：{err}"
+        );
+    }
+
+    #[test]
+    fn prebuilt_bin_path_override_is_pinned() {
+        let (dir, _default_bin) = prebuilt_fixture("prebuilt_override");
+        // 覆盖路径指向别处的二进制（canonicalize 后钉死）
+        let elsewhere = dir.join("elsewhere/aacode");
+        std::fs::create_dir_all(elsewhere.parent().unwrap()).unwrap();
+        std::fs::write(&elsewhere, "not a real elf either").unwrap();
+        let (pkgbuild, _) =
+            generate_pkgbuild(&opts_with(&dir, Some("release-quick"), true, Some(&elsewhere)))
+                .unwrap();
+        let pinned = elsewhere.canonicalize().unwrap();
+        assert!(
+            pkgbuild.contains(&format!("install -Dm755 \"{}\"", pinned.display())),
+            "--bin-path 覆盖应被钉死进 PKGBUILD：{pkgbuild}"
+        );
+        // 覆盖路径不存在 → 生成期报错
+        let missing = dir.join("elsewhere/missing");
+        let err = generate_pkgbuild(&opts_with(&dir, Some("release-quick"), true, Some(&missing)))
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains("--bin-path"),
+            "应指出是 --bin-path 的问题：{err}"
+        );
+    }
+
+    #[test]
+    fn prebuilt_makedepends_explicit_still_respected() {
+        let dir = test_dir("prebuilt_makedepends");
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            r#"
+[package]
+name = "aacode"
+version = "1.23.2"
+license = "Apache-2.0"
+
+[[bin]]
+name = "aacode"
+
+[package.metadata.bundle-stable]
+identifier = "dev.aa.AaCode"
+name = "AaCode"
+
+[package.metadata.bundle-stable.arch]
+makedepends = ["foo", "bar"]
+"#,
+        )
+        .unwrap();
+        std::fs::create_dir_all(dir.join("target/release-quick")).unwrap();
+        std::fs::write(dir.join("target/release-quick/aacode"), "not a real elf").unwrap();
+        let (pkgbuild, _) =
+            generate_pkgbuild(&opts_with(&dir, Some("release-quick"), true, None)).unwrap();
+        assert!(
+            pkgbuild.contains("makedepends=(foo bar)"),
+            "显式声明的 makedepends 在 prebuilt 下仍应保留：{pkgbuild}"
+        );
     }
 }

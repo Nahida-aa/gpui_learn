@@ -136,20 +136,15 @@ pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
     // 二进制：覆盖路径 > cargo metadata 问出的 target_directory/<profile>/<bin>。
     // 本工具不构建——构建环境（webrtc/rustflags/lld）是项目自己的事。
     let profile = opts.profile.unwrap_or("release");
-    let profile_flag = if profile == "release" {
-        "--release".to_string()
-    } else {
-        format!("--profile {profile}")
-    };
     let bin_path = match opts.bin_path {
         Some(p) => p.to_path_buf(),
-        None => resolve_binary_path(opts.project_dir, bin, profile),
+        None => crate::resolve_binary_path(opts.project_dir, bin, profile),
     };
     anyhow::ensure!(
         bin_path.exists(),
         "找不到二进制 {}：先 `cargo build {} -p {}`（aa-bundle 只打包，不构建）",
         bin_path.display(),
-        profile_flag,
+        crate::profile_flag(profile),
         info.name
     );
 
@@ -291,14 +286,6 @@ fn pack_targz(staging: &Path, app_name: &str, out: &Path) -> Result<()> {
         bail!("tar 打包失败（退出码 {:?}）", status.code());
     }
     Ok(())
-}
-
-/// 二进制路径：`resolve_target_dir` 问出 workspace 根的 target/，拼
-/// `<profile 目录>/<bin>`（也尊重 `CARGO_TARGET_DIR`）。`dev` 对应 cargo 的
-/// `debug` 目录，其余用 profile 名（如 `release`、`release-quick`）。
-fn resolve_binary_path(project_dir: &Path, bin: &str, profile: &str) -> PathBuf {
-    let dir = if profile == "dev" { "debug" } else { profile };
-    crate::resolve_target_dir(project_dir).join(dir).join(bin)
 }
 
 /// 拷文件并自动建父目录。权限随源文件（`fs::copy` 保留 mode），二进制因此

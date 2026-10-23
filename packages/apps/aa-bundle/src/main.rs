@@ -71,6 +71,16 @@ struct CommonArgs {
     /// `cargo build --profile release-quick`，package() 取 target/release-quick/<bin>。
     #[arg(long, default_value = "release")]
     profile: String,
+    /// 二进制打包模式（AUR `-bin` 形态）：不现场编译，安装已编好的产物。
+    /// pkgbuild：build() 只校验、package() 直接 install 生成期钉死的
+    /// target/<profile>/<bin>，makedepends 默认清空。tar.gz 本就是预编译打包，
+    /// 此 flag 无额外作用。重新构建后需重新生成，否则装旧产物。
+    #[arg(long, default_value_t = false)]
+    prebuilt: bool,
+    /// 直接指定二进制路径（默认 <target>/<profile>/<bin>）。生成时即校验存在性；
+    /// pkgbuild prebuilt 模式下 canonicalize 成绝对路径钉死进 PKGBUILD。
+    #[arg(long)]
+    bin_path: Option<PathBuf>,
 }
 
 fn main() -> Result<()> {
@@ -91,6 +101,8 @@ fn main() -> Result<()> {
                 license: None,
                 prefix: None,
                 profile: Some(cli.common.profile.as_str()),
+                prebuilt: cli.common.prebuilt,
+                bin_path: cli.common.bin_path.as_deref(),
             };
             let (pkgbuild, desktop) = aa_bundle::pkgbuild::generate_pkgbuild(&opts)?;
 
@@ -113,6 +125,9 @@ fn main() -> Result<()> {
             println!("  makepkg -si        # 构建并安装（卸载用 pacman -R <pkgname>）");
         }
         Format::TarGz => {
+            if cli.common.prebuilt {
+                println!("提示：tar.gz 本就是预编译打包（只安装已编好的二进制），--prebuilt 无额外作用。");
+            }
             let opts = aa_bundle::targz::TargzOptions {
                 project_dir: &cli.common.project_dir,
                 bundle_meta: cli.common.bundle_meta.clone(),
@@ -120,7 +135,7 @@ fn main() -> Result<()> {
                 icon_name: cli.common.icon_name.as_deref(),
                 desktop_template: cli.common.desktop_template.as_deref(),
                 out: cli.common.out.as_deref(),
-                bin_path: None,
+                bin_path: cli.common.bin_path.as_deref(),
                 profile: Some(cli.common.profile.as_str()),
             };
             aa_bundle::targz::generate(&opts)?;
