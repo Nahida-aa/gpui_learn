@@ -29,7 +29,9 @@ use std::process::Command;
 
 use anyhow::{Context, Result, bail};
 
-use crate::{BundleMeta, icon_size_dir, resolve_desktop_entry, resolve_icon_name, write_file};
+use crate::desktop::{icon_size_dir, resolve_desktop_entry, resolve_icon_name};
+use crate::fs::write_file;
+use crate::meta::BundleMeta;
 
 /// 不打包的库（对齐 zed bundle-linux 的 `find_libs` 排除清单）：
 /// - glibc / libgcc / libm / pthread / dl / asound：任何 glibc 系统的必备品，
@@ -107,7 +109,7 @@ pub struct TargzOptions<'a> {
     /// 源码目录（含 Cargo.toml 与 resources/）
     pub project_dir: &'a Path,
     /// 身份/打包配置来源引用列表（**必填**，无默认值）：多个按顺序分层，
-    /// 后者递归覆盖前者（见 [`crate::load_bundle_meta_layered`]）。
+    /// 后者递归覆盖前者（见 [`crate::meta::load_bundle_meta_layered`]）。
     pub bundle_meta: Vec<String>,
     /// 覆盖二进制名（默认取 Cargo.toml 的 [[bin]] 推导链）
     pub bin_name: Option<&'a str>,
@@ -128,9 +130,9 @@ pub struct TargzOptions<'a> {
 
 /// 生成 tar.gz，返回产物路径。
 pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
-    let info = crate::pkgbuild::read_package_info(opts.project_dir)?;
-    let meta: BundleMeta = crate::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
-    let bin = crate::pkgbuild::resolve_bin_name(&info, opts.bin_name, opts.project_dir)?;
+    let info = super::pkgbuild::read_package_info(opts.project_dir)?;
+    let meta: BundleMeta = crate::meta::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
+    let bin = super::pkgbuild::resolve_bin_name(&info, opts.bin_name, opts.project_dir)?;
     let icon = resolve_icon_name(opts.icon_name, bin);
 
     // 二进制：覆盖路径 > cargo metadata 问出的 target_directory/<profile>/<bin>。
@@ -138,20 +140,20 @@ pub fn generate(opts: &TargzOptions) -> Result<PathBuf> {
     let profile = opts.profile.unwrap_or("release");
     let bin_path = match opts.bin_path {
         Some(p) => p.to_path_buf(),
-        None => crate::resolve_binary_path(opts.project_dir, bin, profile),
+        None => crate::cargo::resolve_binary_path(opts.project_dir, bin, profile),
     };
     anyhow::ensure!(
         bin_path.exists(),
         "找不到二进制 {}：先 `cargo build {} -p {}`（aa-bundle 只打包，不构建）",
         bin_path.display(),
-        crate::profile_flag(profile),
+        crate::cargo::profile_flag(profile),
         info.name
     );
 
     let app_name = format!("{bin}.app");
     let out = match opts.out {
         Some(p) => p.to_path_buf(),
-        None => crate::resolve_target_dir(opts.project_dir).join(format!(
+        None => crate::cargo::resolve_target_dir(opts.project_dir).join(format!(
             "aa-bundle/targz/{bin}-linux-{arch}.tar.gz",
             arch = std::env::consts::ARCH
         )),

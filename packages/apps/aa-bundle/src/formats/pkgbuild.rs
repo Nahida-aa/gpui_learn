@@ -26,7 +26,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
-use crate::BundleMeta;
+use crate::meta::BundleMeta;
 
 /// crate 的 Cargo.toml 里我们关心的元数据。
 #[derive(Debug, Clone)]
@@ -182,7 +182,7 @@ impl Default for ArchSettings {
 /// `prebuilt` 为真且子表未显式声明 `makedepends` 时，把默认的 `(cargo rust)`
 /// 清空——二进制打包的 PKGBUILD 既不在包内 `cargo build`，也不调 cargo metadata
 /// （路径生成期已钉死），构建依赖没有意义。显式声明仍然尊重（优先级见调用方）。
-fn arch_settings_from(arch: &Option<crate::ArchTable>, prebuilt: bool) -> ArchSettings {
+fn arch_settings_from(arch: &Option<crate::meta::ArchTable>, prebuilt: bool) -> ArchSettings {
     let mut s = ArchSettings::default();
     if let Some(t) = arch {
         if let Some(v) = &t.depends {
@@ -221,7 +221,7 @@ pub struct PkgbuildOptions<'a> {
     /// 源码目录（含 Cargo.toml）
     pub project_dir: &'a Path,
     /// 身份/打包配置来源引用列表（**必填**，无默认值）：多个按顺序分层，
-    /// 后者递归覆盖前者（见 [`crate::load_bundle_meta_layered`]）。
+    /// 后者递归覆盖前者（见 [`crate::meta::load_bundle_meta_layered`]）。
     /// 典型用法：先给共享表，再给 channel 专属表。
     pub bundle_meta: Vec<String>,
     /// 覆盖二进制名
@@ -287,12 +287,12 @@ pub fn resolve_bin_name<'a>(
 /// pkgbuild 格式的默认输出目录：`<workspace target>/aa-bundle/pkgbuild/<bin>/`。
 ///
 /// 不放在 crate 目录的 `target/` 下——workspace 成员的 target 由 workspace
-/// 根决定（见 [`crate::resolve_target_dir`]），crate 目录下的 target/ cargo
+/// 根决定（见 [`crate::cargo::resolve_target_dir`]），crate 目录下的 target/ cargo
 /// 根本不用。末尾按 bin 名分目录：同一 workspace 打多个 crate 不会互相覆盖。
 pub fn default_out_dir(project_dir: &Path, bin_name: Option<&str>) -> Result<PathBuf> {
     let info = read_package_info(project_dir)?;
     let bin = resolve_bin_name(&info, bin_name, project_dir)?;
-    Ok(crate::resolve_target_dir(project_dir).join(format!("aa-bundle/pkgbuild/{bin}")))
+    Ok(crate::cargo::resolve_target_dir(project_dir).join(format!("aa-bundle/pkgbuild/{bin}")))
 }
 
 /// 生成 PKGBUILD 文本，并渲染 .desktop。
@@ -301,7 +301,7 @@ pub fn default_out_dir(project_dir: &Path, bin_name: Option<&str>) -> Result<Pat
 pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(String, String)>)> {
     let info = read_package_info(opts.project_dir)?;
     let identity: BundleMeta =
-        crate::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
+        crate::meta::load_bundle_meta_layered(&opts.bundle_meta, opts.project_dir)?;
     // 错误消息 / PKGBUILD 注释里展示的「配置来源」：多引用按顺序用 + 连起来
     let meta_ref = opts.bundle_meta.join(" + ");
     let mut settings = arch_settings_from(&identity.arch, opts.prebuilt);
@@ -326,7 +326,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     let bin: &str = resolve_bin_name(&info, opts.bin_name, opts.project_dir)?;
 
     // 图标安装名：覆盖 > bin 名。无数据源可推导，回退时不静默（见 resolve_icon_name）。
-    let icon = crate::resolve_icon_name(opts.icon_name, bin);
+    let icon = crate::desktop::resolve_icon_name(opts.icon_name, bin);
     let license = opts.license.unwrap_or(&info.license);
     let prefix = settings.prefix.trim_end_matches('/');
     // pkgver：bundle 元数据的 version > Cargo.toml 的 version
@@ -360,8 +360,8 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     // release 用简写 `--release`（保持与旧输出一致），其余走 `--profile <name>`。
     // （profile_dir / profile_flag 与 tar.gz 共用，见 lib.rs。）
     let profile = opts.profile.unwrap_or("release");
-    let profile_dir = crate::profile_dir(profile);
-    let profile_flag = crate::profile_flag(profile);
+    let profile_dir = crate::cargo::profile_dir(profile);
+    let profile_flag = crate::cargo::profile_flag(profile);
 
     // prebuilt 模式：生成期就把二进制定位并钉死成绝对路径。canonicalize 一体
     // 解决「相对→绝对」与存在性；`--bin-path` 覆盖优先于 target/<profile>/<bin>。
@@ -376,7 +376,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
                 )
             })?,
             None => {
-                let path = crate::resolve_binary_path(opts.project_dir, bin, profile);
+                let path = crate::cargo::resolve_binary_path(opts.project_dir, bin, profile);
                 anyhow::ensure!(
                     path.exists(),
                     "找不到二进制 {}：先 `cargo build {} -p {}`（prebuilt 模式不构建，只安装已编好的产物）",
@@ -395,7 +395,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
     // .desktop（文件名 + 内容）：模板 > aa-bundle 自动生成，见 resolve_desktop_entry。
     // `$APP_CLI` 用绝对安装路径——PKGBUILD 装完二进制就在 <prefix>/bin/<bin>。
     // Comment 回退值取 Cargo.toml 的 [package].description。
-    let desktop_rel = crate::resolve_desktop_entry(
+    let desktop_rel = crate::desktop::resolve_desktop_entry(
         &identity,
         bin,
         &icon,
@@ -448,7 +448,7 @@ pub fn generate_pkgbuild(opts: &PkgbuildOptions) -> Result<(String, Option<(Stri
         );
         // 尺寸目录按文件名约定判断：`@2x` 结尾 → 1024x1024，否则 512x512。
         // （cargo-bundle 的 icon 列表也是这个约定；不按文件大小猜——那不可靠。）
-        let size_dir = crate::icon_size_dir(icon_path);
+        let size_dir = crate::desktop::icon_size_dir(icon_path);
         icon_install.push_str(&format!(
             "  install -Dm644 \"$_srcdir/{icon_path}\" \"$pkgdir{icon_dir_full}/{size_dir}/apps/{icon}.png\"\n"
         ));
@@ -978,7 +978,7 @@ name = "AaCode"
 
         // 没有 [bundle.arch] 子表 → 走默认值
         let identity =
-            crate::load_bundle_meta("Cargo.toml#[package, metadata, bundle-stable]", &dir).unwrap();
+            crate::meta::load_bundle_meta("Cargo.toml#[package, metadata, bundle-stable]", &dir).unwrap();
         let settings = arch_settings_from(&identity.arch, false);
         assert_eq!(settings.makedepends, vec!["cargo", "rust"]);
         assert_eq!(settings.prefix, "/usr");
@@ -1135,11 +1135,11 @@ name = "AaCode"
     #[test]
     fn desktop_entry_uses_cargo_bundle_category_mapping() {
         // cargo-bundle 的 category 用 macOS LSApplicationCategoryType 体系的值
-        let meta = crate::BundleMeta {
+        let meta = crate::meta::BundleMeta {
             name: Some("AaCode".to_string()),
             short_description: Some("A coding agent".to_string()),
             category: Some("Developer Tool".to_string()),
-            linux: Some(crate::LinuxTable {
+            linux: Some(crate::meta::LinuxTable {
                 mime_types: Some(vec!["text/plain".to_string()]),
                 exec_args: Some("%F".to_string()),
                 ..Default::default()
@@ -1147,7 +1147,7 @@ name = "AaCode"
             ..Default::default()
         };
         // 图标安装名与 bin 名不同时，Icon= 必须用安装名（曾写死 bin 名的 bug）
-        let out = crate::render_desktop_entry(&meta, "aacode", "my_icon", "dev.aa.AaCode", "");
+        let out = crate::desktop::render_desktop_entry(&meta, "aacode", "my_icon", "dev.aa.AaCode", "");
         // "Developer Tool" → Development;（cargo-bundle category.rs:134）
         assert!(out.contains("Categories=Development;"), "{out}");
         assert!(out.contains("Comment=A coding agent"), "{out}");
@@ -1164,7 +1164,7 @@ name = "AaCode"
 
     #[test]
     fn desktop_rendering_substitutes_only_known_vars() {
-        let out = crate::render_template(
+        let out = crate::desktop::render_template(
             "Name=$APP_NAME\nExec=$APP_CLI %F\nIcon=$APP_ICON\nX=$UNKNOWN",
             &[
                 ("APP_NAME", "AaCode"),

@@ -87,7 +87,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.format {
         Format::Pkgbuild => {
-            let opts = aa_bundle::pkgbuild::PkgbuildOptions {
+            let opts = aa_bundle::formats::pkgbuild::PkgbuildOptions {
                 project_dir: &cli.common.project_dir,
                 bundle_meta: cli.common.bundle_meta.clone(),
                 bin_name: cli.common.bin_name.as_deref(),
@@ -104,19 +104,19 @@ fn main() -> Result<()> {
                 prebuilt: cli.common.prebuilt,
                 bin_path: cli.common.bin_path.as_deref(),
             };
-            let (pkgbuild, desktop) = aa_bundle::pkgbuild::generate_pkgbuild(&opts)?;
+            let (pkgbuild, desktop) = aa_bundle::formats::pkgbuild::generate_pkgbuild(&opts)?;
 
             let out_dir = match cli.common.out {
                 Some(p) => p,
-                None => aa_bundle::pkgbuild::default_out_dir(
+                None => aa_bundle::formats::pkgbuild::default_out_dir(
                     &cli.common.project_dir,
                     cli.common.bin_name.as_deref(),
                 )?,
             };
-            aa_bundle::write_file(&out_dir.join("PKGBUILD"), &pkgbuild)?;
+            aa_bundle::fs::write_file(&out_dir.join("PKGBUILD"), &pkgbuild)?;
             println!("已生成 {}", out_dir.join("PKGBUILD").display());
             if let Some((name, rendered)) = desktop {
-                aa_bundle::write_file(&out_dir.join(&name), &rendered)?;
+                aa_bundle::fs::write_file(&out_dir.join(&name), &rendered)?;
                 println!("已生成 {}", out_dir.join(&name).display());
             }
 
@@ -128,7 +128,7 @@ fn main() -> Result<()> {
             if cli.common.prebuilt {
                 println!("提示：tar.gz 本就是预编译打包（只安装已编好的二进制），--prebuilt 无额外作用。");
             }
-            let opts = aa_bundle::targz::TargzOptions {
+            let opts = aa_bundle::formats::targz::TargzOptions {
                 project_dir: &cli.common.project_dir,
                 bundle_meta: cli.common.bundle_meta.clone(),
                 bin_name: cli.common.bin_name.as_deref(),
@@ -138,7 +138,7 @@ fn main() -> Result<()> {
                 bin_path: cli.common.bin_path.as_deref(),
                 profile: Some(cli.common.profile.as_str()),
             };
-            aa_bundle::targz::generate(&opts)?;
+            aa_bundle::formats::targz::generate(&opts)?;
         }
     }
     Ok(())
